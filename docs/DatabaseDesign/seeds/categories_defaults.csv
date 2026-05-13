@@ -1,0 +1,9 @@
+name,is_default,user_id
+Food & Drink,true,
+Transport,true,
+Shopping,true,
+Bills & Utilities,true,
+Healthcare,true,
+Entertainment,true,
+Travel,true,
+Others,true,

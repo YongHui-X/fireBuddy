@@ -1,0 +1,29 @@
+{
+  "name": "firebuddy-monorepo",
+  "private": true,
+  "packageManager": "npm@11.6.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@firebuddy/web",
+    "dev:mobile": "npm run dev --workspace=@firebuddy/mobile",
+    "build:web": "npm run build --workspace=@firebuddy/web",
+    "lint:web": "npm run lint --workspace=@firebuddy/web",
+    "lint:mobile": "npm run lint --workspace=@firebuddy/mobile",
+    "typecheck:shared": "npm run typecheck --workspace=@firebuddy/shared",
+    "dev:backend": "uvicorn main:app --reload --app-dir apps/backend",
+    "android": "npm run android --workspace=@firebuddy/mobile",
+    "ios": "npm run ios --workspace=@firebuddy/mobile",
+    "web": "npm run web --workspace=@firebuddy/mobile",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.4"
+  }
+}

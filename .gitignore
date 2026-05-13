@@ -1,0 +1,13 @@
+node_modules/
+.turbo/
+dist/
+build/
+.venv/
+__pycache__/
+*.pyc
+
+apps/web/node_modules/
+apps/web/dist/
+apps/mobile/node_modules/
+packages/shared/dist/
+
