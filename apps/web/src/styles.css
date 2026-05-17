@@ -490,11 +490,58 @@ select:focus {
 }
 
 .mini-chart {
-  height: 220px;
+  min-height: 280px;
 }
 
 .spending-breakdown {
   display: grid;
+}
+
+.labeled-donut-chart {
+  width: 100%;
+  min-height: 280px;
+  display: block;
+  overflow: visible;
+}
+
+.donut-segment {
+  cursor: pointer;
+  stroke: var(--card);
+  stroke-width: 2;
+  transform-box: view-box;
+  transform-origin: 220px 150px;
+  transition: transform 160ms ease;
+}
+
+.donut-category:hover .donut-segment {
+  transform: scale(1.09);
+}
+
+.donut-label-line {
+  fill: none;
+  stroke: #c7d2ca;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.donut-label-dot {
+  fill: #a8b6ad;
+}
+
+.donut-label {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.donut-label-detail {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.donut-hole {
+  fill: var(--card);
 }
 
 .empty-chart {
@@ -711,6 +758,17 @@ select:focus {
   padding: 12px;
 }
 
+.breakdown-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.breakdown-copy strong,
+.breakdown-copy span {
+  display: block;
+}
+
 .profile-header {
   padding: 48px 24px 78px;
   display: flex;
@@ -861,30 +919,30 @@ select:focus {
 }
 
 .add-route {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: rgba(0, 0, 0, 0.48);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  overflow: hidden;
+  padding: 32px;
 }
 
 .add-panel {
   width: min(100%, 430px);
-  max-height: calc(100vh - 40px);
   background: var(--background);
-  overflow-y: auto;
+  overflow: hidden;
   position: relative;
-  border-radius: 22px;
+  border-radius: 18px;
   box-shadow: var(--shadow-lg);
 }
 
 .add-header {
   position: relative;
   background: linear-gradient(135deg, #4a9b8e 0%, #25543d 100%);
-  min-height: 198px;
+  min-height: 118px;
   color: #ffffff;
-  padding: 46px 28px 0;
+  padding: 30px 30px 0;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: start;
@@ -893,31 +951,49 @@ select:focus {
 
 .add-header h2 {
   text-align: center;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .add-card {
   position: relative;
   z-index: 2;
-  margin: -72px 28px 24px;
-  border-radius: 18px;
+  margin: -28px 28px 28px;
+  border-radius: 14px;
   background: #ffffff;
-  padding: 24px 20px 28px;
+  padding: 24px;
   display: grid;
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
   box-shadow: var(--shadow-lg);
 }
 
+.add-name-field,
+.add-amount-field,
+.add-account-field {
+  grid-column: 1 / -1;
+}
+
+.add-card .form-field,
+.add-card .amount-field {
+  gap: 10px;
+}
+
+.add-card .form-field input,
+.add-card .form-field select {
+  min-height: 46px;
+  border-radius: 10px;
+  padding: 0 14px;
+}
+
 .amount-field div {
-  min-height: 50px;
+  min-height: 48px;
   border: 1px solid var(--primary);
   border-radius: 8px;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 0 12px 0 16px;
-  position: relative;
 }
 
 .amount-field strong {
@@ -926,9 +1002,13 @@ select:focus {
 }
 
 .amount-field input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--text);
+  caret-color: var(--primary);
 }
 
 .amount-field button {
@@ -936,11 +1016,11 @@ select:focus {
   background: transparent;
   color: var(--primary);
   cursor: pointer;
-  z-index: 1;
+  padding: 0;
 }
 
 .invoice-button {
-  min-height: 50px;
+  min-height: 46px;
   border: 1px dashed var(--border);
   border-radius: 10px;
   background: #ffffff;
@@ -955,7 +1035,7 @@ select:focus {
 .primary-button,
 .secondary-button,
 .danger-button {
-  min-height: 44px;
+  min-height: 46px;
   border: none;
   border-radius: 10px;
   padding: 0 16px;
@@ -994,16 +1074,21 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
 }
 
 .center-sheet,
 .confirm-dialog {
   width: min(100vw - 32px, 420px);
-  max-height: 86vh;
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
   border-radius: 18px;
   background: var(--background);
   box-shadow: var(--shadow-lg);
+}
+
+.account-sheet {
+  width: min(100%, 430px);
 }
 
 .bottom-sheet {
@@ -1325,22 +1410,23 @@ select:focus {
   }
 
   .add-route {
-    align-items: flex-start;
-    padding: 12px;
+    align-items: center;
+    padding: 20px;
   }
 
   .add-panel {
-    max-height: calc(100vh - 24px);
+    width: min(100%, 390px);
   }
 
   .add-header {
-    min-height: 184px;
-    padding-top: 38px;
+    min-height: 104px;
+    padding: 24px 24px 0;
   }
 
   .add-card {
-    margin: -66px 18px 18px;
-    padding: 22px 18px 24px;
+    margin: -24px 20px 20px;
+    padding: 20px;
+    gap: 16px 14px;
   }
 
   .header-actions .pill-button {
@@ -1361,5 +1447,39 @@ select:focus {
   .account-card-row > .plain-icon-button {
     grid-column: 2;
     justify-self: start;
+  }
+}
+
+@media (max-height: 620px) {
+  .add-route {
+    padding: 16px;
+  }
+
+  .add-header {
+    min-height: 92px;
+    padding: 20px 22px 0;
+  }
+
+  .add-header h2 {
+    font-size: 16px;
+  }
+
+  .add-card {
+    margin: -22px 18px 18px;
+    padding: 16px;
+    gap: 12px 12px;
+  }
+
+  .add-card .form-field,
+  .add-card .amount-field {
+    gap: 8px;
+  }
+
+  .add-card .form-field input,
+  .add-card .form-field select,
+  .amount-field div,
+  .invoice-button,
+  .primary-button {
+    min-height: 40px;
   }
 }

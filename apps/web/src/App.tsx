@@ -246,6 +246,38 @@ function formatDateLabel(value: string) {
   });
 }
 
+function polarPoint(centerX: number, centerY: number, radius: number, angle: number) {
+  const radians = ((angle - 90) * Math.PI) / 180;
+
+  return {
+    x: centerX + radius * Math.cos(radians),
+    y: centerY + radius * Math.sin(radians),
+  };
+}
+
+function describeDonutSegment(
+  centerX: number,
+  centerY: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number,
+) {
+  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+  const outerStart = polarPoint(centerX, centerY, outerRadius, endAngle);
+  const outerEnd = polarPoint(centerX, centerY, outerRadius, startAngle);
+  const innerStart = polarPoint(centerX, centerY, innerRadius, startAngle);
+  const innerEnd = polarPoint(centerX, centerY, innerRadius, endAngle);
+
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 0 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerStart.x} ${innerStart.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 1 ${innerEnd.x} ${innerEnd.y}`,
+    'Z',
+  ].join(' ');
+}
+
 function accountTypeLabel(type: AccountType) {
   const labels: Record<AccountType, string> = {
     bank: 'Bank',
@@ -643,29 +675,65 @@ function MiniCategoryChart() {
         .reduce((total, transaction) => total + Math.abs(transaction.amount), 0),
       color: category.color,
     }));
+  const activeChartData = chartData.filter((entry) => entry.value > 0);
+  const centerX = 220;
+  const centerY = 150;
+  const innerRadius = 42;
+  const outerRadius = 78;
+  const sliceAngle = 360 / Math.max(activeChartData.length, 1);
+  const gapAngle = activeChartData.length > 1 ? 3 : 0;
 
   return (
     <div className="spending-breakdown">
       <div className="mini-chart">
-        {chartData.some((entry) => entry.value > 0) ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                innerRadius={58}
-                outerRadius={92}
-                paddingAngle={3}
-                dataKey="value"
-                nameKey="name"
-                labelLine={false}
-              >
-                {chartData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={formatTooltipValue} />
-            </PieChart>
-          </ResponsiveContainer>
+        {activeChartData.length > 0 ? (
+          <svg className="labeled-donut-chart" viewBox="0 0 440 300" role="img" aria-label="Equal category spending breakdown">
+            {activeChartData.map((entry, index) => {
+              const startAngle = index * sliceAngle + gapAngle / 2;
+              const endAngle = (index + 1) * sliceAngle - gapAngle / 2;
+              const midAngle = startAngle + (endAngle - startAngle) / 2;
+              const lineStart = polarPoint(centerX, centerY, outerRadius + 5, midAngle);
+              const lineBend = polarPoint(centerX, centerY, 106, midAngle);
+              const isRightSide = lineBend.x >= centerX;
+              const lineEnd = {
+                x: isRightSide ? Math.min(lineBend.x + 34, 320) : Math.max(lineBend.x - 34, 120),
+                y: lineBend.y,
+              };
+              const labelX = isRightSide ? lineEnd.x + 7 : lineEnd.x - 7;
+
+              return (
+                <g className="donut-category" key={entry.name}>
+                  <path
+                    className="donut-segment"
+                    d={describeDonutSegment(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle)}
+                    fill={entry.color}
+                  />
+                  <polyline
+                    className="donut-label-line"
+                    points={`${lineStart.x},${lineStart.y} ${lineBend.x},${lineBend.y} ${lineEnd.x},${lineEnd.y}`}
+                  />
+                  <circle className="donut-label-dot" cx={lineStart.x} cy={lineStart.y} r="2.7" />
+                  <text
+                    className="donut-label"
+                    x={labelX}
+                    y={lineEnd.y - 4}
+                    textAnchor={isRightSide ? 'start' : 'end'}
+                  >
+                    {entry.name}
+                  </text>
+                  <text
+                    className="donut-label-detail"
+                    x={labelX}
+                    y={lineEnd.y + 12}
+                    textAnchor={isRightSide ? 'start' : 'end'}
+                  >
+                    {formatSGD(entry.value, 0)}
+                  </text>
+                </g>
+              );
+            })}
+            <circle className="donut-hole" cx={centerX} cy={centerY} r={innerRadius - 1} />
+          </svg>
         ) : (
           <div className="empty-chart">No spending yet</div>
         )}
@@ -897,7 +965,7 @@ function Categories() {
               return (
                 <div className="breakdown-row" key={category.id}>
                   <CategoryAvatar category={category} />
-                  <div>
+                  <div className="breakdown-copy">
                     <strong>{category.name}</strong>
                     <span>{share.toFixed(0)}% of tracked spend</span>
                   </div>
@@ -1364,7 +1432,7 @@ function AccountSheet({
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <aside className="bottom-sheet" onClick={(event) => event.stopPropagation()}>
+      <aside className="center-sheet account-sheet" onClick={(event) => event.stopPropagation()}>
         <div className="sheet-handle" />
         <div className="sheet-header">
           <h3>{mode === 'add' ? 'New account' : 'Edit account'}</h3>
@@ -1437,7 +1505,6 @@ function AddExpense() {
   const [category, setCategory] = useState('food');
   const [account, setAccount] = useState(accounts[0]?.id ?? '');
   const isIncome = category === 'income';
-  const displayAmount = amount ? Number(amount).toFixed(2) : '0.00';
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1469,22 +1536,22 @@ function AddExpense() {
         </header>
 
         <section className="add-card">
-          <label className="form-field">
+          <label className="form-field add-name-field">
             <span>Name</span>
             <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Netflix" />
           </label>
 
-          <label className="amount-field">
+          <label className="amount-field add-amount-field">
             <span>Amount</span>
             <div>
-              <strong>S$ {displayAmount}</strong>
+              <strong>S$</strong>
               <input
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder="0"
+                placeholder="0.00"
               />
               <button type="button" onClick={() => setAmount('')}>
                 Clear
@@ -1492,12 +1559,12 @@ function AddExpense() {
             </div>
           </label>
 
-          <label className="form-field">
+          <label className="form-field add-date-field">
             <span>Date</span>
             <input value={date} onChange={(event) => setDate(event.target.value)} type="date" />
           </label>
 
-          <label className="form-field">
+          <label className="form-field add-category-field">
             <span>Category</span>
             <select value={category} onChange={(event) => setCategory(event.target.value)}>
               {categories.map((item) => (
@@ -1508,7 +1575,7 @@ function AddExpense() {
             </select>
           </label>
 
-          <label className="form-field">
+          <label className="form-field add-account-field">
             <span>Account</span>
             <select value={account} onChange={(event) => setAccount(event.target.value)}>
               {accounts.map((item) => (
