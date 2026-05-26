@@ -13,6 +13,12 @@ The product helps users capture everyday expenses, understand category spend, an
 
 For the current web correction, `docs/Figmamake` is the active layout source. The implementation should adapt that layout into the repo rather than copy the generated project wholesale.
 
+Design-preservation rule:
+- The current `apps/web` UI should continue to follow the Figma Make-inspired layout described in this PRD.
+- Frontend refactors, package extraction, state cleanup, or shared-contract work must preserve the existing visual structure unless the user explicitly asks for a redesign.
+- Do not replace the active UI with a generic dashboard scaffold, flat two-column product layout, or new visual system just to improve architecture.
+- If architecture and design goals conflict, keep the Figma-style layout intact and move logic behind it incrementally.
+
 ## 3. Target Users
 - Singapore-based working adults tracking day-to-day spending.
 - Early FIRE planners who want CPF-aware and Singapore-relevant language later.
@@ -84,6 +90,7 @@ For the current web correction, `docs/Figmamake` is the active layout source. Th
   - Figma-style cards, shadows, spacing, and screen hierarchy.
 - Do not include sending, peer transfer, send-again, contact list, or payment-recipient UI.
 - This layout requirement intentionally overrides the older flat/no-gradient visual constraint for the current web implementation.
+- Treat these visual requirements as regression criteria. Any future frontend or shared-package change should keep the mobile-first app-column feel, curved green headers, overlapping cards, sidebar behavior, and bottom add-button navigation unless a new design direction is explicitly approved.
 
 ## 7. Functional Requirements
 - The user can add an expense and see all views update immediately.

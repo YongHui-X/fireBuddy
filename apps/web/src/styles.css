@@ -900,6 +900,205 @@ select:focus {
   background: transparent;
 }
 
+.advisor-content {
+  display: grid;
+  gap: 16px;
+}
+
+.advisor-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.advisor-hero h3 {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.advisor-hero p {
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.advisor-endpoint-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--muted);
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+}
+
+.advisor-endpoint-card span,
+.advisor-endpoint-card small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.advisor-endpoint-card strong {
+  color: var(--primary-dark);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.advisor-shell {
+  background: var(--card);
+  border: 1px solid rgba(215, 227, 216, 0.75);
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.advisor-messages {
+  display: grid;
+  gap: 12px;
+  min-height: 360px;
+  max-height: 54vh;
+  overflow-y: auto;
+  padding: 18px;
+  background: linear-gradient(180deg, #f5f8f4 0%, #eef5ef 100%);
+}
+
+.advisor-message {
+  display: grid;
+  gap: 5px;
+  max-width: 78%;
+}
+
+.advisor-message span {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.advisor-message p {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--text);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.advisor-message-assistant {
+  justify-self: start;
+}
+
+.advisor-message-assistant p {
+  background: #ffffff;
+}
+
+.advisor-message-user {
+  justify-self: end;
+}
+
+.advisor-message-user span {
+  text-align: right;
+}
+
+.advisor-message-user p {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.advisor-sources {
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+  padding: 14px 18px;
+}
+
+.advisor-sources strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.advisor-sources ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.advisor-error {
+  margin: 0;
+  border-top: 1px solid #f4b6b6;
+  background: #fff5f5;
+  color: var(--danger);
+  padding: 12px 18px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.advisor-form {
+  border-top: 1px solid var(--border);
+  padding: 16px 18px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.advisor-form label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.advisor-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 104px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--text);
+  padding: 12px 14px;
+  line-height: 1.5;
+}
+
+.advisor-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.advisor-form-actions .primary-button:disabled {
+  background: var(--border);
+  color: var(--text-muted);
+}
+
+.advisor-prompts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.advisor-prompts button {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--text);
+  padding: 10px 12px;
+  text-align: left;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.advisor-prompts button:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
 .account-list {
   display: grid;
   gap: 12px;
@@ -1447,6 +1646,26 @@ select:focus {
   .account-card-row > .plain-icon-button {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .advisor-hero,
+  .advisor-prompts {
+    grid-template-columns: 1fr;
+  }
+
+  .advisor-messages {
+    min-height: 320px;
+    max-height: 48vh;
+    padding: 14px;
+  }
+
+  .advisor-message {
+    max-width: 100%;
+  }
+
+  .advisor-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }
 

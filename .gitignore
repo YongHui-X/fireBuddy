@@ -5,9 +5,10 @@ build/
 .venv/
 __pycache__/
 *.pyc
+apps/backend/rag/knowledge-base/source-pdfs/**/*.pdf
+apps/backend/rag/knowledge-base/source-pdfs/**/*.pdf.bak
 
 apps/web/node_modules/
 apps/web/dist/
 apps/mobile/node_modules/
 packages/shared/dist/
-

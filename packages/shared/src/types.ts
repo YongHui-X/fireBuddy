@@ -31,3 +31,20 @@ export interface CreateExpenseInput {
   amount: string;
   date: string;
 }
+
+export type RagChatRole = 'user' | 'assistant';
+
+export interface RagChatMessage {
+  role: RagChatRole;
+  content: string;
+}
+
+export interface RagChatRequest {
+  question: string;
+  history: RagChatMessage[];
+}
+
+export interface RagChatResponse {
+  answer: string;
+  sources: string[];
+}

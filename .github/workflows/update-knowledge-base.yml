@@ -1,0 +1,54 @@
+name: Update Knowledge Base
+
+on:
+  schedule:
+    - cron: '0 9 1 * *' # 9am on 1st of every month
+  workflow_dispatch: # also triggerable manually
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install requests beautifulsoup4 openai supabase python-dotenv
+
+      - name: Fetch latest figures
+        run: python backend/rag/scripts/fetch_figures.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Check if figures changed
+        id: diff
+        run: |
+          git diff --quiet backend/rag/annual-figures.json \
+            && echo "changed=false" >> $GITHUB_OUTPUT \
+            || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Re-ingest if changed
+        if: steps.diff.outputs.changed == 'true'
+        run: python backend/rag/ingest.py
+
+      - name: Commit updated figures
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config --global user.email "bot@firebuddy"
+          git config --global user.name "FireBuddy Bot"
+          git add backend/rag/annual-figures.json
+          git commit -m "chore: auto-update annual figures $(date +'%Y-%m')"
+          git push
+
+      - name: Notify
+        if: steps.diff.outputs.changed == 'true'
+        run: python backend/rag/scripts/notify.py
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

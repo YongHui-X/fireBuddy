@@ -63,6 +63,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
+import { apiRoutes, type RagChatMessage, type RagChatResponse } from '@firebuddy/shared';
 
 type AccountType = 'bank' | 'credit_card' | 'debit_card' | 'cash' | 'ewallet';
 
@@ -419,6 +420,7 @@ function Layout() {
             <SidebarNavItem key={item.path} {...item} />
           ))}
           <SidebarNavItem path="/analytics" icon={Download} label="Analytics" />
+          <SidebarNavItem path="/advisor" icon={MessageSquare} label="Advisor" />
         </nav>
 
         <button className="sidebar-add-button button-press" type="button" onClick={() => navigate('/add')}>
@@ -436,6 +438,7 @@ function Layout() {
               <Route path="categories" element={<Categories />} />
               <Route path="profile" element={<Profile />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="advisor" element={<Advisor />} />
               <Route path="accounts" element={<Accounts />} />
             </Routes>
           </div>
@@ -1115,13 +1118,14 @@ function CategorySheet({
 }
 
 function Profile() {
+  const navigate = useNavigate();
   const [showClearDialog, setShowClearDialog] = useState(false);
   const settings = [
     { icon: User, label: 'Account info', danger: false },
     { icon: Bell, label: 'Notifications', danger: false },
     { icon: Shield, label: 'Login and security', danger: false },
     { icon: Lock, label: 'Data and privacy', danger: false },
-    { icon: MessageSquare, label: 'Message center', danger: false },
+    { icon: MessageSquare, label: 'Financial advisor', danger: false, route: '/advisor' },
     { icon: HelpCircle, label: 'Help & feedback', danger: false },
     { icon: Database, label: 'Clear all data', danger: true },
     { icon: LogOut, label: 'Sign out', danger: true },
@@ -1152,6 +1156,11 @@ function Profile() {
               onClick={() => {
                 if (setting.label === 'Clear all data') {
                   setShowClearDialog(true);
+                  return;
+                }
+
+                if ('route' in setting && setting.route) {
+                  navigate(setting.route);
                 }
               }}
             >
@@ -1181,6 +1190,196 @@ function Profile() {
           </aside>
         </div>
       ) : null}
+    </main>
+  );
+}
+
+function Advisor() {
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState<RagChatMessage[]>([
+    {
+      role: 'assistant',
+      content:
+        'Ask me about CPF, SRS, HDB grants, retirement sums, Singapore Savings Bonds, or FIRE planning in Singapore.',
+    },
+  ]);
+  const [question, setQuestion] = useState('');
+  const [sources, setSources] = useState<string[]>([]);
+  const [isAsking, setIsAsking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+  const canAsk = question.trim().length > 0 && !isAsking;
+
+  async function askAdvisor(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedQuestion = question.trim();
+
+    if (!trimmedQuestion || isAsking) {
+      return;
+    }
+
+    const userMessage: RagChatMessage = {
+      role: 'user',
+      content: trimmedQuestion,
+    };
+    const nextMessages = [...messages, userMessage];
+
+    setMessages(nextMessages);
+    setQuestion('');
+    setError(null);
+    setSources([]);
+    setIsAsking(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}${apiRoutes.financialAdvisorChat}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: trimmedQuestion,
+          history: messages,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`RAG service returned ${response.status}`);
+      }
+
+      const payload = (await response.json()) as RagChatResponse;
+
+      if (!payload.answer) {
+        throw new Error('RAG service returned an empty answer');
+      }
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          content: payload.answer,
+        },
+      ]);
+      setSources(payload.sources ?? []);
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Unable to reach the RAG service.';
+
+      setError(
+        `${message}. Start the backend RAG endpoint at ${apiRoutes.financialAdvisorChat}, or set VITE_API_BASE_URL if it is running elsewhere.`,
+      );
+      setMessages((current) => current.filter((item) => item !== userMessage));
+    } finally {
+      setIsAsking(false);
+    }
+  }
+
+  function useSuggestedQuestion(value: string) {
+    setQuestion(value);
+    setError(null);
+  }
+
+  return (
+    <main className="page">
+      <section className="analytics-header">
+        <button className="plain-icon-button" type="button" onClick={() => navigate(-1)}>
+          <ArrowLeft size={20} />
+        </button>
+        <h2>Advisor</h2>
+        <MessageSquare size={20} />
+      </section>
+
+      <section className="analytics-content advisor-content">
+        <article className="advisor-hero white-card">
+          <div>
+            <p className="eyebrow">Knowledge base chatbot</p>
+            <h3>Ask Singapore finance questions before personal data is connected.</h3>
+            <p>
+              This interface is wired for the standalone RAG endpoint only. It does not send expense,
+              profile, or user account data.
+            </p>
+          </div>
+          <div className="advisor-endpoint-card">
+            <span>Expected endpoint</span>
+            <strong>{apiRoutes.financialAdvisorChat}</strong>
+            <small>Base URL: {apiBaseUrl}</small>
+          </div>
+        </article>
+
+        <article className="advisor-shell">
+          <div className="advisor-messages" aria-live="polite">
+            {messages.map((message, index) => (
+              <div
+                className={`advisor-message advisor-message-${message.role}`}
+                key={`${message.role}-${index}`}
+              >
+                <span>{message.role === 'user' ? 'You' : 'FireBuddy'}</span>
+                <p>{message.content}</p>
+              </div>
+            ))}
+
+            {isAsking ? (
+              <div className="advisor-message advisor-message-assistant">
+                <span>FireBuddy</span>
+                <p>Searching the knowledge base...</p>
+              </div>
+            ) : null}
+          </div>
+
+          {sources.length > 0 ? (
+            <div className="advisor-sources">
+              <strong>Sources</strong>
+              <ul>
+                {sources.map((source) => (
+                  <li key={source}>{source}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {error ? <p className="advisor-error">{error}</p> : null}
+
+          <form className="advisor-form" onSubmit={askAdvisor}>
+            <label htmlFor="advisor-question">Question</label>
+            <textarea
+              id="advisor-question"
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              placeholder="What is the CPF Full Retirement Sum for 2026?"
+              rows={4}
+            />
+            <div className="advisor-form-actions">
+              <button className="secondary-button" type="button" onClick={() => setMessages(messages.slice(0, 1))}>
+                Clear
+              </button>
+              <button className="primary-button" type="submit" disabled={!canAsk}>
+                {isAsking ? 'Asking...' : 'Ask advisor'}
+              </button>
+            </div>
+          </form>
+        </article>
+
+        <article className="white-card">
+          <div className="section-title-row">
+            <h3>Try asking</h3>
+          </div>
+          <div className="advisor-prompts">
+            {[
+              'What are the CPF contribution rates for 2026?',
+              'How do Basic, Full, and Enhanced Retirement Sum differ?',
+              'Can I use CPFIS to invest my CPF savings?',
+              'What should a Singapore FIRE plan consider before age 55?',
+            ].map((suggestion) => (
+              <button key={suggestion} type="button" onClick={() => useSuggestedQuestion(suggestion)}>
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </article>
+      </section>
     </main>
   );
 }

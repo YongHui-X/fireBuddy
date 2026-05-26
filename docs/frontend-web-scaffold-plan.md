@@ -1,9 +1,20 @@
 # Frontend Web Scaffold Plan
 
+> Status: superseded for visual direction.
+>
+> This document captured an older first-pass scaffold plan. For the current web app, follow
+> `docs/PRD.md` and `docs/Figmamake` for layout and visual direction. Do not use this file
+> to justify replacing the active Figma-inspired design with a flat generic scaffold.
+
 ## Purpose
 This document defines the first implementation pass for the web app in `apps/web`.
 
 The goal is to replace the current placeholder scaffold with a real `Add Expense` screen that works with local dummy data only.
+
+Current correction:
+- The active web app has moved beyond this first-pass scaffold.
+- Preserve the existing Figma Make-inspired layout in `apps/web` when doing frontend or `packages/shared` cleanup.
+- Architecture improvements should be incremental behind the current screens, not a visual reset.
 
 ## Scope For This Pass
 - Build the first meaningful web UI in `apps/web`
@@ -138,6 +149,10 @@ Keep validation lightweight:
 Validation should happen locally in the page container before adding a new local entry.
 
 ## Styling Direction
+Historical guidance from the first scaffold pass:
+- The flat/no-gradient/no-shadow rules below are no longer the current visual source of truth.
+- Use `docs/PRD.md` section 6 and `docs/Figmamake` instead.
+
 Follow the updated green-led product palette:
 - Background: `#F5F8F4`
 - Surface: `#FFFFFF`
@@ -157,6 +172,8 @@ Visual rules:
 - No drop shadows
 - Generous whitespace
 - Calm, finance-oriented feel
+
+Do not apply these historical visual rules if they conflict with the current PRD requirement for Figma-style cards, shadows, green curved headers, overlapping dashboard cards, desktop sidebar, and mobile bottom navigation.
 
 ## Acceptance Criteria
 This pass is complete when:
