@@ -122,7 +122,7 @@ Default categories remain:
 - Supabase-backed expense persistence.
 - FastAPI routes for expenses, categories, and AI parsing.
 - OpenAI-powered transaction auto-categorisation.
-- CPF and financial-document RAG after the core flow is stable.
+- CPF and financial-document RAG on Supabase pgvector after the core flow is stable.
 - Full FIRE analytics and projection charts after the MVP expense flow works end to end.
 
 ## 10. Out Of Scope For MVP

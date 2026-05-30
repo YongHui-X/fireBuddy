@@ -32,7 +32,7 @@ Target repo state:
 | Backend | FastAPI (Python) | API layer, business logic, and AI feature hosting |
 | Database | Supabase (Postgres) | Data storage, auth, and row level security |
 | AI - Phase 1 | OpenAI API (GPT-4o mini) | Transaction auto-categorisation from text descriptions |
-| AI - Later phases | OpenAI Vision, LlamaIndex or LangChain, FAISS or Chroma | Receipt scanning and RAG over CPF or finance documents |
+| AI - Later phases | OpenAI Vision, LlamaIndex or LangChain, Supabase pgvector | Receipt scanning and RAG over CPF or finance documents |
 | Monorepo tooling | Turborepo | Coordinates web, mobile, backend, and shared packages |
 
 ## Architecture Principles
@@ -200,14 +200,14 @@ Until the web-first migration is complete, expect the implemented mobile surface
 
 ## Resume Framing
 Full app:
-> FireBuddy | React, FastAPI, Supabase, OpenAI API, LlamaIndex, FAISS
-> Built a Singapore-focused personal finance app featuring transaction auto-categorisation via OpenAI API and a RAG-powered CPF and financial documents Q&A chatbot.
+> FireBuddy | React, FastAPI, Supabase, OpenAI API, LlamaIndex, Supabase pgvector
+> Built a Singapore-focused personal finance app featuring transaction auto-categorisation via OpenAI API and a Supabase-backed RAG-powered CPF and financial documents Q&A chatbot.
 
 Categorisation:
 > Implemented transaction auto-categorisation via OpenAI API. User inputs a description and the app suggests a category in real time using GPT-4o mini.
 
 RAG:
-> Implemented a RAG pipeline using LlamaIndex and FAISS to enable natural language querying over financial documents.
+> Implemented a Supabase pgvector-based RAG pipeline using LlamaIndex to enable natural language querying over financial documents.
 
 ## Out Of Scope For Now
 - Telegram bot integration
