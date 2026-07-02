@@ -10,12 +10,14 @@ import {
 } from 'react';
 import {
   BrowserRouter,
+  Navigate,
   NavLink,
   Route,
   Routes,
   useLocation,
   useNavigate,
 } from 'react-router';
+import type { Session } from '@supabase/supabase-js';
 import {
   Area,
   AreaChart,
@@ -42,30 +44,57 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CircleHelp,
+  Clapperboard,
   CreditCard,
   Database,
   Download,
   Filter,
   Grid2X2,
   HelpCircle,
+  HeartPulse,
   Home,
   Lock,
   LogOut,
+  Maximize2,
   MessageSquare,
+  Minimize2,
   MoreHorizontal,
+  Moon,
+  PanelLeft,
   Pencil,
+  Plane,
   Plus,
+  ReceiptText,
   Search,
   Shield,
+  ShoppingBag,
   Smartphone,
+  Sun,
   Trash2,
+  Train,
+  TrendingUp,
+  Utensils,
   User,
   Wallet,
+  WalletCards,
   X,
 } from 'lucide-react';
-import { apiRoutes, type RagChatMessage, type RagChatResponse } from '@firebuddy/shared';
+import {
+  apiRoutes,
+  type Category as ApiCategory,
+  type Expense as ApiExpense,
+  type RagChatMessage,
+  type RagChatResponse,
+} from '@firebuddy/shared';
+
+import { createExpense, getCategories, getExpenses } from './api';
+import { supabase } from './supabase';
+
+const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true';
 
 type AccountType = 'bank' | 'credit_card' | 'debit_card' | 'cash' | 'ewallet';
+type IconComponent = ComponentType<{ size?: number; strokeWidth?: number }>;
 
 interface Transaction {
   id: string;
@@ -97,7 +126,16 @@ interface AppContextValue {
   transactions: Transaction[];
   categories: Category[];
   accounts: Account[];
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  themeMode: ThemeMode;
+  session: Session | null;
+  authLoading: boolean;
+  authError: string | null;
+  syncStatus: 'idle' | 'loading' | 'ready' | 'error';
+  syncError: string | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
   addCategory: (category: Omit<Category, 'id'>) => void;
@@ -109,10 +147,32 @@ interface AppContextValue {
   getCategoryById: (id: string) => Category | undefined;
   getAccountById: (id: string) => Account | undefined;
   getMonthlySpend: (categoryId: string, month?: string) => number;
+  toggleTheme: () => void;
+  setThemeMode: (mode: ThemeMode) => void;
 }
 
-const MONTH_KEY = '2026-04';
-const todayDate = '2026-04-14';
+type ThemeMode = 'light' | 'dark';
+
+interface ChatTopic {
+  id: string;
+  title: string;
+  messages: RagChatMessage[];
+  sources: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+function getDeviceDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getDeviceMonthKey(dateKey = getDeviceDateKey()) {
+  return dateKey.slice(0, 7);
+}
 
 const colors = {
   primary: '#3C8A61',
@@ -151,18 +211,45 @@ const categoryColors = [
   '#A8D3B7',
 ];
 
-const categoryIcons = ['FD', 'TR', 'SH', 'BU', 'HC', 'EN', 'TV', 'OT', 'IN'];
+const categoryIconOptions = [
+  { id: 'food', label: 'Food & Drink', icon: Utensils },
+  { id: 'transport', label: 'Transport', icon: Train },
+  { id: 'shopping', label: 'Shopping', icon: ShoppingBag },
+  { id: 'utilities', label: 'Bills & Utilities', icon: ReceiptText },
+  { id: 'health', label: 'Healthcare', icon: HeartPulse },
+  { id: 'entertainment', label: 'Entertainment', icon: Clapperboard },
+  { id: 'travel', label: 'Travel', icon: Plane },
+  { id: 'others', label: 'Others', icon: CircleHelp },
+  { id: 'income', label: 'Income', icon: TrendingUp },
+] as const satisfies readonly { id: string; label: string; icon: IconComponent }[];
+
+const categoryIconsById = new Map<string, IconComponent>(
+  categoryIconOptions.map((option) => [option.id, option.icon]),
+);
+
+const legacyCategoryIconIds: Record<string, string> = {
+  FD: 'food',
+  TR: 'transport',
+  SH: 'shopping',
+  BU: 'utilities',
+  HC: 'health',
+  EN: 'entertainment',
+  TV: 'travel',
+  OT: 'others',
+  IN: 'income',
+  NW: 'others',
+};
 
 const initialCategories: Category[] = [
-  { id: 'food', name: 'Food & Drink', color: '#3C8A61', icon: 'FD', monthlyBudget: 600, isDefault: true },
-  { id: 'transport', name: 'Transport', color: '#67B47C', icon: 'TR', monthlyBudget: 250, isDefault: true },
-  { id: 'shopping', name: 'Shopping', color: '#E5B24A', icon: 'SH', monthlyBudget: 300, isDefault: true },
-  { id: 'utilities', name: 'Bills & Utilities', color: '#7BAA90', icon: 'BU', monthlyBudget: 150, isDefault: true },
-  { id: 'health', name: 'Healthcare', color: '#2E9B57', icon: 'HC', monthlyBudget: 150, isDefault: true },
-  { id: 'entertainment', name: 'Entertainment', color: '#8BB89D', icon: 'EN', monthlyBudget: 200, isDefault: true },
-  { id: 'travel', name: 'Travel', color: '#25543D', icon: 'TV', monthlyBudget: 400, isDefault: true },
-  { id: 'others', name: 'Others', color: '#A8D3B7', icon: 'OT', monthlyBudget: 200, isDefault: true },
-  { id: 'income', name: 'Income', color: '#25543D', icon: 'IN', monthlyBudget: 0, isDefault: true },
+  { id: 'food', name: 'Food & Drink', color: '#3C8A61', icon: 'food', monthlyBudget: 600, isDefault: true },
+  { id: 'transport', name: 'Transport', color: '#67B47C', icon: 'transport', monthlyBudget: 250, isDefault: true },
+  { id: 'shopping', name: 'Shopping', color: '#E5B24A', icon: 'shopping', monthlyBudget: 300, isDefault: true },
+  { id: 'utilities', name: 'Bills & Utilities', color: '#7BAA90', icon: 'utilities', monthlyBudget: 150, isDefault: true },
+  { id: 'health', name: 'Healthcare', color: '#2E9B57', icon: 'health', monthlyBudget: 150, isDefault: true },
+  { id: 'entertainment', name: 'Entertainment', color: '#8BB89D', icon: 'entertainment', monthlyBudget: 200, isDefault: true },
+  { id: 'travel', name: 'Travel', color: '#25543D', icon: 'travel', monthlyBudget: 400, isDefault: true },
+  { id: 'others', name: 'Others', color: '#A8D3B7', icon: 'others', monthlyBudget: 200, isDefault: true },
+  { id: 'income', name: 'Income', color: '#25543D', icon: 'income', monthlyBudget: 0, isDefault: true },
 ];
 
 const initialAccounts: Account[] = [
@@ -186,6 +273,72 @@ const initialTransactions: Transaction[] = [
   { id: '10', description: 'Dividends STI ETF', amount: 248.5, category: 'income', date: '2026-04-01', account: 'dbs_savings' },
 ];
 
+const categoryVisualsByName = new Map(
+  initialCategories.map((category) => [
+    category.name.toLowerCase(),
+    {
+      color: category.color,
+      icon: category.icon,
+      monthlyBudget: category.monthlyBudget,
+    },
+  ]),
+);
+
+function mapApiCategory(category: ApiCategory): Category {
+  const visuals = categoryVisualsByName.get(category.name.toLowerCase());
+
+  return {
+    id: category.id,
+    name: category.name,
+    color: visuals?.color ?? colors.primary,
+    icon: visuals?.icon ?? category.name.slice(0, 2).toUpperCase(),
+    monthlyBudget: visuals?.monthlyBudget ?? 0,
+    isDefault: category.isDefault,
+  };
+}
+
+function mapApiExpense(expense: ApiExpense): Transaction {
+  return {
+    id: expense.id,
+    description: expense.description || 'Unnamed expense',
+    amount: -Math.abs(Number(expense.amount)),
+    category: expense.categoryId ?? '',
+    date: expense.date,
+  };
+}
+
+function resolveCategoryIconId(category?: Category) {
+  if (!category?.icon) {
+    return category?.id ?? 'others';
+  }
+
+  return legacyCategoryIconIds[category.icon] ?? category.icon;
+}
+
+function getCategoryIcon(category?: Category): IconComponent {
+  return categoryIconsById.get(resolveCategoryIconId(category)) ?? CircleHelp;
+}
+
+function sortTransactionsNewestFirst(items: Transaction[]) {
+  return [...items].sort((left, right) => {
+    const dateOrder = right.date.localeCompare(left.date);
+
+    if (dateOrder !== 0) {
+      return dateOrder;
+    }
+
+    return right.id.localeCompare(left.id);
+  });
+}
+
+function getAccountMeta(account?: Account) {
+  if (!account) {
+    return 'Account';
+  }
+
+  return `${account.name} · ${accountTypeLabel(account.type)}`;
+}
+
 const netWorthHistory = [
   { month: 'Nov', netWorth: 113800, invested: 89300, cash: 24500 },
   { month: 'Dec', netWorth: 117200, invested: 91800, cash: 25400 },
@@ -202,6 +355,18 @@ const monthlyCashflow = [
   { month: 'Feb', income: 7800, expenses: 3490, savings: 4310 },
   { month: 'Mar', income: 8050, expenses: 3720, savings: 4330 },
   { month: 'Apr', income: 8048, expenses: 2448, savings: 5600 },
+];
+
+const CHAT_TOPICS_STORAGE_KEY = 'firebuddy_chat_topics_v1';
+const CHAT_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_chat_active_topic_v1';
+const THEME_STORAGE_KEY = 'firebuddy_theme_v1';
+const CHAT_GREETING =
+  'Ask me about CPF, SRS, HDB grants, retirement sums, Singapore Savings Bonds, or FIRE planning in Singapore.';
+const CHAT_PROMPTS = [
+  'What are the CPF contribution rates for 2026?',
+  'How do Basic, Full, and Enhanced Retirement Sum differ?',
+  'Can I use CPFIS to invest my CPF savings?',
+  'What should a Singapore FIRE plan consider before age 55?',
 ];
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -228,7 +393,7 @@ function formatTooltipValue(value: unknown) {
 
 function formatDateLabel(value: string) {
   const parsed = new Date(`${value}T00:00:00`);
-  const today = new Date(`${todayDate}T00:00:00`);
+  const today = new Date(`${getDeviceDateKey()}T00:00:00`);
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
@@ -293,7 +458,7 @@ function accountTypeLabel(type: AccountType) {
 
 function AppProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    loadStored('firebuddy_web_transactions_v2', initialTransactions),
+    sortTransactionsNewestFirst(loadStored('firebuddy_web_transactions_v2', initialTransactions)),
   );
   const [categories, setCategories] = useState<Category[]>(() =>
     loadStored('firebuddy_web_categories_v2', initialCategories),
@@ -301,6 +466,74 @@ function AppProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>(() =>
     loadStored('firebuddy_web_accounts_v2', initialAccounts),
   );
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => loadStored(THEME_STORAGE_KEY, 'light'));
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        setAuthError(error.message);
+      }
+
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthError(null);
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setSyncStatus('idle');
+      setSyncError(null);
+      return;
+    }
+
+    let isActive = true;
+    setSyncStatus('loading');
+    setSyncError(null);
+
+    Promise.all([getCategories(session.access_token), getExpenses(session.access_token)])
+      .then(([apiCategories, apiExpenses]) => {
+        if (!isActive) {
+          return;
+        }
+
+        setCategories(apiCategories.map(mapApiCategory));
+        setTransactions(sortTransactionsNewestFirst(apiExpenses.map(mapApiExpense)));
+        setSyncStatus('ready');
+      })
+      .catch((error: unknown) => {
+        if (!isActive) {
+          return;
+        }
+
+        setSyncError(error instanceof Error ? error.message : 'Unable to sync FireBuddy data.');
+        setSyncStatus('error');
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [session]);
 
   useEffect(() => {
     window.localStorage.setItem('firebuddy_web_transactions_v2', JSON.stringify(transactions));
@@ -313,6 +546,12 @@ function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     window.localStorage.setItem('firebuddy_web_accounts_v2', JSON.stringify(accounts));
   }, [accounts]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+    document.documentElement.style.colorScheme = themeMode;
+    window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+  }, [themeMode]);
 
   const value = useMemo<AppContextValue>(() => {
     function getCategoryById(id: string) {
@@ -327,17 +566,59 @@ function AppProvider({ children }: { children: ReactNode }) {
       transactions,
       categories,
       accounts,
-      addTransaction: (transaction) => {
-        const nextTransaction = { ...transaction, id: `txn_${Date.now()}` };
-        setTransactions((current) =>
-          [nextTransaction, ...current].sort((left, right) => right.date.localeCompare(left.date)),
-        );
+      session,
+      authLoading,
+      authError,
+      syncStatus,
+      syncError,
+      signIn: async (email, password) => {
+        setAuthError(null);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          setAuthError(error.message);
+          throw error;
+        }
+      },
+      signUp: async (email, password) => {
+        setAuthError(null);
+        const { error } = await supabase.auth.signUp({ email, password });
+
+        if (error) {
+          setAuthError(error.message);
+          throw error;
+        }
+      },
+      signOut: async () => {
+        setAuthError(null);
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+          setAuthError(error.message);
+          throw error;
+        }
+      },
+      addTransaction: async (transaction) => {
+        let nextTransaction = { ...transaction, id: `txn_${Date.now()}` };
+
+        if (session) {
+          const savedExpense = await createExpense(session.access_token, {
+            categoryId: transaction.category || null,
+            description: transaction.description,
+            amount: Math.abs(transaction.amount).toFixed(2),
+            date: transaction.date,
+          });
+
+          nextTransaction = mapApiExpense(savedExpense);
+        }
+
+        setTransactions((current) => sortTransactionsNewestFirst([nextTransaction, ...current]));
       },
       updateTransaction: (id, updates) => {
         setTransactions((current) =>
-          current
-            .map((transaction) => (transaction.id === id ? { ...transaction, ...updates } : transaction))
-            .sort((left, right) => right.date.localeCompare(left.date)),
+          sortTransactionsNewestFirst(
+            current.map((transaction) => (transaction.id === id ? { ...transaction, ...updates } : transaction)),
+          ),
         );
       },
       deleteTransaction: (id) => {
@@ -376,13 +657,16 @@ function AppProvider({ children }: { children: ReactNode }) {
       },
       getCategoryById,
       getAccountById,
-      getMonthlySpend: (categoryId, month = MONTH_KEY) =>
+      getMonthlySpend: (categoryId, month = getDeviceMonthKey()) =>
         transactions
           .filter((transaction) => transaction.category === categoryId && transaction.date.startsWith(month))
           .filter((transaction) => transaction.amount < 0)
           .reduce((total, transaction) => total + Math.abs(transaction.amount), 0),
+      themeMode,
+      setThemeMode,
+      toggleTheme: () => setThemeMode((current) => (current === 'dark' ? 'light' : 'dark')),
     };
-  }, [accounts, categories, transactions]);
+  }, [accounts, authError, authLoading, categories, session, syncError, syncStatus, transactions, themeMode]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
@@ -419,8 +703,7 @@ function Layout() {
           {navItems.map((item) => (
             <SidebarNavItem key={item.path} {...item} />
           ))}
-          <SidebarNavItem path="/analytics" icon={Download} label="Analytics" />
-          <SidebarNavItem path="/advisor" icon={MessageSquare} label="Advisor" />
+          <SidebarNavItem path="/insights" icon={Download} label="Insights" />
         </nav>
 
         <button className="sidebar-add-button button-press" type="button" onClick={() => navigate('/add')}>
@@ -437,14 +720,15 @@ function Layout() {
               <Route path="transactions" element={<Transactions />} />
               <Route path="categories" element={<Categories />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="advisor" element={<Advisor />} />
+              <Route path="insights" element={<Insights />} />
+              <Route path="analytics" element={<Navigate to="/insights" replace />} />
               <Route path="accounts" element={<Accounts />} />
             </Routes>
           </div>
           <MobileNav />
         </div>
       </div>
+      <ChatWidget />
     </div>
   );
 }
@@ -515,8 +799,10 @@ function MobileTabItem({
 
 function Dashboard() {
   const navigate = useNavigate();
-  const { transactions, getCategoryById } = useFireBuddy();
-  const monthTransactions = transactions.filter((transaction) => transaction.date.startsWith(MONTH_KEY));
+  const { transactions, getCategoryById, getAccountById, themeMode, toggleTheme } = useFireBuddy();
+  const currentMonthKey = getDeviceMonthKey();
+  const sortedTransactions = sortTransactionsNewestFirst(transactions);
+  const monthTransactions = sortedTransactions.filter((transaction) => transaction.date.startsWith(currentMonthKey));
   const totalExpenses = monthTransactions
     .filter((transaction) => transaction.amount < 0)
     .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
@@ -524,7 +810,7 @@ function Dashboard() {
     .filter((transaction) => transaction.amount > 0)
     .reduce((total, transaction) => total + transaction.amount, 0);
   const firePercent = (fireData.currentNetWorth / fireData.targetNetWorth) * 100;
-  const recent = transactions.slice(0, 5);
+  const recent = sortedTransactions.slice(0, 5);
 
   return (
     <main className="page page-dashboard">
@@ -534,9 +820,21 @@ function Dashboard() {
             <p className="header-greeting">Good afternoon,</p>
             <h2>{fireData.name}</h2>
           </div>
-          <button className="icon-button translucent" type="button" aria-label="Notifications">
-            <Bell size={22} strokeWidth={1.6} />
-          </button>
+          <div className="header-actions">
+            <button
+              className="icon-button translucent"
+              type="button"
+              aria-label={themeMode === 'dark' ? 'Disable dark mode' : 'Enable dark mode'}
+              aria-pressed={themeMode === 'dark'}
+              onClick={toggleTheme}
+              title={themeMode === 'dark' ? 'Light mode' : 'Dark mode'}
+            >
+              {themeMode === 'dark' ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
+            </button>
+            <button className="icon-button translucent" type="button" aria-label="Notifications">
+              <Bell size={22} strokeWidth={1.6} />
+            </button>
+          </div>
         </div>
         <HeaderCurve />
       </section>
@@ -616,23 +914,16 @@ function Dashboard() {
           <div className="transaction-list">
             {recent.map((transaction) => {
               const category = getCategoryById(transaction.category);
+              const account = transaction.account ? getAccountById(transaction.account) : undefined;
               return (
-                <button
-                  className="transaction-item"
+                <TransactionRow
                   key={transaction.id}
-                  type="button"
+                  transaction={transaction}
+                  category={category}
+                  account={account}
+                  variant="compact"
                   onClick={() => navigate('/transactions')}
-                >
-                  <CategoryAvatar category={category} />
-                  <div className="transaction-copy">
-                    <strong>{transaction.description}</strong>
-                    <span>{formatDateLabel(transaction.date)}</span>
-                  </div>
-                  <strong className={transaction.amount > 0 ? 'amount-positive' : 'amount-negative'}>
-                    {transaction.amount > 0 ? '+ ' : '- '}
-                    {formatSGD(transaction.amount)}
-                  </strong>
-                </button>
+                />
               );
             })}
           </div>
@@ -645,7 +936,7 @@ function Dashboard() {
 function HeaderCurve() {
   return (
     <svg className="header-curve" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0,0 Q600,120 1200,0 L1200,120 L0,120 Z" fill={colors.background} />
+      <path d="M0,0 Q600,120 1200,0 L1200,120 L0,120 Z" style={{ fill: 'var(--background)' }} />
     </svg>
   );
 }
@@ -660,11 +951,55 @@ function StatPill({ label, value }: { label: string; value: string }) {
 }
 
 function CategoryAvatar({ category }: { category?: Category }) {
+  const Icon = getCategoryIcon(category);
+
   return (
     <span className="category-avatar" style={{ backgroundColor: `${category?.color ?? colors.primary}22`, color: category?.color }}>
-      {category?.icon ?? '??'}
+      <Icon size={21} strokeWidth={1.9} />
     </span>
   );
+}
+
+function TransactionRow({
+  transaction,
+  category,
+  account,
+  variant = 'card',
+  onClick,
+}: {
+  transaction: Transaction;
+  category?: Category;
+  account?: Account;
+  variant?: 'compact' | 'card';
+  onClick?: () => void;
+}) {
+  const amountClass = transaction.amount > 0 ? 'amount-positive' : 'amount-negative';
+  const className = variant === 'compact' ? 'transaction-item' : 'transaction-card';
+  const content = (
+    <>
+      <CategoryAvatar category={category} />
+      <div className="transaction-copy">
+        <strong>{transaction.description}</strong>
+        <span>
+          {formatDateLabel(transaction.date)} · {category?.name ?? 'Category'} · {getAccountMeta(account)}
+        </span>
+      </div>
+      <strong className={amountClass}>
+        {transaction.amount > 0 ? '+ ' : '- '}
+        {formatSGD(transaction.amount)}
+      </strong>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button className={className} type="button" onClick={onClick}>
+        {content}
+      </button>
+    );
+  }
+
+  return <article className={className}>{content}</article>;
 }
 
 function MiniCategoryChart() {
@@ -754,10 +1089,11 @@ function Transactions() {
   const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month'>('month');
 
   const filteredTransactions = useMemo(() => {
-    const weekAgo = new Date(`${todayDate}T00:00:00`);
+    const currentMonthKey = getDeviceMonthKey();
+    const weekAgo = new Date(`${getDeviceDateKey()}T00:00:00`);
     weekAgo.setDate(weekAgo.getDate() - 7);
 
-    return transactions.filter((transaction) => {
+    return sortTransactionsNewestFirst(transactions).filter((transaction) => {
       const category = getCategoryById(transaction.category);
       const account = transaction.account ? getAccountById(transaction.account) : undefined;
       const normalizedQuery = searchQuery.toLowerCase();
@@ -771,7 +1107,7 @@ function Transactions() {
       const transactionDate = new Date(`${transaction.date}T00:00:00`);
       const matchesDate =
         dateFilter === 'all' ||
-        (dateFilter === 'month' && transaction.date.startsWith(MONTH_KEY)) ||
+        (dateFilter === 'month' && transaction.date.startsWith(currentMonthKey)) ||
         (dateFilter === 'week' && transactionDate >= weekAgo);
 
       return matchesSearch && matchesCategory && matchesAccount && matchesDate;
@@ -866,7 +1202,7 @@ function Transactions() {
               <option value="">All accounts</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name}
+                  {account.name} - {accountTypeLabel(account.type)}
                 </option>
               ))}
             </select>
@@ -883,19 +1219,12 @@ function Transactions() {
                   const account = transaction.account ? getAccountById(transaction.account) : undefined;
 
                   return (
-                    <article className="transaction-card" key={transaction.id}>
-                      <CategoryAvatar category={category} />
-                      <div className="transaction-copy">
-                        <strong>{transaction.description}</strong>
-                        <span>
-                          {category?.name ?? 'Category'} · {account?.name ?? 'Account'}
-                        </span>
-                      </div>
-                      <strong className={transaction.amount > 0 ? 'amount-positive' : 'amount-negative'}>
-                        {transaction.amount > 0 ? '+ ' : '- '}
-                        {formatSGD(transaction.amount)}
-                      </strong>
-                    </article>
+                    <TransactionRow
+                      key={transaction.id}
+                      transaction={transaction}
+                      category={category}
+                      account={account}
+                    />
                   );
                 })}
               </div>
@@ -983,7 +1312,7 @@ function Categories() {
       {isAdding ? (
         <CategorySheet
           mode="add"
-          initial={{ icon: 'NW', color: categoryColors[0], monthlyBudget: 0 }}
+          initial={{ icon: 'others', color: categoryColors[0], monthlyBudget: 0 }}
           onClose={() => setIsAdding(false)}
           onSave={(category) => {
             addCategory(category as Omit<Category, 'id'>);
@@ -1025,7 +1354,7 @@ function CategorySheet({
   onClose: () => void;
 }) {
   const [name, setName] = useState(initial.name ?? '');
-  const [icon, setIcon] = useState(initial.icon ?? 'NW');
+  const [icon, setIcon] = useState(legacyCategoryIconIds[initial.icon ?? ''] ?? initial.icon ?? 'others');
   const [color, setColor] = useState(initial.color ?? categoryColors[0]);
   const [monthlyBudget, setMonthlyBudget] = useState(String(initial.monthlyBudget ?? 0));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -1061,11 +1390,11 @@ function CategorySheet({
           </label>
 
           <label className="form-field">
-            <span>Icon label</span>
+            <span>Icon</span>
             <select value={icon} onChange={(event) => setIcon(event.target.value)}>
-              {categoryIcons.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              {categoryIconOptions.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
                 </option>
               ))}
             </select>
@@ -1119,13 +1448,13 @@ function CategorySheet({
 
 function Profile() {
   const navigate = useNavigate();
+  const { session, signOut, themeMode, toggleTheme } = useFireBuddy();
   const [showClearDialog, setShowClearDialog] = useState(false);
   const settings = [
     { icon: User, label: 'Account info', danger: false },
     { icon: Bell, label: 'Notifications', danger: false },
     { icon: Shield, label: 'Login and security', danger: false },
     { icon: Lock, label: 'Data and privacy', danger: false },
-    { icon: MessageSquare, label: 'Financial advisor', danger: false, route: '/advisor' },
     { icon: HelpCircle, label: 'Help & feedback', danger: false },
     { icon: Database, label: 'Clear all data', danger: true },
     { icon: LogOut, label: 'Sign out', danger: true },
@@ -1147,7 +1476,26 @@ function Profile() {
       </section>
 
       <section className="profile-content">
+        <article className="settings-card profile-account-card">
+          <div className="setting-row setting-row-static">
+            <span className="setting-icon">
+              <User size={20} />
+            </span>
+            <strong>{session?.user.email ?? 'Signed in'}</strong>
+          </div>
+        </article>
+
         <article className="settings-card">
+          <button
+            className="setting-row setting-row-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-pressed={themeMode === 'dark'}
+          >
+            <span className="setting-icon">{themeMode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</span>
+            <strong>Dark mode</strong>
+            <span className="setting-state">{themeMode === 'dark' ? 'On' : 'Off'}</span>
+          </button>
           {settings.map((setting) => (
             <button
               className={`setting-row ${setting.danger ? 'setting-row-danger' : ''}`}
@@ -1156,6 +1504,11 @@ function Profile() {
               onClick={() => {
                 if (setting.label === 'Clear all data') {
                   setShowClearDialog(true);
+                  return;
+                }
+
+                if (setting.label === 'Sign out') {
+                  void signOut();
                   return;
                 }
 
@@ -1194,29 +1547,93 @@ function Profile() {
   );
 }
 
-function Advisor() {
-  const navigate = useNavigate();
-  const [messages, setMessages] = useState<RagChatMessage[]>([
-    {
-      role: 'assistant',
-      content:
-        'Ask me about CPF, SRS, HDB grants, retirement sums, Singapore Savings Bonds, or FIRE planning in Singapore.',
-    },
-  ]);
+function createChatTopic(seedTitle = 'New chat'): ChatTopic {
+  const now = new Date().toISOString();
+
+  return {
+    id: `chat_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    title: seedTitle,
+    messages: [
+      {
+        role: 'assistant',
+        content: CHAT_GREETING,
+      },
+    ],
+    sources: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function loadChatTopics(): ChatTopic[] {
+  const fallback = [createChatTopic()];
+
+  try {
+    const stored = window.localStorage.getItem(CHAT_TOPICS_STORAGE_KEY);
+    const parsed = stored ? (JSON.parse(stored) as ChatTopic[]) : fallback;
+
+    return parsed.length > 0 ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function getTopicTitle(question: string) {
+  const compact = question.replace(/\s+/g, ' ').trim();
+  return compact.length > 42 ? `${compact.slice(0, 39)}...` : compact;
+}
+
+function ChatWidget() {
+  const [topics, setTopics] = useState<ChatTopic[]>(() => loadChatTopics());
+  const [activeTopicId, setActiveTopicId] = useState<string>(() => {
+    const storedId = window.localStorage.getItem(CHAT_ACTIVE_TOPIC_STORAGE_KEY);
+    const loadedTopics = loadChatTopics();
+    return storedId && loadedTopics.some((topic) => topic.id === storedId) ? storedId : loadedTopics[0].id;
+  });
+  const [isOpen, setIsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isTopicListOpen, setIsTopicListOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [sources, setSources] = useState<string[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+  const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
   const canAsk = question.trim().length > 0 && !isAsking;
 
-  async function askAdvisor(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  useEffect(() => {
+    if (!topics.some((topic) => topic.id === activeTopicId)) {
+      setActiveTopicId(topics[0].id);
+    }
+  }, [activeTopicId, topics]);
 
-    const trimmedQuestion = question.trim();
+  useEffect(() => {
+    window.localStorage.setItem(CHAT_TOPICS_STORAGE_KEY, JSON.stringify(topics));
+  }, [topics]);
 
-    if (!trimmedQuestion || isAsking) {
+  useEffect(() => {
+    window.localStorage.setItem(CHAT_ACTIVE_TOPIC_STORAGE_KEY, activeTopicId);
+  }, [activeTopicId]);
+
+  function updateActiveTopic(updater: (topic: ChatTopic) => ChatTopic) {
+    setTopics((current) => current.map((topic) => (topic.id === activeTopic.id ? updater(topic) : topic)));
+  }
+
+  function startNewChat(seedQuestion?: string) {
+    const nextTopic = createChatTopic(seedQuestion ? getTopicTitle(seedQuestion) : 'New chat');
+    setTopics((current) => [nextTopic, ...current]);
+    setActiveTopicId(nextTopic.id);
+    setQuestion(seedQuestion ?? '');
+    setError(null);
+    setIsOpen(true);
+  }
+
+  async function askAdvisor(event?: FormEvent<HTMLFormElement>, overrideQuestion?: string) {
+    event?.preventDefault();
+
+    const trimmedQuestion = (overrideQuestion ?? question).trim();
+
+    if (!trimmedQuestion || isAsking || !activeTopic) {
       return;
     }
 
@@ -1224,12 +1641,20 @@ function Advisor() {
       role: 'user',
       content: trimmedQuestion,
     };
-    const nextMessages = [...messages, userMessage];
+    const history = activeTopic.messages;
 
-    setMessages(nextMessages);
+    updateActiveTopic((topic) => {
+      const isUntitled = topic.title === 'New chat';
+      return {
+        ...topic,
+        title: isUntitled ? getTopicTitle(trimmedQuestion) : topic.title,
+        messages: [...topic.messages, userMessage],
+        sources: [],
+        updatedAt: new Date().toISOString(),
+      };
+    });
     setQuestion('');
     setError(null);
-    setSources([]);
     setIsAsking(true);
 
     try {
@@ -1240,7 +1665,7 @@ function Advisor() {
         },
         body: JSON.stringify({
           question: trimmedQuestion,
-          history: messages,
+          history,
         }),
       });
 
@@ -1254,14 +1679,18 @@ function Advisor() {
         throw new Error('RAG service returned an empty answer');
       }
 
-      setMessages((current) => [
-        ...current,
-        {
-          role: 'assistant',
-          content: payload.answer,
-        },
-      ]);
-      setSources(payload.sources ?? []);
+      updateActiveTopic((topic) => ({
+        ...topic,
+        messages: [
+          ...topic.messages,
+          {
+            role: 'assistant',
+            content: payload.answer,
+          },
+        ],
+        sources: payload.sources ?? [],
+        updatedAt: new Date().toISOString(),
+      }));
     } catch (caughtError) {
       const message =
         caughtError instanceof Error
@@ -1271,120 +1700,135 @@ function Advisor() {
       setError(
         `${message}. Start the backend RAG endpoint at ${apiRoutes.financialAdvisorChat}, or set VITE_API_BASE_URL if it is running elsewhere.`,
       );
-      setMessages((current) => current.filter((item) => item !== userMessage));
+      updateActiveTopic((topic) => ({
+        ...topic,
+        messages: topic.messages.filter((messageItem) => messageItem !== userMessage),
+      }));
     } finally {
       setIsAsking(false);
     }
   }
 
-  function useSuggestedQuestion(value: string) {
-    setQuestion(value);
-    setError(null);
+  if (!isOpen) {
+    return (
+      <button className="chat-launcher button-press" type="button" onClick={() => setIsOpen(true)} aria-label="Open FireBuddy chat">
+        <MessageSquare size={24} />
+      </button>
+    );
   }
 
   return (
-    <main className="page">
-      <section className="analytics-header">
-        <button className="plain-icon-button" type="button" onClick={() => navigate(-1)}>
-          <ArrowLeft size={20} />
-        </button>
-        <h2>Advisor</h2>
-        <MessageSquare size={20} />
-      </section>
+    <div className={isFullscreen ? 'chat-widget chat-widget-fullscreen' : 'chat-widget'}>
+      <aside className={`chat-topic-panel ${isTopicListOpen || isFullscreen ? 'chat-topic-panel-open' : ''}`}>
+        <div className="chat-topic-header">
+          <strong>Chat topics</strong>
+          <button className="chat-icon-button" type="button" onClick={() => startNewChat()}>
+            <Plus size={16} />
+          </button>
+        </div>
+        <div className="chat-topic-list">
+          {topics.map((topic) => (
+            <button
+              className={`chat-topic-item ${topic.id === activeTopic.id ? 'chat-topic-item-active' : ''}`}
+              key={topic.id}
+              type="button"
+              onClick={() => {
+                setActiveTopicId(topic.id);
+                setError(null);
+                if (!isFullscreen) {
+                  setIsTopicListOpen(false);
+                }
+              }}
+            >
+              <strong>{topic.title}</strong>
+              <span>{new Date(topic.updatedAt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })}</span>
+            </button>
+          ))}
+        </div>
+      </aside>
 
-      <section className="analytics-content advisor-content">
-        <article className="advisor-hero white-card">
-          <div>
-            <p className="eyebrow">Knowledge base chatbot</p>
-            <h3>Ask Singapore finance questions before personal data is connected.</h3>
-            <p>
-              This interface is wired for the standalone RAG endpoint only. It does not send expense,
-              profile, or user account data.
-            </p>
+      <section className="chat-shell" aria-label="FireBuddy financial advisor">
+        <header className="chat-header">
+          <button className="chat-icon-button" type="button" onClick={() => setIsTopicListOpen((current) => !current)} aria-label="Toggle chat topics">
+            <PanelLeft size={18} />
+          </button>
+          <div className="chat-title-block">
+            <span>FireBuddy advisor</span>
+            <strong>{activeTopic.title}</strong>
           </div>
-          <div className="advisor-endpoint-card">
-            <span>Expected endpoint</span>
-            <strong>{apiRoutes.financialAdvisorChat}</strong>
-            <small>Base URL: {apiBaseUrl}</small>
+          <div className="chat-header-actions">
+            <button className="chat-icon-button" type="button" onClick={() => setIsFullscreen((current) => !current)} aria-label={isFullscreen ? 'Exit fullscreen chat' : 'Expand chat'}>
+              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
+            <button className="chat-icon-button" type="button" onClick={() => setIsOpen(false)} aria-label="Close chat">
+              <X size={18} />
+            </button>
           </div>
-        </article>
+        </header>
 
-        <article className="advisor-shell">
-          <div className="advisor-messages" aria-live="polite">
-            {messages.map((message, index) => (
-              <div
-                className={`advisor-message advisor-message-${message.role}`}
-                key={`${message.role}-${index}`}
-              >
-                <span>{message.role === 'user' ? 'You' : 'FireBuddy'}</span>
-                <p>{message.content}</p>
-              </div>
-            ))}
+        <div className="chat-messages" aria-live="polite">
+          {activeTopic.messages.map((message, index) => (
+            <div className={`advisor-message advisor-message-${message.role}`} key={`${message.role}-${index}`}>
+              <span>{message.role === 'user' ? 'You' : 'FireBuddy'}</span>
+              <p>{message.content}</p>
+            </div>
+          ))}
 
-            {isAsking ? (
-              <div className="advisor-message advisor-message-assistant">
-                <span>FireBuddy</span>
-                <p>Searching the knowledge base...</p>
-              </div>
-            ) : null}
-          </div>
-
-          {sources.length > 0 ? (
-            <div className="advisor-sources">
-              <strong>Sources</strong>
-              <ul>
-                {sources.map((source) => (
-                  <li key={source}>{source}</li>
-                ))}
-              </ul>
+          {isAsking ? (
+            <div className="advisor-message advisor-message-assistant">
+              <span>FireBuddy</span>
+              <p>Searching the knowledge base...</p>
             </div>
           ) : null}
+        </div>
 
-          {error ? <p className="advisor-error">{error}</p> : null}
-
-          <form className="advisor-form" onSubmit={askAdvisor}>
-            <label htmlFor="advisor-question">Question</label>
-            <textarea
-              id="advisor-question"
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              placeholder="What is the CPF Full Retirement Sum for 2026?"
-              rows={4}
-            />
-            <div className="advisor-form-actions">
-              <button className="secondary-button" type="button" onClick={() => setMessages(messages.slice(0, 1))}>
-                Clear
-              </button>
-              <button className="primary-button" type="submit" disabled={!canAsk}>
-                {isAsking ? 'Asking...' : 'Ask advisor'}
-              </button>
-            </div>
-          </form>
-        </article>
-
-        <article className="white-card">
-          <div className="section-title-row">
-            <h3>Try asking</h3>
+        {activeTopic.sources.length > 0 ? (
+          <div className="advisor-sources chat-sources">
+            <strong>Sources</strong>
+            <ul>
+              {activeTopic.sources.map((source) => (
+                <li key={source}>{source}</li>
+              ))}
+            </ul>
           </div>
-          <div className="advisor-prompts">
-            {[
-              'What are the CPF contribution rates for 2026?',
-              'How do Basic, Full, and Enhanced Retirement Sum differ?',
-              'Can I use CPFIS to invest my CPF savings?',
-              'What should a Singapore FIRE plan consider before age 55?',
-            ].map((suggestion) => (
-              <button key={suggestion} type="button" onClick={() => useSuggestedQuestion(suggestion)}>
+        ) : null}
+
+        {error ? <p className="advisor-error">{error}</p> : null}
+
+        {activeTopic.messages.length <= 1 ? (
+          <div className="chat-prompts">
+            {CHAT_PROMPTS.map((suggestion) => (
+              <button key={suggestion} type="button" onClick={() => askAdvisor(undefined, suggestion)}>
                 {suggestion}
               </button>
             ))}
           </div>
-        </article>
+        ) : null}
+
+        <form className="advisor-form chat-form" onSubmit={askAdvisor}>
+          <label htmlFor="floating-advisor-question">Question</label>
+          <textarea
+            id="floating-advisor-question"
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="Ask about CPF, SRS, HDB grants, or FIRE planning"
+            rows={isFullscreen ? 3 : 2}
+          />
+          <div className="advisor-form-actions">
+            <button className="secondary-button" type="button" onClick={() => startNewChat()}>
+              New chat
+            </button>
+            <button className="primary-button" type="submit" disabled={!canAsk}>
+              {isAsking ? 'Asking...' : 'Ask'}
+            </button>
+          </div>
+        </form>
       </section>
-    </main>
+    </div>
   );
 }
 
-function Analytics() {
+function Insights() {
   const { transactions, categories } = useFireBuddy();
   const navigate = useNavigate();
   const [range, setRange] = useState<'Day' | 'Week' | 'Month' | 'Year'>('Day');
@@ -1408,7 +1852,7 @@ function Analytics() {
         <button className="plain-icon-button" type="button" onClick={() => navigate(-1)}>
           <ArrowLeft size={20} />
         </button>
-        <h2>Statistics</h2>
+        <h2>Insights</h2>
         <Download size={20} />
       </section>
 
@@ -1516,7 +1960,7 @@ const accountTypes: {
 }[] = [
   { id: 'bank', label: 'Bank', icon: Building2 },
   { id: 'credit_card', label: 'Credit Card', icon: CreditCard },
-  { id: 'debit_card', label: 'Debit Card', icon: Wallet },
+  { id: 'debit_card', label: 'Debit Card', icon: WalletCards },
   { id: 'cash', label: 'Cash', icon: Banknote },
   { id: 'ewallet', label: 'E-Wallet', icon: Smartphone },
 ];
@@ -1697,30 +2141,53 @@ function AccountSheet({
 
 function AddExpense() {
   const navigate = useNavigate();
-  const { addTransaction, categories, accounts } = useFireBuddy();
+  const { addTransaction, categories, accounts, syncStatus } = useFireBuddy();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState(todayDate);
-  const [category, setCategory] = useState('food');
+  const [date, setDate] = useState(() => getDeviceDateKey());
+  const [category, setCategory] = useState(categories[0]?.id ?? '');
   const [account, setAccount] = useState(accounts[0]?.id ?? '');
-  const isIncome = category === 'income';
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const selectedCategory = categories.find((item) => item.id === category);
+  const isIncome = selectedCategory?.name.toLowerCase() === 'income';
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const numericAmount = Number(amount);
-
-    if (!numericAmount || numericAmount <= 0) {
+  useEffect(() => {
+    if (!category && categories[0]) {
+      setCategory(categories[0].id);
       return;
     }
 
-    addTransaction({
-      description: description.trim() || 'Unnamed expense',
-      amount: isIncome ? Math.abs(numericAmount) : -Math.abs(numericAmount),
-      category,
-      date,
-      account,
-    });
-    navigate('/');
+    if (category && !categories.some((item) => item.id === category)) {
+      setCategory(categories[0]?.id ?? '');
+    }
+  }, [categories, category]);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const numericAmount = Number(amount);
+
+    if (!numericAmount || numericAmount <= 0 || !category || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      await addTransaction({
+        description: description.trim() || 'Unnamed expense',
+        amount: isIncome ? Math.abs(numericAmount) : -Math.abs(numericAmount),
+        category,
+        date,
+        account,
+      });
+      navigate('/');
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Unable to save transaction.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -1765,7 +2232,7 @@ function AddExpense() {
 
           <label className="form-field add-category-field">
             <span>Category</span>
-            <select value={category} onChange={(event) => setCategory(event.target.value)}>
+            <select value={category} onChange={(event) => setCategory(event.target.value)} disabled={syncStatus === 'loading'}>
               {categories.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -1779,7 +2246,7 @@ function AddExpense() {
             <select value={account} onChange={(event) => setAccount(event.target.value)}>
               {accounts.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name}
+                  {item.name} - {accountTypeLabel(item.type)}
                 </option>
               ))}
             </select>
@@ -1790,8 +2257,10 @@ function AddExpense() {
             Add Invoice
           </button>
 
-          <button className="primary-button full-width" type="submit">
-            Save transaction
+          {saveError ? <p className="form-error">{saveError}</p> : null}
+
+          <button className="primary-button full-width" type="submit" disabled={isSaving || syncStatus === 'loading'}>
+            {isSaving ? 'Saving...' : 'Save transaction'}
           </button>
         </section>
       </form>
@@ -1799,14 +2268,137 @@ function AddExpense() {
   );
 }
 
+function AuthScreen() {
+  const { authError, signIn, signUp } = useFireBuddy();
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const isSignUp = mode === 'sign-up';
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setNotice(null);
+
+    try {
+      if (isSignUp) {
+        await signUp(email.trim(), password);
+        setNotice('Account created. Check your email if Supabase asks for confirmation.');
+      } else {
+        await signIn(email.trim(), password);
+      }
+    } catch {
+      // The provider stores the user-facing error message.
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="auth-page">
+      <section className="auth-panel">
+        <div className="auth-brand">
+          <Wallet size={28} />
+          <div>
+            <h1>FireBuddy</h1>
+            <p>Singapore FIRE tracker</p>
+          </div>
+        </div>
+
+        <form className="auth-form" onSubmit={submit}>
+          <div>
+            <h2>{isSignUp ? 'Create your account' : 'Welcome back'}</h2>
+            <p>{isSignUp ? 'Start tracking expenses against your FIRE plan.' : 'Sign in to sync expenses through Supabase.'}</p>
+          </div>
+
+          <label className="form-field">
+            <span>Email</span>
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              required
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Password</span>
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+              minLength={6}
+              required
+            />
+          </label>
+
+          {authError ? <p className="form-error">{authError}</p> : null}
+          {notice ? <p className="form-notice">{notice}</p> : null}
+
+          <button className="primary-button full-width" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Please wait...' : isSignUp ? 'Create account' : 'Sign in'}
+          </button>
+        </form>
+
+        <button
+          className="auth-mode-button"
+          type="button"
+          onClick={() => {
+            setMode(isSignUp ? 'sign-in' : 'sign-up');
+            setNotice(null);
+          }}
+        >
+          {isSignUp ? 'Already have an account? Sign in' : 'New to FireBuddy? Create an account'}
+        </button>
+      </section>
+    </main>
+  );
+}
+
+function AppRoutes() {
+  const { authLoading, session, syncError, syncStatus } = useFireBuddy();
+
+  if (!skipAuth && authLoading) {
+    return (
+      <main className="auth-page">
+        <section className="auth-panel">
+          <div className="auth-brand">
+            <Wallet size={28} />
+            <div>
+              <h1>FireBuddy</h1>
+              <p>Loading your session...</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (!skipAuth && !session) {
+    return <AuthScreen />;
+  }
+
+  return (
+    <>
+      {syncStatus === 'error' && syncError ? <div className="sync-banner">{syncError}</div> : null}
+      <Routes>
+        <Route path="/add" element={<AddExpense />} />
+        <Route path="/*" element={<Layout />} />
+      </Routes>
+    </>
+  );
+}
+
 export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/add" element={<AddExpense />} />
-          <Route path="/*" element={<Layout />} />
-        </Routes>
+        <AppRoutes />
       </BrowserRouter>
     </AppProvider>
   );

@@ -14,6 +14,7 @@ class Settings:
       os.getenv("SUPABASE_SECRET_KEY", "").strip()
       or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     )
+    self.supabase_jwt_secret = os.getenv("SUPABASE_JWT_SECRET", "").strip()
 
     if not self.supabase_url:
       raise ValueError("Missing SUPABASE_URL in apps/backend/.env")

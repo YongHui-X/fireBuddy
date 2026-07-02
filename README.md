@@ -21,28 +21,23 @@ Reference:
 
 ## RAG Map
 
-The current RAG workspace under `apps/backend/rag/` is split into two parts:
+The current RAG workspace under `apps/backend/rag/` is split into two main areas:
 
-- `fetchAndConvert/` handles knowledge-base updates
-- `Implementation/` holds the embedding and answer-side RAG logic
+- `fetchAndConvert/` prepares and refreshes the knowledge base
+- `Implementation/` handles ingestion, retrieval, and answer generation
 
 ```mermaid
 graph LR
-  A["Source PDFs"] --> B["check_pdfs.py"]
-  B --> C["pdf_hashes.json"]
-  B --> D["pdf_to_md.py"]
-  D --> E["markdown cache"]
-  E --> F["fetch_figures.py"]
-  F --> G["annual-figures.json"]
-  E --> H["ingest.py"]
-  H --> I["Supabase pgvector"]
-  I --> J["answer.py"]
-  G --> J
-  B --> K["update_kb.py"]
-  K --> L["notify.py"]
+  A["Reference documents"] --> B["fetchAndConvert/<br/>Knowledge-base refresh"]
+  B --> C["knowledge-base/<br/>Prepared document cache"]
+  C --> D["Implementation/<br/>Ingestion and retrieval"]
+  D --> E["Supabase pgvector"]
+  E --> F["RAG answers"]
+  C --> G["Exact annual figures"]
+  G --> F
 ```
 
 Notes:
-- `update_kb.py` currently orchestrates PDF checks, optional markdown conversion, optional figure extraction, and optional notifications.
-- `ingest.py` is the embedding step, but the current orchestrator says ingestion is still skipped.
-- `annual-figures.json` is kept separate from the vector store because those values need to stay exact.
+- The refresh area checks source documents, prepares cached content, and can update exact annual figures.
+- The implementation area turns prepared content into embeddings and retrieves relevant context for answers.
+- Exact annual figures stay separate from the vector store because those values must remain precise.

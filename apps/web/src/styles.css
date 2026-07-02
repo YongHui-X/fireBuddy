@@ -19,6 +19,24 @@
   --shadow-md: 0 12px 24px rgba(31, 61, 46, 0.1);
 }
 
+:root[data-theme='dark'] {
+  color: #e5f1ea;
+  background: #09120d;
+  --background: #09120d;
+  --card: #11231b;
+  --primary: #75c28b;
+  --primary-dark: #9bd6ab;
+  --primary-soft: rgba(117, 194, 139, 0.14);
+  --secondary: #8fc7a1;
+  --muted: #15271f;
+  --text: #e5f1ea;
+  --text-muted: #92a69b;
+  --border: #284438;
+  --danger: #ff7b73;
+  --shadow-lg: 0 20px 42px rgba(0, 0, 0, 0.42);
+  --shadow-md: 0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -32,6 +50,7 @@ body,
 body {
   margin: 0;
   background: var(--background);
+  color: var(--text);
 }
 
 button,
@@ -76,6 +95,81 @@ select:focus {
 .figma-app-root {
   min-height: 100vh;
   background: var(--background);
+}
+
+.auth-page {
+  min-height: 100vh;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-panel {
+  width: min(100%, 390px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  color: var(--primary-dark);
+}
+
+.auth-brand svg {
+  color: var(--primary);
+}
+
+.auth-brand h1,
+.auth-form h2 {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.auth-brand p,
+.auth-form p {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-mode-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 18px;
+  padding: 0;
+}
+
+.sync-banner {
+  position: fixed;
+  z-index: 80;
+  top: 12px;
+  left: 50%;
+  width: min(calc(100% - 24px), 420px);
+  transform: translateX(-50%);
+  border: 1px solid rgba(214, 69, 69, 0.28);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--danger);
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .desktop-sidebar {
@@ -185,7 +279,7 @@ select:focus {
 }
 
 .balance-card {
-  background: #ffffff;
+  background: var(--card);
   color: var(--text);
   border-radius: 20px;
   padding: 26px 22px 28px;
@@ -248,7 +342,7 @@ select:focus {
 }
 
 .balance-stat:nth-child(2) .round-icon {
-  background: #fef2f2;
+  background: rgba(214, 69, 69, 0.12);
   color: var(--danger);
 }
 
@@ -628,9 +722,9 @@ select:focus {
 }
 
 .filter-chip-active {
-  background: #ffffff;
+  background: var(--card);
   color: var(--primary);
-  border-color: #ffffff;
+  border-color: var(--card);
 }
 
 .pill-button {
@@ -649,8 +743,8 @@ select:focus {
 }
 
 .pill-button.inverse-white {
-  border-color: #ffffff;
-  background: #ffffff;
+  border-color: var(--card);
+  background: var(--card);
   color: var(--primary);
 }
 
@@ -666,7 +760,7 @@ select:focus {
   padding: 16px;
   display: grid;
   gap: 5px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .summary-strip span {
@@ -782,7 +876,7 @@ select:focus {
   height: 100px;
   border: 4px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--card);
   color: var(--primary);
   display: flex;
   align-items: center;
@@ -805,6 +899,10 @@ select:focus {
   padding: 0 20px 96px;
 }
 
+.profile-account-card {
+  margin-bottom: 14px;
+}
+
 .settings-card {
   overflow: hidden;
 }
@@ -812,7 +910,7 @@ select:focus {
 .setting-row {
   width: 100%;
   border: none;
-  background: #ffffff;
+  background: var(--card);
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -821,6 +919,14 @@ select:focus {
   text-align: left;
   color: var(--text);
   cursor: pointer;
+}
+
+.setting-row-static {
+  cursor: default;
+}
+
+.setting-row-toggle {
+  font: inherit;
 }
 
 .setting-row + .setting-row {
@@ -840,7 +946,14 @@ select:focus {
 
 .setting-row-danger .setting-icon {
   color: var(--danger);
-  background: #fef2f2;
+  background: rgba(214, 69, 69, 0.12);
+}
+
+.setting-state {
+  justify-self: end;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .analytics-header {
@@ -850,7 +963,7 @@ select:focus {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 16px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .analytics-header h2 {
@@ -961,7 +1074,7 @@ select:focus {
   max-height: 54vh;
   overflow-y: auto;
   padding: 18px;
-  background: linear-gradient(180deg, #f5f8f4 0%, #eef5ef 100%);
+  background: linear-gradient(180deg, var(--background) 0%, var(--muted) 100%);
 }
 
 .advisor-message {
@@ -992,7 +1105,7 @@ select:focus {
 }
 
 .advisor-message-assistant p {
-  background: #ffffff;
+  background: var(--card);
 }
 
 .advisor-message-user {
@@ -1011,7 +1124,7 @@ select:focus {
 
 .advisor-sources {
   border-top: 1px solid var(--border);
-  background: #ffffff;
+  background: var(--card);
   padding: 14px 18px;
 }
 
@@ -1032,7 +1145,7 @@ select:focus {
 .advisor-error {
   margin: 0;
   border-top: 1px solid #f4b6b6;
-  background: #fff5f5;
+  background: rgba(214, 69, 69, 0.09);
   color: var(--danger);
   padding: 12px 18px;
   font-size: 13px;
@@ -1059,7 +1172,7 @@ select:focus {
   min-height: 104px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--card);
   color: var(--text);
   padding: 12px 14px;
   line-height: 1.5;
@@ -1086,7 +1199,7 @@ select:focus {
   min-height: 48px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--card);
   color: var(--text);
   padding: 10px 12px;
   text-align: left;
@@ -1097,6 +1210,226 @@ select:focus {
 .advisor-prompts button:hover {
   border-color: var(--primary);
   background: var(--primary-soft);
+}
+
+.chat-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 70;
+  width: 58px;
+  height: 58px;
+  border: 3px solid var(--background);
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(60, 138, 97, 0.28);
+}
+
+.chat-widget {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 75;
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  color: var(--text);
+}
+
+.chat-widget-fullscreen {
+  inset: 18px;
+  width: auto;
+  max-height: none;
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
+.chat-shell,
+.chat-topic-panel {
+  border: 1px solid rgba(215, 227, 216, 0.9);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+}
+
+.chat-shell {
+  min-height: 0;
+  max-height: inherit;
+  border-radius: 18px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(180px, 1fr) auto auto auto;
+}
+
+.chat-widget-fullscreen .chat-shell {
+  border-radius: 0 18px 18px 0;
+}
+
+.chat-header,
+.chat-topic-header {
+  min-height: 62px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.chat-title-block {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.chat-title-block span {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chat-title-block strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+.chat-header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.chat-icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--muted);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.chat-topic-panel {
+  display: none;
+  min-height: 0;
+  border-radius: 18px 0 0 18px;
+  border-right: none;
+  overflow: hidden;
+}
+
+.chat-topic-panel-open {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.chat-widget:not(.chat-widget-fullscreen) .chat-topic-panel-open {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: min(280px, calc(100vw - 64px));
+  border-radius: 18px 0 0 18px;
+  border-right: 1px solid var(--border);
+}
+
+.chat-topic-list {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  background: var(--background);
+}
+
+.chat-topic-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-topic-item-active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.chat-topic-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.chat-topic-item span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.chat-messages {
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--background);
+}
+
+.chat-widget-fullscreen .chat-messages {
+  padding: 22px;
+}
+
+.chat-sources {
+  max-height: 130px;
+  overflow-y: auto;
+}
+
+.chat-prompts {
+  border-top: 1px solid var(--border);
+  background: var(--card);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chat-prompts button {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--muted);
+  color: var(--text);
+  padding: 9px 10px;
+  text-align: left;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.chat-prompts button:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.chat-form {
+  background: var(--card);
 }
 
 .account-list {
@@ -1158,7 +1491,7 @@ select:focus {
   z-index: 2;
   margin: -28px 28px 28px;
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--card);
   padding: 24px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1222,7 +1555,7 @@ select:focus {
   min-height: 46px;
   border: 1px dashed var(--border);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--card);
   color: var(--text-muted);
   display: inline-flex;
   align-items: center;
@@ -1251,18 +1584,44 @@ select:focus {
   color: #ffffff;
 }
 
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .secondary-button {
   background: var(--muted);
   color: var(--text);
 }
 
 .danger-button {
-  background: #fef2f2;
+  background: rgba(214, 69, 69, 0.12);
   color: var(--danger);
 }
 
 .full-width {
   width: 100%;
+}
+
+.form-error,
+.form-notice {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.form-error {
+  background: rgba(214, 69, 69, 0.1);
+  color: var(--danger);
+}
+
+.form-notice {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
 }
 
 .sheet-backdrop {
@@ -1372,7 +1731,7 @@ select:focus {
 .delete-confirm {
   border: 1px solid #f4b6b6;
   border-radius: 12px;
-  background: #fff5f5;
+  background: rgba(214, 69, 69, 0.09);
   color: var(--danger);
   padding: 12px;
   display: flex;
@@ -1488,7 +1847,7 @@ select:focus {
     position: fixed;
     inset: 0 auto 0 0;
     width: 200px;
-    background: #ffffff;
+    background: var(--card);
     border-right: 1px solid var(--border);
     padding: 24px 14px;
     display: flex;
@@ -1665,6 +2024,41 @@ select:focus {
 
   .advisor-form-actions {
     display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .chat-launcher {
+    right: 18px;
+    bottom: 92px;
+  }
+
+  .chat-widget {
+    right: 12px;
+    bottom: 86px;
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 112px);
+  }
+
+  .chat-widget-fullscreen {
+    inset: 10px;
+    grid-template-columns: 1fr;
+    max-height: none;
+  }
+
+  .chat-widget-fullscreen .chat-shell {
+    border-radius: 18px;
+  }
+
+  .chat-widget-fullscreen .chat-topic-panel {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 2;
+    width: min(280px, calc(100vw - 48px));
+    border-right: 1px solid var(--border);
+    border-radius: 18px 0 0 18px;
+  }
+
+  .chat-prompts {
     grid-template-columns: 1fr;
   }
 }

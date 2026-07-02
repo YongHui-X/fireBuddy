@@ -32,6 +32,17 @@ export interface CreateExpenseInput {
   date: string;
 }
 
+export interface UpdateExpenseInput {
+  categoryId?: UUID | null;
+  description?: string;
+  amount?: string;
+  date?: string;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+}
+
 export type RagChatRole = 'user' | 'assistant';
 
 export interface RagChatMessage {
@@ -44,7 +55,16 @@ export interface RagChatRequest {
   history: RagChatMessage[];
 }
 
+export interface RagChatSource {
+  title: string | null;
+  url: string | null;
+  path: string | null;
+  headline: string | null;
+}
+
 export interface RagChatResponse {
   answer: string;
   sources: string[];
+  sourceDetails?: RagChatSource[];
+  source_details?: RagChatSource[];
 }

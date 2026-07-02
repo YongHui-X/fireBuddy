@@ -19,34 +19,53 @@ Full pipeline (recommended):
 import json
 import logging
 import os
+import random
+import re
+import sys
+import argparse
 from multiprocessing import Pool
 from pathlib import Path
 
 from dotenv import load_dotenv
-from litellm import completion
+# from litellm import completion
 from openai import OpenAI
 from pydantic import BaseModel, Field
 from supabase import create_client
-from tenacity import retry, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
 
-load_dotenv(override=True)
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+RAG_DIR = Path(__file__).resolve().parents[1]
+
+load_dotenv(BACKEND_DIR / ".env", override=True)
 
 model = "openai/gpt-4.1-nano"
 
-DB_NAME = str(Path(__file__).parent.parent / "preprocessed_db")
+DB_NAME = str(RAG_DIR / "preprocessed_db")
 collection_name = "docs"
-embedding_model = "text-embedding-3-large"
-KNOWLEDGE_BASE_PATH = Path(__file__).parent.parent / "knowledge-base"
+embedding_model = "text-embedding-3-small"
+KNOWLEDGE_BASE_PATH = RAG_DIR / "knowledge-base"
+FETCH_AND_CONVERT_DIR = RAG_DIR / "fetchAndConvert"
 AVERAGE_CHUNK_SIZE = 100
 # for handling rate limits to prevent app from crashing
 wait = wait_exponential(multiplier=1, min=10, max=240)
 
 WORKERS = 3
+MAX_SECTION_SIZE = 4000
 
-openai = OpenAI()
+if str(FETCH_AND_CONVERT_DIR) not in sys.path:
+    sys.path.append(str(FETCH_AND_CONVERT_DIR))
+
+from check_pdfs import PDFS
 
 class Ingestable_Chunk(BaseModel):
+    """
+    Represents the final chunk shape before database storage.
+
+    `page_content` is the text sent to the embedding model, while `metadata`
+    carries source and citation fields that are stored with the vector.
+    """
+
     page_content:str
     metadata: dict
 
@@ -63,6 +82,13 @@ class Ingestable_Chunk(BaseModel):
 
 
 class Chunk(BaseModel):
+    """
+    Represents a logical section of a source document before embedding.
+
+    This keeps the chunk headline, optional summary, and original text separate
+    until `as_result()` joins them into the storage-ready text.
+    """
+
     headline: str = Field(
         description="A brief heading for this chunk, typically a few words, that is most likely to be surfaced in a query",
     )
@@ -74,6 +100,13 @@ class Chunk(BaseModel):
     )
 
     def as_result(self, document, chunk_index: int):
+        """
+        Convert this chunk into an `Ingestable_Chunk`.
+
+        The method copies document-level citation metadata, adds the chunk's
+        index and headline, then joins non-empty text parts into `page_content`.
+        """
+
         metadata = {"source_path": document["source"],
                     "source_type": document["type"],
                     "source_title": document["title"],
@@ -84,6 +117,427 @@ class Chunk(BaseModel):
                     "headline": self.headline,
                     }
         return Ingestable_Chunk(
-            page_content=self.headline + "\n\n" + self.summary + "\n\n" + self.original_text,
+            page_content="\n\n".join(
+                part for part in [self.headline, self.summary, self.original_text]
+                if part
+            ),
             metadata=metadata,
         )
+
+
+class Chunks(BaseModel):
+    """
+    Container for multiple `Chunk` objects.
+
+    It is not used heavily in the deterministic path yet, but it matches the
+    shape we may want if an LLM or batch chunker returns many chunks at once.
+    """
+
+    chunks: list[Chunk]
+
+def find_md_files(base_dir: Path) -> list[Path]:
+    """
+    Find all Markdown files that should be considered for ingestion.
+
+    The search is recursive so it includes both `manual/` notes and
+    `markdown-cache/` files converted from official PDFs.
+    """
+
+    if not base_dir.exists():
+        return []
+
+    return sorted(
+        path for path in base_dir.rglob("*.md")
+        if path.is_file()
+    )
+
+
+def build_source_url_map() -> dict[str, str]:
+    """
+    Build a lookup from Markdown cache path to official source PDF URL.
+
+    The PDF registry in `check_pdfs.py` stores `.pdf` destinations, so this
+    converts those destinations to `.md` paths to match converted cache files.
+    """
+
+    return {
+        str(Path(source["dest"]).with_suffix(".md")).replace("\\", "/"): source["url"]
+        for source in PDFS
+    }
+
+
+SOURCE_URL_MAP = build_source_url_map()
+
+
+def md_to_doc_obj(file_path: Path) -> dict:
+    """
+    Read a Markdown file and convert it into the common document shape.
+
+    This labels whether the file came from `markdown-cache/`, `manual/`, or an
+    unknown source, then attaches title, topic, agency, source URL, and text.
+    """
+
+    text = file_path.read_text(encoding="utf-8")
+    relative_path = file_path.relative_to(KNOWLEDGE_BASE_PATH)
+
+    source_group = relative_path.parts[0]
+    source_url = None
+
+    if source_group == "markdown-cache":
+        doc_type = "pdf_cache"
+        agency = relative_path.parts[1]
+        topic = file_path.stem
+        cache_path = str(Path(*relative_path.parts[1:])).replace("\\", "/")
+        source_url = SOURCE_URL_MAP.get(cache_path)
+    elif source_group == "manual":
+        doc_type = "manual"
+        agency = None
+        topic = relative_path.parts[1]
+    else:
+        doc_type = "unknown"
+        agency = None
+        topic = file_path.stem
+
+    return {
+        "source": str(relative_path).replace("\\", "/"),
+        "type": doc_type,
+        "title": file_path.stem.replace("-", " ").title(),
+        "agency": agency,
+        "topic": topic,
+        "source_url": source_url,
+        "text": text,
+    }
+
+
+
+def split_by_headings(text: str) -> list[dict]:
+    """
+    Split Markdown text into sections based on heading lines.
+
+    Each `#`, `##`, etc. heading starts a new section. Text before the first
+    heading is grouped under an `Introduction` heading.
+    """
+
+    sections = []
+    current_heading = "Introduction"
+    current_lines = []
+
+    for line in text.splitlines():
+        if re.match(r"^#{1,6}\s+", line):
+            if current_lines:
+                sections.append({
+                    "heading": current_heading,
+                    "text": "\n".join(current_lines).strip(),
+                })
+
+            current_heading = line.lstrip("#").strip()
+            current_lines = []
+        else:
+            current_lines.append(line)
+
+    if current_lines:
+        sections.append({
+            "heading": current_heading,
+            "text": "\n".join(current_lines).strip(),
+        })
+
+    return [section for section in sections if section["text"]]
+
+
+def split_large_section(section: dict, max_size: int = MAX_SECTION_SIZE) -> list[dict]:
+    """
+    Break a large section into smaller paragraph-based chunks.
+
+    PDF-derived Markdown can have weak headings, so a single section can become
+    too large. This keeps paragraph groups near `max_size` characters.
+    """
+
+    if len(section["text"]) <= max_size:
+        return [section]
+
+    paragraphs = section["text"].split("\n\n")
+    chunks = []
+    current_paragraphs = []
+    current_size = 0
+
+    for paragraph in paragraphs:
+        paragraph = paragraph.strip()
+        if not paragraph:
+            continue
+
+        separator_size = 2 if current_paragraphs else 0
+        paragraph_size = len(paragraph) + separator_size
+
+        if current_paragraphs and current_size + paragraph_size > max_size:
+            chunks.append({
+                "heading": section["heading"],
+                "text": "\n\n".join(current_paragraphs),
+            })
+            current_paragraphs = []
+            current_size = 0
+
+        current_paragraphs.append(paragraph)
+        current_size += paragraph_size
+
+    if current_paragraphs:
+        chunks.append({
+            "heading": section["heading"],
+            "text": "\n\n".join(current_paragraphs),
+        })
+
+    return chunks
+
+
+def split_document(text: str) -> list[dict]:
+    """
+    Split one document into retrieval-sized text chunks.
+
+    The first pass respects Markdown headings. The second pass splits only the
+    sections that are still too large for practical embedding and retrieval.
+    """
+
+    chunks = []
+
+    for section in split_by_headings(text):
+        chunks.extend(split_large_section(section))
+
+    return chunks
+
+
+def create_chunks(document: dict) -> list[Chunk]:
+    """
+    Convert split document sections into `Chunk` models.
+
+    The current baseline is deterministic: the section heading becomes the
+    headline, summary stays empty, and original text is preserved exactly.
+    """
+
+    return [
+        Chunk(
+            headline=chunk["heading"],
+            summary="",
+            original_text=chunk["text"],
+        )
+        for chunk in split_document(document["text"])
+    ]
+
+
+def create_ingestable_chunks(document: dict) -> list[Ingestable_Chunk]:
+    """
+    Create storage-ready chunks for one source document.
+
+    It creates deterministic `Chunk` objects first, then attaches source
+    metadata and chunk indexes through `Chunk.as_result()`.
+    """
+
+    return [
+        chunk.as_result(document, chunk_index)
+        for chunk_index, chunk in enumerate(create_chunks(document))
+    ]
+
+
+def create_all_ingestable_chunks(documents: list[dict]) -> list[Ingestable_Chunk]:
+    """
+    Create one flat list of storage-ready chunks for the whole corpus.
+
+    Supabase ingestion works row by row, so this removes the per-document
+    nesting after all document chunks have been created.
+    """
+
+    chunks = []
+
+    for document in documents:
+        chunks.extend(create_ingestable_chunks(document))
+
+    return chunks
+
+
+def get_required_env(name: str) -> str:
+    """
+    Read a required environment variable.
+
+    This fails immediately with a clear message when a required key is missing,
+    instead of letting OpenAI or Supabase fail later with a vague error.
+    """
+
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
+def get_supabase_client():
+    """
+    Create the Supabase client used for ingestion writes.
+
+    Ingestion uses backend credentials because it is an admin data-loading job
+    that writes shared RAG content, not user-owned frontend data.
+    """
+
+    supabase_url = get_required_env("SUPABASE_URL")
+    supabase_key = (
+        os.getenv("SUPABASE_SECRET_KEY", "").strip()
+        or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    )
+
+    if not supabase_key:
+        raise RuntimeError(
+            "Missing required environment variable: "
+            "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY"
+        )
+
+    return create_client(supabase_url, supabase_key)
+
+
+@retry(wait=wait, stop=stop_after_attempt(5))
+def embed_text(client: OpenAI, text: str) -> list[float]:
+    """
+    Generate an embedding vector for one chunk of text.
+
+    The retry wrapper tries up to 5 times, helping the script survive temporary
+    OpenAI rate limits or transient API failures without hanging forever.
+    """
+
+    response = client.embeddings.create(
+        model=embedding_model,
+        input=text,
+    )
+    return response.data[0].embedding
+
+
+def chunk_to_row(chunk: Ingestable_Chunk, embedding: list[float]) -> dict:
+    """
+    Convert an ingestable chunk into the exact `rag_chunks` table payload.
+
+    This separates database field mapping from the upsert call, making it easier
+    to inspect or adjust schema mapping without changing embedding logic.
+    """
+
+    metadata = chunk.metadata
+    return {
+        "source_path": metadata["source_path"],
+        "source_type": metadata["source_type"],
+        "source_title": metadata["source_title"],
+        "source_url": metadata.get("source_url"),
+        "agency": metadata.get("agency"),
+        "topic": metadata.get("topic"),
+        "chunk_index": metadata["chunk_index"],
+        "headline": metadata["headline"],
+        "content": chunk.page_content,
+        "embedding": embedding,
+    }
+
+
+def upsert_chunk(supabase_client, chunk: Ingestable_Chunk, embedding: list[float]):
+    """
+    Write one embedded chunk into Supabase.
+
+    The upsert conflict target is `source_path,chunk_index`, so rerunning
+    ingestion updates the same logical chunk instead of duplicating rows.
+    """
+
+    row = chunk_to_row(chunk, embedding)
+    return (
+        supabase_client.table("rag_chunks")
+        .upsert(row, on_conflict="source_path,chunk_index")
+        .execute()
+    )
+
+
+def print_chunk_size_summary(documents: list[dict]) -> None:
+    """
+    Print chunk counts and largest chunk size for each document.
+
+    This is a quick safety check that the deterministic chunker is not producing
+    huge sections that would be poor retrieval candidates.
+    """
+
+    print("\n--- Chunk Size Summary ---")
+
+    for doc in documents:
+        chunks = split_document(doc["text"])
+        largest_chunk = max(
+            (len(chunk["text"]) for chunk in chunks),
+            default=0,
+        )
+
+        print(
+            f"{doc['title']}: "
+            f"{len(chunks)} chunk(s), "
+            f"largest chunk {largest_chunk} characters"
+        )
+
+
+def print_sample_chunk(ingestable_chunks: list[Ingestable_Chunk]) -> None:
+    """
+    Print one repeatable sample chunk for manual inspection.
+
+    A fixed random seed keeps the sample stable between runs, which makes it
+    easier to notice accidental metadata or content-format changes.
+    """
+
+    if not ingestable_chunks:
+        return
+
+    random.seed(42)
+    sample_chunk = random.choice(ingestable_chunks)
+
+    print("\n--- Random Ingestable Chunk Example ---")
+    print(f"Metadata: {sample_chunk.metadata}")
+    print(sample_chunk.page_content[:500])
+
+
+def main(*, limit: int | None = None, dry_run: bool = False):
+    """
+    Run the full ingestion workflow.
+
+    The workflow loads Markdown documents, chunks them, optionally limits the
+    batch for testing, and either dry-runs or embeds/upserts into Supabase.
+    """
+
+    files = find_md_files(KNOWLEDGE_BASE_PATH)
+    print(f"Found {len(files)} markdown files")
+
+    documents = [md_to_doc_obj(file_path) for file_path in files]
+    print(f"Loaded {len(documents)} documents")
+
+    print_chunk_size_summary(documents)
+
+    ingestable_chunks = create_all_ingestable_chunks(documents)
+    if limit is not None:
+        ingestable_chunks = ingestable_chunks[:limit]
+
+    print(f"\nCreated {len(ingestable_chunks)} ingestable chunks")
+    print_sample_chunk(ingestable_chunks)
+
+    if dry_run:
+        print("\nDry run complete. No embeddings created and no rows written.")
+        return
+
+    openai_client = OpenAI()
+    supabase_client = get_supabase_client()
+
+    for chunk in tqdm(ingestable_chunks, desc="Embedding and upserting chunks"):
+        embedding = embed_text(openai_client, chunk.page_content)
+        upsert_chunk(supabase_client, chunk, embedding)
+
+    print(f"\nUpserted {len(ingestable_chunks)} chunks into public.rag_chunks")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Embed and ingest FireBuddy RAG knowledge-base chunks"
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Only ingest the first N chunks; useful for smoke tests",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Build and inspect chunks without creating embeddings or writing rows",
+    )
+    args = parser.parse_args()
+
+    main(limit=args.limit, dry_run=args.dry_run)

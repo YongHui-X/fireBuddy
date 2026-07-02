@@ -1,2 +1,9 @@
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
+openai
+pydantic
+PyJWT
+python-dotenv
+supabase
+tenacity
+tqdm
