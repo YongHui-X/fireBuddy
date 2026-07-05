@@ -55,9 +55,9 @@ class ExpenseResponse(BaseModel):
 
 def serialize_expense(row: dict[str, Any]) -> ExpenseResponse:
     return ExpenseResponse(
-        id=row["id"],
-        userId=row["user_id"],
-        categoryId=row.get("category_id"),
+        id=str(row["id"]),
+        userId=str(row["user_id"]),
+        categoryId=str(row["category_id"]) if row.get("category_id") is not None else None,
         description=row.get("description"),
         amount=str(row["amount"]),
         date=str(row["date"]),

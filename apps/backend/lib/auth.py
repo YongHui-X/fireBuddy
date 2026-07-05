@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 import jwt
+from jwt import PyJWKClient
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -9,6 +10,7 @@ from config import settings
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
+jwks_client = PyJWKClient(settings.supabase_jwks_url)
 
 
 @dataclass(frozen=True)
@@ -26,24 +28,47 @@ def get_current_user(
             detail="Missing bearer token",
         )
 
-    if not settings.supabase_jwt_secret:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Missing SUPABASE_JWT_SECRET in apps/backend/.env",
-        )
+    token = credentials.credentials
 
     try:
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
-            credentials.credentials,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
+            token,
+            signing_key.key,
+            algorithms=["ES256", "RS256"],
             audience="authenticated",
+            issuer=settings.supabase_auth_issuer,
         )
     except jwt.ExpiredSignatureError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
         ) from exc
+    except jwt.PyJWKClientError:
+        if not settings.supabase_jwt_secret:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid bearer token",
+            )
+
+        try:
+            payload = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+                issuer=settings.supabase_auth_issuer,
+            )
+        except jwt.ExpiredSignatureError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has expired",
+            ) from exc
+        except jwt.PyJWTError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid bearer token",
+            ) from exc
     except jwt.PyJWTError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -62,4 +87,3 @@ def get_current_user(
         id=user_id,
         email=payload.get("email"),
     )
-

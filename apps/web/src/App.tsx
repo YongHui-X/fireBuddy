@@ -88,7 +88,13 @@ import {
   type RagChatResponse,
 } from '@firebuddy/shared';
 
-import { createExpense, getCategories, getExpenses } from './api';
+import {
+    createCategory,
+    createExpense,
+    deleteCategory as deleteApiCategory,
+    getCategories,
+    getExpenses,
+  } from './api';
 import { supabase } from './supabase';
 
 const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true';
@@ -138,9 +144,9 @@ interface AppContextValue {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
-  addCategory: (category: Omit<Category, 'id'>) => void;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
+  deleteCategory: (id: string) => Promise<void>;
   addAccount: (account: Omit<Account, 'id'>) => void;
   updateAccount: (id: string, updates: Partial<Account>) => void;
   deleteAccount: (id: string) => void;
@@ -412,6 +418,14 @@ function formatDateLabel(value: string) {
   });
 }
 
+function getAuthErrorMessage(message: string) {
+  if (message.toLowerCase().includes('email address') && message.toLowerCase().includes('invalid')) {
+    return 'Supabase rejected that email address. Try another email address you can access.';
+  }
+
+  return message;
+}
+
 function polarPoint(centerX: number, centerY: number, radius: number, angle: number) {
   const radians = ((angle - 90) * Math.PI) / 180;
 
@@ -576,7 +590,7 @@ function AppProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
-          setAuthError(error.message);
+          setAuthError(getAuthErrorMessage(error.message));
           throw error;
         }
       },
@@ -585,7 +599,7 @@ function AppProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signUp({ email, password });
 
         if (error) {
-          setAuthError(error.message);
+          setAuthError(getAuthErrorMessage(error.message));
           throw error;
         }
       },
@@ -624,7 +638,16 @@ function AppProvider({ children }: { children: ReactNode }) {
       deleteTransaction: (id) => {
         setTransactions((current) => current.filter((transaction) => transaction.id !== id));
       },
-      addCategory: (category) => {
+      addCategory: async (category) => {
+        if (session) {
+          const savedCategory = await createCategory(session.access_token, {
+            name: category.name,
+          });
+
+          setCategories((current) => [...current, mapApiCategory(savedCategory)]);
+          return;
+        }
+
         setCategories((current) => [
           ...current,
           {
@@ -639,9 +662,13 @@ function AppProvider({ children }: { children: ReactNode }) {
           current.map((category) => (category.id === id ? { ...category, ...updates } : category)),
         );
       },
-      deleteCategory: (id) => {
+      deleteCategory: async (id) => {
         if (id === 'income') {
           return;
+        }
+
+        if (session) {
+          await deleteApiCategory(session.access_token, id);
         }
 
         setCategories((current) => current.filter((category) => category.id !== id));
@@ -1314,8 +1341,8 @@ function Categories() {
           mode="add"
           initial={{ icon: 'others', color: categoryColors[0], monthlyBudget: 0 }}
           onClose={() => setIsAdding(false)}
-          onSave={(category) => {
-            addCategory(category as Omit<Category, 'id'>);
+          onSave={async (category) => {
+            await addCategory(category as Omit<Category, 'id'>);
             setIsAdding(false);
           }}
         />
@@ -1330,8 +1357,8 @@ function Categories() {
             updateCategory(editingCategory.id, updates);
             setEditingCategory(null);
           }}
-          onDelete={() => {
-            deleteCategory(editingCategory.id);
+          onDelete={async () => {
+            await deleteCategory(editingCategory.id);
             setEditingCategory(null);
           }}
         />
@@ -2141,7 +2168,7 @@ function AccountSheet({
 
 function AddExpense() {
   const navigate = useNavigate();
-  const { addTransaction, categories, accounts, syncStatus } = useFireBuddy();
+  const { addTransaction, categories, accounts, session, syncStatus } = useFireBuddy();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(() => getDeviceDateKey());
@@ -2149,19 +2176,25 @@ function AddExpense() {
   const [account, setAccount] = useState(accounts[0]?.id ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const selectedCategory = categories.find((item) => item.id === category);
+  const availableCategories = useMemo(
+    () => session
+      ? categories.filter((item) => item.isDefault || /^[0-9a-f-]{36}$/i.test(item.id) || /^\d+$/.test(item.id))
+      : categories,
+    [categories, session],
+  );
+  const selectedCategory = availableCategories.find((item) => item.id === category);
   const isIncome = selectedCategory?.name.toLowerCase() === 'income';
 
   useEffect(() => {
-    if (!category && categories[0]) {
-      setCategory(categories[0].id);
+    if (!category && availableCategories[0]) {
+      setCategory(availableCategories[0].id);
       return;
     }
 
-    if (category && !categories.some((item) => item.id === category)) {
-      setCategory(categories[0]?.id ?? '');
+    if (category && !availableCategories.some((item) => item.id === category)) {
+      setCategory(availableCategories[0]?.id ?? '');
     }
-  }, [categories, category]);
+  }, [availableCategories, category]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -2233,7 +2266,7 @@ function AddExpense() {
           <label className="form-field add-category-field">
             <span>Category</span>
             <select value={category} onChange={(event) => setCategory(event.target.value)} disabled={syncStatus === 'loading'}>
-              {categories.map((item) => (
+              {availableCategories.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>

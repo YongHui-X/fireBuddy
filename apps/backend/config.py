@@ -24,5 +24,8 @@ class Settings:
         "Missing SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY in apps/backend/.env"
       )
 
+    self.supabase_auth_issuer = f"{self.supabase_url}/auth/v1"
+    self.supabase_jwks_url = f"{self.supabase_auth_issuer}/.well-known/jwks.json"
+
 
 settings = Settings()

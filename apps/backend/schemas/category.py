@@ -25,8 +25,8 @@ class CategoryResponse(BaseModel):
 
 def serialize_category(row: dict[str, Any]) -> CategoryResponse:
     return CategoryResponse(
-        id=row["id"],
-        userId=row.get("user_id"),
+        id=str(row["id"]),
+        userId=str(row["user_id"]) if row.get("user_id") is not None else None,
         name=row["name"],
         isDefault=bool(row["is_default"]),
         createdAt=_serialize_datetime(row.get("created_at")),

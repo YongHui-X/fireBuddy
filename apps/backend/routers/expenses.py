@@ -2,6 +2,7 @@ from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
 from lib.supabase import supabase
@@ -22,25 +23,43 @@ def ensure_category_is_available(category_id: str | None, user_id: str) -> None:
     if category_id is None:
         return
 
-    default_response = (
-        supabase.table("categories")
-        .select("id")
-        .eq("id", category_id)
-        .eq("is_default", True)
-        .limit(1)
-        .execute()
-    )
+    try:
+        default_response = (
+            supabase.table("categories")
+            .select("id")
+            .eq("id", category_id)
+            .eq("is_default", True)
+            .limit(1)
+            .execute()
+        )
+    except APIError as exc:
+        if exc.code == "22P02":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="categoryId must reference a backend category",
+            ) from exc
+        raise
+
     if default_response.data:
         return
 
-    user_response = (
-        supabase.table("categories")
-        .select("id")
-        .eq("id", category_id)
-        .eq("user_id", user_id)
-        .limit(1)
-        .execute()
-    )
+    try:
+        user_response = (
+            supabase.table("categories")
+            .select("id")
+            .eq("id", category_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+    except APIError as exc:
+        if exc.code == "22P02":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="categoryId must reference a backend category",
+            ) from exc
+        raise
+
     if user_response.data:
         return
 

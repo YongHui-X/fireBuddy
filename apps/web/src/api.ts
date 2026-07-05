@@ -23,7 +23,22 @@ async function request<T>(
 
   if (!response.ok) {
     const message = await response.text();
-    throw new Error(message || `Request failed with ${response.status}`);
+    let errorMessage = message || `Request failed with ${response.status}`;
+
+    try {
+      const parsed = JSON.parse(message) as { detail?: unknown };
+      if (typeof parsed.detail === 'string') {
+        errorMessage = parsed.detail;
+      }
+    } catch {
+      // Keep the raw message when the response is not JSON.
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  if (response.status === 204){
+    return undefined as T;
   }
 
   return response.json() as Promise<T>;
@@ -43,3 +58,17 @@ export function createExpense(token: string, input: CreateExpenseInput) {
     body: JSON.stringify(input),
   });
 }
+
+
+export function createCategory(token: string, input: { name: string }) {
+    return request<Category>(apiRoutes.categories, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+export function deleteCategory(token: string, id: string) {
+    return request<void>(`${apiRoutes.categories}/${id}`, token, {
+      method: 'DELETE',
+    });
+  }
