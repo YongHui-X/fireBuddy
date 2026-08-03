@@ -10,5 +10,7 @@ apps/backend/rag/knowledge-base/source-pdfs/**/*.pdf.bak
 
 apps/web/node_modules/
 apps/web/dist/
+apps/web/.env.local
+apps/web/.env.*.local
 apps/mobile/node_modules/
 packages/shared/dist/

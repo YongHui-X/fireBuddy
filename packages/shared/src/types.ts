@@ -10,6 +10,9 @@ export interface Category {
   id: UUID;
   userId: UUID | null;
   name: string;
+  icon: string;
+  color: string;
+  monthlyBudget: string;
   isDefault: boolean;
   createdAt: string;
 }
@@ -41,6 +44,16 @@ export interface UpdateExpenseInput {
 
 export interface CreateCategoryInput {
   name: string;
+  icon: string;
+  color: string;
+  monthlyBudget: string;
+}
+
+export interface UpdateCategoryInput {
+  name: string;
+  icon: string;
+  color: string;
+  monthlyBudget: string;
 }
 
 export type RagChatRole = 'user' | 'assistant';

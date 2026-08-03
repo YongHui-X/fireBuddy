@@ -1,8 +1,11 @@
 import {
   apiRoutes,
   type Category,
+  type CreateCategoryInput,
   type CreateExpenseInput,
   type Expense,
+  type UpdateCategoryInput,
+  type UpdateExpenseInput,
 } from '@firebuddy/shared';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
@@ -37,7 +40,7 @@ async function request<T>(
     throw new Error(errorMessage);
   }
 
-  if (response.status === 204){
+  if (response.status === 204) {
     return undefined as T;
   }
 
@@ -59,16 +62,35 @@ export function createExpense(token: string, input: CreateExpenseInput) {
   });
 }
 
+export function updateExpense(token: string, id: string, input: UpdateExpenseInput) {
+  return request<Expense>(`${apiRoutes.expenses}/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}
 
-export function createCategory(token: string, input: { name: string }) {
-    return request<Category>(apiRoutes.categories, token, {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-  }
+export function deleteExpense(token: string, id: string) {
+  return request<void>(`${apiRoutes.expenses}/${id}`, token, {
+    method: 'DELETE',
+  });
+}
+
+export function createCategory(token: string, input: CreateCategoryInput) {
+  return request<Category>(apiRoutes.categories, token, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateCategory(token: string, id: string, input: UpdateCategoryInput) {
+  return request<Category>(`${apiRoutes.categories}/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}
 
 export function deleteCategory(token: string, id: string) {
-    return request<void>(`${apiRoutes.categories}/${id}`, token, {
-      method: 'DELETE',
-    });
-  }
+  return request<void>(`${apiRoutes.categories}/${id}`, token, {
+    method: 'DELETE',
+  });
+}

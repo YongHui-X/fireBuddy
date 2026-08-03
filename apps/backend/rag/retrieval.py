@@ -14,7 +14,7 @@ from openai import OpenAI
 from supabase import create_client
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-
+  
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env", override=True)
 

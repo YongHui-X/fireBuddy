@@ -26,6 +26,8 @@ class Settings:
 
     self.supabase_auth_issuer = f"{self.supabase_url}/auth/v1"
     self.supabase_jwks_url = f"{self.supabase_auth_issuer}/.well-known/jwks.json"
+    self.openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
 
 
 settings = Settings()
