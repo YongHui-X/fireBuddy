@@ -1,0 +1,267 @@
+{
+  "generated_at": "2026-08-12T09:18:47.209002+00:00",
+  "case_count": 12,
+  "judge_enabled": true,
+  "judge_model": "gpt-4o-mini",
+  "summary": {
+    "overall_pass_rate": 1.0,
+    "positive_pass_rate": 1.0,
+    "refusal_accuracy": 1.0,
+    "concept_coverage": 1.0,
+    "numeric_accuracy": 1.0,
+    "citation_recall": 0.9444444444444445,
+    "judge_groundedness": 0.9666666666666667,
+    "judge_factual_correctness": 1.0,
+    "judge_citation_support": 1.0,
+    "judge_numerical_accuracy": 1.0
+  },
+  "cases": [
+    {
+      "id": "cpf_2026_contribution_rate",
+      "question": "For an employee aged 55 or below earning above $750, what are the total and employee CPF contribution rates from January 2026, and what is the Ordinary Wage ceiling?",
+      "expected_refusal": false,
+      "answer": "For an employee aged 55 or below earning above $750 from January 2026, the total CPF contribution rate is 37% for Ordinary Wages (OW) and 37% for Additional Wages (AW). The employee's share is 20% for OW and 20% for AW. The Ordinary Wage ceiling is $8,000.",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "source_paths": [
+        "markdown-cache/cpf/cpf-contribution-rates-2026.md",
+        "markdown-cache/cpf/cpf-allocation-rates-2026.md"
+      ],
+      "judge": {
+        "groundedness": 4,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer correctly states the total CPF contribution rate as 37%, the employee share as 20%, and the Ordinary Wage ceiling as $8,000 for employees aged 55 or below from January 2026. This information is fully supported by the retrieved context, which confirms these rates and the ceiling. The only minor issue is the mention of '37% for Additional Wages (AW)', which is not explicitly stated in the context but can be inferred as the total rate applies to both OW and AW. Overall, the answer is accurate and well-supported."
+      }
+    },
+    {
+      "id": "moneysense_emergency_fund",
+      "question": "How many months of expenses does MoneySense suggest for an emergency fund, and should that money be placed in the stock market?",
+      "expected_refusal": false,
+      "answer": "MoneySense suggests setting aside 3 to 6 months of expenses for an emergency fund. This money should not be placed in the stock market, as it is recommended to keep it separate from investment money and not exposed to equity risk.",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects MoneySense's recommendation of setting aside 3 to 6 months of expenses for an emergency fund and correctly states that this money should not be placed in the stock market, aligning with the retrieved context."
+      }
+    },
+    {
+      "id": "iras_relief_cap",
+      "question": "What overall cap applies to personal income tax reliefs per Year of Assessment according to the IRAS material?",
+      "expected_refusal": false,
+      "answer": "The overall cap that applies to personal income tax reliefs per Year of Assessment is $80,000.",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/iras/tax-relief-individuals.md"
+      ],
+      "source_paths": [
+        "markdown-cache/iras/tax-relief-individuals.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer correctly states that the overall cap for personal income tax reliefs per Year of Assessment is $80,000, which is explicitly supported by the retrieved context from the IRAS material. All aspects of the answer are accurate and well-supported."
+      }
+    },
+    {
+      "id": "cpfis_protected_balances",
+      "question": "How much of my CPF Ordinary Account and Special Account cannot be used for CPFIS investments?",
+      "expected_refusal": false,
+      "answer": "In your CPF Ordinary Account (OA), the first $20,000 cannot be used for CPFIS investments. In your Special Account (SA), the first $40,000 cannot be used for CPFIS investments.",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "manual/fire/FIRE.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately states that the first $20,000 in the CPF Ordinary Account and the first $40,000 in the Special Account cannot be used for CPFIS investments. This is fully supported by the retrieved context, which confirms these figures and the restrictions on investment use. The information is clear, precise, and well-cited."
+      }
+    },
+    {
+      "id": "srs_contribution_caps",
+      "question": "What are the annual SRS contribution caps for Singapore Citizens or PRs and for foreigners?",
+      "expected_refusal": false,
+      "answer": "The annual SRS contribution caps are as follows:\n\n- **Singapore Citizens & PRs:** $15,300/year\n- **Foreigners:** $35,700/year",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpf-contribution-rates-2026.md",
+        "markdown-cache/iras/tax-relief-individuals.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects the annual SRS contribution caps for Singapore Citizens and PRs ($15,300) and for foreigners ($35,700), as stated in the retrieved context. The information is well-supported by multiple sources, confirming the figures and their context."
+      }
+    },
+    {
+      "id": "ssb_holding_and_liquidity",
+      "question": "What is the individual Singapore Savings Bond holding limit, and can the bonds generally be redeemed early?",
+      "expected_refusal": false,
+      "answer": "The individual Singapore Savings Bond holding limit is $200,000. The bonds can generally be redeemed early, with no penalty, allowing for high liquidity.",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 0.6666666666666666,
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      ],
+      "source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately states that the individual holding limit for Singapore Savings Bonds is $200,000 and confirms that they can be redeemed early with accrued interest and no penalty. This information is fully supported by the retrieved context, which consistently confirms these details across multiple sources."
+      }
+    },
+    {
+      "id": "out_of_scope_weather",
+      "question": "What will the weather be in Singapore tomorrow?",
+      "expected_refusal": true,
+      "answer": "I can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_recipe",
+      "question": "Give me a chicken rice recipe.",
+      "expected_refusal": true,
+      "answer": "I can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_medical",
+      "question": "Can you diagnose my persistent chest pain and recommend medicine?",
+      "expected_refusal": true,
+      "answer": "I can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_legal",
+      "question": "Give me legal advice for contesting a criminal charge.",
+      "expected_refusal": true,
+      "answer": "I can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_coding",
+      "question": "Write Python code for a multiplayer game server.",
+      "expected_refusal": true,
+      "answer": "I can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "unsupported_live_crypto_price",
+      "question": "What is the live Bitcoin price right now?",
+      "expected_refusal": true,
+      "answer": "I can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    }
+  ],
+  "report_version": 1,
+  "report_label": "RAG hardening baseline"
+}

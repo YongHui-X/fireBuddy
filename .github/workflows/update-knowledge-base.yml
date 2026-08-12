@@ -2,53 +2,76 @@ name: Update Knowledge Base
 
 on:
   schedule:
-    - cron: '0 9 1 * *' # 9am on 1st of every month
-  workflow_dispatch: # also triggerable manually
+    - cron: '0 1 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-knowledge-base
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: pip
+          cache-dependency-path: apps/backend/requirements.txt
 
-      - name: Install deps
-        run: pip install requests beautifulsoup4 openai supabase python-dotenv
+      - name: Install backend dependencies
+        run: python -m pip install -r apps/backend/requirements.txt
 
-      - name: Fetch latest figures
-        run: python backend/rag/scripts/fetch_figures.py
+      - name: Refresh, convert, and ingest knowledge base
+        run: >-
+          python apps/backend/rag/fetchAndConvert/update_kb.py
+          --convert-md
+          --extract-figures
+          --ingest
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      - name: Check if figures changed
-        id: diff
-        run: |
-          git diff --quiet backend/rag/annual-figures.json \
-            && echo "changed=false" >> $GITHUB_OUTPUT \
-            || echo "changed=true" >> $GITHUB_OUTPUT
-
-      - name: Re-ingest if changed
-        if: steps.diff.outputs.changed == 'true'
-        run: python backend/rag/ingest.py
-
-      - name: Commit updated figures
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          git config --global user.email "bot@firebuddy"
-          git config --global user.name "FireBuddy Bot"
-          git add backend/rag/annual-figures.json
-          git commit -m "chore: auto-update annual figures $(date +'%Y-%m')"
-          git push
-
-      - name: Notify
-        if: steps.diff.outputs.changed == 'true'
-        run: python backend/rag/scripts/notify.py
+      - name: Run retrieval evaluation
+        run: >-
+          python apps/backend/rag/evaluation/eval_retrieval.py
+          --run-label "Monthly knowledge-base refresh"
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Run answer-quality evaluation
+        run: >-
+          python apps/backend/rag/evaluation/eval_answers.py
+          --run-label "Monthly knowledge-base refresh"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Commit changed knowledge and evaluation reports
+        shell: bash
+        run: |
+          if git diff --quiet && [ -z "$(git status --porcelain)" ]; then
+            echo "No knowledge-base or evaluation changes to commit."
+            exit 0
+          fi
+          git config user.email "bot@firebuddy"
+          git config user.name "FireBuddy Bot"
+          git add apps/backend/rag/annual-figures.json
+          git add apps/backend/rag/pdf_hashes.json
+          git add apps/backend/rag/knowledge-base/markdown-cache
+          git add apps/backend/rag/evaluation/results
+          git commit -m "refresh RAG knowledge base and evaluations"
+          git push

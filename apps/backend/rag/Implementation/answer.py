@@ -1,11 +1,4 @@
-"""
-Retrieve FireBuddy RAG chunks for a user question.
-
-This is a retrieval smoke-test layer, not the final answer-generation layer.
-
-Run:
-    python apps/backend/rag/Implementation/answer.py "What are CPF contribution rates in 2026?"
-"""
+"""Run the production FireBuddy RAG answer flow from the command line."""
 
 import argparse
 from pathlib import Path
@@ -15,57 +8,36 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.append(str(BACKEND_DIR))
 
-from rag.retrieval import retrieve_chunks
+from schemas.rag import AdvisorResponse
+from services.rag_service import answer_financial_advisor_question
 
 
-def print_matches(matches: list[dict]) -> None:
-    """
-    Print retrieval results in a human-readable CLI format.
+def format_cli_response(response: AdvisorResponse) -> str:
+    """Format the generated answer and its citations for terminal output."""
 
-    The output includes similarity, source title, source URL, and a content
-    preview so we can judge whether retrieval is returning sensible context.
-    """
-
-    if not matches:
-        print("No matches found.")
-        return
-
-    for index, match in enumerate(matches, start=1):
-        print(f"\n--- Match {index} ---")
-        print(f"Similarity: {match.get('similarity'):.4f}")
-        print(f"Title: {match.get('source_title')}")
-        print(f"Headline: {match.get('headline')}")
-        # `source_path` is the knowledge-base file that produced the chunk.
-        # `source_url` is the official citation URL when ingestion knows it.
-        print(f"Source path: {match.get('source_path')}")
-        print(f"Source URL: {match.get('source_url')}")
-        print("Content preview:")
-        print((match.get("content") or "")[:700])
+    lines = [response.answer]
+    if response.sources:
+        lines.extend(["", "Sources:"])
+        lines.extend(
+            f"{index}. {source}"
+            for index, source in enumerate(response.sources, start=1)
+        )
+    return "\n".join(lines)
 
 
-def main() -> None:
-    """
-    Run the command-line retrieval smoke test.
-
-    This parses the question and match count, retrieves candidate chunks, and
-    prints them without generating a final LLM answer.
-    """
+def main(argv: list[str] | None = None) -> int:
+    """Generate one answer through the same service used by the FastAPI route."""
 
     parser = argparse.ArgumentParser(
-        description="Retrieve FireBuddy RAG chunks for a question"
+        description="Generate a grounded FireBuddy RAG answer"
     )
-    parser.add_argument("question", help="Question to retrieve context for")
-    parser.add_argument(
-        "--match-count",
-        type=int,
-        default=5,
-        help="Number of matching chunks to return",
-    )
-    args = parser.parse_args()
+    parser.add_argument("question", help="Singapore personal-finance question")
+    args = parser.parse_args(argv)
 
-    matches = retrieve_chunks(args.question, match_count=args.match_count)
-    print_matches(matches)
+    response = answer_financial_advisor_question(args.question)
+    print(format_cli_response(response))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

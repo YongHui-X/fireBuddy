@@ -1,16 +1,13 @@
 """
-PDF-focused knowledge base update helper for FireBuddy.
+Refresh the FireBuddy knowledge base and optionally rebuild its vector index.
 
-For now this script only downloads and hash-checks source PDFs by default.
-Markdown conversion and figure extraction are opt-in. Ingestion is intentionally
-not wired here yet.
-
-Run from apps/backend:
-    python rag/scripts/update_kb.py
-    python rag/scripts/update_kb.py --force
-    python rag/scripts/update_kb.py --convert-md
-    python rag/scripts/update_kb.py --extract-figures
-    python rag/scripts/update_kb.py --notify
+Run from the repository root:
+    python apps/backend/rag/fetchAndConvert/update_kb.py
+    python apps/backend/rag/fetchAndConvert/update_kb.py --force
+    python apps/backend/rag/fetchAndConvert/update_kb.py --convert-md
+    python apps/backend/rag/fetchAndConvert/update_kb.py --extract-figures
+    python apps/backend/rag/fetchAndConvert/update_kb.py --convert-md --extract-figures --ingest
+    python apps/backend/rag/fetchAndConvert/update_kb.py --notify
 """
 
 import argparse
@@ -51,6 +48,7 @@ def main(
     extract_figures: bool = False,
     notify: bool = False,
     ci_mode: bool = False,
+    ingest: bool = False,
 ) -> int:
     from check_pdfs import run as check_pdfs_run
 
@@ -66,11 +64,12 @@ def main(
     failed_sources = pdf_report.get("failed", [])
     changed_pdf_paths = [Path(source["path"]) for source in changed_sources]
 
+    conversion_ok = True
     if convert_md:
         from pdf_to_md import run as pdf_to_md_run
 
         paths_to_convert = changed_pdf_paths if changed_pdf_paths else None
-        run_step(
+        conversion_ok, _ = run_step(
             "Convert PDFs to markdown cache",
             lambda: pdf_to_md_run(only_paths=paths_to_convert),
         )
@@ -79,16 +78,31 @@ def main(
         log.info("Skipping markdown conversion. Pass --convert-md to enable it.")
 
     figure_changes = []
+    figures_ok = True
     if extract_figures:
         from fetch_figures import run as fetch_figures_run
 
-        _, figure_changes = run_step(
+        figures_ok, figure_changes = run_step(
             "Extract annual figures",
             fetch_figures_run,
         )
         figure_changes = figure_changes or []
     else:
         log.info("Skipping figure extraction. Pass --extract-figures to enable it.")
+
+    ingestion_ok = True
+    ingested = False
+    if ingest and conversion_ok and figures_ok:
+        implementation_dir = RAG_DIR / "Implementation"
+        if str(implementation_dir) not in sys.path:
+            sys.path.insert(0, str(implementation_dir))
+        from ingest import main as ingest_main
+
+        ingestion_ok, _ = run_step("Embed and upsert RAG chunks", ingest_main)
+        ingested = ingestion_ok
+    elif ingest:
+        ingestion_ok = False
+        log.error("Skipping ingestion because an earlier refresh step failed.")
 
     log.info("")
     log.info("=" * 60)
@@ -97,7 +111,7 @@ def main(
     log.info("  PDF skipped:    %s", len(pdf_report.get("skipped", [])))
     log.info("  PDF failed:     %s", len(failed_sources))
     log.info("  Figure changes: %s", len(figure_changes))
-    log.info("  Ingestion:      skipped; RAG ingestion is not implemented in scripts")
+    log.info("  Ingestion:      %s", "complete" if ingested else "skipped")
     log.info("=" * 60)
 
     has_changes = bool(changed_sources or figure_changes)
@@ -117,7 +131,7 @@ def main(
     elif notify:
         log.info("No changes or failures; skipping notification.")
 
-    if has_failures:
+    if has_failures or not conversion_ok or not figures_ok or not ingestion_ok:
         return 1
     if ci_mode and has_changes:
         return 1
@@ -142,6 +156,11 @@ if __name__ == "__main__":
         help="Also update annual-figures.json using the LLM extractor",
     )
     parser.add_argument(
+        "--ingest",
+        action="store_true",
+        help="Embed and upsert the refreshed Markdown knowledge base",
+    )
+    parser.add_argument(
         "--ci",
         action="store_true",
         help="Exit 1 if changes are detected",
@@ -160,5 +179,6 @@ if __name__ == "__main__":
             extract_figures=args.extract_figures,
             notify=args.notify,
             ci_mode=args.ci,
+            ingest=args.ingest,
         )
     )

@@ -52,6 +52,10 @@ wait = wait_exponential(multiplier=1, min=10, max=240)
 
 WORKERS = 3
 MAX_SECTION_SIZE = 4000
+CHUNK_OVERLAP_PARAGRAPHS = 1
+CHUNK_OVERLAP_MAX_CHARS = 600
+SUPABASE_SELECT_PAGE_SIZE = 1000
+STALE_DELETE_BATCH_SIZE = 100
 
 if str(FETCH_AND_CONVERT_DIR) not in sys.path:
     sys.path.append(str(FETCH_AND_CONVERT_DIR))
@@ -258,26 +262,28 @@ def split_large_section(section: dict, max_size: int = MAX_SECTION_SIZE) -> list
     paragraphs = section["text"].split("\n\n")
     chunks = []
     current_paragraphs = []
-    current_size = 0
 
     for paragraph in paragraphs:
         paragraph = paragraph.strip()
         if not paragraph:
             continue
 
-        separator_size = 2 if current_paragraphs else 0
-        paragraph_size = len(paragraph) + separator_size
+        candidate_paragraphs = [*current_paragraphs, paragraph]
 
-        if current_paragraphs and current_size + paragraph_size > max_size:
+        if current_paragraphs and paragraph_group_size(candidate_paragraphs) > max_size:
             chunks.append({
                 "heading": section["heading"],
                 "text": "\n\n".join(current_paragraphs),
             })
-            current_paragraphs = []
-            current_size = 0
+            overlap_paragraphs = select_overlap_paragraphs(current_paragraphs)
+            overlap_candidate = [*overlap_paragraphs, paragraph]
+            current_paragraphs = (
+                overlap_paragraphs
+                if paragraph_group_size(overlap_candidate) <= max_size
+                else []
+            )
 
         current_paragraphs.append(paragraph)
-        current_size += paragraph_size
 
     if current_paragraphs:
         chunks.append({
@@ -286,6 +292,34 @@ def split_large_section(section: dict, max_size: int = MAX_SECTION_SIZE) -> list
         })
 
     return chunks
+
+
+def paragraph_group_size(paragraphs: list[str]) -> int:
+    """Return the stored text size for a paragraph group."""
+
+    if not paragraphs:
+        return 0
+
+    return sum(len(paragraph) for paragraph in paragraphs) + (len(paragraphs) - 1) * 2
+
+
+def select_overlap_paragraphs(paragraphs: list[str]) -> list[str]:
+    """
+    Carry a small tail from one oversized chunk into the next chunk.
+
+    The overlap belongs here in ingestion, not retrieval, because it makes the
+    stored vector text preserve context around chunk boundaries.
+    """
+
+    selected: list[str] = []
+
+    for paragraph in reversed(paragraphs[-CHUNK_OVERLAP_PARAGRAPHS:]):
+        candidate = [paragraph, *selected]
+        if paragraph_group_size(candidate) > CHUNK_OVERLAP_MAX_CHARS:
+            continue
+        selected = candidate
+
+    return selected
 
 
 def split_document(text: str) -> list[dict]:
@@ -389,6 +423,23 @@ def get_supabase_client():
     return create_client(supabase_url, supabase_key)
 
 
+def has_supabase_env() -> bool:
+    """
+    Check whether dry-run cleanup can inspect Supabase safely.
+
+    Normal ingestion still calls `get_supabase_client()` so missing credentials
+    fail loudly. Dry runs remain useful without credentials and simply skip the
+    optional stale-row inspection.
+    """
+
+    has_url = bool(os.getenv("SUPABASE_URL", "").strip())
+    has_key = bool(
+        os.getenv("SUPABASE_SECRET_KEY", "").strip()
+        or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    )
+    return has_url and has_key
+
+
 @retry(wait=wait, stop=stop_after_attempt(5))
 def embed_text(client: OpenAI, text: str) -> list[float]:
     """
@@ -444,6 +495,144 @@ def upsert_chunk(supabase_client, chunk: Ingestable_Chunk, embedding: list[float
     )
 
 
+def chunk_storage_key(source_path: str | None, chunk_index) -> tuple[str, int] | None:
+    """
+    Normalize a chunk's unique storage key.
+
+    Stale cleanup compares the deterministic `(source_path, chunk_index)` key
+    used by the Supabase upsert constraint rather than comparing row content.
+    """
+
+    if not source_path:
+        return None
+
+    try:
+        return (source_path, int(chunk_index))
+    except (TypeError, ValueError):
+        return None
+
+
+def build_current_chunk_keys(
+    ingestable_chunks: list[Ingestable_Chunk],
+) -> set[tuple[str, int]]:
+    """Build the current valid key set from generated ingestable chunks."""
+
+    keys = set()
+
+    for chunk in ingestable_chunks:
+        key = chunk_storage_key(
+            chunk.metadata.get("source_path"),
+            chunk.metadata.get("chunk_index"),
+        )
+        if key:
+            keys.add(key)
+
+    return keys
+
+
+def fetch_existing_chunk_rows(supabase_client) -> list[dict]:
+    """
+    Read existing RAG chunk identifiers from Supabase in pages.
+
+    Only `id`, `source_path`, and `chunk_index` are needed to determine stale
+    rows and delete them with filtered Supabase Data API calls.
+    """
+
+    rows = []
+    start = 0
+
+    while True:
+        end = start + SUPABASE_SELECT_PAGE_SIZE - 1
+        response = (
+            supabase_client.table("rag_chunks")
+            .select("id,source_path,chunk_index")
+            .range(start, end)
+            .execute()
+        )
+        page = response.data or []
+        rows.extend(page)
+
+        if len(page) < SUPABASE_SELECT_PAGE_SIZE:
+            break
+
+        start += SUPABASE_SELECT_PAGE_SIZE
+
+    return rows
+
+
+def find_stale_chunk_rows(
+    existing_rows: list[dict],
+    current_keys: set[tuple[str, int]],
+) -> list[dict]:
+    """Return database rows that no longer exist in the current knowledge base."""
+
+    stale_rows = []
+
+    for row in existing_rows:
+        key = chunk_storage_key(row.get("source_path"), row.get("chunk_index"))
+        if key and key not in current_keys:
+            stale_rows.append(row)
+
+    return stale_rows
+
+
+def delete_stale_chunk_rows(supabase_client, stale_rows: list[dict]) -> int:
+    """
+    Delete stale RAG chunks by id using filtered Supabase delete calls.
+
+    The Supabase Python API should always delete with filters. Deleting by id
+    avoids complex composite-key filters and keeps each request bounded.
+    """
+
+    stale_ids = [row["id"] for row in stale_rows if row.get("id")]
+
+    for start in range(0, len(stale_ids), STALE_DELETE_BATCH_SIZE):
+        batch_ids = stale_ids[start:start + STALE_DELETE_BATCH_SIZE]
+        (
+            supabase_client.table("rag_chunks")
+            .delete()
+            .in_("id", batch_ids)
+            .execute()
+        )
+
+    return len(stale_ids)
+
+
+def cleanup_stale_chunks(
+    supabase_client,
+    current_keys: set[tuple[str, int]],
+    *,
+    dry_run: bool = False,
+) -> int:
+    """
+    Remove rows for chunks that disappeared from the current full index.
+
+    This runs only after successful upserts in normal ingestion. In dry-run
+    mode it reports the stale count and leaves Supabase untouched.
+    """
+
+    existing_rows = fetch_existing_chunk_rows(supabase_client)
+    stale_rows = find_stale_chunk_rows(existing_rows, current_keys)
+
+    if dry_run:
+        print(
+            "\nDry-run stale cleanup: "
+            f"{len(stale_rows)} row(s) would be deleted from public.rag_chunks."
+        )
+        return len(stale_rows)
+
+    if not stale_rows:
+        print("\nStale cleanup complete. No obsolete rag_chunks rows found.")
+        return 0
+
+    deleted_count = delete_stale_chunk_rows(supabase_client, stale_rows)
+    print(
+        "\nStale cleanup complete. "
+        f"Deleted {deleted_count} obsolete rag_chunks row(s)."
+    )
+    return deleted_count
+
+
 def print_chunk_size_summary(documents: list[dict]) -> None:
     """
     Print chunk counts and largest chunk size for each document.
@@ -487,7 +676,12 @@ def print_sample_chunk(ingestable_chunks: list[Ingestable_Chunk]) -> None:
     print(sample_chunk.page_content[:500])
 
 
-def main(*, limit: int | None = None, dry_run: bool = False):
+def main(
+    *,
+    limit: int | None = None,
+    dry_run: bool = False,
+    skip_cleanup: bool = False,
+):
     """
     Run the full ingestion workflow.
 
@@ -504,14 +698,31 @@ def main(*, limit: int | None = None, dry_run: bool = False):
     print_chunk_size_summary(documents)
 
     ingestable_chunks = create_all_ingestable_chunks(documents)
-    if limit is not None:
+    using_limit = limit is not None
+    if using_limit:
         ingestable_chunks = ingestable_chunks[:limit]
 
     print(f"\nCreated {len(ingestable_chunks)} ingestable chunks")
     print_sample_chunk(ingestable_chunks)
+    current_keys = build_current_chunk_keys(ingestable_chunks)
 
     if dry_run:
         print("\nDry run complete. No embeddings created and no rows written.")
+        if skip_cleanup:
+            print("Stale cleanup skipped because --skip-cleanup was set.")
+        elif using_limit:
+            print("Stale cleanup skipped because --limit is a partial index.")
+        elif has_supabase_env():
+            cleanup_stale_chunks(
+                get_supabase_client(),
+                current_keys,
+                dry_run=True,
+            )
+        else:
+            print(
+                "Dry-run stale cleanup skipped because Supabase credentials "
+                "are not configured."
+            )
         return
 
     openai_client = OpenAI()
@@ -522,6 +733,13 @@ def main(*, limit: int | None = None, dry_run: bool = False):
         upsert_chunk(supabase_client, chunk, embedding)
 
     print(f"\nUpserted {len(ingestable_chunks)} chunks into public.rag_chunks")
+
+    if skip_cleanup:
+        print("Stale cleanup skipped because --skip-cleanup was set.")
+    elif using_limit:
+        print("Stale cleanup skipped because --limit is a partial index.")
+    else:
+        cleanup_stale_chunks(supabase_client, current_keys)
 
 
 if __name__ == "__main__":
@@ -538,6 +756,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Build and inspect chunks without creating embeddings or writing rows",
     )
+    parser.add_argument(
+        "--skip-cleanup",
+        action="store_true",
+        help="Skip stale rag_chunks cleanup after successful upserts",
+    )
     args = parser.parse_args()
 
-    main(limit=args.limit, dry_run=args.dry_run)
+    main(limit=args.limit, dry_run=args.dry_run, skip_cleanup=args.skip_cleanup)

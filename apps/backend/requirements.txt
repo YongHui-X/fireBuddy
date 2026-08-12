@@ -7,3 +7,5 @@ python-dotenv
 supabase
 tenacity
 tqdm
+requests==2.33.1
+pdfplumber==0.11.9

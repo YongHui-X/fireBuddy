@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from config import settings
 from routers.categories import router as categories_router
 from routers.expenses import router as expenses_router
 from routers.rag import router as rag_router
@@ -9,13 +10,10 @@ app = FastAPI(title='FireBuddy API')
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-    ],
+    allow_origins=list(settings.cors_allowed_origins),
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allow_headers=['Authorization', 'Content-Type'],
 )
 
 

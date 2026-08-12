@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType, type FormEvent } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router';
 import type { Session } from '@supabase/supabase-js';
-import { apiRoutes, type RagChatMessage, type RagChatResponse } from '@firebuddy/shared';
+import { type RagChatMessage, type RagChatSource } from '@firebuddy/shared';
 import {
   ArrowDownLeft,
   ArrowLeft,
@@ -70,6 +70,7 @@ import {
   type ChatTopic,
   type Transaction,
 } from '../app/FireBuddyProvider';
+import { askFinancialAdvisor } from '../api';
 
 const Insights = lazy(() => import('./Insights'));
 const navItems = [
@@ -1486,6 +1487,7 @@ function createChatTopic(seedTitle = 'New chat'): ChatTopic {
       },
     ],
     sources: [],
+    sourceDetails: [],
     createdAt: now,
     updatedAt: now,
   };
@@ -1498,7 +1500,12 @@ function loadChatTopics(): ChatTopic[] {
     const stored = window.localStorage.getItem(CHAT_TOPICS_STORAGE_KEY);
     const parsed = stored ? (JSON.parse(stored) as ChatTopic[]) : fallback;
 
-    return parsed.length > 0 ? parsed : fallback;
+    return parsed.length > 0
+      ? parsed.map((topic) => ({
+          ...topic,
+          sourceDetails: topic.sourceDetails ?? [],
+        }))
+      : fallback;
   } catch {
     return fallback;
   }
@@ -1507,6 +1514,10 @@ function loadChatTopics(): ChatTopic[] {
 function getTopicTitle(question: string) {
   const compact = question.replace(/\s+/g, ' ').trim();
   return compact.length > 42 ? `${compact.slice(0, 39)}...` : compact;
+}
+
+function getSourceLabel(source: RagChatSource) {
+  return source.title ?? source.headline ?? source.path ?? source.url ?? 'Unknown source';
 }
 
 function ChatWidget() {
@@ -1523,9 +1534,9 @@ function ChatWidget() {
   const [isAsking, setIsAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
   const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
   const canAsk = question.trim().length > 0 && !isAsking;
+  const { session } = useFireBuddy();
 
   useEffect(() => {
     if (!topics.some((topic) => topic.id === activeTopicId)) {
@@ -1576,6 +1587,7 @@ function ChatWidget() {
         title: isUntitled ? getTopicTitle(trimmedQuestion) : topic.title,
         messages: [...topic.messages, userMessage],
         sources: [],
+        sourceDetails: [],
         updatedAt: new Date().toISOString(),
       };
     });
@@ -1584,27 +1596,21 @@ function ChatWidget() {
     setIsAsking(true);
 
     try {
-      const response = await fetch(`${apiBaseUrl}${apiRoutes.financialAdvisorChat}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question: trimmedQuestion,
-          history,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`RAG service returned ${response.status}`);
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Please sign in before using the FireBuddy advisor.');
       }
 
-      const payload = (await response.json()) as RagChatResponse;
+      const payload = await askFinancialAdvisor(token, {
+        question: trimmedQuestion,
+        history,
+      });
 
       if (!payload.answer) {
         throw new Error('RAG service returned an empty answer');
       }
 
+      const sourceDetails = payload.source_details ?? payload.sourceDetails ?? [];
       updateActiveTopic((topic) => ({
         ...topic,
         messages: [
@@ -1615,6 +1621,7 @@ function ChatWidget() {
           },
         ],
         sources: payload.sources ?? [],
+        sourceDetails,
         updatedAt: new Date().toISOString(),
       }));
     } catch (caughtError) {
@@ -1623,12 +1630,12 @@ function ChatWidget() {
           ? caughtError.message
           : 'Unable to reach the RAG service.';
 
-      setError(
-        `${message}. Start the backend RAG endpoint at ${apiRoutes.financialAdvisorChat}, or set VITE_API_BASE_URL if it is running elsewhere.`,
-      );
+      setError(message);
       updateActiveTopic((topic) => ({
         ...topic,
         messages: topic.messages.filter((messageItem) => messageItem !== userMessage),
+        sources: [],
+        sourceDetails: [],
       }));
     } finally {
       setIsAsking(false);
@@ -1708,13 +1715,26 @@ function ChatWidget() {
           ) : null}
         </div>
 
-        {activeTopic.sources.length > 0 ? (
+        {activeTopic.sourceDetails.length > 0 || activeTopic.sources.length > 0 ? (
           <div className="advisor-sources chat-sources">
             <strong>Sources</strong>
             <ul>
-              {activeTopic.sources.map((source) => (
-                <li key={source}>{source}</li>
-              ))}
+              {activeTopic.sourceDetails.length > 0
+                ? activeTopic.sourceDetails.map((source) => (
+                    <li key={`${source.url ?? source.path ?? getSourceLabel(source)}-${source.headline ?? ''}`}>
+                      {source.url ? (
+                        <a href={source.url} target="_blank" rel="noreferrer">
+                          {getSourceLabel(source)}
+                        </a>
+                      ) : (
+                        getSourceLabel(source)
+                      )}
+                      {source.headline && source.headline !== getSourceLabel(source) ? (
+                        <span>{source.headline}</span>
+                      ) : null}
+                    </li>
+                  ))
+                : activeTopic.sources.map((source) => <li key={source}>{source}</li>)}
             </ul>
           </div>
         ) : null}

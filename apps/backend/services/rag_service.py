@@ -8,7 +8,10 @@ This version performs the first complete RAG flow:
 - return source references for frontend citation display
 """
 
+import hashlib
+import logging
 import os
+import time
 
 from openai import OpenAI
 
@@ -17,8 +20,128 @@ from schemas.rag import AdvisorResponse, AdvisorSource, ChatMessage
 
 
 ANSWER_MODEL = os.getenv("RAG_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
+DEFAULT_RAG_MIN_SIMILARITY = 0.45
 MAX_CONTEXT_CHARS_PER_CHUNK = 1800
 MAX_HISTORY_MESSAGES = 6
+LOW_CONFIDENCE_ANSWER = (
+    "I do not have enough reliable context in the FireBuddy knowledge base "
+    "to answer that. Try asking about CPF, Singapore Savings Bonds, "
+    "MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore "
+    "investing basics."
+)
+OUT_OF_SCOPE_ANSWER = (
+    "I can only help with the Singapore personal-finance topics covered by "
+    "FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, "
+    "IRAS reliefs, investing basics, and FIRE planning."
+)
+SUPPORTED_FINANCE_TERMS = {
+    "account", "allocation", "asset", "bond", "budget", "cash", "cpf",
+    "cpfis", "debt", "emergency fund", "expense", "finance", "financial",
+    "fire", "fund", "income", "insurance", "interest", "invest", "iras",
+    "money", "moneysense", "portfolio", "reit", "relief", "retire", "saving",
+    "srs", "ssb", "tax", "t-bill", "withdrawal",
+}
+OUT_OF_SCOPE_TERMS = {
+    "code", "coding", "diagnose", "football", "legal advice", "medical advice",
+    "movie", "recipe", "sports score", "translate", "weather",
+}
+LIVE_MARKET_TERMS = {"bitcoin", "crypto", "exchange rate", "share price", "stock price"}
+
+logger = logging.getLogger(__name__)
+
+
+def is_clearly_out_of_scope(question: str) -> bool:
+    """Identify obvious unsupported or live-market requests before paid retrieval."""
+
+    normalized = " ".join(question.lower().split())
+    asks_for_live_value = any(
+        term in normalized for term in ("current", "right now", "today", "live")
+    ) and any(term in normalized for term in LIVE_MARKET_TERMS)
+    if asks_for_live_value:
+        return True
+
+    if any(term in normalized for term in SUPPORTED_FINANCE_TERMS):
+        return False
+
+    return any(term in normalized for term in OUT_OF_SCOPE_TERMS)
+
+
+def get_rag_min_similarity() -> float:
+    """
+    Read the minimum retrieval confidence threshold for answer generation.
+
+    `RAG_MIN_SIMILARITY` lets the backend refuse weak retrieval results without
+    changing code. Invalid values fall back to the conservative V1 default.
+    """
+
+    raw_value = os.getenv("RAG_MIN_SIMILARITY", "").strip()
+    if not raw_value:
+        return DEFAULT_RAG_MIN_SIMILARITY
+
+    try:
+        return float(raw_value)
+    except ValueError:
+        logger.warning(
+            "Invalid RAG_MIN_SIMILARITY value; using default",
+            extra={
+                "configured_value_length": len(raw_value),
+                "default": DEFAULT_RAG_MIN_SIMILARITY,
+            },
+        )
+        return DEFAULT_RAG_MIN_SIMILARITY
+
+
+def question_hash(question: str) -> str:
+    """
+    Build a privacy-conscious identifier for request correlation.
+
+    The full question is never logged. A short SHA-256 prefix lets backend logs
+    group repeated questions without exposing the user's wording.
+    """
+
+    return hashlib.sha256(question.encode("utf-8")).hexdigest()[:16]
+
+
+def match_similarity(match: dict) -> float:
+    """Return a numeric similarity value from a retrieval match."""
+
+    try:
+        return float(match.get("similarity") or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def log_rag_event(
+    *,
+    question: str,
+    matches: list[dict],
+    source_count: int,
+    outcome: str,
+    started_at: float,
+) -> None:
+    """
+    Log RAG request metadata without recording the raw user question.
+
+    The fields capture enough information for retrieval debugging: stable
+    question hash, question length, top source paths, top similarities, source
+    count, outcome, and latency.
+    """
+
+    top_matches = matches[:5]
+    log_fields = {
+        "question_hash": question_hash(question),
+        "question_length": len(question),
+        "top_source_paths": [
+            match.get("source_path") for match in top_matches
+        ],
+        "top_similarities": [
+            round(match_similarity(match), 4) for match in top_matches
+        ],
+        "source_count": source_count,
+        "outcome": outcome,
+        "latency_ms": round((time.perf_counter() - started_at) * 1000, 2),
+    }
+    logger.info("rag_advisor_request %s", log_fields, extra=log_fields)
 
 
 def format_source_label(source: AdvisorSource) -> str:
@@ -155,6 +278,15 @@ def generate_grounded_answer(question: str, context: str, history: list[ChatMess
                     "not invent facts, URLs, rates, dates, or source names. "
                     "Preserve numeric values and formulas exactly as they "
                     "appear in the context. "
+                    "For tables, associate each value only with its explicit "
+                    "row and column. Do not invent a breakdown or reuse a "
+                    "number from a different row or column. Omit any table "
+                    "value whose label is ambiguous in the retrieved text. "
+                    "When one percentage applies separately to Ordinary Wages "
+                    "and Additional Wages, state it once as the applicable "
+                    "rate. Never join repeated OW and AW rates with a plus "
+                    "sign because that falsely implies they should be added. "
+                    "Answer only the breakdowns the question asks for. "
                     "Do not give personalized financial advice; provide "
                     "general educational information only. Do not include "
                     "source numbers in the answer; citations are returned "
@@ -177,7 +309,12 @@ def generate_grounded_answer(question: str, context: str, history: list[ChatMess
     return (answer or "").strip()
 
 
-def answer_financial_advisor_question(question: str, history: list[ChatMessage] | None = None):
+def answer_financial_advisor_question(
+    question: str,
+    history: list[ChatMessage] | None = None,
+    *,
+    retrieved_matches: list[dict] | None = None,
+):
     """
     Handle the financial advisor request for the FastAPI route.
 
@@ -185,18 +322,51 @@ def answer_financial_advisor_question(question: str, history: list[ChatMessage] 
     evidence, generate the answer, and package citations for the frontend.
     """
 
+    started_at = time.perf_counter()
     cleaned_question = question.strip()
 
     if not cleaned_question:
+        log_rag_event(
+            question=cleaned_question,
+            matches=[],
+            source_count=0,
+            outcome="empty_question",
+            started_at=started_at,
+        )
         return AdvisorResponse(
             answer="Please ask a question before using the financial advisor.",
             sources=[],
             source_details=[],
         )
 
-    matches = retrieve_chunks(cleaned_question)
+    if is_clearly_out_of_scope(cleaned_question):
+        log_rag_event(
+            question=cleaned_question,
+            matches=[],
+            source_count=0,
+            outcome="out_of_scope_refusal",
+            started_at=started_at,
+        )
+        return AdvisorResponse(
+            answer=OUT_OF_SCOPE_ANSWER,
+            sources=[],
+            source_details=[],
+        )
+
+    matches = (
+        retrieved_matches
+        if retrieved_matches is not None
+        else retrieve_chunks(cleaned_question)
+    )
 
     if not matches:
+        log_rag_event(
+            question=cleaned_question,
+            matches=[],
+            source_count=0,
+            outcome="no_matches",
+            started_at=started_at,
+        )
         return AdvisorResponse(
             answer=(
                 "I could not find relevant information in the FireBuddy "
@@ -206,11 +376,34 @@ def answer_financial_advisor_question(question: str, history: list[ChatMessage] 
             source_details=[],
         )
 
+    top_similarity = match_similarity(matches[0])
     source_details = build_unique_sources(matches)
+
+    if top_similarity < get_rag_min_similarity():
+        log_rag_event(
+            question=cleaned_question,
+            matches=matches,
+            source_count=len(source_details),
+            outcome="low_confidence_refusal",
+            started_at=started_at,
+        )
+        return AdvisorResponse(
+            answer=LOW_CONFIDENCE_ANSWER,
+            sources=[],
+            source_details=[],
+        )
+
     sources = [format_source_label(source) for source in source_details]
     context = format_retrieved_context(matches)
 
     if not context:
+        log_rag_event(
+            question=cleaned_question,
+            matches=matches,
+            source_count=len(source_details),
+            outcome="empty_context",
+            started_at=started_at,
+        )
         return AdvisorResponse(
             answer=(
                 "I found matching records, but they did not contain readable "
@@ -221,6 +414,14 @@ def answer_financial_advisor_question(question: str, history: list[ChatMessage] 
         )
 
     answer = generate_grounded_answer(cleaned_question, context, history)
+
+    log_rag_event(
+        question=cleaned_question,
+        matches=matches,
+        source_count=len(source_details),
+        outcome="answered",
+        started_at=started_at,
+    )
 
     return AdvisorResponse(
         answer=answer,

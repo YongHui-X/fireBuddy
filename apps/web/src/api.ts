@@ -4,6 +4,8 @@ import {
   type CreateCategoryInput,
   type CreateExpenseInput,
   type Expense,
+  type RagChatRequest,
+  type RagChatResponse,
   type UpdateCategoryInput,
   type UpdateExpenseInput,
 } from '@firebuddy/shared';
@@ -92,5 +94,12 @@ export function updateCategory(token: string, id: string, input: UpdateCategoryI
 export function deleteCategory(token: string, id: string) {
   return request<void>(`${apiRoutes.categories}/${id}`, token, {
     method: 'DELETE',
+  });
+}
+
+export function askFinancialAdvisor(token: string, input: RagChatRequest) {
+  return request<RagChatResponse>(apiRoutes.financialAdvisorChat, token, {
+    method: 'POST',
+    body: JSON.stringify(input),
   });
 }

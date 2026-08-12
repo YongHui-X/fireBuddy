@@ -1,0 +1,263 @@
+[
+  {
+    "id": "cpf_contribution_rates_2026_employee",
+    "question": "What are the CPF contribution rates for employees in 2026?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-contribution-rates-2026.md"],
+    "expected_topics": ["cpf-contribution-rates-2026"],
+    "tags": ["cpf", "contributions", "2026"]
+  },
+  {
+    "id": "cpf_allocation_rates_2026_ordinary_special_medisave",
+    "question": "How are CPF contributions allocated across Ordinary, Special, Retirement, and MediSave accounts in 2026?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-allocation-rates-2026.md"],
+    "expected_topics": ["cpf-allocation-rates-2026"],
+    "tags": ["cpf", "allocation", "2026"]
+  },
+  {
+    "id": "cpf_retirement_sums_basic_full_enhanced",
+    "question": "What are the Basic, Full, and Enhanced Retirement Sums for CPF retirement planning?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-retirement-sums.md"],
+    "expected_topics": ["cpf-retirement-sums"],
+    "tags": ["cpf", "retirement", "retirement-sums"]
+  },
+  {
+    "id": "cpf_life_payout_examples",
+    "question": "Where can I find CPF LIFE payout examples for different retirement sums?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-life-payout-examples.md"],
+    "expected_topics": ["cpf-life-payout-examples"],
+    "tags": ["cpf", "cpf-life", "retirement-income"]
+  },
+  {
+    "id": "cpfis_investment_products",
+    "question": "What investment products can be included under CPFIS?",
+    "expected_source_paths": ["markdown-cache/cpf/cpfis-investment-products.md"],
+    "expected_topics": ["cpfis-investment-products"],
+    "tags": ["cpf", "cpfis", "investing"]
+  },
+  {
+    "id": "cpfis_instruments_limits",
+    "question": "What limits apply when investing CPF savings through CPFIS instruments?",
+    "expected_source_paths": ["markdown-cache/cpf/cpfis-instruments-and-limits.md"],
+    "expected_topics": ["cpfis-instruments-and-limits"],
+    "tags": ["cpf", "cpfis", "limits"]
+  },
+  {
+    "id": "cpf_investing_safer_sequence",
+    "question": "How should a Singapore investor think about CPF before investing cash?",
+    "expected_source_paths": [
+      "manual/investing/investing-in-singapore.md",
+      "markdown-cache/cpf/cpfis-investment-products.md"
+    ],
+    "expected_topics": ["investing", "cpfis-investment-products"],
+    "tags": ["cpf", "investing", "singapore"]
+  },
+  {
+    "id": "cpf_retirement_income_context",
+    "question": "How does CPF LIFE fit into retirement income planning in Singapore?",
+    "expected_source_paths": [
+      "markdown-cache/cpf/cpf-life-payout-examples.md",
+      "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+    ],
+    "expected_topics": ["cpf-life-payout-examples", "retirement-booklet-english-2024"],
+    "tags": ["cpf", "retirement", "moneysense"]
+  },
+  {
+    "id": "cpf_retirement_age_planning",
+    "question": "What CPF topics should I review when planning for retirement in Singapore?",
+    "expected_source_paths": [
+      "markdown-cache/cpf/cpf-retirement-sums.md",
+      "manual/fire/fire-planning-singapore.md"
+    ],
+    "expected_topics": ["cpf-retirement-sums", "fire"],
+    "tags": ["cpf", "retirement", "fire"]
+  },
+  {
+    "id": "cpf_contribution_allocation_understanding",
+    "question": "Why might my CPF contribution not all go into the same CPF account?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-allocation-rates-2026.md"],
+    "expected_topics": ["cpf-allocation-rates-2026"],
+    "tags": ["cpf", "allocation", "contributions"]
+  },
+  {
+    "id": "mas_ssb_faq_redemption",
+    "question": "How does redeeming a Singapore Savings Bond work?",
+    "expected_source_paths": ["markdown-cache/mas/singapore-savings-bonds-faqs.md"],
+    "expected_topics": ["singapore-savings-bonds-faqs"],
+    "tags": ["mas", "ssb", "redemption"]
+  },
+  {
+    "id": "mas_ssb_factsheet_interest",
+    "question": "What should I know about Singapore Savings Bond interest before buying?",
+    "expected_source_paths": [
+      "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+      "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+    ],
+    "expected_topics": ["singapore-savings-bonds-factsheet", "singapore-savings-bonds-faqs"],
+    "tags": ["mas", "ssb", "interest"]
+  },
+  {
+    "id": "mas_ssb_safe_cash_allocation",
+    "question": "Are Singapore Savings Bonds useful for lower-risk cash allocation?",
+    "expected_source_paths": [
+      "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+      "manual/investing/investing-in-singapore.md"
+    ],
+    "expected_topics": ["singapore-savings-bonds-factsheet", "investing"],
+    "tags": ["mas", "ssb", "investing"]
+  },
+  {
+    "id": "mas_ssb_application_basics",
+    "question": "What are the basics of applying for Singapore Savings Bonds?",
+    "expected_source_paths": ["markdown-cache/mas/singapore-savings-bonds-faqs.md"],
+    "expected_topics": ["singapore-savings-bonds-faqs"],
+    "tags": ["mas", "ssb", "application"]
+  },
+  {
+    "id": "mas_ssb_vs_general_investing",
+    "question": "How are Singapore Savings Bonds different from equity investing?",
+    "expected_source_paths": [
+      "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+      "manual/investing/investing-in-singapore.md"
+    ],
+    "expected_topics": ["singapore-savings-bonds-factsheet", "investing"],
+    "tags": ["mas", "ssb", "equities"]
+  },
+  {
+    "id": "moneysense_basic_financial_planning_steps",
+    "question": "What basic steps does MoneySense recommend for financial planning?",
+    "expected_source_paths": [
+      "markdown-cache/moneysense/basic-financial-planning-guide.md",
+      "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+    ],
+    "expected_topics": [
+      "basic-financial-planning-guide",
+      "basic-financial-planning-guide-faqs"
+    ],
+    "tags": ["moneysense", "planning", "basics"]
+  },
+  {
+    "id": "moneysense_financial_planning_faq",
+    "question": "Where can I find frequently asked questions about basic financial planning in Singapore?",
+    "expected_source_paths": ["markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"],
+    "expected_topics": ["basic-financial-planning-guide-faqs"],
+    "tags": ["moneysense", "planning", "faq"]
+  },
+  {
+    "id": "moneysense_retirement_booklet",
+    "question": "What does MoneySense say about preparing for retirement?",
+    "expected_source_paths": ["markdown-cache/moneysense/retirement-booklet-english-2024.md"],
+    "expected_topics": ["retirement-booklet-english-2024"],
+    "tags": ["moneysense", "retirement"]
+  },
+  {
+    "id": "moneysense_emergency_fund",
+    "question": "How should I think about an emergency fund before investing?",
+    "expected_source_paths": [
+      "markdown-cache/moneysense/basic-financial-planning-guide.md",
+      "manual/investing/investing-in-singapore.md"
+    ],
+    "expected_topics": ["basic-financial-planning-guide", "investing"],
+    "tags": ["moneysense", "emergency-fund", "investing"]
+  },
+  {
+    "id": "moneysense_insurance_before_investing",
+    "question": "Why does basic financial planning include insurance before wealth building?",
+    "expected_source_paths": [
+      "markdown-cache/moneysense/basic-financial-planning-guide.md",
+      "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+    ],
+    "expected_topics": [
+      "basic-financial-planning-guide",
+      "basic-financial-planning-guide-faqs"
+    ],
+    "tags": ["moneysense", "insurance", "planning"]
+  },
+  {
+    "id": "iras_tax_relief_individuals",
+    "question": "What individual income tax relief information is available from IRAS?",
+    "expected_source_paths": ["markdown-cache/iras/tax-relief-individuals.md"],
+    "expected_topics": ["tax-relief-individuals"],
+    "tags": ["iras", "tax", "relief"]
+  },
+  {
+    "id": "iras_tax_relief_retirement_planning",
+    "question": "How do tax reliefs relate to retirement planning in Singapore?",
+    "expected_source_paths": [
+      "markdown-cache/iras/tax-relief-individuals.md",
+      "manual/fire/fire-planning-singapore.md"
+    ],
+    "expected_topics": ["tax-relief-individuals", "fire"],
+    "tags": ["iras", "tax", "retirement"]
+  },
+  {
+    "id": "iras_relief_personal_finance",
+    "question": "Which source should I consult for Singapore individual tax relief rules?",
+    "expected_source_paths": ["markdown-cache/iras/tax-relief-individuals.md"],
+    "expected_topics": ["tax-relief-individuals"],
+    "tags": ["iras", "tax", "rules"]
+  },
+  {
+    "id": "fire_number_singapore",
+    "question": "How do I think about my FIRE number in Singapore?",
+    "expected_source_paths": [
+      "manual/fire/FIRE.md",
+      "manual/fire/fire-planning-singapore.md"
+    ],
+    "expected_topics": ["fire"],
+    "tags": ["fire", "planning", "singapore"]
+  },
+  {
+    "id": "fire_with_cpf",
+    "question": "How should CPF be considered in a Singapore FIRE plan?",
+    "expected_source_paths": [
+      "manual/fire/fire-planning-singapore.md",
+      "markdown-cache/cpf/cpf-retirement-sums.md"
+    ],
+    "expected_topics": ["fire", "cpf-retirement-sums"],
+    "tags": ["fire", "cpf", "retirement"]
+  },
+  {
+    "id": "fire_expense_tracking",
+    "question": "Why is expense tracking important for FIRE planning?",
+    "expected_source_paths": [
+      "manual/fire/FIRE.md",
+      "manual/fire/fire-planning-singapore.md"
+    ],
+    "expected_topics": ["fire"],
+    "tags": ["fire", "expenses", "planning"]
+  },
+  {
+    "id": "fire_with_safe_assets",
+    "question": "How might lower-risk assets fit into a FIRE portfolio in Singapore?",
+    "expected_source_paths": [
+      "manual/fire/fire-planning-singapore.md",
+      "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+    ],
+    "expected_topics": ["fire", "singapore-savings-bonds-factsheet"],
+    "tags": ["fire", "ssb", "portfolio"]
+  },
+  {
+    "id": "singapore_investing_basics",
+    "question": "What are sensible investing basics for someone in Singapore?",
+    "expected_source_paths": ["manual/investing/investing-in-singapore.md"],
+    "expected_topics": ["investing"],
+    "tags": ["investing", "singapore", "basics"]
+  },
+  {
+    "id": "singapore_investing_etfs",
+    "question": "How should a Singapore investor think about ETFs?",
+    "expected_source_paths": ["manual/investing/investing-in-singapore.md"],
+    "expected_topics": ["investing"],
+    "tags": ["investing", "etf", "singapore"]
+  },
+  {
+    "id": "singapore_investing_order_of_operations",
+    "question": "What order should I consider for saving, CPF, insurance, and investing?",
+    "expected_source_paths": [
+      "manual/investing/investing-in-singapore.md",
+      "markdown-cache/moneysense/basic-financial-planning-guide.md"
+    ],
+    "expected_topics": ["investing", "basic-financial-planning-guide"],
+    "tags": ["investing", "cpf", "planning"]
+  }
+]

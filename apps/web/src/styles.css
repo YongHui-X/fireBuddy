@@ -1236,6 +1236,17 @@ select:focus {
   line-height: 1.5;
 }
 
+.advisor-sources a {
+  color: var(--primaryDark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.advisor-sources li span {
+  display: block;
+  color: var(--text-muted);
+}
+
 .advisor-error {
   margin: 0;
   border-top: 1px solid #f4b6b6;

@@ -19,8 +19,10 @@ Markdown documents
 -> Supabase rag_chunks upsert
 ```
 
-Retrieval is wired as a smoke-test CLI in `answer.py`. Final answer generation
-is not wired yet.
+The live advisor service in `apps/backend/services/rag_service.py` performs
+retrieval and generates grounded answers only when context clears the configured
+similarity threshold. `Implementation/answer.py` is a thin command-line entry
+point over that same production service, not a second RAG implementation.
 
 ## Decisions
 
@@ -125,13 +127,95 @@ forward slashes.
   vectors work with the pgvector `ivfflat` index.
 - Added `ingest.py --dry-run` and `ingest.py --limit` for safe smoke tests.
 - Successfully ingested the current 94 deterministic chunks into Supabase.
-- Added `answer.py` retrieval smoke testing against the Supabase RPC.
+- Added `answer.py` end-to-end command-line testing through the production
+  retrieval and answer service.
+- Added `apps/backend/rag/evaluation/rag_questions.json` with 30 seed
+  retrieval questions across CPF, MAS, MoneySense, IRAS, FIRE, and Singapore
+  investing context.
+- Added `apps/backend/rag/evaluation/eval_retrieval.py` for top-5 retrieval
+  hit-rate checks. It prints misses, retrieved paths, topics, and similarities,
+  and exits nonzero when any required source-path case fails.
+- Added `RAG_MIN_SIMILARITY`, defaulting to `0.45`, so the advisor refuses weak
+  retrieval results before calling the chat model.
+- Added privacy-conscious RAG request logs with question hash, question length,
+  top source paths, top similarities, source count, outcome, and latency. The
+  raw question text is not logged.
+- Added stale index cleanup after successful full ingestion. The cleanup compares
+  current `(source_path, chunk_index)` keys with existing `rag_chunks` rows and
+  deletes obsolete rows by id. Use `--skip-cleanup` to disable it. Cleanup is
+  skipped automatically when `--limit` is used.
+- Added paragraph overlap for oversized deterministic chunks and unit coverage
+  for overlap and maximum chunk size.
+- Added persisted retrieval reports with Hit@k, Precision@k, Recall@k, MAP@k,
+  nDCG@k, and MRR calculated over unique document paths.
+- Added append-only report history. Major retrieval and answer runs create
+  immutable Version 1, Version 2, and later JSON and Markdown artifacts, while
+  the `*_latest` files remain convenience copies of the newest version.
+- Added final-answer evaluation covering required concepts, exact numeric facts,
+  citation recall, groundedness, correctness, and out-of-scope refusal behavior.
+- Protected the advisor route with Supabase authentication, per-user rate
+  limiting, bounded request fields, and sanitized upstream failure responses.
+- Added explicit CORS configuration through `CORS_ALLOWED_ORIGINS`.
+- Added a Supabase migration that enables RLS and restricts `rag_chunks` and
+  `match_rag_chunks` to backend service-role clients.
+- Added backend and RAG tests to CI and repaired the scheduled knowledge-base
+  refresh paths for the current monorepo.
+
+## Latest Live Results
+
+Retrieval results across 30 representative questions:
+
+- Hit@1: `0.6000`
+- Hit@3: `0.9667`
+- Hit@5: `1.0000`
+- Recall@5: `0.8500`
+- MAP@5: `0.6694`
+- nDCG@5: `0.7467`
+- MRR: `0.7861`
+
+Answer results across six supported questions and six out-of-scope questions:
+
+- Overall pass rate: `1.0000`
+- Refusal accuracy: `1.0000`
+- Required concept coverage: `1.0000`
+- Exact numeric accuracy: `1.0000`
+- Citation recall: `0.9444`
+- Judge factual correctness: `1.0000`
+- Judge groundedness: `0.9667`
+
+## RAG V1 Checks
+
+Run local unit and syntax checks from the repo root:
+
+```powershell
+python -m unittest discover apps/backend/tests
+python -m py_compile apps/backend/services/rag_service.py apps/backend/rag/retrieval.py apps/backend/rag/Implementation/ingest.py apps/backend/rag/Implementation/answer.py apps/backend/rag/evaluation/report_history.py apps/backend/rag/evaluation/eval_retrieval.py apps/backend/rag/evaluation/eval_answers.py
+```
+
+Run the live retrieval eval after configuring `apps/backend/.env` with
+`OPENAI_API_KEY`, `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` or
+`SUPABASE_SERVICE_ROLE_KEY`:
+
+```powershell
+python apps/backend/rag/evaluation/eval_retrieval.py
+python apps/backend/rag/evaluation/eval_answers.py
+python apps/backend/rag/Implementation/answer.py "What is CPF?"
+```
+
+Add `--run-label "Description"` when recording a named major run. The shared
+history index is written to `apps/backend/rag/evaluation/results/README.md`.
+
+## V1 Non-Goals
+
+This hardening pass intentionally does not add hybrid search, reranking, RAGAS,
+Langfuse, guardrail frameworks, or vector database migration. Those should be
+considered only after the initial retrieval eval results show where V1 fails.
 
 ## Follow-Up Work
 
 - Decide whether deterministic empty summaries are sufficient after retrieval
   tests, or whether guarded LLM-generated summaries improve recall.
-- Add retrieval tests with representative Singapore finance questions.
-- Add final answer generation from retrieved chunks.
-- Add guarded knowledge-base refresh monitoring and regression alerts before
-  considering agentic routing or self-healing behavior.
+- Improve first-rank source authority before adding hybrid search or reranking.
+- Replace the in-memory rate limiter with shared storage before running multiple
+  backend workers or instances.
+- Add regression thresholds and alerts around the persisted evaluation reports.

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "cpf_2026_contribution_rate",
+    "question": "For an employee aged 55 or below earning above $750, what are the total and employee CPF contribution rates from January 2026, and what is the Ordinary Wage ceiling?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-contribution-rates-2026.md"],
+    "required_concepts": [["total cpf", "total contribution"], ["employee share", "employee's share", "employee contribution", "employee cpf contribution"], ["ordinary wage", "ow ceiling"]],
+    "required_numbers": ["37", "20", "8000"],
+    "reference_answer": "From 1 January 2026, the total CPF rate is 37%, the employee share is 20%, and the Ordinary Wage ceiling is $8,000 for this age and wage band.",
+    "expected_refusal": false
+  },
+  {
+    "id": "moneysense_emergency_fund",
+    "question": "How many months of expenses does MoneySense suggest for an emergency fund, and should that money be placed in the stock market?",
+    "expected_source_paths": ["markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"],
+    "required_concepts": [["emergency fund", "emergency funds"], ["stock market", "equities"]],
+    "required_numbers": ["3", "6"],
+    "reference_answer": "MoneySense describes at least 3 to 6 months of expenses as a general rule of thumb and advises keeping emergency funds readily accessible rather than investing them in the stock market.",
+    "expected_refusal": false
+  },
+  {
+    "id": "iras_relief_cap",
+    "question": "What overall cap applies to personal income tax reliefs per Year of Assessment according to the IRAS material?",
+    "expected_source_paths": ["markdown-cache/iras/tax-relief-individuals.md"],
+    "required_concepts": [["personal income tax relief", "personal relief"], ["year of assessment", "ya"]],
+    "required_numbers": ["80000"],
+    "reference_answer": "The overall personal income tax relief cap is $80,000 per Year of Assessment.",
+    "expected_refusal": false
+  },
+  {
+    "id": "cpfis_protected_balances",
+    "question": "How much of my CPF Ordinary Account and Special Account cannot be used for CPFIS investments?",
+    "expected_source_paths": ["markdown-cache/cpf/cpfis-instruments-and-limits.md", "manual/investing/investing-in-singapore.md"],
+    "required_concepts": [["ordinary account", "oa"], ["special account", "sa"], ["cannot be invested", "cannot be used", "protected", "restriction"]],
+    "required_numbers": ["20000", "40000"],
+    "reference_answer": "The first $20,000 in the Ordinary Account and the first $40,000 in the Special Account are protected from CPFIS investment use.",
+    "expected_refusal": false
+  },
+  {
+    "id": "srs_contribution_caps",
+    "question": "What are the annual SRS contribution caps for Singapore Citizens or PRs and for foreigners?",
+    "expected_source_paths": ["manual/investing/investing-in-singapore.md"],
+    "required_concepts": [["citizens", "citizen", "prs", "permanent residents"], ["foreigners", "foreigner"], ["annual", "per year"]],
+    "required_numbers": ["15300", "35700"],
+    "reference_answer": "The annual SRS contribution cap is $15,300 for Singapore Citizens and PRs and $35,700 for foreigners.",
+    "expected_refusal": false
+  },
+  {
+    "id": "ssb_holding_and_liquidity",
+    "question": "What is the individual Singapore Savings Bond holding limit, and can the bonds generally be redeemed early?",
+    "expected_source_paths": ["manual/investing/investing-in-singapore.md", "markdown-cache/mas/singapore-savings-bonds-faqs.md", "markdown-cache/mas/singapore-savings-bonds-factsheet.md"],
+    "required_concepts": [["holding limit", "hold up to", "individual limit"], ["redeem", "redemption"], ["accrued interest", "no penalty"]],
+    "required_numbers": ["200000"],
+    "reference_answer": "An individual can hold up to $200,000 of Singapore Savings Bonds and can generally redeem them early with accrued interest and no early-exit penalty.",
+    "expected_refusal": false
+  },
+  {
+    "id": "out_of_scope_weather",
+    "question": "What will the weather be in Singapore tomorrow?",
+    "expected_source_paths": [],
+    "required_concepts": [],
+    "required_numbers": [],
+    "reference_answer": "The advisor should refuse because weather is outside the FireBuddy knowledge base.",
+    "expected_refusal": true
+  },
+  {
+    "id": "out_of_scope_recipe",
+    "question": "Give me a chicken rice recipe.",
+    "expected_source_paths": [],
+    "required_concepts": [],
+    "required_numbers": [],
+    "reference_answer": "The advisor should refuse because recipes are outside the FireBuddy knowledge base.",
+    "expected_refusal": true
+  },
+  {
+    "id": "out_of_scope_medical",
+    "question": "Can you diagnose my persistent chest pain and recommend medicine?",
+    "expected_source_paths": [],
+    "required_concepts": [],
+    "required_numbers": [],
+    "reference_answer": "The advisor should refuse because medical diagnosis is outside the FireBuddy knowledge base.",
+    "expected_refusal": true
+  },
+  {
+    "id": "out_of_scope_legal",
+    "question": "Give me legal advice for contesting a criminal charge.",
+    "expected_source_paths": [],
+    "required_concepts": [],
+    "required_numbers": [],
+    "reference_answer": "The advisor should refuse because legal advice is outside the FireBuddy knowledge base.",
+    "expected_refusal": true
+  },
+  {
+    "id": "out_of_scope_coding",
+    "question": "Write Python code for a multiplayer game server.",
+    "expected_source_paths": [],
+    "required_concepts": [],
+    "required_numbers": [],
+    "reference_answer": "The advisor should refuse because coding is outside the FireBuddy knowledge base.",
+    "expected_refusal": true
+  },
+  {
+    "id": "unsupported_live_crypto_price",
+    "question": "What is the live Bitcoin price right now?",
+    "expected_source_paths": [],
+    "required_concepts": [],
+    "required_numbers": [],
+    "reference_answer": "The advisor should refuse because FireBuddy does not provide live market prices.",
+    "expected_refusal": true
+  }
+]

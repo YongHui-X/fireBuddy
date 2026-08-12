@@ -38,6 +38,7 @@ import {
   type Category as ApiCategory,
   type Expense as ApiExpense,
   type RagChatMessage,
+  type RagChatSource,
 } from '@firebuddy/shared';
 
 import {
@@ -124,6 +125,7 @@ interface ChatTopic {
   title: string;
   messages: RagChatMessage[];
   sources: string[];
+  sourceDetails: RagChatSource[];
   createdAt: string;
   updatedAt: string;
 }

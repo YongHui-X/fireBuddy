@@ -1,9 +1,8 @@
 """
 Shared retrieval helpers for the FireBuddy RAG pipeline.
 
-Both the FastAPI service and the CLI smoke test use this module so the
-embedding model, Supabase RPC call, and source metadata handling stay in one
-place.
+The production advisor service uses this module so embedding, Supabase RPC,
+and source metadata handling stay separate from answer generation.
 """
 
 import os
