@@ -59,6 +59,7 @@ class ReportHistoryTests(unittest.TestCase):
             self.assertIn("### Version 1: Baseline", history)
             self.assertIn("### Version 2: Improved retrieval", history)
             self.assertIn("| ndcg@5 | 0.8000 |", history)
+            self.assertNotIn("  \n", second.markdown_path.read_text(encoding="utf-8"))
 
     def test_existing_version_artifact_is_never_overwritten(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

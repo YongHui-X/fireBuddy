@@ -9,6 +9,9 @@ import {
 } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
+  Award,
+  Banknote,
+  Briefcase,
   Bus,
   Camera,
   Car,
@@ -27,6 +30,8 @@ import {
   Laptop,
   MapPin,
   Plane,
+  Percent,
+  Shapes,
   Shirt,
   ShoppingBag,
   Smartphone,
@@ -35,24 +40,29 @@ import {
   Utensils,
 } from 'lucide-react';
 import {
+  type Account as ApiAccount,
+  type AccountType as ApiAccountType,
   type Category as ApiCategory,
-  type Expense as ApiExpense,
-  type RagChatMessage,
-  type RagChatSource,
+  type Transaction as ApiTransaction,
+  type TransactionType,
 } from '@firebuddy/shared';
 
 import {
+  createAccount,
   createCategory,
-  createExpense,
+  createTransaction,
+  deleteAccount as deleteApiAccount,
   deleteCategory as deleteApiCategory,
-  deleteExpense as deleteApiExpense,
+  deleteTransaction as deleteApiTransaction,
   getCategories,
-  getExpenses,
+  getAccounts,
+  getTransactions,
+  updateAccount as updateApiAccount,
   updateCategory as updateApiCategory,
-  updateExpense as updateApiExpense,
+  updateTransaction as updateApiTransaction,
 } from '../api';
 import { hasSupabaseConfig, supabase } from '../supabase';
-type AccountType = 'bank' | 'credit_card' | 'debit_card' | 'cash' | 'ewallet';
+type AccountType = ApiAccountType;
 type IconComponent = ComponentType<{ size?: number; strokeWidth?: number }>;
 
 interface Transaction {
@@ -61,7 +71,8 @@ interface Transaction {
   amount: number;
   category: string;
   date: string;
-  account?: string;
+  account: string;
+  transactionType: TransactionType;
 }
 
 interface Category {
@@ -70,6 +81,7 @@ interface Category {
   color: string;
   icon: string;
   monthlyBudget: number;
+  categoryType: TransactionType;
   isDefault?: boolean;
 }
 
@@ -79,6 +91,7 @@ interface Account {
   type: AccountType;
   color: string;
   lastFour?: string;
+  isDefault?: boolean;
 }
 
 interface AppNotification {
@@ -97,18 +110,22 @@ interface AppContextValue {
   authError: string | null;
   syncStatus: 'idle' | 'loading' | 'ready' | 'error';
   syncError: string | null;
+  demoMode: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  clearAuthError: () => void;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<Transaction>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
-  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<Category>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
-  addAccount: (account: Omit<Account, 'id'>) => void;
-  updateAccount: (id: string, updates: Partial<Account>) => void;
-  deleteAccount: (id: string) => void;
+  addAccount: (account: Omit<Account, 'id'>) => Promise<Account>;
+  updateAccount: (id: string, updates: Partial<Account>) => Promise<void>;
+  deleteAccount: (id: string) => Promise<void>;
   getCategoryById: (id: string) => Category | undefined;
   getAccountById: (id: string) => Account | undefined;
   getMonthlySpend: (categoryId: string, month?: string) => number;
@@ -119,16 +136,6 @@ interface AppContextValue {
 }
 
 type ThemeMode = 'light' | 'dark';
-
-interface ChatTopic {
-  id: string;
-  title: string;
-  messages: RagChatMessage[];
-  sources: string[];
-  sourceDetails: RagChatSource[];
-  createdAt: string;
-  updatedAt: string;
-}
 
 function getDeviceDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -211,7 +218,12 @@ const categoryIconOptions = [
   { id: 'tech', label: 'Tech', icon: Laptop },
   { id: 'banking', label: 'Banking', icon: Landmark },
   { id: 'others', label: 'Others', icon: CircleHelp },
-  { id: 'income', label: 'Income', icon: TrendingUp },
+  { id: 'shapes', label: 'Others', icon: Shapes },
+  { id: 'salary', label: 'Salary', icon: Briefcase },
+  { id: 'bonus', label: 'Bonus', icon: Award },
+  { id: 'dividends', label: 'Dividends', icon: TrendingUp },
+  { id: 'interest', label: 'Interest', icon: Percent },
+  { id: 'income', label: 'Other income', icon: Banknote },
 ] as const satisfies readonly { id: string; label: string; icon: IconComponent }[];
 
 const categoryIconsById = new Map<string, IconComponent>(
@@ -226,21 +238,40 @@ const legacyCategoryIconIds: Record<string, string> = {
   HC: 'health',
   EN: 'entertainment',
   TV: 'travel',
-  OT: 'others',
-  IN: 'income',
+  OT: 'shapes',
   NW: 'others',
 };
 
+const demoCategoryIds = {
+  food: '00000000-0000-4000-8000-000000000001',
+  transport: '00000000-0000-4000-8000-000000000002',
+  shopping: '00000000-0000-4000-8000-000000000003',
+  utilities: '00000000-0000-4000-8000-000000000004',
+  health: '00000000-0000-4000-8000-000000000005',
+  entertainment: '00000000-0000-4000-8000-000000000006',
+  travel: '00000000-0000-4000-8000-000000000007',
+  others: '00000000-0000-4000-8000-000000000008',
+  salary: '00000000-0000-4000-8000-000000000009',
+  bonus: '00000000-0000-4000-8000-000000000010',
+  dividends: '00000000-0000-4000-8000-000000000011',
+  interest: '00000000-0000-4000-8000-000000000012',
+  otherIncome: '00000000-0000-4000-8000-000000000013',
+} as const;
+
 const initialCategories: Category[] = [
-  { id: 'food', name: 'Food & Drink', color: '#3C8A61', icon: 'food', monthlyBudget: 600, isDefault: true },
-  { id: 'transport', name: 'Transport', color: '#67B47C', icon: 'transport', monthlyBudget: 250, isDefault: true },
-  { id: 'shopping', name: 'Shopping', color: '#E5B24A', icon: 'shopping', monthlyBudget: 300, isDefault: true },
-  { id: 'utilities', name: 'Bills & Utilities', color: '#7BAA90', icon: 'utilities', monthlyBudget: 150, isDefault: true },
-  { id: 'health', name: 'Healthcare', color: '#2E9B57', icon: 'health', monthlyBudget: 150, isDefault: true },
-  { id: 'entertainment', name: 'Entertainment', color: '#8BB89D', icon: 'entertainment', monthlyBudget: 200, isDefault: true },
-  { id: 'travel', name: 'Travel', color: '#25543D', icon: 'travel', monthlyBudget: 400, isDefault: true },
-  { id: 'others', name: 'Others', color: '#A8D3B7', icon: 'others', monthlyBudget: 200, isDefault: true },
-  { id: 'income', name: 'Income', color: '#25543D', icon: 'income', monthlyBudget: 0, isDefault: true },
+  { id: demoCategoryIds.food, name: 'Food & Drink', color: '#3C8A61', icon: 'food', monthlyBudget: 600, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.transport, name: 'Transport', color: '#67B47C', icon: 'transport', monthlyBudget: 250, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.shopping, name: 'Shopping', color: '#E5B24A', icon: 'shopping', monthlyBudget: 300, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.utilities, name: 'Bills & Utilities', color: '#7BAA90', icon: 'utilities', monthlyBudget: 150, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.health, name: 'Healthcare', color: '#2E9B57', icon: 'health', monthlyBudget: 150, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.entertainment, name: 'Entertainment', color: '#8BB89D', icon: 'entertainment', monthlyBudget: 200, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.travel, name: 'Travel', color: '#25543D', icon: 'travel', monthlyBudget: 400, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.others, name: 'Others', color: '#A8D3B7', icon: 'shapes', monthlyBudget: 200, categoryType: 'expense', isDefault: true },
+  { id: demoCategoryIds.salary, name: 'Salary', color: '#3C8A61', icon: 'salary', monthlyBudget: 0, categoryType: 'income', isDefault: true },
+  { id: demoCategoryIds.bonus, name: 'Bonus', color: '#E5B24A', icon: 'bonus', monthlyBudget: 0, categoryType: 'income', isDefault: true },
+  { id: demoCategoryIds.dividends, name: 'Dividends', color: '#67B47C', icon: 'dividends', monthlyBudget: 0, categoryType: 'income', isDefault: true },
+  { id: demoCategoryIds.interest, name: 'Interest', color: '#7BAA90', icon: 'interest', monthlyBudget: 0, categoryType: 'income', isDefault: true },
+  { id: demoCategoryIds.otherIncome, name: 'Other income', color: '#A8D3B7', icon: 'income', monthlyBudget: 0, categoryType: 'income', isDefault: true },
 ];
 
 const initialAccounts: Account[] = [
@@ -252,16 +283,15 @@ const initialAccounts: Account[] = [
 ];
 
 const initialTransactions: Transaction[] = [
-  { id: '1', description: 'Hawker Centre lunch', amount: -8.5, category: 'food', date: '2026-04-14', account: 'grabpay' },
-  { id: '2', description: 'MRT Bishan to City Hall', amount: -1.82, category: 'transport', date: '2026-04-14', account: 'dbs_savings' },
-  { id: '3', description: 'April salary', amount: 6500, category: 'income', date: '2026-04-14', account: 'dbs_savings' },
-  { id: '4', description: 'Cold Storage groceries', amount: -67.4, category: 'food', date: '2026-04-13', account: 'dbs_altitude' },
-  { id: '5', description: 'Grab ride home', amount: -12.5, category: 'transport', date: '2026-04-13', account: 'grabpay' },
-  { id: '6', description: 'Netflix subscription', amount: -10.98, category: 'entertainment', date: '2026-04-13', account: 'dbs_altitude' },
-  { id: '7', description: 'Watsons pharmacy', amount: -22.9, category: 'health', date: '2026-04-12', account: 'dbs_altitude' },
-  { id: '8', description: 'Uniqlo Orchard', amount: -79, category: 'shopping', date: '2026-04-12', account: 'dbs_altitude' },
-  { id: '9', description: 'SP utilities bill', amount: -98.4, category: 'utilities', date: '2026-04-11', account: 'ocbc_360' },
-  { id: '10', description: 'Dividends STI ETF', amount: 248.5, category: 'income', date: '2026-04-01', account: 'dbs_savings' },
+  { id: '00000000-0000-4000-9000-000000001000', description: 'Monthly salary', amount: 5200, category: demoCategoryIds.salary, date: '2026-04-15', account: 'dbs_savings', transactionType: 'income' },
+  { id: '00000000-0000-4000-9000-000000001001', description: 'Hawker Centre lunch', amount: -8.5, category: demoCategoryIds.food, date: '2026-04-14', account: 'grabpay', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001002', description: 'MRT Bishan to City Hall', amount: -1.82, category: demoCategoryIds.transport, date: '2026-04-14', account: 'dbs_savings', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001004', description: 'Cold Storage groceries', amount: -67.4, category: demoCategoryIds.food, date: '2026-04-13', account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001005', description: 'Grab ride home', amount: -12.5, category: demoCategoryIds.transport, date: '2026-04-13', account: 'grabpay', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001006', description: 'Netflix subscription', amount: -10.98, category: demoCategoryIds.entertainment, date: '2026-04-13', account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001007', description: 'Watsons pharmacy', amount: -22.9, category: demoCategoryIds.health, date: '2026-04-12', account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001008', description: 'Uniqlo Orchard', amount: -79, category: demoCategoryIds.shopping, date: '2026-04-12', account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001009', description: 'SP utilities bill', amount: -98.4, category: demoCategoryIds.utilities, date: '2026-04-11', account: 'ocbc_360', transactionType: 'expense' },
 ];
 
 function mapApiCategory(category: ApiCategory): Category {
@@ -271,17 +301,31 @@ function mapApiCategory(category: ApiCategory): Category {
     color: category.color || colors.primary,
     icon: category.icon || 'others',
     monthlyBudget: Number(category.monthlyBudget) || 0,
+    categoryType: category.categoryType,
     isDefault: category.isDefault,
   };
 }
 
-function mapApiExpense(expense: ApiExpense): Transaction {
+function mapApiTransaction(transaction: ApiTransaction): Transaction {
   return {
-    id: expense.id,
-    description: expense.description || 'Unnamed expense',
-    amount: -Math.abs(Number(expense.amount)),
-    category: expense.categoryId ?? '',
-    date: expense.date,
+    id: transaction.id,
+    description: transaction.description || `Unnamed ${transaction.transactionType}`,
+    amount: transaction.transactionType === 'income' ? Math.abs(Number(transaction.amount)) : -Math.abs(Number(transaction.amount)),
+    category: transaction.categoryId ?? '',
+    date: transaction.date,
+    account: transaction.accountId,
+    transactionType: transaction.transactionType,
+  };
+}
+
+function mapApiAccount(account: ApiAccount): Account {
+  return {
+    id: account.id,
+    name: account.name,
+    type: account.type,
+    color: account.color,
+    lastFour: account.lastFour ?? undefined,
+    isDefault: account.isDefault,
   };
 }
 
@@ -326,29 +370,13 @@ const netWorthHistory = [
   { month: 'Apr', netWorth: 124850, invested: 98400, cash: 26450 },
 ];
 
-const monthlyCashflow = [
-  { month: 'Nov', income: 7520, expenses: 3810, savings: 3710 },
-  { month: 'Dec', income: 8240, expenses: 4220, savings: 4020 },
-  { month: 'Jan', income: 7800, expenses: 3640, savings: 4160 },
-  { month: 'Feb', income: 7800, expenses: 3490, savings: 4310 },
-  { month: 'Mar', income: 8050, expenses: 3720, savings: 4330 },
-  { month: 'Apr', income: 8048, expenses: 2448, savings: 5600 },
-];
-
-const CHAT_TOPICS_STORAGE_KEY = 'firebuddy_chat_topics_v1';
-const CHAT_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_chat_active_topic_v1';
 const THEME_STORAGE_KEY = 'firebuddy_theme_v1';
-const CHAT_GREETING =
-  'Ask me about CPF, SRS, HDB grants, retirement sums, Singapore Savings Bonds, or FIRE planning in Singapore.';
-const CHAT_PROMPTS = [
-  'What are the CPF contribution rates for 2026?',
-  'How do Basic, Full, and Enhanced Retirement Sum differ?',
-  'Can I use CPFIS to invest my CPF savings?',
-  'What should a Singapore FIRE plan consider before age 55?',
-];
+const TRANSACTIONS_STORAGE_KEY = 'firebuddy_web_transactions_v3';
+const CATEGORIES_STORAGE_KEY = 'firebuddy_web_categories_v3';
 const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true';
 const missingSupabaseConfigMessage =
   'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY. Add them to apps/web/.env.local, or set VITE_SKIP_AUTH=true for local demo mode.';
+const demoAccountResetMessage = 'Password resets are disabled for the FireBuddy demo account.';
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -361,13 +389,41 @@ function loadStored<T>(key: string, fallback: T): T {
   }
 }
 
+// Restores an explicit choice first, then follows the device preference on a first visit.
 function loadThemeMode(): ThemeMode {
   try {
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === 'dark' || stored === 'light' ? stored : 'light';
+    if (stored === 'dark' || stored === 'light') {
+      return stored;
+    }
+
+    return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
   } catch {
     return 'light';
   }
+}
+
+// Keeps the shared demo account credentials unchanged throughout FireBuddy's recovery UI.
+function isDemoAccountEmail(email: string | null | undefined) {
+  const demoAccountEmail = (import.meta.env.VITE_DEMO_ACCOUNT_EMAIL ?? '').trim().toLowerCase();
+  return Boolean(demoAccountEmail) && email?.trim().toLowerCase() === demoAccountEmail;
+}
+
+function normalizeStoredTransactions(items: Transaction[]): Transaction[] {
+  return items.map((transaction) => ({
+    ...transaction,
+    transactionType: transaction.transactionType ?? (transaction.amount > 0 ? 'income' : 'expense'),
+  }));
+}
+
+function normalizeStoredCategories(items: Category[]): Category[] {
+  return items.map((category) => ({
+    ...category,
+    categoryType: category.categoryType ?? 'expense',
+    icon: category.name === 'Others' && category.icon === 'others' ? 'shapes' : category.icon,
+  }));
 }
 
 function formatSGD(value: number, digits = 2) {
@@ -402,8 +458,45 @@ function formatDateLabel(value: string) {
   });
 }
 
-function getAuthErrorMessage(message: string) {
-  if (message.toLowerCase().includes('email address') && message.toLowerCase().includes('invalid')) {
+// Converts Supabase and browser network errors into safe, actionable auth messages.
+function getAuthErrorMessage(error: unknown) {
+  const message = typeof error === 'string'
+    ? error
+    : error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String(error.message)
+        : 'Authentication failed. Please try again.';
+  const code = typeof error === 'object' && error !== null && 'code' in error
+    ? String(error.code)
+    : '';
+  const normalizedMessage = message.toLowerCase();
+
+  if (code === 'invalid_credentials' || normalizedMessage.includes('invalid login credentials')) {
+    return 'Incorrect email or password.';
+  }
+
+  if (code === 'email_not_confirmed' || normalizedMessage.includes('email not confirmed')) {
+    return 'Confirm your email before signing in.';
+  }
+
+  if (
+    code === 'over_request_rate_limit' ||
+    normalizedMessage.includes('rate limit') ||
+    normalizedMessage.includes('too many requests')
+  ) {
+    return 'Too many sign-in attempts. Wait a moment and try again.';
+  }
+
+  if (
+    normalizedMessage.includes('failed to fetch') ||
+    normalizedMessage.includes('fetch failed') ||
+    normalizedMessage.includes('network request failed')
+  ) {
+    return 'Unable to reach FireBuddy right now. Check your connection and try again.';
+  }
+
+  if (normalizedMessage.includes('email address') && normalizedMessage.includes('invalid')) {
     return 'Supabase rejected that email address. Try another email address you can access.';
   }
 
@@ -456,13 +549,13 @@ function accountTypeLabel(type: AccountType) {
 
 function AppProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    sortTransactionsNewestFirst(loadStored('firebuddy_web_transactions_v2', initialTransactions)),
+    sortTransactionsNewestFirst(normalizeStoredTransactions(loadStored(TRANSACTIONS_STORAGE_KEY, initialTransactions))),
   );
   const [categories, setCategories] = useState<Category[]>(() =>
-    loadStored('firebuddy_web_categories_v2', initialCategories),
+    normalizeStoredCategories(loadStored(CATEGORIES_STORAGE_KEY, initialCategories)),
   );
   const [accounts, setAccounts] = useState<Account[]>(() =>
-    loadStored('firebuddy_web_accounts_v2', initialAccounts),
+    skipAuth ? loadStored('firebuddy_web_accounts_v2', initialAccounts) : [],
   );
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => loadThemeMode());
   const [session, setSession] = useState<Session | null>(null);
@@ -527,14 +620,19 @@ function AppProvider({ children }: { children: ReactNode }) {
     setSyncStatus('loading');
     setSyncError(null);
 
-    Promise.all([getCategories(session.access_token), getExpenses(session.access_token)])
-      .then(([apiCategories, apiExpenses]) => {
+    Promise.all([
+      getCategories(session.access_token),
+      getAccounts(session.access_token),
+      getTransactions(session.access_token),
+    ])
+      .then(([apiCategories, apiAccounts, apiTransactions]) => {
         if (!isActive) {
           return;
         }
 
         setCategories(apiCategories.map(mapApiCategory));
-        setTransactions(sortTransactionsNewestFirst(apiExpenses.map(mapApiExpense)));
+        setAccounts(apiAccounts.map(mapApiAccount));
+        setTransactions(sortTransactionsNewestFirst(apiTransactions.map(mapApiTransaction)));
         setSyncStatus('ready');
       })
       .catch((error: unknown) => {
@@ -552,15 +650,17 @@ function AppProvider({ children }: { children: ReactNode }) {
   }, [session]);
 
   useEffect(() => {
-    window.localStorage.setItem('firebuddy_web_transactions_v2', JSON.stringify(transactions));
+    window.localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
   }, [transactions]);
 
   useEffect(() => {
-    window.localStorage.setItem('firebuddy_web_categories_v2', JSON.stringify(categories));
+    window.localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
   }, [categories]);
 
   useEffect(() => {
-    window.localStorage.setItem('firebuddy_web_accounts_v2', JSON.stringify(accounts));
+    if (skipAuth) {
+      window.localStorage.setItem('firebuddy_web_accounts_v2', JSON.stringify(accounts));
+    }
   }, [accounts]);
 
   useEffect(() => {
@@ -592,6 +692,22 @@ function AppProvider({ children }: { children: ReactNode }) {
       return accounts.find((account) => account.id === id);
     }
 
+    // Applies the same friendly error handling to every Supabase auth request.
+    async function runAuthRequest<T extends { error: unknown }>(request: () => Promise<T>) {
+      try {
+        const result = await request();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        return result;
+      } catch (error) {
+        setAuthError(getAuthErrorMessage(error));
+        throw error;
+      }
+    }
+
     return {
       transactions,
       categories,
@@ -602,6 +718,7 @@ function AppProvider({ children }: { children: ReactNode }) {
       authError,
       syncStatus,
       syncError,
+      demoMode: skipAuth,
       signIn: async (email, password) => {
         setAuthError(null);
         if (!supabase) {
@@ -609,12 +726,9 @@ function AppProvider({ children }: { children: ReactNode }) {
           throw new Error(missingSupabaseConfigMessage);
         }
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          setAuthError(getAuthErrorMessage(error.message));
-          throw error;
-        }
+        const auth = supabase.auth;
+        await runAuthRequest(() => auth.signInWithPassword({ email, password }));
+        notify('You have successfully signed in.');
       },
       signUp: async (email, password) => {
         setAuthError(null);
@@ -623,12 +737,46 @@ function AppProvider({ children }: { children: ReactNode }) {
           throw new Error(missingSupabaseConfigMessage);
         }
 
-        const { error } = await supabase.auth.signUp({ email, password });
-
-        if (error) {
-          setAuthError(getAuthErrorMessage(error.message));
-          throw error;
+        const auth = supabase.auth;
+        await runAuthRequest(() => auth.signUp({ email, password }));
+      },
+      requestPasswordReset: async (email) => {
+        setAuthError(null);
+        if (!supabase) {
+          setAuthError(missingSupabaseConfigMessage);
+          throw new Error(missingSupabaseConfigMessage);
         }
+
+        if (isDemoAccountEmail(email)) {
+          setAuthError(demoAccountResetMessage);
+          throw new Error(demoAccountResetMessage);
+        }
+
+        const auth = supabase.auth;
+        await runAuthRequest(() => auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        }));
+      },
+      updatePassword: async (password) => {
+        setAuthError(null);
+        if (!supabase) {
+          setAuthError(missingSupabaseConfigMessage);
+          throw new Error(missingSupabaseConfigMessage);
+        }
+
+        if (!session) {
+          const message = 'This password reset link is invalid or has expired.';
+          setAuthError(message);
+          throw new Error(message);
+        }
+
+        if (isDemoAccountEmail(session.user.email)) {
+          setAuthError(demoAccountResetMessage);
+          throw new Error(demoAccountResetMessage);
+        }
+
+        const auth = supabase.auth;
+        await runAuthRequest(() => auth.updateUser({ password }));
       },
       signOut: async () => {
         setAuthError(null);
@@ -637,29 +785,29 @@ function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const { error } = await supabase.auth.signOut();
-
-        if (error) {
-          setAuthError(error.message);
-          throw error;
-        }
+        const auth = supabase.auth;
+        await runAuthRequest(() => auth.signOut());
       },
+      clearAuthError: () => setAuthError(null),
       addTransaction: async (transaction) => {
-        let nextTransaction = { ...transaction, id: `txn_${Date.now()}` };
+        let nextTransaction: Transaction = { ...transaction, id: crypto.randomUUID() };
 
         if (session) {
-          const savedExpense = await createExpense(session.access_token, {
+          const savedTransaction = await createTransaction(session.access_token, {
             categoryId: transaction.category || null,
+            accountId: transaction.account,
             description: transaction.description,
             amount: Math.abs(transaction.amount).toFixed(2),
             date: transaction.date,
+            transactionType: transaction.transactionType,
           });
 
-          nextTransaction = mapApiExpense(savedExpense);
+          nextTransaction = mapApiTransaction(savedTransaction);
         }
 
         setTransactions((current) => sortTransactionsNewestFirst([nextTransaction, ...current]));
         notify('Transaction has been added.');
+        return nextTransaction;
       },
       updateTransaction: async (id, updates) => {
         if (session) {
@@ -670,16 +818,15 @@ function AppProvider({ children }: { children: ReactNode }) {
           }
 
           const nextTransaction = { ...currentTransaction, ...updates };
-          const savedExpense = await updateApiExpense(session.access_token, id, {
+          const savedTransaction = await updateApiTransaction(session.access_token, id, {
             categoryId: nextTransaction.category || null,
+            accountId: nextTransaction.account,
             description: nextTransaction.description,
             amount: Math.abs(nextTransaction.amount).toFixed(2),
             date: nextTransaction.date,
+            transactionType: nextTransaction.transactionType,
           });
-          const syncedTransaction = {
-            ...mapApiExpense(savedExpense),
-            account: nextTransaction.account,
-          };
+          const syncedTransaction = mapApiTransaction(savedTransaction);
 
           setTransactions((current) =>
             sortTransactionsNewestFirst(
@@ -699,7 +846,7 @@ function AppProvider({ children }: { children: ReactNode }) {
       },
       deleteTransaction: async (id) => {
         if (session) {
-          await deleteApiExpense(session.access_token, id);
+          await deleteApiTransaction(session.access_token, id);
         }
 
         setTransactions((current) => current.filter((transaction) => transaction.id !== id));
@@ -712,22 +859,19 @@ function AppProvider({ children }: { children: ReactNode }) {
             icon: category.icon,
             color: category.color,
             monthlyBudget: String(category.monthlyBudget),
+            categoryType: category.categoryType,
           });
 
-          setCategories((current) => [...current, mapApiCategory(savedCategory)]);
+          const nextCategory = mapApiCategory(savedCategory);
+          setCategories((current) => [...current, nextCategory]);
           notify('Category has been added.');
-          return;
+          return nextCategory;
         }
 
-        setCategories((current) => [
-          ...current,
-          {
-            ...category,
-            id: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${Date.now()}`,
-            isDefault: false,
-          },
-        ]);
+        const nextCategory = { ...category, id: crypto.randomUUID(), isDefault: false };
+        setCategories((current) => [...current, nextCategory]);
         notify('Category has been added.');
+        return nextCategory;
       },
       updateCategory: async (id, updates) => {
         if (session) {
@@ -741,6 +885,7 @@ function AppProvider({ children }: { children: ReactNode }) {
             icon: updates.icon ?? currentCategory.icon,
             color: updates.color ?? currentCategory.color,
             monthlyBudget: String(updates.monthlyBudget ?? currentCategory.monthlyBudget),
+            categoryType: updates.categoryType ?? currentCategory.categoryType,
           });
 
           setCategories((current) =>
@@ -763,7 +908,8 @@ function AppProvider({ children }: { children: ReactNode }) {
         notify('Category has been updated.');
       },
       deleteCategory: async (id) => {
-        if (id === 'income') {
+        const category = categories.find((item) => item.id === id);
+        if (category?.isDefault) {
           return;
         }
 
@@ -774,15 +920,48 @@ function AppProvider({ children }: { children: ReactNode }) {
         setCategories((current) => current.filter((category) => category.id !== id));
         notify('Category has been deleted.');
       },
-      addAccount: (account) => {
-        setAccounts((current) => [...current, { ...account, id: `acc_${Date.now()}` }]);
+      addAccount: async (account) => {
+        if (session) {
+          const savedAccount = await createAccount(session.access_token, {
+            name: account.name,
+            type: account.type,
+            color: account.color,
+            lastFour: account.lastFour ?? null,
+          });
+          const nextAccount = mapApiAccount(savedAccount);
+          setAccounts((current) => [...current, nextAccount]);
+          notify('Account has been added.');
+          return nextAccount;
+        }
+
+        const nextAccount = { ...account, id: crypto.randomUUID(), isDefault: false };
+        setAccounts((current) => [...current, nextAccount]);
         notify('Account has been added.');
+        return nextAccount;
       },
-      updateAccount: (id, updates) => {
+      updateAccount: async (id, updates) => {
+        if (session) {
+          const savedAccount = await updateApiAccount(session.access_token, id, {
+            ...(updates.name !== undefined ? { name: updates.name } : {}),
+            ...(updates.type !== undefined ? { type: updates.type } : {}),
+            ...(updates.color !== undefined ? { color: updates.color } : {}),
+            ...(updates.lastFour !== undefined ? { lastFour: updates.lastFour || null } : {}),
+          });
+          setAccounts((current) =>
+            current.map((account) => (account.id === id ? mapApiAccount(savedAccount) : account)),
+          );
+          notify('Account has been updated.');
+          return;
+        }
+
         setAccounts((current) => current.map((account) => (account.id === id ? { ...account, ...updates } : account)));
         notify('Account has been updated.');
       },
-      deleteAccount: (id) => {
+      deleteAccount: async (id) => {
+        if (session) {
+          await deleteApiAccount(session.access_token, id);
+        }
+
         setAccounts((current) => current.filter((account) => account.id !== id));
         notify('Account has been deleted.');
       },
@@ -790,8 +969,12 @@ function AppProvider({ children }: { children: ReactNode }) {
       getAccountById,
       getMonthlySpend: (categoryId, month = getDeviceMonthKey()) =>
         transactions
-          .filter((transaction) => transaction.category === categoryId && transaction.date.startsWith(month))
-          .filter((transaction) => transaction.amount < 0)
+          .filter(
+            (transaction) =>
+              transaction.category === categoryId &&
+              transaction.transactionType === 'expense' &&
+              transaction.date.startsWith(month),
+          )
           .reduce((total, transaction) => total + Math.abs(transaction.amount), 0),
       themeMode,
       setThemeMode,
@@ -817,10 +1000,6 @@ function useFireBuddy() {
 
 export {
   AppProvider,
-  CHAT_ACTIVE_TOPIC_STORAGE_KEY,
-  CHAT_GREETING,
-  CHAT_PROMPTS,
-  CHAT_TOPICS_STORAGE_KEY,
   accountTypeLabel,
   categoryColors,
   categoryIconOptions,
@@ -835,7 +1014,6 @@ export {
   getDeviceDateKey,
   getDeviceMonthKey,
   initialCategories,
-  monthlyCashflow,
   netWorthHistory,
   polarPoint,
   legacyCategoryIconIds,
@@ -843,4 +1021,4 @@ export {
   useFireBuddy,
 };
 
-export type { Account, AccountType, AppContextValue, AppNotification, Category, ChatTopic, IconComponent, ThemeMode, Transaction };
+export type { Account, AccountType, AppContextValue, AppNotification, Category, IconComponent, ThemeMode, Transaction };

@@ -75,6 +75,14 @@ class Settings:
             "ADVISOR_RATE_LIMIT_WINDOW_SECONDS",
             60,
         )
+        self.ai_suggestion_rate_limit_requests = read_positive_int(
+            "AI_SUGGESTION_RATE_LIMIT_REQUESTS",
+            10,
+        )
+        self.ai_suggestion_rate_limit_window_seconds = read_positive_int(
+            "AI_SUGGESTION_RATE_LIMIT_WINDOW_SECONDS",
+            60,
+        )
 
 
 settings = Settings()

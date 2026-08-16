@@ -1,9 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType, type FormEvent } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router';
 import type { Session } from '@supabase/supabase-js';
-import { type RagChatMessage, type RagChatSource } from '@firebuddy/shared';
+import { type TransactionType } from '@firebuddy/shared';
 import {
-  ArrowDownLeft,
   ArrowLeft,
   ArrowLeftRight,
   ArrowUpRight,
@@ -12,24 +11,18 @@ import {
   Building2,
   Check,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   CircleHelp,
   CreditCard,
   Database,
-  Download,
   Filter,
   Grid2X2,
   HelpCircle,
   Home,
   Lock,
   LogOut,
-  Maximize2,
   MessageSquare,
-  Minimize2,
-  MoreHorizontal,
   Moon,
-  PanelLeft,
   Pencil,
   Plus,
   Search,
@@ -44,10 +37,6 @@ import {
   X,
 } from 'lucide-react';
 import {
-  CHAT_ACTIVE_TOPIC_STORAGE_KEY,
-  CHAT_GREETING,
-  CHAT_PROMPTS,
-  CHAT_TOPICS_STORAGE_KEY,
   accountTypeLabel,
   categoryColors,
   categoryIconOptions,
@@ -67,23 +56,30 @@ import {
   type Account,
   type AccountType,
   type Category,
-  type ChatTopic,
   type Transaction,
 } from '../app/FireBuddyProvider';
-import { askFinancialAdvisor } from '../api';
+import { EmberMark, FireBuddyMark } from '../app/BrandMarks';
+import { getDisplayName } from '../app/displayName';
 
 const Insights = lazy(() => import('./Insights'));
+const Ember = lazy(() => import('./Ember'));
 const navItems = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
   { path: '/categories', icon: Grid2X2, label: 'Categories' },
-  { path: '/insights', icon: Download, label: 'Insights' },
+  { path: '/profile', icon: User, label: 'Profile' },
+] as const;
+const secondaryNavItems = [
+  { path: '/ember', icon: MessageSquare, label: 'Ember' },
 ] as const;
 const categoryBudgetInputPattern = /^\d{0,8}(?:\.\d{0,2})?$/;
 
 function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { session, signOut, notify } = useFireBuddy();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     function preventBackspaceNavigation(event: KeyboardEvent) {
@@ -115,12 +111,32 @@ function Layout() {
     });
   }
 
+  /** Sign out through Supabase while keeping the sidebar action responsive. */
+  async function handleSignOut() {
+    if (isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      setShowLogoutDialog(false);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Unable to sign out.');
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
+
   return (
     <div className="figma-app-root">
       <aside className="desktop-sidebar">
         <div className="sidebar-logo">
-          <h1>FireBuddy</h1>
-          <p>SG FIRE Tracker</p>
+          <FireBuddyMark className="sidebar-brand-mark" size={38} />
+          <div>
+            <h1>FireBuddy</h1>
+            <p>SG FIRE Tracker</p>
+          </div>
         </div>
 
         <nav className="desktop-nav" aria-label="Primary">
@@ -129,14 +145,30 @@ function Layout() {
           ))}
         </nav>
 
-        <button className="sidebar-add-button button-press" type="button" onClick={openAddTransaction}>
-          <Plus size={16} strokeWidth={2} />
-          Add Transaction
-        </button>
-        <button className="sidebar-profile-button" type="button" onClick={() => navigate('/profile')}>
-          <User size={16} strokeWidth={1.8} />
-          Profile
-        </button>
+        <nav className="desktop-nav desktop-secondary-nav" aria-label="Guides">
+          <span className="desktop-nav-label">Guide</span>
+          {secondaryNavItems.map((item) => (
+            <SidebarNavItem key={item.path} {...item} />
+          ))}
+        </nav>
+
+        <div className="sidebar-actions">
+          {session ? (
+            <button
+              className="sidebar-logout-button"
+              type="button"
+              onClick={() => setShowLogoutDialog(true)}
+              disabled={isSigningOut}
+            >
+              <LogOut size={16} strokeWidth={1.9} />
+              {isSigningOut ? 'Logging out...' : 'Log out'}
+            </button>
+          ) : null}
+          <button className="sidebar-add-button button-press" type="button" onClick={openAddTransaction}>
+            <Plus size={16} strokeWidth={2} />
+            Add Transaction
+          </button>
+        </div>
       </aside>
 
       <div className="app-container">
@@ -146,17 +178,65 @@ function Layout() {
               <Route index element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="categories" element={<Categories />} />
-              <Route path="profile" element={<Profile />} />
+              <Route path="profile" element={<Profile onRequestLogout={() => setShowLogoutDialog(true)} />} />
               <Route path="insights" element={<Suspense fallback={<InsightsFallback />}><Insights /></Suspense>} />
               <Route path="analytics" element={<Navigate to="/insights" replace />} />
               <Route path="accounts" element={<Accounts />} />
+              <Route path="ember" element={<Suspense fallback={<EmberFallback />}><Ember /></Suspense>} />
             </Routes>
           </div>
           <MobileNav />
         </div>
       </div>
-      <ChatWidget />
       <CrudToast />
+      <LogoutConfirmationDialog
+        isOpen={showLogoutDialog}
+        isSigningOut={isSigningOut}
+        onCancel={() => setShowLogoutDialog(false)}
+        onConfirm={() => void handleSignOut()}
+      />
+    </div>
+  );
+}
+
+type LogoutConfirmationDialogProps = {
+  isOpen: boolean;
+  isSigningOut: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+/** Ask for confirmation before ending the current authenticated session. */
+function LogoutConfirmationDialog({
+  isOpen,
+  isSigningOut,
+  onCancel,
+  onConfirm,
+}: LogoutConfirmationDialogProps) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="sheet-backdrop">
+      <aside
+        className="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <h3 id="logout-dialog-title">Log out?</h3>
+        <p id="logout-dialog-description">Are you sure you want to log out of FireBuddy?</p>
+        <div className="sheet-actions">
+          <button className="secondary-button" type="button" onClick={onCancel} disabled={isSigningOut}>
+            Cancel
+          </button>
+          <button className="danger-button" type="button" onClick={onConfirm} disabled={isSigningOut}>
+            {isSigningOut ? 'Logging out...' : 'Log out'}
+          </button>
+        </div>
+      </aside>
     </div>
   );
 }
@@ -274,11 +354,12 @@ function Dashboard() {
   const sortedTransactions = sortTransactionsNewestFirst(transactions);
   const monthTransactions = sortedTransactions.filter((transaction) => transaction.date.startsWith(currentMonthKey));
   const totalExpenses = monthTransactions
-    .filter((transaction) => transaction.amount < 0)
+    .filter((transaction) => transaction.transactionType === 'expense')
     .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
   const totalIncome = monthTransactions
-    .filter((transaction) => transaction.amount > 0)
-    .reduce((total, transaction) => total + transaction.amount, 0);
+    .filter((transaction) => transaction.transactionType === 'income')
+    .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
+  const displayName = getDisplayName(session?.user);
   const firePercent = (fireData.currentNetWorth / fireData.targetNetWorth) * 100;
   const recent = sortedTransactions.slice(0, 5);
   const activeEditingTransaction = editingTransaction
@@ -291,7 +372,7 @@ function Dashboard() {
         <div className="header-row">
           <div>
             <p className="header-greeting">Good afternoon,</p>
-            <h2>{fireData.name}</h2>
+            <h2>{displayName}</h2>
           </div>
           <div className="header-actions">
             <button
@@ -319,22 +400,22 @@ function Dashboard() {
         <article className="balance-card card-hover-subtle">
           <div className="balance-top">
             <div>
-              <p className="card-label">Total Balance</p>
-              <h1>{formatSGD(fireData.currentNetWorth, 0)}</h1>
+              <p className="card-label">This month's tracked spending</p>
+              <h1>{formatSGD(totalExpenses, 0)}</h1>
             </div>
-            <button className="plain-icon-button" type="button" aria-label="More">
-              <MoreHorizontal size={22} />
+            <button className="text-button" type="button" onClick={() => navigate('/insights')}>
+              View insights
             </button>
           </div>
 
           <div className="balance-stats">
             <div className="balance-stat">
-              <span className="round-icon">
-                <ArrowDownLeft size={18} />
+              <span className="round-icon income-icon">
+                <Banknote size={18} />
               </span>
-              <div className="balance-income">
+              <div>
                 <p>Income</p>
-                <strong>{formatSGD(totalIncome, 0)}</strong>
+                <strong className="amount-positive">+ {formatSGD(totalIncome)}</strong>
               </div>
             </div>
             <div className="balance-stat">
@@ -343,13 +424,13 @@ function Dashboard() {
               </span>
               <div className="balance-expenses">
                 <p>Expenses</p>
-                <strong>{formatSGD(totalExpenses, 0)}</strong>
+                <strong>- {formatSGD(totalExpenses)}</strong>
               </div>
             </div>
           </div>
         </article>
 
-        <div className="dashboard-top-grid">
+        <div className="dashboard-top-grid dashboard-widget-grid">
           <article className="white-card spending-breakdown-card">
             <div className="section-title-row">
               <h3>Spending breakdown</h3>
@@ -363,8 +444,8 @@ function Dashboard() {
           <article className="white-card fire-card">
             <div className="section-title-row">
               <div>
-                <p className="eyebrow">FIRE progress</p>
-                <h3>Target snapshot</h3>
+                <p className="eyebrow">Illustrative FIRE progress</p>
+                <h3>Illustrative snapshot</h3>
               </div>
               <strong>{firePercent.toFixed(1)}%</strong>
             </div>
@@ -378,11 +459,52 @@ function Dashboard() {
               <StatPill label="FIRE year" value={String(fireData.projectedFireYear)} />
             </div>
           </article>
+
+          <article className="white-card account-summary-card">
+            <div className="section-title-row">
+              <div>
+                <p className="eyebrow">Accounts</p>
+                <h3>Your payment accounts</h3>
+              </div>
+              <button className="text-button" type="button" onClick={() => navigate('/accounts')}>
+                Manage
+              </button>
+            </div>
+            {accounts.length > 0 ? (
+              <ul className="dashboard-account-list">
+                {accounts.slice(0, 3).map((account) => (
+                  <li key={account.id}>
+                    <span className="dashboard-account-icon" style={{ backgroundColor: account.color }}>
+                      <WalletCards size={16} aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>{account.name}</strong>
+                      <small>{accountTypeLabel(account.type)}{account.lastFour ? ` · ${account.lastFour}` : ''}</small>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="dashboard-empty-copy">Add an account to organise where transactions are paid from.</p>
+            )}
+          </article>
+
+          <article className="ember-home-card">
+            <span className="ember-home-icon"><EmberMark size={28} /></span>
+            <div>
+              <p className="eyebrow">Meet Ember</p>
+              <h3>Ask about CPF, CPFIS, Singapore Savings Bonds, IRAS reliefs, and FIRE planning</h3>
+            </div>
+            <button className="secondary-button" type="button" onClick={() => navigate('/ember')}>
+              Open Ember
+              <ChevronRight size={16} aria-hidden="true" />
+            </button>
+          </article>
         </div>
 
         <section className="content-section transactions-history-section">
           <div className="section-title-row">
-            <h3>Transactions History</h3>
+            <h3>Recent transactions</h3>
             <button className="text-button" type="button" onClick={() => navigate('/transactions')}>
               See all
             </button>
@@ -491,21 +613,29 @@ function TransactionRow({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
-  const amountClass = transaction.amount > 0 ? 'amount-positive' : 'amount-negative';
-  const className = variant === 'compact' ? 'transaction-item' : 'transaction-card';
+  const isIncome = transaction.transactionType === 'income';
+  const amountClass = isIncome ? 'amount-positive' : 'amount-negative';
+  const className = [
+    variant === 'compact' ? 'transaction-item' : 'transaction-card',
+    isIncome ? 'transaction-income' : 'transaction-expense',
+  ].join(' ');
   const content = (
     <>
       <CategoryAvatar category={category} />
       <div className="transaction-copy">
         <strong>{transaction.description}</strong>
-        <span>
-          {formatDateLabel(transaction.date)} {'\u00B7'} {category?.name ?? 'Category'} {'\u00B7'} {getAccountMeta(account)}
-        </span>
+        <div className="transaction-meta-row">
+          <span className={`transaction-type-badge ${isIncome ? 'transaction-type-income' : 'transaction-type-expense'}`}>
+            {isIncome ? 'Income' : 'Expense'}
+          </span>
+          <span>
+            {formatDateLabel(transaction.date)} {'\u00B7'} {category?.name ?? 'Category'} {'\u00B7'} {getAccountMeta(account)}
+          </span>
+        </div>
       </div>
       <div className="transaction-amount-actions">
         <strong className={amountClass}>
-          {transaction.amount > 0 ? '+ ' : '- '}
-          {formatSGD(transaction.amount)}
+          {isIncome ? '+' : '-'} {formatSGD(transaction.amount)}
         </strong>
         {onEdit ? (
           <button
@@ -562,11 +692,11 @@ function TransactionRow({
 function MiniCategoryChart() {
   const { transactions, categories } = useFireBuddy();
   const chartData = categories
-    .filter((category) => category.id !== 'income')
+    .filter((category) => category.categoryType === 'expense')
     .map((category) => ({
       name: category.name,
       value: transactions
-        .filter((transaction) => transaction.category === category.id && transaction.amount < 0)
+        .filter((transaction) => transaction.category === category.id && transaction.transactionType === 'expense')
         .reduce((total, transaction) => total + Math.abs(transaction.amount), 0),
       color: category.color,
     }));
@@ -695,7 +825,10 @@ function Transactions() {
   }, [filteredTransactions]);
 
   const monthTotal = filteredTransactions
-    .filter((transaction) => transaction.amount < 0)
+    .filter((transaction) => transaction.transactionType === 'expense')
+    .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
+  const incomeTotal = filteredTransactions
+    .filter((transaction) => transaction.transactionType === 'income')
     .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
   const activeEditingTransaction = editingTransaction
     ? transactions.find((transaction) => transaction.id === editingTransaction.id) ?? editingTransaction
@@ -780,9 +913,13 @@ function Transactions() {
 
       <section className="screen-content">
         <article className="summary-strip">
-          <div>
-            <span>Filtered spend</span>
-            <strong>{formatSGD(monthTotal)}</strong>
+          <div className="summary-expense">
+            <span>Filtered expenses</span>
+            <strong className="amount-negative">- {formatSGD(monthTotal)}</strong>
+          </div>
+          <div className="summary-income">
+            <span>Filtered income</span>
+            <strong className="amount-positive">+ {formatSGD(incomeTotal)}</strong>
           </div>
         </article>
 
@@ -927,19 +1064,19 @@ function TransactionSheet({
   const [date, setDate] = useState(transaction.date);
   const [category, setCategory] = useState(transaction.category);
   const [account, setAccount] = useState(transaction.account ?? accounts[0]?.id ?? '');
+  const [transactionType, setTransactionType] = useState<TransactionType>(transaction.transactionType);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const availableCategories = useMemo(
-    () =>
+    () => (
       session
         ? categories.filter((item) => item.isDefault || /^[0-9a-f-]{36}$/i.test(item.id) || /^\d+$/.test(item.id))
-        : categories,
-    [categories, session],
+        : categories
+    ).filter((item) => item.categoryType === transactionType),
+    [categories, session, transactionType],
   );
-  const selectedCategory = availableCategories.find((item) => item.id === category);
-  const isIncome = selectedCategory?.name.toLowerCase() === 'income';
   const isBusy = isSaving || isDeleting;
 
   useEffect(() => {
@@ -953,12 +1090,23 @@ function TransactionSheet({
     }
   }, [availableCategories, category]);
 
+  useEffect(() => {
+    if (!account && accounts[0]) {
+      setAccount(accounts[0].id);
+      return;
+    }
+
+    if (account && !accounts.some((item) => item.id === account)) {
+      setAccount(accounts[0]?.id ?? '');
+    }
+  }, [account, accounts]);
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const numericAmount = Number(amount);
 
-    if (!numericAmount || numericAmount <= 0 || !category || isBusy) {
+    if (!numericAmount || numericAmount <= 0 || !category || !account || isBusy) {
       return;
     }
 
@@ -967,11 +1115,12 @@ function TransactionSheet({
 
     try {
       await onSave({
-        description: description.trim() || 'Unnamed expense',
-        amount: isIncome ? Math.abs(numericAmount) : -Math.abs(numericAmount),
+        description: description.trim() || `Unnamed ${transactionType}`,
+        amount: transactionType === 'income' ? Math.abs(numericAmount) : -Math.abs(numericAmount),
         category,
         date,
         account,
+        transactionType,
       });
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Unable to update transaction.');
@@ -1008,6 +1157,21 @@ function TransactionSheet({
         </div>
 
         <form className="sheet-body" onSubmit={save}>
+          <div className="transaction-type-toggle" role="group" aria-label="Transaction type">
+            {(['expense', 'income'] as const).map((type) => (
+              <button
+                className={transactionType === type ? 'active' : ''}
+                key={type}
+                type="button"
+                onClick={() => setTransactionType(type)}
+                aria-pressed={transactionType === type}
+                disabled={isBusy}
+              >
+                {type === 'expense' ? 'Expense' : 'Income'}
+              </button>
+            ))}
+          </div>
+
           <label className="form-field">
             <span>Description</span>
             <input
@@ -1083,7 +1247,7 @@ function TransactionSheet({
               <Trash2 size={15} />
               Delete
             </button>
-            <button className="primary-button" type="submit" disabled={isBusy || syncStatus === 'loading'}>
+            <button className="primary-button" type="submit" disabled={isBusy || syncStatus === 'loading' || !account}>
               {isSaving ? 'Saving...' : 'Save'}
             </button>
           </div>
@@ -1097,9 +1261,10 @@ function Categories() {
   const { categories, transactions, addCategory, updateCategory, deleteCategory, getMonthlySpend } = useFireBuddy();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const expenseCategories = categories.filter((category) => category.id !== 'income');
+  const [categoryType, setCategoryType] = useState<TransactionType>('expense');
+  const visibleCategories = categories.filter((category) => category.categoryType === categoryType);
   const totalSpend = transactions
-    .filter((transaction) => transaction.amount < 0)
+    .filter((transaction) => transaction.transactionType === 'expense')
     .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
 
   return (
@@ -1112,12 +1277,31 @@ function Categories() {
             Add
           </button>
         </div>
-        <p className="header-subtitle">Manage your spend buckets and monthly budgets.</p>
+        <p className="header-subtitle">
+          {categoryType === 'expense'
+            ? 'Manage your spend buckets and monthly budgets.'
+            : 'Manage the sources used to classify income.'}
+        </p>
       </section>
 
       <section className="screen-content">
+        <div className="transaction-type-toggle category-type-tabs" role="tablist" aria-label="Category type">
+          {(['expense', 'income'] as const).map((type) => (
+            <button
+              className={categoryType === type ? 'active' : ''}
+              key={type}
+              type="button"
+              role="tab"
+              aria-selected={categoryType === type}
+              onClick={() => setCategoryType(type)}
+            >
+              {type === 'expense' ? 'Expense' : 'Income'}
+            </button>
+          ))}
+        </div>
+
         <div className="category-grid">
-          {expenseCategories.map((category) => {
+          {visibleCategories.map((category) => {
             const spend = getMonthlySpend(category.id);
             const percent = category.monthlyBudget > 0 ? Math.min((spend / category.monthlyBudget) * 100, 100) : 0;
 
@@ -1125,30 +1309,43 @@ function Categories() {
               <article className="category-card" key={category.id}>
                 <div className="category-top-row">
                   <CategoryAvatar category={category} variant="category-card" />
-                  <button className="plain-icon-button muted" type="button" onClick={() => setEditingCategory(category)}>
-                    <Pencil size={16} />
-                  </button>
+                  {category.isDefault ? (
+                    <span aria-label="Default category" />
+                  ) : (
+                    <button
+                      className="plain-icon-button muted"
+                      type="button"
+                      onClick={() => setEditingCategory(category)}
+                      aria-label={`Edit ${category.name}`}
+                    >
+                      <Pencil size={16} />
+                    </button>
+                  )}
                 </div>
                 <h3>{category.name}</h3>
-                <p>{formatSGD(spend, 0)} this month</p>
-                <div className="progress-bar light">
-                  <span style={{ width: `${percent}%`, backgroundColor: category.color }} />
-                </div>
-                <span className="category-budget">
-                  {category.monthlyBudget > 0 ? `${percent.toFixed(0)}% of ${formatSGD(category.monthlyBudget, 0)}` : 'No budget'}
-                </span>
+                {category.categoryType === 'expense' ? (
+                  <>
+                    <p>{formatSGD(spend, 0)} this month</p>
+                    <div className="progress-bar light">
+                      <span style={{ width: `${percent}%`, backgroundColor: category.color }} />
+                    </div>
+                    <span className="category-budget">
+                      {category.monthlyBudget > 0 ? `${percent.toFixed(0)}% of ${formatSGD(category.monthlyBudget, 0)}` : 'No budget'}
+                    </span>
+                  </>
+                ) : null}
               </article>
             );
           })}
         </div>
 
-        <section className="content-section">
+        {categoryType === 'expense' ? <section className="content-section">
           <div className="section-title-row">
             <h3>Full breakdown</h3>
             <Filter size={18} color={colors.textMuted} />
           </div>
           <div className="category-breakdown">
-            {expenseCategories.map((category) => {
+            {visibleCategories.map((category) => {
               const spend = getMonthlySpend(category.id);
               const share = totalSpend > 0 ? (spend / totalSpend) * 100 : 0;
               return (
@@ -1163,13 +1360,14 @@ function Categories() {
               );
             })}
           </div>
-        </section>
+        </section> : null}
       </section>
 
       {isAdding ? (
         <CategorySheet
           mode="add"
-          initial={{ icon: 'others', color: categoryColors[0], monthlyBudget: 0 }}
+          initial={{ icon: categoryType === 'income' ? 'income' : 'shapes', color: categoryColors[0], monthlyBudget: 0, categoryType }}
+          categoryType={categoryType}
           onClose={() => setIsAdding(false)}
           onSave={async (category) => {
             await addCategory(category as Omit<Category, 'id'>);
@@ -1182,6 +1380,7 @@ function Categories() {
         <CategorySheet
           mode="edit"
           initial={editingCategory}
+          categoryType={editingCategory.categoryType}
           onClose={() => setEditingCategory(null)}
           onSave={async (updates) => {
             await updateCategory(editingCategory.id, updates);
@@ -1197,15 +1396,17 @@ function Categories() {
   );
 }
 
-function CategorySheet({
+export function CategorySheet({
   mode,
   initial,
+  categoryType,
   onSave,
   onDelete,
   onClose,
 }: {
   mode: 'add' | 'edit';
   initial: Partial<Category>;
+  categoryType: TransactionType;
   onSave: (data: Partial<Category>) => Promise<void>;
   onDelete?: () => Promise<void>;
   onClose: () => void;
@@ -1226,7 +1427,7 @@ function CategorySheet({
       return;
     }
 
-    const normalizedBudget = monthlyBudget.trim();
+    const normalizedBudget = categoryType === 'income' ? '0' : monthlyBudget.trim();
     if (
       normalizedBudget === '.' ||
       !categoryBudgetInputPattern.test(normalizedBudget) ||
@@ -1245,6 +1446,7 @@ function CategorySheet({
         icon,
         color,
         monthlyBudget: Number(normalizedBudget) || 0,
+        categoryType,
         isDefault: initial.isDefault,
       });
     } catch (error) {
@@ -1282,6 +1484,11 @@ function CategorySheet({
         </div>
 
         <div className="sheet-body">
+          <div className="locked-type-row">
+            <span>Type</span>
+            <strong>{categoryType === 'expense' ? 'Expense' : 'Income'}</strong>
+          </div>
+
           <label className="form-field">
             <span>Category name</span>
             <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Dining out" disabled={isBusy} />
@@ -1309,7 +1516,7 @@ function CategorySheet({
             </div>
           </div>
 
-          <label className="form-field">
+          {categoryType === 'expense' ? <label className="form-field">
             <span>Monthly budget</span>
             <input
               value={monthlyBudget}
@@ -1326,8 +1533,8 @@ function CategorySheet({
               aria-invalid={Boolean(budgetError)}
               disabled={isBusy}
             />
-          </label>
-          {budgetError ? <p className="form-error">{budgetError}</p> : null}
+          </label> : null}
+          {categoryType === 'expense' && budgetError ? <p className="form-error">{budgetError}</p> : null}
 
           <div className="swatch-grid">
             {categoryColors.map((item) => (
@@ -1373,23 +1580,31 @@ function CategorySheet({
   );
 }
 
-function Profile() {
-  const navigate = useNavigate();
-  const { session, signOut, themeMode, toggleTheme } = useFireBuddy();
+type ProfileProps = {
+  onRequestLogout: () => void;
+};
+
+function Profile({ onRequestLogout }: ProfileProps) {
+  const { session, themeMode, toggleTheme, demoMode } = useFireBuddy();
   const [showClearDialog, setShowClearDialog] = useState(false);
-  const settings = [
-    { icon: User, label: 'Account info', danger: false },
-    { icon: Bell, label: 'Notifications', danger: false },
-    { icon: Shield, label: 'Login and security', danger: false },
-    { icon: Lock, label: 'Data and privacy', danger: false },
-    { icon: HelpCircle, label: 'Help & feedback', danger: false },
-    { icon: Database, label: 'Clear all data', danger: true },
-    { icon: LogOut, label: 'Sign out', danger: true },
+  const comingSoonSettings = [
+    { icon: User, label: 'Account info' },
+    { icon: Bell, label: 'Notifications' },
+    { icon: Shield, label: 'Login and security' },
+    { icon: Lock, label: 'Data and privacy' },
+    { icon: HelpCircle, label: 'Help & feedback' },
   ];
+  const displayName = getDisplayName(session?.user);
+  const initials = displayName
+    .split(/[._\s-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'FB';
 
   function clearAllData() {
-    window.localStorage.removeItem('firebuddy_web_transactions_v2');
-    window.localStorage.removeItem('firebuddy_web_categories_v2');
+    window.localStorage.removeItem('firebuddy_web_transactions_v3');
+    window.localStorage.removeItem('firebuddy_web_categories_v3');
     window.localStorage.removeItem('firebuddy_web_accounts_v2');
     window.location.reload();
   }
@@ -1397,9 +1612,9 @@ function Profile() {
   return (
     <main className="page">
       <section className="profile-header">
-        <div className="profile-avatar">{fireData.initials}</div>
-        <h2>{fireData.name}</h2>
-        <p>@{fireData.name.toLowerCase().replace(' ', '_')}</p>
+        <div className="profile-avatar">{initials}</div>
+        <h2>{displayName}</h2>
+        <p>{session?.user.email ?? 'Local demo mode'}</p>
       </section>
 
       <section className="profile-content">
@@ -1423,34 +1638,32 @@ function Profile() {
             <strong>Dark mode</strong>
             <span className="setting-state">{themeMode === 'dark' ? 'On' : 'Off'}</span>
           </button>
-          {settings.map((setting) => (
+          {comingSoonSettings.map((setting) => (
             <button
-              className={`setting-row ${setting.danger ? 'setting-row-danger' : ''}`}
+              className="setting-row setting-row-disabled"
               key={setting.label}
               type="button"
-              onClick={() => {
-                if (setting.label === 'Clear all data') {
-                  setShowClearDialog(true);
-                  return;
-                }
-
-                if (setting.label === 'Sign out') {
-                  void signOut();
-                  return;
-                }
-
-                if ('route' in setting && setting.route) {
-                  navigate(setting.route);
-                }
-              }}
+              disabled
             >
               <span className="setting-icon">
                 <setting.icon size={20} />
               </span>
               <strong>{setting.label}</strong>
-              {!setting.danger ? <ChevronRight size={20} /> : null}
+              <span className="setting-state">Coming soon</span>
             </button>
           ))}
+          {demoMode ? (
+            <button className="setting-row setting-row-danger" type="button" onClick={() => setShowClearDialog(true)}>
+              <span className="setting-icon"><Database size={20} /></span>
+              <strong>Clear local demo data</strong>
+            </button>
+          ) : null}
+          {session ? (
+            <button className="setting-row setting-row-danger" type="button" onClick={onRequestLogout}>
+              <span className="setting-icon"><LogOut size={20} /></span>
+              <strong>Log out</strong>
+            </button>
+          ) : null}
         </article>
       </section>
 
@@ -1474,310 +1687,14 @@ function Profile() {
   );
 }
 
-function createChatTopic(seedTitle = 'New chat'): ChatTopic {
-  const now = new Date().toISOString();
-
-  return {
-    id: `chat_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-    title: seedTitle,
-    messages: [
-      {
-        role: 'assistant',
-        content: CHAT_GREETING,
-      },
-    ],
-    sources: [],
-    sourceDetails: [],
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
-function loadChatTopics(): ChatTopic[] {
-  const fallback = [createChatTopic()];
-
-  try {
-    const stored = window.localStorage.getItem(CHAT_TOPICS_STORAGE_KEY);
-    const parsed = stored ? (JSON.parse(stored) as ChatTopic[]) : fallback;
-
-    return parsed.length > 0
-      ? parsed.map((topic) => ({
-          ...topic,
-          sourceDetails: topic.sourceDetails ?? [],
-        }))
-      : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function getTopicTitle(question: string) {
-  const compact = question.replace(/\s+/g, ' ').trim();
-  return compact.length > 42 ? `${compact.slice(0, 39)}...` : compact;
-}
-
-function getSourceLabel(source: RagChatSource) {
-  return source.title ?? source.headline ?? source.path ?? source.url ?? 'Unknown source';
-}
-
-function ChatWidget() {
-  const [topics, setTopics] = useState<ChatTopic[]>(() => loadChatTopics());
-  const [activeTopicId, setActiveTopicId] = useState<string>(() => {
-    const storedId = window.localStorage.getItem(CHAT_ACTIVE_TOPIC_STORAGE_KEY);
-    const loadedTopics = loadChatTopics();
-    return storedId && loadedTopics.some((topic) => topic.id === storedId) ? storedId : loadedTopics[0].id;
-  });
-  const [isOpen, setIsOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isTopicListOpen, setIsTopicListOpen] = useState(false);
-  const [question, setQuestion] = useState('');
-  const [isAsking, setIsAsking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
-  const canAsk = question.trim().length > 0 && !isAsking;
-  const { session } = useFireBuddy();
-
-  useEffect(() => {
-    if (!topics.some((topic) => topic.id === activeTopicId)) {
-      setActiveTopicId(topics[0].id);
-    }
-  }, [activeTopicId, topics]);
-
-  useEffect(() => {
-    window.localStorage.setItem(CHAT_TOPICS_STORAGE_KEY, JSON.stringify(topics));
-  }, [topics]);
-
-  useEffect(() => {
-    window.localStorage.setItem(CHAT_ACTIVE_TOPIC_STORAGE_KEY, activeTopicId);
-  }, [activeTopicId]);
-
-  function updateActiveTopic(updater: (topic: ChatTopic) => ChatTopic) {
-    setTopics((current) => current.map((topic) => (topic.id === activeTopic.id ? updater(topic) : topic)));
-  }
-
-  function startNewChat(seedQuestion?: string) {
-    const nextTopic = createChatTopic(seedQuestion ? getTopicTitle(seedQuestion) : 'New chat');
-    setTopics((current) => [nextTopic, ...current]);
-    setActiveTopicId(nextTopic.id);
-    setQuestion(seedQuestion ?? '');
-    setError(null);
-    setIsOpen(true);
-  }
-
-  async function askAdvisor(event?: FormEvent<HTMLFormElement>, overrideQuestion?: string) {
-    event?.preventDefault();
-
-    const trimmedQuestion = (overrideQuestion ?? question).trim();
-
-    if (!trimmedQuestion || isAsking || !activeTopic) {
-      return;
-    }
-
-    const userMessage: RagChatMessage = {
-      role: 'user',
-      content: trimmedQuestion,
-    };
-    const history = activeTopic.messages;
-
-    updateActiveTopic((topic) => {
-      const isUntitled = topic.title === 'New chat';
-      return {
-        ...topic,
-        title: isUntitled ? getTopicTitle(trimmedQuestion) : topic.title,
-        messages: [...topic.messages, userMessage],
-        sources: [],
-        sourceDetails: [],
-        updatedAt: new Date().toISOString(),
-      };
-    });
-    setQuestion('');
-    setError(null);
-    setIsAsking(true);
-
-    try {
-      const token = session?.access_token;
-      if (!token) {
-        throw new Error('Please sign in before using the FireBuddy advisor.');
-      }
-
-      const payload = await askFinancialAdvisor(token, {
-        question: trimmedQuestion,
-        history,
-      });
-
-      if (!payload.answer) {
-        throw new Error('RAG service returned an empty answer');
-      }
-
-      const sourceDetails = payload.source_details ?? payload.sourceDetails ?? [];
-      updateActiveTopic((topic) => ({
-        ...topic,
-        messages: [
-          ...topic.messages,
-          {
-            role: 'assistant',
-            content: payload.answer,
-          },
-        ],
-        sources: payload.sources ?? [],
-        sourceDetails,
-        updatedAt: new Date().toISOString(),
-      }));
-    } catch (caughtError) {
-      const message =
-        caughtError instanceof Error
-          ? caughtError.message
-          : 'Unable to reach the RAG service.';
-
-      setError(message);
-      updateActiveTopic((topic) => ({
-        ...topic,
-        messages: topic.messages.filter((messageItem) => messageItem !== userMessage),
-        sources: [],
-        sourceDetails: [],
-      }));
-    } finally {
-      setIsAsking(false);
-    }
-  }
-
-  if (!isOpen) {
-    return (
-      <button className="chat-launcher button-press" type="button" onClick={() => setIsOpen(true)} aria-label="Open FireBuddy chat">
-        <MessageSquare size={24} />
-      </button>
-    );
-  }
-
-  return (
-    <div className={isFullscreen ? 'chat-widget chat-widget-fullscreen' : 'chat-widget'}>
-      <aside className={`chat-topic-panel ${isTopicListOpen || isFullscreen ? 'chat-topic-panel-open' : ''}`}>
-        <div className="chat-topic-header">
-          <strong>Chat topics</strong>
-          <button className="chat-icon-button" type="button" onClick={() => startNewChat()}>
-            <Plus size={16} />
-          </button>
-        </div>
-        <div className="chat-topic-list">
-          {topics.map((topic) => (
-            <button
-              className={`chat-topic-item ${topic.id === activeTopic.id ? 'chat-topic-item-active' : ''}`}
-              key={topic.id}
-              type="button"
-              onClick={() => {
-                setActiveTopicId(topic.id);
-                setError(null);
-                if (!isFullscreen) {
-                  setIsTopicListOpen(false);
-                }
-              }}
-            >
-              <strong>{topic.title}</strong>
-              <span>{new Date(topic.updatedAt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })}</span>
-            </button>
-          ))}
-        </div>
-      </aside>
-
-      <section className="chat-shell" aria-label="FireBuddy financial advisor">
-        <header className="chat-header">
-          <button className="chat-icon-button" type="button" onClick={() => setIsTopicListOpen((current) => !current)} aria-label="Toggle chat topics">
-            <PanelLeft size={18} />
-          </button>
-          <div className="chat-title-block">
-            <span>FireBuddy advisor</span>
-            <strong>{activeTopic.title}</strong>
-          </div>
-          <div className="chat-header-actions">
-            <button className="chat-icon-button" type="button" onClick={() => setIsFullscreen((current) => !current)} aria-label={isFullscreen ? 'Exit fullscreen chat' : 'Expand chat'}>
-              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-            </button>
-            <button className="chat-icon-button" type="button" onClick={() => setIsOpen(false)} aria-label="Close chat">
-              <X size={18} />
-            </button>
-          </div>
-        </header>
-
-        <div className="chat-messages" aria-live="polite">
-          {activeTopic.messages.map((message, index) => (
-            <div className={`advisor-message advisor-message-${message.role}`} key={`${message.role}-${index}`}>
-              <span>{message.role === 'user' ? 'You' : 'FireBuddy'}</span>
-              <p>{message.content}</p>
-            </div>
-          ))}
-
-          {isAsking ? (
-            <div className="advisor-message advisor-message-assistant">
-              <span>FireBuddy</span>
-              <p>Searching the knowledge base...</p>
-            </div>
-          ) : null}
-        </div>
-
-        {activeTopic.sourceDetails.length > 0 || activeTopic.sources.length > 0 ? (
-          <div className="advisor-sources chat-sources">
-            <strong>Sources</strong>
-            <ul>
-              {activeTopic.sourceDetails.length > 0
-                ? activeTopic.sourceDetails.map((source) => (
-                    <li key={`${source.url ?? source.path ?? getSourceLabel(source)}-${source.headline ?? ''}`}>
-                      {source.url ? (
-                        <a href={source.url} target="_blank" rel="noreferrer">
-                          {getSourceLabel(source)}
-                        </a>
-                      ) : (
-                        getSourceLabel(source)
-                      )}
-                      {source.headline && source.headline !== getSourceLabel(source) ? (
-                        <span>{source.headline}</span>
-                      ) : null}
-                    </li>
-                  ))
-                : activeTopic.sources.map((source) => <li key={source}>{source}</li>)}
-            </ul>
-          </div>
-        ) : null}
-
-        {error ? <p className="advisor-error">{error}</p> : null}
-
-        {activeTopic.messages.length <= 1 ? (
-          <div className="chat-prompts">
-            {CHAT_PROMPTS.map((suggestion) => (
-              <button key={suggestion} type="button" onClick={() => askAdvisor(undefined, suggestion)}>
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        <form className="advisor-form chat-form" onSubmit={askAdvisor}>
-          <label htmlFor="floating-advisor-question">Question</label>
-          <textarea
-            id="floating-advisor-question"
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Ask about CPF, SRS, HDB grants, or FIRE planning"
-            rows={isFullscreen ? 3 : 2}
-          />
-          <div className="advisor-form-actions">
-            <button className="secondary-button" type="button" onClick={() => startNewChat()}>
-              New chat
-            </button>
-            <button className="primary-button" type="submit" disabled={!canAsk}>
-              {isAsking ? 'Asking...' : 'Ask'}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
-  );
-}
-
-
 function InsightsFallback() {
   return <main className="page" />;
 }
+
+function EmberFallback() {
+  return <main className="page ember-page" aria-label="Loading Ember" />;
+}
+
 const accountTypes: {
   id: AccountType;
   label: string;
@@ -1825,6 +1742,7 @@ function Accounts() {
                   <span>
                     {accountTypeLabel(account.type)}
                     {account.lastFour ? ` \u00B7 ${account.lastFour}` : ''} {'\u00B7'} {usageCount} transactions
+                    {account.isDefault ? ' · Default' : ''}
                   </span>
                 </div>
                 <button className="plain-icon-button muted" type="button" onClick={() => setEditingAccount(account)}>
@@ -1841,8 +1759,8 @@ function Accounts() {
           mode="add"
           initial={{ color: categoryColors[0], type: 'bank' }}
           onClose={() => setIsAdding(false)}
-          onSave={(account) => {
-            addAccount(account as Omit<Account, 'id'>);
+          onSave={async (account) => {
+            await addAccount(account as Omit<Account, 'id'>);
             setIsAdding(false);
           }}
         />
@@ -1853,12 +1771,12 @@ function Accounts() {
           mode="edit"
           initial={editingAccount}
           onClose={() => setEditingAccount(null)}
-          onSave={(updates) => {
-            updateAccount(editingAccount.id, updates);
+          onSave={async (updates) => {
+            await updateAccount(editingAccount.id, updates);
             setEditingAccount(null);
           }}
-          onDelete={() => {
-            deleteAccount(editingAccount.id);
+          onDelete={editingAccount.isDefault ? undefined : async () => {
+            await deleteAccount(editingAccount.id);
             setEditingAccount(null);
           }}
         />
@@ -1867,7 +1785,7 @@ function Accounts() {
   );
 }
 
-function AccountSheet({
+export function AccountSheet({
   mode,
   initial,
   onSave,
@@ -1876,26 +1794,58 @@ function AccountSheet({
 }: {
   mode: 'add' | 'edit';
   initial: Partial<Account>;
-  onSave: (data: Partial<Account>) => void;
-  onDelete?: () => void;
+  onSave: (data: Partial<Account>) => Promise<void>;
+  onDelete?: () => Promise<void>;
   onClose: () => void;
 }) {
   const [name, setName] = useState(initial.name ?? '');
   const [type, setType] = useState<AccountType>(initial.type ?? 'bank');
   const [color, setColor] = useState(initial.color ?? categoryColors[0]);
   const [lastFour, setLastFour] = useState(initial.lastFour ?? '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  function save() {
-    if (!name.trim()) {
+  async function save() {
+    if (!name.trim() || isSaving || isDeleting) {
       return;
     }
 
-    onSave({
-      name: name.trim(),
-      type,
-      color,
-      lastFour: lastFour.trim() || undefined,
-    });
+    if (lastFour && !/^\d{4}$/.test(lastFour)) {
+      setFormError('Last four digits must contain exactly four numbers.');
+      return;
+    }
+
+    setIsSaving(true);
+    setFormError(null);
+    try {
+      await onSave({
+        name: name.trim(),
+        type,
+        color,
+        lastFour: lastFour.trim() || undefined,
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Unable to save account.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function removeAccount() {
+    if (!onDelete || isSaving || isDeleting) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setFormError(null);
+    try {
+      await onDelete();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Unable to delete account.');
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -1917,7 +1867,8 @@ function AccountSheet({
                   className={`type-chip ${type === item.id ? 'type-chip-active' : ''}`}
                   key={item.id}
                   type="button"
-                  onClick={() => setType(item.id)}
+                onClick={() => setType(item.id)}
+                disabled={isSaving || isDeleting}
                 >
                   <Icon size={14} />
                   {item.label}
@@ -1927,11 +1878,11 @@ function AccountSheet({
           </div>
           <label className="form-field">
             <span>Account name</span>
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="DBS Savings" />
+            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="DBS Savings" disabled={isSaving || isDeleting} />
           </label>
           <label className="form-field">
             <span>Last four digits</span>
-            <input value={lastFour} onChange={(event) => setLastFour(event.target.value)} maxLength={4} placeholder="4521" />
+            <input value={lastFour} onChange={(event) => setLastFour(event.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="4521" disabled={isSaving || isDeleting} />
           </label>
           <div className="swatch-grid">
             {categoryColors.map((item) => (
@@ -1941,21 +1892,24 @@ function AccountSheet({
                 style={{ backgroundColor: item }}
                 type="button"
                 onClick={() => setColor(item)}
+                disabled={isSaving || isDeleting}
                 aria-label={item}
               >
                 {item === color ? <Check size={14} color="#fff" strokeWidth={3} /> : null}
               </button>
             ))}
           </div>
+          {initial.isDefault ? <p className="field-help">The default account can be edited but not deleted.</p> : null}
+          {formError ? <p className="form-error">{formError}</p> : null}
           <div className="sheet-actions">
             {onDelete ? (
-              <button className="danger-button" type="button" onClick={onDelete}>
+              <button className="danger-button" type="button" onClick={removeAccount} disabled={isSaving || isDeleting}>
                 <Trash2 size={15} />
-                Delete
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             ) : null}
-            <button className="primary-button" type="button" onClick={save}>
-              Save
+            <button className="primary-button" type="button" onClick={save} disabled={isSaving || isDeleting}>
+              {isSaving ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>

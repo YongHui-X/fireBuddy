@@ -51,6 +51,9 @@ jobs:
       - name: Build web app
         run: npm run build:web
 
+      - name: Test web app
+        run: npm run test:web
+
       - name: Lint mobile app
         run: npm run lint:mobile
 
@@ -66,6 +69,10 @@ jobs:
         run: >-
           python -m py_compile
           apps/backend/main.py
+          apps/backend/routers/accounts.py
+          apps/backend/routers/ai.py
+          apps/backend/routers/categories.py
+          apps/backend/routers/expenses.py
           apps/backend/routers/rag.py
           apps/backend/services/rag_service.py
           apps/backend/services/rate_limiter.py

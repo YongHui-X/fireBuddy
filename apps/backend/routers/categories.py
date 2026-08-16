@@ -1,6 +1,7 @@
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
@@ -19,6 +20,7 @@ CurrentUser = Annotated[AuthenticatedUser, Depends(get_current_user)]
 CATEGORY_VISUALS_MIGRATION_ERROR = (
     "Category visuals are not available yet. Apply the add_category_visuals Supabase migration."
 )
+CATEGORY_COLUMNS = "id,user_id,name,icon,color,monthly_budget,category_type,is_default,created_at"
 
 
 def _is_missing_category_visual_column(error: APIError) -> bool:
@@ -30,23 +32,28 @@ def _is_missing_category_visual_column(error: APIError) -> bool:
 
 
 @router.get("", response_model=list[CategoryResponse])
-def get_categories(current_user: CurrentUser):
+def get_categories(
+    current_user: CurrentUser,
+    category_type: str | None = Query(default=None, alias="categoryType", pattern="^(expense|income)$"),
+):
     default_response = (
         supabase.table("categories")
-        .select("*")
+        .select(CATEGORY_COLUMNS)
         .eq("is_default", True)
         .order("name")
         .execute()
     )
     user_response = (
         supabase.table("categories")
-        .select("*")
+        .select(CATEGORY_COLUMNS)
         .eq("user_id", current_user.id)
         .order("name")
         .execute()
     )
 
     rows = [*(default_response.data or []), *(user_response.data or [])]
+    if category_type is not None:
+        rows = [row for row in rows if row.get("category_type", "expense") == category_type]
     return [serialize_category(row) for row in sorted(rows, key=lambda row: row["name"].lower())]
 
 
@@ -61,6 +68,7 @@ def create_category(payload: CreateCategoryRequest, current_user: CurrentUser):
                     "icon": payload.icon,
                     "color": payload.color,
                     "monthly_budget": str(payload.monthly_budget),
+                    "category_type": payload.category_type,
                     "user_id": current_user.id,
                     "is_default": False,
                 }
@@ -85,11 +93,12 @@ def create_category(payload: CreateCategoryRequest, current_user: CurrentUser):
 
 
 @router.put("/{category_id}", response_model=CategoryResponse)
-def update_category(category_id: str, payload: UpdateCategoryRequest, current_user: CurrentUser):
+def update_category(category_id: UUID, payload: UpdateCategoryRequest, current_user: CurrentUser):
+    category_id_value = str(category_id)
     response = (
         supabase.table("categories")
-        .select("*")
-        .eq("id", category_id)
+        .select(CATEGORY_COLUMNS)
+        .eq("id", category_id_value)
         .limit(1)
         .execute()
     )
@@ -116,9 +125,10 @@ def update_category(category_id: str, payload: UpdateCategoryRequest, current_us
                     "icon": payload.icon,
                     "color": payload.color,
                     "monthly_budget": str(payload.monthly_budget),
+                    "category_type": payload.category_type,
                 }
             )
-            .eq("id", category_id)
+            .eq("id", category_id_value)
             .eq("user_id", current_user.id)
             .execute()
         )
@@ -140,11 +150,12 @@ def update_category(category_id: str, payload: UpdateCategoryRequest, current_us
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_category(category_id: str, current_user: CurrentUser):
+def delete_category(category_id: UUID, current_user: CurrentUser):
+    category_id_value = str(category_id)
     response = (
         supabase.table("categories")
-        .select("*")
-        .eq("id", category_id)
+        .select(CATEGORY_COLUMNS)
+        .eq("id", category_id_value)
         .limit(1)
         .execute()
     )
@@ -165,7 +176,7 @@ def delete_category(category_id: str, current_user: CurrentUser):
     (
         supabase.table("categories")
         .delete()
-        .eq("id", category_id)
+        .eq("id", category_id_value)
         .eq("user_id", current_user.id)
         .execute()
     )

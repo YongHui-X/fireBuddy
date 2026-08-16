@@ -15,9 +15,14 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
   
 BACKEND_DIR = Path(__file__).resolve().parents[1]
-load_dotenv(BACKEND_DIR / ".env", override=True)
+load_dotenv(BACKEND_DIR / ".env", override=False)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
+HYBRID_RETRIEVAL_RPC = "hybrid_match_rag_chunks"
+INTERNAL_CANDIDATE_COUNT = 10
+FULL_TEXT_RRF_WEIGHT = 0.6
+SEMANTIC_RRF_WEIGHT = 1.0
+RRF_SMOOTHING = 50
 wait = wait_exponential(multiplier=1, min=10, max=240)
 
 
@@ -76,12 +81,10 @@ def embed_question(client: OpenAI, question: str) -> list[float]:
 
 def retrieve_chunks(question: str, match_count: int = 5) -> list[dict]:
     """
-    Retrieve the most relevant knowledge-base chunks for a question.
+    Retrieve relevant chunks with vector and keyword reciprocal rank fusion.
 
-    `match_rag_chunks` is a Supabase Postgres RPC defined in
-    `supabase/migrations/003_rag_pgvector.sql`. It compares the question
-    embedding against `rag_chunks.embedding` and returns the closest chunks with
-    citation metadata such as source title, source URL, and source path.
+    The private RPC ranks ten vector and keyword candidates, deduplicates source
+    documents, and returns the best requested chunks with citation metadata.
     """
 
     openai_client = OpenAI()
@@ -89,10 +92,15 @@ def retrieve_chunks(question: str, match_count: int = 5) -> list[dict]:
     embedding = embed_question(openai_client, question)
 
     response = supabase_client.rpc(
-        "match_rag_chunks",
+        HYBRID_RETRIEVAL_RPC,
         {
+            "query_text": question,
             "query_embedding": embedding,
             "match_count": match_count,
+            "candidate_count": INTERNAL_CANDIDATE_COUNT,
+            "full_text_weight": FULL_TEXT_RRF_WEIGHT,
+            "semantic_weight": SEMANTIC_RRF_WEIGHT,
+            "rrf_k": RRF_SMOOTHING,
         },
     ).execute()
 

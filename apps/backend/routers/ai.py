@@ -1,39 +1,60 @@
 import json
 from typing import Annotated, Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from openai import OpenAI, OpenAIError
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
 
 from config import settings
 from lib.auth import AuthenticatedUser, get_current_user
 from lib.supabase import supabase
+from services.rate_limiter import SlidingWindowRateLimiter
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 CurrentUser = Annotated[AuthenticatedUser, Depends(get_current_user)]
 Confidence = Literal["low", "medium", "high"]
+ai_suggestion_rate_limiter = SlidingWindowRateLimiter(
+    settings.ai_suggestion_rate_limit_requests,
+    settings.ai_suggestion_rate_limit_window_seconds,
+)
 
 
-class ParseInputRequest(BaseModel):
-    description: str = Field(min_length=1, max_length=200)
+class AiModel(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
-class ParseInputResponse(BaseModel):
-    category_id: str | None = Field(alias="categoryId")
-    category_name: str | None = Field(alias="categoryName")
+class ParseInputRequest(AiModel):
+    description: Annotated[str, Field(min_length=1, max_length=200)]
+
+    @field_validator("description")
+    @classmethod
+    def clean_description(cls, value: str) -> str:
+        """Trim descriptions and reject whitespace-only suggestion requests."""
+
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Description cannot be blank")
+        return cleaned
+
+
+class ParseInputResponse(AiModel):
+    category_id: UUID | None
+    category_name: str | None
     confidence: Confidence
     reason: str | None = None
 
-    model_config = ConfigDict(populate_by_name=True)
 
-
-class CategoryOption(BaseModel):
-    id: str
+class CategoryOption(AiModel):
+    id: UUID
     name: str
 
 
 def fetch_available_categories(user_id: str) -> list[CategoryOption]:
+    """Return system and user-owned categories allowed for a suggestion."""
+
     default_response = (
         supabase.table("categories")
         .select("id,name")
@@ -49,7 +70,11 @@ def fetch_available_categories(user_id: str) -> list[CategoryOption]:
         .execute()
     )
 
-    rows = [*(default_response.data or []), *(user_response.data or [])]
+    rows = [
+        row
+        for row in [*(default_response.data or []), *(user_response.data or [])]
+        if str(row["name"]).strip().lower() != "income"
+    ]
     return [
         CategoryOption(id=str(row["id"]), name=str(row["name"]))
         for row in sorted(rows, key=lambda row: str(row["name"]).lower())
@@ -57,6 +82,8 @@ def fetch_available_categories(user_id: str) -> list[CategoryOption]:
 
 
 def parse_openai_json(content: str) -> dict:
+    """Decode structured model output without exposing raw upstream content."""
+
     try:
         parsed = json.loads(content)
     except json.JSONDecodeError as exc:
@@ -76,10 +103,20 @@ def parse_openai_json(content: str) -> dict:
 
 @router.post("/parse-input", response_model=ParseInputResponse)
 def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
+    """Suggest one available category while leaving saving to the user."""
+
     if not settings.openai_api_key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="OPENAI_API_KEY is not configured",
+        )
+
+    rate_limit = ai_suggestion_rate_limiter.check(current_user.id)
+    if not rate_limit.allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many category suggestion requests. Please try again shortly.",
+            headers={"Retry-After": str(rate_limit.retry_after_seconds)},
         )
 
     categories = fetch_available_categories(current_user.id)
@@ -91,11 +128,10 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
             reason="No categories are available.",
         )
 
-    category_lookup = {category.id: category for category in categories}
+    category_lookup = {str(category.id): category for category in categories}
     category_list = "\n".join(f"- {category.id}: {category.name}" for category in categories)
-    client = OpenAI(api_key=settings.openai_api_key)
-
     try:
+        client = OpenAI(api_key=settings.openai_api_key)
         response = client.chat.completions.create(
             model=settings.openai_model,
             temperature=0,
@@ -111,7 +147,7 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
                 {
                     "role": "user",
                     "content": (
-                        f"Description: {payload.description.strip()}\n\n"
+                        f"Description: {payload.description}\n\n"
                         f"Available categories:\n{category_list}"
                     ),
                 },
@@ -143,7 +179,7 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
                 },
             },
         )
-    except OpenAIError as exc:
+    except (OpenAIError, RuntimeError, ValueError, TypeError) as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Unable to get an AI category suggestion",

@@ -4,6 +4,14 @@
 
 alter table public.rag_chunks enable row level security;
 
+drop policy if exists rag_chunks_service_role_backend_only on public.rag_chunks;
+create policy rag_chunks_service_role_backend_only
+  on public.rag_chunks
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
 revoke all on table public.rag_chunks from public, anon, authenticated;
 grant select, insert, update, delete on table public.rag_chunks to service_role;
 

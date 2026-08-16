@@ -23,7 +23,6 @@ import random
 import re
 import sys
 import argparse
-from multiprocessing import Pool
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -37,16 +36,11 @@ from tqdm import tqdm
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 RAG_DIR = Path(__file__).resolve().parents[1]
 
-load_dotenv(BACKEND_DIR / ".env", override=True)
+load_dotenv(BACKEND_DIR / ".env", override=False)
 
-model = "openai/gpt-4.1-nano"
-
-DB_NAME = str(RAG_DIR / "preprocessed_db")
-collection_name = "docs"
 embedding_model = "text-embedding-3-small"
 KNOWLEDGE_BASE_PATH = RAG_DIR / "knowledge-base"
 FETCH_AND_CONVERT_DIR = RAG_DIR / "fetchAndConvert"
-AVERAGE_CHUNK_SIZE = 100
 # for handling rate limits to prevent app from crashing
 wait = wait_exponential(multiplier=1, min=10, max=240)
 

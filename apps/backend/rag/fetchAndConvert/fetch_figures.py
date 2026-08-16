@@ -51,7 +51,7 @@ except ModuleNotFoundError:
     def wait_exponential(*args, **kwargs):
         return None
 
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 logging.basicConfig(
     level=logging.INFO,

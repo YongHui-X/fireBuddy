@@ -4,7 +4,6 @@ export type {
   AppContextValue,
   AppNotification,
   Category,
-  ChatTopic,
   IconComponent,
   ThemeMode,
   Transaction,

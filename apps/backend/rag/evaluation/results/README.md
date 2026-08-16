@@ -30,6 +30,32 @@ Cases: **30**
 
 Artifacts: [Markdown](retrieval/versions/v001.md) | [JSON](retrieval/versions/v001.json)
 
+### Version 2: HNSW and hybrid RRF retrieval
+
+Generated: `2026-08-14T06:11:00.208780+00:00`
+Cases: **30**
+
+| Metric | Score |
+|---|---:|
+| mrr | 0.8622 |
+| hit_rate@1 | 0.7667 |
+| precision@1 | 0.7667 |
+| recall@1 | 0.6000 |
+| map@1 | 0.7667 |
+| ndcg@1 | 0.7667 |
+| hit_rate@3 | 0.9667 |
+| precision@3 | 0.3778 |
+| recall@3 | 0.8167 |
+| map@3 | 0.7333 |
+| ndcg@3 | 0.7851 |
+| hit_rate@5 | 1.0000 |
+| precision@5 | 0.2667 |
+| recall@5 | 0.9167 |
+| map@5 | 0.7750 |
+| ndcg@5 | 0.8353 |
+
+Artifacts: [Markdown](retrieval/versions/v002.md) | [JSON](retrieval/versions/v002.json)
+
 
 ## Answer-quality evaluations
 

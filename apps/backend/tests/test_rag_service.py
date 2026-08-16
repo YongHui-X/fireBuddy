@@ -2,7 +2,8 @@ import os
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -10,9 +11,28 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from services import rag_service
+from schemas.rag import ChatMessage
 
 
 class RagServiceTests(unittest.TestCase):
+    def test_answer_model_is_identified_as_ember(self):
+        client = MagicMock()
+        client.chat.completions.create.return_value = SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="Answer"))]
+        )
+
+        with patch.object(rag_service, "OpenAI", return_value=client):
+            answer = rag_service.generate_grounded_answer(
+                "What is CPF?", "Retrieved CPF context"
+            )
+
+        self.assertEqual(answer, "Answer")
+        system_prompt = client.chat.completions.create.call_args.kwargs["messages"][0]["content"]
+        self.assertIn(
+            "Ember, FireBuddy's educational Singapore finance guide",
+            system_prompt,
+        )
+
     def test_build_unique_sources_deduplicates_by_url_then_path(self):
         matches = [
             {
@@ -117,6 +137,137 @@ class RagServiceTests(unittest.TestCase):
         self.assertIn("Content:", context)
         self.assertTrue(context.endswith("..."))
         self.assertLess(len(context), len(long_content) + 300)
+
+    def test_answer_generation_receives_only_the_latest_six_history_messages(self):
+        history = [
+            ChatMessage(
+                role="user" if index % 2 == 0 else "assistant",
+                content=f"message {index + 1}",
+            )
+            for index in range(8)
+        ]
+        matches = [
+            {
+                "source_title": "CPF Guide",
+                "source_url": "https://example.test/cpf.pdf",
+                "source_path": "markdown-cache/cpf/cpf-guide.md",
+                "headline": "CPF",
+                "content": "Relevant CPF context",
+                "similarity": 0.9,
+            }
+        ]
+
+        with patch.object(
+            rag_service,
+            "generate_grounded_answer",
+            return_value="Grounded answer",
+        ) as generate:
+            rag_service.answer_financial_advisor_question(
+                "How does CPF work?",
+                history,
+                retrieved_matches=matches,
+            )
+
+        generated_history = generate.call_args.args[2]
+        self.assertEqual(len(generated_history), rag_service.MAX_HISTORY_MESSAGES)
+        self.assertEqual(generated_history[0].content, "message 3")
+        self.assertEqual(generated_history[-1].content, "message 8")
+        self.assertEqual(len(history), 8)
+
+    def test_streams_grounded_supported_topics_with_sources_and_done(self):
+        matches = [
+            {
+                "source_title": "Official Singapore finance guide",
+                "source_url": "https://example.test/guide",
+                "source_path": "markdown-cache/guide.md",
+                "headline": "Official guide",
+                "content": "Relevant official context",
+                "similarity": 0.91,
+            }
+        ]
+        questions = [
+            "How does CPF work?",
+            "How do Singapore Savings Bonds work?",
+            "What does MoneySense suggest for planning?",
+            "What IRAS reliefs should I understand?",
+            "What are the basics of FIRE planning?",
+        ]
+
+        for question in questions:
+            with self.subTest(question=question):
+                with patch.object(
+                    rag_service,
+                    "stream_grounded_answer",
+                    return_value=iter(["Grounded ", "answer"]),
+                ):
+                    events = list(
+                        rag_service.stream_financial_advisor_question(
+                            question,
+                            retrieved_matches=matches,
+                        )
+                    )
+
+                self.assertEqual(
+                    [event["event"] for event in events],
+                    ["status", "status", "delta", "delta", "sources", "done"],
+                )
+                self.assertEqual(events[-2]["data"]["sources"][0]["title"], "Official Singapore finance guide")
+
+    def test_streams_no_match_and_refusal_as_normal_completed_answers(self):
+        with patch.object(rag_service, "retrieve_chunks", return_value=[]):
+            no_match_events = list(
+                rag_service.stream_financial_advisor_question(
+                    "Explain an unknown finance scheme"
+                )
+            )
+        refusal_events = list(
+            rag_service.stream_financial_advisor_question(
+                "Give me a chicken rice recipe"
+            )
+        )
+
+        self.assertEqual(no_match_events[-1]["event"], "done")
+        self.assertEqual(refusal_events[-1]["event"], "done")
+        self.assertNotIn("error", [event["event"] for event in no_match_events])
+        self.assertNotIn("error", [event["event"] for event in refusal_events])
+
+    def test_stream_reports_an_empty_model_answer(self):
+        matches = [
+            {
+                "source_title": "CPF Guide",
+                "source_url": None,
+                "source_path": "cpf.md",
+                "headline": "CPF",
+                "content": "Relevant context",
+                "similarity": 0.9,
+            }
+        ]
+        with patch.object(rag_service, "stream_grounded_answer", return_value=iter([])):
+            events = list(
+                rag_service.stream_financial_advisor_question(
+                    "How does CPF work?",
+                    retrieved_matches=matches,
+                )
+            )
+
+        self.assertEqual(events[-1]["event"], "error")
+        self.assertEqual(events[-1]["data"]["code"], "empty_response")
+
+    def test_stream_reports_retrieval_failure_without_exposing_details(self):
+        with patch.object(
+            rag_service,
+            "retrieve_chunks",
+            side_effect=RuntimeError("private database detail"),
+        ):
+            events = list(
+                rag_service.stream_financial_advisor_question(
+                    "How does CPF work?"
+                )
+            )
+
+        self.assertEqual(events[-1]["event"], "error")
+        self.assertEqual(events[-1]["data"]["code"], "retrieval")
+        self.assertNotIn("private database detail", events[-1]["data"]["message"])
 
 
 if __name__ == "__main__":

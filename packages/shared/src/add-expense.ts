@@ -1,4 +1,4 @@
-export type AccountType = 'bank' | 'credit_card' | 'debit_card' | 'cash' | 'ewallet';
+import type { AccountType } from './types';
 
 export interface AccountOption {
   id: string;

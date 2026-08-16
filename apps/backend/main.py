@@ -2,9 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
+from routers.accounts import router as accounts_router
+from routers.ai import router as ai_router
 from routers.categories import router as categories_router
 from routers.expenses import router as expenses_router
 from routers.rag import router as rag_router
+from routers.transactions import router as transactions_router
 
 app = FastAPI(title='FireBuddy API')
 
@@ -22,6 +25,16 @@ def root():
     return {'message': 'Welcome to the Homepage'}
 
 
+@app.get('/health')
+def health():
+    """Return a minimal unauthenticated readiness response."""
+
+    return {'status': 'ok'}
+
+
+app.include_router(accounts_router)
+app.include_router(ai_router)
 app.include_router(categories_router)
 app.include_router(expenses_router)
 app.include_router(rag_router)
+app.include_router(transactions_router)

@@ -52,7 +52,7 @@ def _versioned_markdown(markdown: str, version: int, label: str) -> str:
     """Add visible version metadata below the report title."""
 
     title, separator, remainder = markdown.partition("\n")
-    banner = f"> Report version: **Version {version}**  \n> Run label: **{label}**"
+    banner = f"> Report version: **Version {version}**\n> Run label: **{label}**"
     if not separator:
         return f"{title}\n\n{banner}\n"
     return f"{title}\n\n{banner}\n\n{remainder.lstrip()}"

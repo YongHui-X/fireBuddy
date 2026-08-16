@@ -1,50 +1,109 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { ChevronLeft, MoreHorizontal, Plus } from 'lucide-react';
+import { Plus, Sparkles, X } from 'lucide-react';
+import type { TransactionType } from '@firebuddy/shared';
 
-import { accountTypeLabel, getDeviceDateKey, useFireBuddy } from '../app/FireBuddyProvider';
+import {
+  accountTypeLabel,
+  categoryColors,
+  getDeviceDateKey,
+  useFireBuddy,
+  type Account,
+  type Category,
+} from '../app/FireBuddyProvider';
+import { suggestExpenseCategory } from '../api';
+import { AccountSheet, CategorySheet } from './AppShell';
 
 function AddExpense() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addTransaction, categories, accounts, session, syncStatus } = useFireBuddy();
+  const { addTransaction, addCategory, addAccount, categories, accounts, session, syncStatus } = useFireBuddy();
+  const [transactionType, setTransactionType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(() => getDeviceDateKey());
-  const [category, setCategory] = useState(categories[0]?.id ?? '');
+  const [category, setCategory] = useState('');
   const [account, setAccount] = useState(accounts[0]?.id ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestionMessage, setSuggestionMessage] = useState<string | null>(null);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
   const availableCategories = useMemo(
-    () => session
-      ? categories.filter((item) => item.isDefault || /^[0-9a-f-]{36}$/i.test(item.id) || /^\d+$/.test(item.id))
-      : categories,
-    [categories, session],
+    () => categories.filter((item) => item.categoryType === transactionType),
+    [categories, transactionType],
   );
-  const selectedCategory = availableCategories.find((item) => item.id === category);
-  const isIncome = selectedCategory?.name.toLowerCase() === 'income';
   const backgroundPath = (location.state as { backgroundPath?: string } | null)?.backgroundPath;
 
-  function closeAddExpense() {
+  /** Close the transaction modal and restore its background route. */
+  function closeAddTransaction() {
     navigate(backgroundPath ?? '/');
   }
 
   useEffect(() => {
-    if (!category && availableCategories[0]) {
-      setCategory(availableCategories[0].id);
-      return;
-    }
-
-    if (category && !availableCategories.some((item) => item.id === category)) {
+    if (!category || !availableCategories.some((item) => item.id === category)) {
       setCategory(availableCategories[0]?.id ?? '');
     }
   }, [availableCategories, category]);
 
+  useEffect(() => {
+    if (!account && accounts[0]) {
+      setAccount(accounts[0].id);
+      return;
+    }
+
+    if (account && !accounts.some((item) => item.id === account)) {
+      setAccount(accounts[0]?.id ?? '');
+    }
+  }, [account, accounts]);
+
+  /** Request an expense-only category suggestion without auto-saving it. */
+  async function requestSuggestion() {
+    const token = session?.access_token;
+    const cleanDescription = description.trim();
+    if (transactionType !== 'expense' || !token || !cleanDescription || isSuggesting) {
+      return;
+    }
+
+    setIsSuggesting(true);
+    setSuggestionMessage(null);
+
+    try {
+      const result = await suggestExpenseCategory(token, { description: cleanDescription });
+      if (result.categoryId && availableCategories.some((item) => item.id === result.categoryId)) {
+        setCategory(result.categoryId);
+      } else {
+        setSuggestionMessage('Unable to determine category. Choose one manually.');
+      }
+    } catch {
+      setSuggestionMessage('Unable to determine category. Choose one manually.');
+    } finally {
+      setIsSuggesting(false);
+    }
+  }
+
+  /** Validate and persist the current typed transaction draft. */
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const numericAmount = Number(amount);
 
-    if (!numericAmount || numericAmount <= 0 || !category || isSaving) {
+    if (isSaving) {
+      return;
+    }
+
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      setSaveError('Enter an amount greater than zero.');
+      return;
+    }
+
+    if (!category) {
+      setSaveError('Choose a category before saving.');
+      return;
+    }
+
+    if (!account) {
+      setSaveError('Choose or create an account before saving.');
       return;
     }
 
@@ -53,13 +112,14 @@ function AddExpense() {
 
     try {
       await addTransaction({
-        description: description.trim() || 'Unnamed expense',
-        amount: isIncome ? Math.abs(numericAmount) : -Math.abs(numericAmount),
+        description: description.trim() || `Unnamed ${transactionType}`,
+        amount: transactionType === 'income' ? Math.abs(numericAmount) : -Math.abs(numericAmount),
         category,
         date,
         account,
+        transactionType,
       });
-      closeAddExpense();
+      closeAddTransaction();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Unable to save transaction.');
     } finally {
@@ -68,19 +128,41 @@ function AddExpense() {
   }
 
   return (
-    <main className="add-route" onClick={closeAddExpense}>
+    <main className="add-route" onClick={closeAddTransaction}>
       <form className="add-panel" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
         <header className="add-header">
-          <button className="plain-icon-button inverse-plain" type="button" onClick={closeAddExpense}>
-            <ChevronLeft size={24} />
+          <span aria-hidden="true" />
+          <h2>Add transaction</h2>
+          <button
+            className="plain-icon-button inverse-plain"
+            type="button"
+            onClick={closeAddTransaction}
+            aria-label="Close add transaction"
+          >
+            <X size={22} />
           </button>
-          <h2>Add {isIncome ? 'Income' : 'Expense'}</h2>
-          <MoreHorizontal size={24} />
         </header>
 
         <section className="add-card">
+          <div className="transaction-type-toggle add-type-toggle" role="group" aria-label="Transaction type">
+            {(['expense', 'income'] as const).map((type) => (
+              <button
+                className={transactionType === type ? 'active' : ''}
+                key={type}
+                type="button"
+                onClick={() => {
+                  setTransactionType(type);
+                  setSuggestionMessage(null);
+                }}
+                aria-pressed={transactionType === type}
+              >
+                {type === 'expense' ? 'Expense' : 'Income'}
+              </button>
+            ))}
+          </div>
+
           <label className="form-field add-name-field">
-            <span>Name</span>
+            <span>Description</span>
             <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Netflix" />
           </label>
 
@@ -102,52 +184,123 @@ function AddExpense() {
             </div>
           </label>
 
-          <label className="form-field add-date-field">
-            <span>Date</span>
-            <input value={date} onChange={(event) => setDate(event.target.value)} type="date" />
-          </label>
+          <div className="add-paired-row">
+            <label className="form-field add-date-field">
+              <span>Date</span>
+              <input value={date} onChange={(event) => setDate(event.target.value)} type="date" />
+            </label>
 
-          <label className="form-field add-category-field">
-            <span>Category</span>
+            <div className="form-field add-category-field">
+              <div className="field-label-actions">
+                <label htmlFor="transaction-category">Category</label>
+                <span className="compact-field-actions">
+                  {transactionType === 'expense' ? (
+                    <button
+                      className="category-suggestion-button"
+                      type="button"
+                      onClick={requestSuggestion}
+                      disabled={!session || !description.trim() || isSuggesting}
+                    >
+                      <Sparkles size={13} />
+                      {isSuggesting ? 'Detecting...' : 'Autodetect category'}
+                    </button>
+                  ) : null}
+                  <button className="compact-add-button" type="button" onClick={() => setIsAddingCategory(true)}>
+                    <Plus size={13} /> Add category
+                  </button>
+                </span>
+              </div>
+              <select
+                id="transaction-category"
+                value={category}
+                onChange={(event) => {
+                  setCategory(event.target.value);
+                  setSuggestionMessage(null);
+                }}
+                disabled={syncStatus === 'loading'}
+              >
+                {availableCategories.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {transactionType === 'expense' && !session ? (
+            <span className="field-help add-suggestion-status">Sign in to use category autodetection.</span>
+          ) : null}
+          {suggestionMessage ? (
+            <p className="form-error add-suggestion-status" role="status">{suggestionMessage}</p>
+          ) : null}
+
+          <div className="form-field add-account-field">
+            <div className="field-label-actions">
+              <label htmlFor="transaction-account">Account</label>
+              <button className="compact-add-button" type="button" onClick={() => setIsAddingAccount(true)}>
+                <Plus size={13} /> Add account
+              </button>
+            </div>
             <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              id="transaction-account"
+              value={account}
+              onChange={(event) => setAccount(event.target.value)}
               disabled={syncStatus === 'loading'}
             >
-              {availableCategories.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="form-field add-account-field">
-            <span>Account</span>
-            <select value={account} onChange={(event) => setAccount(event.target.value)}>
               {accounts.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name} - {accountTypeLabel(item.type)}
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <button className="invoice-button" type="button">
-            <Plus size={18} />
-            Add Invoice
-          </button>
+          {saveError ? <p className="form-error add-form-status">{saveError}</p> : null}
 
-          {saveError ? <p className="form-error">{saveError}</p> : null}
-
-          <button className="primary-button full-width" type="submit" disabled={isSaving || syncStatus === 'loading'}>
+          <button className="primary-button full-width add-save-button" type="submit" disabled={isSaving || syncStatus === 'loading'}>
             {isSaving ? 'Saving...' : 'Save transaction'}
           </button>
         </section>
+
+        {isAddingCategory ? (
+          <div className="nested-sheet-layer" onClick={(event) => event.stopPropagation()}>
+            <CategorySheet
+              mode="add"
+              initial={{
+                icon: transactionType === 'income' ? 'income' : 'shapes',
+                color: categoryColors[0],
+                monthlyBudget: 0,
+                categoryType: transactionType,
+              }}
+              categoryType={transactionType}
+              onClose={() => setIsAddingCategory(false)}
+              onSave={async (values) => {
+                const created = await addCategory(values as Omit<Category, 'id'>);
+                setCategory(created.id);
+                setIsAddingCategory(false);
+              }}
+            />
+          </div>
+        ) : null}
+
+        {isAddingAccount ? (
+          <div className="nested-sheet-layer" onClick={(event) => event.stopPropagation()}>
+            <AccountSheet
+              mode="add"
+              initial={{ color: categoryColors[0], type: 'bank' }}
+              onClose={() => setIsAddingAccount(false)}
+              onSave={async (values) => {
+                const created = await addAccount(values as Omit<Account, 'id'>);
+                setAccount(created.id);
+                setIsAddingAccount(false);
+              }}
+            />
+          </div>
+        ) : null}
       </form>
     </main>
   );
 }
-
 
 export default AddExpense;

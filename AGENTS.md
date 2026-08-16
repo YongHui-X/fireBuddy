@@ -3,21 +3,21 @@
 ## Source Of Truth
 - Read [`PROJECT_BRIEF.md`](PROJECT_BRIEF.md) before making product, architecture, data model, or roadmap decisions.
 - Treat `AGENTS.md` as the operating guide for how to work in this repo.
-- If `PROJECT_BRIEF.md` and the current file tree differ, assume the repo is in transition. Call out the gap clearly and work within the user's requested scope instead of pretending the migration is already complete.
+- If `PROJECT_BRIEF.md` and the current file tree differ, call out the gap clearly and work within the user's requested scope. The root monorepo migration is complete, but individual features may still be in transition.
 
 ## Project Direction
-FireBuddy is a Singapore-focused personal finance and FIRE tracker. The target architecture is a Turborepo monorepo with a web-first build for early public deployment and job applications, while mobile is deferred until later.
+FireBuddy is a Singapore-focused personal finance and FIRE tracker. The repository is a Turborepo monorepo with a web-first build for early public deployment and job applications, while mobile is deferred until later.
 
 Current repo state:
 - The repo now uses the root monorepo shape with `apps/`, `packages/`, and `docs/`.
 - `apps/web/` is the active React and Vite frontend.
-- `apps/web/` includes Supabase auth, dashboard, transactions, categories, profile, insights, accounts, add-expense modal, local fallback state, and backend sync for categories and expenses.
-- `apps/backend/` is the FastAPI backend with mounted categories, expenses, and financial advisor RAG routes.
+- `apps/web/` includes Supabase auth, typed income and expense transactions, read-only system categories, custom category management, persisted accounts, expense-only insights, optional AI category suggestions, financial advisor chat history, and explicit demo-only local state.
+- `apps/backend/` is the FastAPI backend with mounted health, accounts, transactions, compatibility expenses, categories, AI suggestion, and financial advisor RAG routes.
 - `apps/mobile/` contains the earlier Expo implementation and is currently deferred.
-- `packages/shared/` contains shared TypeScript contracts, category data, add-expense helpers, and API route constants.
-- `supabase/` contains SQL migrations for profiles, categories, expenses, category visuals, and RAG pgvector storage.
+- `packages/shared/` contains shared TypeScript contracts for accounts, categories, transactions, expenses, AI, and RAG, plus category data, add-expense helpers, and API route constants.
+- `supabase/` contains timestamped SQL migrations for UUID alignment, profiles, typed categories, persisted accounts, income and expense transactions, security, and private hybrid RAG storage.
 
-Target repo state:
+Ongoing repo direction:
 - `apps/web` for the active React + Vite web app
 - `apps/mobile` for the Expo + React Native mobile app
 - `apps/backend` for FastAPI
@@ -31,7 +31,7 @@ Current structure:
 - `apps/web/src/routes/` contains the main web screens and modal routes
 - `apps/web/src/app/` contains web app state, constants, and shared view helpers
 - `apps/backend/` contains the FastAPI app
-- `apps/backend/routers/` contains categories, expenses, RAG, and draft AI parse route modules
+- `apps/backend/routers/` contains mounted accounts, transactions, compatibility expenses, categories, AI suggestion, and RAG route modules
 - `apps/backend/rag/` contains the knowledge base, ingestion, retrieval, and advisor service support code
 - `apps/mobile/` contains the earlier Expo app
 - `apps/mobile/app/` contains Expo Router routes
@@ -41,16 +41,17 @@ Current structure:
 - `supabase/` contains migrations and seed data
 - `docs/Figmamake/` contains Figma Make reference material
 
-Target structure after migration:
+Ongoing architecture direction:
 - `apps/web/` should remain the main frontend surface
 - `apps/mobile/` should hold the Expo mobile app once shared logic and web contracts are stable
 - `apps/backend/` should hold FastAPI business logic, protected data APIs, AI features, and RAG endpoints
 - `packages/shared/` should hold shared TypeScript types, helpers, Supabase client utilities, hooks, and API-call wrappers imported by both frontends
 
-Migration-aware rule:
-- Agents may propose folder moves, shared-package extraction, and scaffold plans.
-- Agents must not assume `apps/web`, `apps/mobile`, `apps/backend`, or `packages/shared` already exist unless they are present in the repo.
-- Agents must distinguish mounted backend routes from draft route modules. `routers/ai.py` exists, but only routes included by `apps/backend/main.py` are live.
+Repository-aware rule:
+- The root monorepo migration is complete. Do not perform broad folder moves unless the user explicitly asks for another restructure.
+- Confirm paths, scripts, mounted routes, and migrations against the current tree before documenting or changing them.
+- Treat only routers included by `apps/backend/main.py` as live API surfaces.
+- Treat `/transactions` as the primary typed income and expense API. Keep `/expenses` documented as a mounted compatibility API until it is deliberately retired.
 
 ## Build, Test, And Development Commands
 Use commands that match the repo's current state.
@@ -66,20 +67,23 @@ Current commands that exist today:
 - `npm run ios`
 - `npm run web`
 - `npm run lint:mobile`
+- `npm run typecheck:mobile`
 - `npm run typecheck:shared`
+- `npm run test:web`
+- `python -m unittest discover apps/backend/tests -v`
 - `npm run dev`
 - `npm run build`
 - `npm run lint`
 - `npm run typecheck`
 
-Target commands after monorepo migration:
+Root orchestration direction:
 - Run install commands from the monorepo root
 - Expect root scripts to remain the main entrypoint for `web`, `mobile`, and `backend`
 - Confirm the exact workspace and Turbo commands from `package.json` and `turbo.json` before instructing the user to run them
 
 ## Architecture Guidance
 - Prioritise the web app first. Mobile is a later phase unless the user explicitly asks to work on it.
-- Preserve a shared-logic-first architecture. Business logic should live in hooks, lib modules, backend services, or the future `packages/shared` package, not inside UI components.
+- Preserve a shared-logic-first architecture. Business logic should live in hooks, lib modules, backend services, or `packages/shared`, not inside UI components.
 - Keep components presentation-only whenever practical. They should render UI and call hooks instead of owning business logic.
 - Treat Figma Make output as a visual reference only. Do not copy-paste generated Vite, Tailwind, or shadcn code into the project unless the user explicitly asks for a careful adaptation.
 - When adapting the current Expo code in `apps/mobile` toward the target architecture, optimise for later reuse in `packages/shared`.
@@ -97,25 +101,30 @@ For new screens or flows, prefer this sequence unless the user asks otherwise:
 
 Navigation direction:
 - Bottom tabs should remain `Home`, `Transactions`, `Categories`, and `Profile`.
-- `Add Expense` should be treated as a modal, sheet, or floating-action-button flow rather than a fifth main tab unless the user explicitly changes the design.
+- `Add transaction` should remain a modal, sheet, or floating action button flow rather than a fifth main tab unless the user explicitly changes the design.
 - The current web UI includes an `Insights` route and an `Accounts` management view. Accounts should remain secondary to Transactions unless the user changes the product direction.
+- Income and expense categories must remain explicitly typed. Budget totals and the current Insights calculations remain expense-only.
+- AI category suggestions apply only to expense drafts, require an explicit user action, and must never save a transaction automatically.
 
 ## Coding Style And Naming Conventions
-Follow the existing TypeScript, React Native, Expo Router, and Python patterns already present in the repo, while steering new architecture work toward the target web-first monorepo.
+Follow the existing TypeScript, React Native, Expo Router, and Python patterns already present in the web-first monorepo.
 
 - Use 2-space indentation and match the surrounding quote style
 - Use PascalCase for components and camelCase for functions and variables
 - Keep route filenames aligned with the framework in use
 - Keep shared UI reusable and keep feature-specific logic close to the consuming route or hook
-- When introducing target-state structure, prefer names that will map cleanly to `apps/*` and `packages/shared`
+- When extending the structure, keep ownership clear across `apps/*` and `packages/shared`
+- Add short summary comments to important functions when their purpose or constraints are not obvious from the name and surrounding code
 
 ## Testing Guidelines
-There is no broad automated test suite configured yet.
+The repository has web Vitest coverage, backend `unittest` coverage, migration security checks, RAG evaluation tests, and a GitHub Actions CI workflow.
 
 - If you add tests, keep them near the feature and document the command in the relevant `package.json`
-- For web work, run the most relevant of `npm run lint:web`, `npm run build:web`, and `npm run typecheck:shared`
+- For web work, run the most relevant of `npm run test:web`, `npm run lint:web`, `npm run build:web`, and `npm run typecheck:shared`
 - For current Expo work, verify with `npm run lint:mobile` plus manual checks in the relevant screen
-- For backend work, run targeted Python import or route checks where practical, and document any checks that need Supabase or OpenAI credentials
+- For backend work, run targeted tests or `python -m unittest discover apps/backend/tests -v`, plus Python compile checks where practical
+- Local unit tests use fakes and placeholder credentials where possible. Live RAG ingestion and evaluation still require valid Supabase and OpenAI credentials
+- CI currently typechecks shared and web code, builds and tests the web app, lints mobile, runs backend tests, and compiles key backend modules
 - For monorepo work, document which app or package owns each test command
 
 ## Commit And Pull Request Guidelines

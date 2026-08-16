@@ -12,6 +12,7 @@ import hashlib
 import logging
 import os
 import time
+from collections.abc import Iterator
 
 from openai import OpenAI
 
@@ -30,7 +31,7 @@ LOW_CONFIDENCE_ANSWER = (
     "investing basics."
 )
 OUT_OF_SCOPE_ANSWER = (
-    "I can only help with the Singapore personal-finance topics covered by "
+    "Ember can only help with the Singapore personal-finance topics covered by "
     "FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, "
     "IRAS reliefs, investing basics, and FIRE planning."
 )
@@ -48,6 +49,52 @@ OUT_OF_SCOPE_TERMS = {
 LIVE_MARKET_TERMS = {"bitcoin", "crypto", "exchange rate", "share price", "stock price"}
 
 logger = logging.getLogger(__name__)
+
+
+def build_answer_messages(question: str, context: str, history: list[ChatMessage]) -> list[dict]:
+    """Build the single grounded prompt shared by JSON and streaming answers."""
+
+    history_text = format_chat_history(history)
+    history_block = (
+        f"Recent conversation:\n{history_text}\n\n"
+        if history_text
+        else ""
+    )
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You are Ember, FireBuddy's educational Singapore finance guide. "
+                "Answer only using the retrieved context. If the context "
+                "does not contain enough evidence, say that clearly. Do "
+                "not invent facts, URLs, rates, dates, or source names. "
+                "Preserve numeric values and formulas exactly as they "
+                "appear in the context. "
+                "For tables, associate each value only with its explicit "
+                "row and column. Do not invent a breakdown or reuse a "
+                "number from a different row or column. Omit any table "
+                "value whose label is ambiguous in the retrieved text. "
+                "When one percentage applies separately to Ordinary Wages "
+                "and Additional Wages, state it once as the applicable "
+                "rate. Never join repeated OW and AW rates with a plus "
+                "sign because that falsely implies they should be added. "
+                "Answer only the breakdowns the question asks for. "
+                "Do not give personalized financial advice; provide "
+                "general educational information only. Do not include "
+                "source numbers in the answer; citations are returned "
+                "separately by the API."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                history_block
+                + f"Question:\n{question}\n\n"
+                + f"Retrieved context:\n{context}\n\n"
+                + "Write a concise answer without source-number citations."
+            ),
+        },
+    ]
 
 
 def is_clearly_out_of_scope(question: str) -> bool:
@@ -214,6 +261,12 @@ def format_chat_history(history: list[ChatMessage]) -> str:
     return "\n".join(lines)
 
 
+def select_recent_chat_history(history: list[ChatMessage]) -> list[ChatMessage]:
+    """Bound generation context to the backend's most recent chat window."""
+
+    return history[-MAX_HISTORY_MESSAGES:]
+
+
 def format_retrieved_context(matches: list[dict]) -> str:
     """
     Turn retrieved rows into the context block sent to the answer model.
@@ -259,54 +312,176 @@ def generate_grounded_answer(question: str, context: str, history: list[ChatMess
     """
 
     client = OpenAI()
-    history_text = format_chat_history(history or [])
-    history_block = (
-        f"Recent conversation:\n{history_text}\n\n"
-        if history_text
-        else ""
-    )
     response = client.chat.completions.create(
         model=ANSWER_MODEL,
         temperature=0.2,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are FireBuddy's Singapore personal-finance assistant. "
-                    "Answer only using the retrieved context. If the context "
-                    "does not contain enough evidence, say that clearly. Do "
-                    "not invent facts, URLs, rates, dates, or source names. "
-                    "Preserve numeric values and formulas exactly as they "
-                    "appear in the context. "
-                    "For tables, associate each value only with its explicit "
-                    "row and column. Do not invent a breakdown or reuse a "
-                    "number from a different row or column. Omit any table "
-                    "value whose label is ambiguous in the retrieved text. "
-                    "When one percentage applies separately to Ordinary Wages "
-                    "and Additional Wages, state it once as the applicable "
-                    "rate. Never join repeated OW and AW rates with a plus "
-                    "sign because that falsely implies they should be added. "
-                    "Answer only the breakdowns the question asks for. "
-                    "Do not give personalized financial advice; provide "
-                    "general educational information only. Do not include "
-                    "source numbers in the answer; citations are returned "
-                    "separately by the API."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    history_block +
-                    f"Question:\n{question}\n\n"
-                    f"Retrieved context:\n{context}\n\n"
-                    "Write a concise answer without source-number citations."
-                ),
-            },
-        ],
+        messages=build_answer_messages(question, context, history or []),
     )
 
     answer = response.choices[0].message.content
     return (answer or "").strip()
+
+
+def stream_grounded_answer(
+    question: str,
+    context: str,
+    history: list[ChatMessage] | None = None,
+) -> Iterator[str]:
+    """Yield grounded OpenAI answer tokens as they become available."""
+
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model=ANSWER_MODEL,
+        temperature=0.2,
+        messages=build_answer_messages(question, context, history or []),
+        stream=True,
+    )
+
+    for chunk in response:
+        if not chunk.choices:
+            continue
+        content = chunk.choices[0].delta.content
+        if content:
+            yield content
+
+
+def chunk_static_answer(answer: str, chunk_size: int = 72) -> Iterator[str]:
+    """Split deterministic refusals and no-match answers into visible deltas."""
+
+    for start in range(0, len(answer), chunk_size):
+        yield answer[start:start + chunk_size]
+
+
+def stream_financial_advisor_question(
+    question: str,
+    history: list[ChatMessage] | None = None,
+    *,
+    retrieved_matches: list[dict] | None = None,
+) -> Iterator[dict]:
+    """Stream ordered status, answer, source, completion, and error events."""
+
+    started_at = time.perf_counter()
+    cleaned_question = question.strip()
+    yield {
+        "event": "status",
+        "data": {"status": "searching", "message": "Searching curated sources"},
+    }
+
+    if not cleaned_question:
+        answer = "Please ask Ember a question before requesting an answer."
+        for text in chunk_static_answer(answer):
+            yield {"event": "delta", "data": {"text": text}}
+        yield {"event": "sources", "data": {"sources": []}}
+        yield {"event": "done", "data": {}}
+        return
+
+    if is_clearly_out_of_scope(cleaned_question):
+        log_rag_event(
+            question=cleaned_question,
+            matches=[],
+            source_count=0,
+            outcome="out_of_scope_refusal",
+            started_at=started_at,
+        )
+        for text in chunk_static_answer(OUT_OF_SCOPE_ANSWER):
+            yield {"event": "delta", "data": {"text": text}}
+        yield {"event": "sources", "data": {"sources": []}}
+        yield {"event": "done", "data": {}}
+        return
+
+    try:
+        matches = (
+            retrieved_matches
+            if retrieved_matches is not None
+            else retrieve_chunks(cleaned_question)
+        )
+    except Exception:
+        logger.exception(
+            "rag_retrieval_failed",
+            extra={"question_hash": question_hash(cleaned_question)},
+        )
+        yield {
+            "event": "error",
+            "data": {
+                "code": "retrieval",
+                "message": "Ember could not search the curated sources.",
+                "retryable": True,
+                "status": 502,
+            },
+        }
+        return
+    if not matches:
+        answer = "Ember could not find relevant information in the FireBuddy knowledge base."
+        log_rag_event(
+            question=cleaned_question,
+            matches=[],
+            source_count=0,
+            outcome="no_matches",
+            started_at=started_at,
+        )
+        for text in chunk_static_answer(answer):
+            yield {"event": "delta", "data": {"text": text}}
+        yield {"event": "sources", "data": {"sources": []}}
+        yield {"event": "done", "data": {}}
+        return
+
+    source_details = build_unique_sources(matches)
+    yield {
+        "event": "status",
+        "data": {"status": "preparing", "message": "Preparing a grounded answer"},
+    }
+
+    if match_similarity(matches[0]) < get_rag_min_similarity():
+        log_rag_event(
+            question=cleaned_question,
+            matches=matches,
+            source_count=len(source_details),
+            outcome="low_confidence_refusal",
+            started_at=started_at,
+        )
+        for text in chunk_static_answer(LOW_CONFIDENCE_ANSWER):
+            yield {"event": "delta", "data": {"text": text}}
+        yield {"event": "sources", "data": {"sources": []}}
+        yield {"event": "done", "data": {}}
+        return
+
+    context = format_retrieved_context(matches)
+    source_payload = [source.model_dump() for source in source_details]
+    if not context:
+        answer = "I found matching records, but they did not contain readable context to answer from."
+        for text in chunk_static_answer(answer):
+            yield {"event": "delta", "data": {"text": text}}
+        yield {"event": "sources", "data": {"sources": source_payload}}
+        yield {"event": "done", "data": {}}
+        return
+
+    answer_parts = []
+    bounded_history = select_recent_chat_history(history or [])
+    for text in stream_grounded_answer(cleaned_question, context, bounded_history):
+        answer_parts.append(text)
+        yield {"event": "delta", "data": {"text": text}}
+
+    if not "".join(answer_parts).strip():
+        yield {
+            "event": "error",
+            "data": {
+                "code": "empty_response",
+                "message": "Ember returned an empty answer.",
+                "retryable": True,
+                "status": 204,
+            },
+        }
+        return
+
+    log_rag_event(
+        question=cleaned_question,
+        matches=matches,
+        source_count=len(source_details),
+        outcome="answered",
+        started_at=started_at,
+    )
+    yield {"event": "sources", "data": {"sources": source_payload}}
+    yield {"event": "done", "data": {}}
 
 
 def answer_financial_advisor_question(
@@ -334,7 +509,7 @@ def answer_financial_advisor_question(
             started_at=started_at,
         )
         return AdvisorResponse(
-            answer="Please ask a question before using the financial advisor.",
+            answer="Please ask Ember a question before requesting an answer.",
             sources=[],
             source_details=[],
         )
@@ -369,7 +544,7 @@ def answer_financial_advisor_question(
         )
         return AdvisorResponse(
             answer=(
-                "I could not find relevant information in the FireBuddy "
+                "Ember could not find relevant information in the FireBuddy "
                 "knowledge base."
             ),
             sources=[],
@@ -413,7 +588,8 @@ def answer_financial_advisor_question(
             source_details=source_details,
         )
 
-    answer = generate_grounded_answer(cleaned_question, context, history)
+    bounded_history = select_recent_chat_history(history or [])
+    answer = generate_grounded_answer(cleaned_question, context, bounded_history)
 
     log_rag_event(
         question=cleaned_question,

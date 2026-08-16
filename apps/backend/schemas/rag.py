@@ -7,6 +7,15 @@ class ChatMessage(BaseModel):
   role: Literal["user", "assistant"]
   content: str = Field(..., min_length=1, max_length=4000)
 
+  @field_validator("content", mode="before")
+  @classmethod
+  def normalize_content(cls, value):
+    """Collapse message whitespace before enforcing content length limits."""
+
+    if isinstance(value, str):
+      return " ".join(value.split())
+    return value
+
 
 class AdvisorRequest(BaseModel):
   question: str = Field(..., min_length=1, max_length=2000)

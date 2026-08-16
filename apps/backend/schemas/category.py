@@ -1,8 +1,10 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any, Literal
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic.alias_generators import to_camel
 
 DEFAULT_CATEGORY_COLOR = "#3C8A61"
 DEFAULT_CATEGORY_ICONS = {
@@ -28,8 +30,12 @@ DEFAULT_CATEGORY_ICONS = {
     "gifts": "gifts",
     "tech": "tech",
     "banking": "banking",
-    "income": "income",
     "others": "others",
+    "salary": "salary",
+    "bonus": "bonus",
+    "dividends": "dividends",
+    "interest": "interest",
+    "other income": "income",
 }
 DEFAULT_CATEGORY_STYLES = {
     "food & drink": ("#3C8A61", Decimal("600")),
@@ -43,41 +49,70 @@ DEFAULT_CATEGORY_STYLES = {
 }
 
 
-class CreateCategoryRequest(BaseModel):
-    name: str = Field(min_length=1, max_length=80)
-    icon: str = Field(pattern=r"^[a-z][a-z0-9_]{0,31}$")
-    color: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
-    monthly_budget: Decimal = Field(alias="monthlyBudget", ge=0, max_digits=10, decimal_places=2)
+class CategoryModel(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+
+class CreateCategoryRequest(CategoryModel):
+    name: Annotated[str, Field(min_length=1, max_length=80)]
+    icon: Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,31}$")]
+    color: Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]
+    monthly_budget: Annotated[
+        Decimal,
+        Field(ge=0, max_digits=10, decimal_places=2),
+    ]
+    category_type: Literal["expense", "income"] = "expense"
 
     @field_validator("name")
     @classmethod
     def clean_name(cls, value: str) -> str:
-        return " ".join(value.strip().split())
+        cleaned = " ".join(value.strip().split())
+        return cleaned
+
+    @model_validator(mode="after")
+    def require_zero_income_budget(self):
+        """Keep income categories free of expense budget semantics."""
+
+        if self.category_type == "income" and self.monthly_budget != 0:
+            raise ValueError("Income categories must have a zero monthly budget")
+        return self
 
 
-class UpdateCategoryRequest(BaseModel):
-    name: str = Field(min_length=1, max_length=80)
-    icon: str = Field(pattern=r"^[a-z][a-z0-9_]{0,31}$")
-    color: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
-    monthly_budget: Decimal = Field(alias="monthlyBudget", ge=0, max_digits=10, decimal_places=2)
+class UpdateCategoryRequest(CategoryModel):
+    name: Annotated[str, Field(min_length=1, max_length=80)]
+    icon: Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,31}$")]
+    color: Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]
+    monthly_budget: Annotated[
+        Decimal,
+        Field(ge=0, max_digits=10, decimal_places=2),
+    ]
+    category_type: Literal["expense", "income"] = "expense"
 
     @field_validator("name")
     @classmethod
     def clean_name(cls, value: str) -> str:
-        return " ".join(value.strip().split())
+        cleaned = " ".join(value.strip().split())
+        return cleaned
+
+    @model_validator(mode="after")
+    def require_zero_income_budget(self):
+        """Keep income categories free of expense budget semantics."""
+
+        if self.category_type == "income" and self.monthly_budget != 0:
+            raise ValueError("Income categories must have a zero monthly budget")
+        return self
 
 
-class CategoryResponse(BaseModel):
-    id: str
-    user_id: str | None = Field(alias="userId")
+class CategoryResponse(CategoryModel):
+    id: UUID
+    user_id: UUID | None
     name: str
     icon: str
     color: str
-    monthly_budget: Decimal = Field(alias="monthlyBudget")
-    is_default: bool = Field(alias="isDefault")
-    created_at: str = Field(alias="createdAt")
-
-    model_config = ConfigDict(populate_by_name=True)
+    monthly_budget: Decimal
+    category_type: Literal["expense", "income"]
+    is_default: bool
+    created_at: str
 
 
 def serialize_category(row: dict[str, Any]) -> CategoryResponse:
@@ -93,6 +128,7 @@ def serialize_category(row: dict[str, Any]) -> CategoryResponse:
         icon=str(row.get("icon") or DEFAULT_CATEGORY_ICONS.get(normalized_name, "others")),
         color=str(row.get("color") or fallback_color),
         monthlyBudget=Decimal(str(fallback_budget if persisted_budget is None else persisted_budget)),
+        categoryType=str(row.get("category_type") or "expense"),
         id=str(row["id"]),
         userId=str(row["user_id"]) if row.get("user_id") is not None else None,
         name=name,
