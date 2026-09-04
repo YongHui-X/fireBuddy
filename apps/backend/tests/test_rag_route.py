@@ -113,6 +113,57 @@ class RagRouteTests(unittest.TestCase):
         self.assertEqual(len(submitted_history), 20)
         self.assertEqual(submitted_history[0].content, "first message")
 
+    def test_accepts_bounded_interface_context_and_passes_it_to_the_service(self):
+        with patch.object(
+            rag_router,
+            "answer_financial_advisor_question",
+            return_value={"answer": "Answer", "sources": [], "source_details": []},
+        ) as advisor:
+            response = self.client.post(
+                "/api/chat/financial-advisor",
+                json={
+                    "question": "What should I review here?",
+                    "history": [],
+                    "appContext": {
+                        "currentPage": "Transactions",
+                        "currentPath": "/transactions",
+                        "recentActions": [{
+                            "type": "create",
+                            "label": "  Added   a transaction  ",
+                            "occurredAt": "2026-09-03T08:00:00.000Z",
+                        }],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        submitted_context = advisor.call_args.args[2]
+        self.assertEqual(submitted_context.current_page, "Transactions")
+        self.assertEqual(submitted_context.recent_actions[0].label, "Added a transaction")
+
+    def test_rejects_more_than_five_interface_actions(self):
+        response = self.client.post(
+            "/api/chat/financial-advisor",
+            json={
+                "question": "What should I review?",
+                "history": [],
+                "appContext": {
+                    "currentPage": "Home dashboard",
+                    "currentPath": "/",
+                    "recentActions": [
+                        {
+                            "type": "update",
+                            "label": f"Action {index}",
+                            "occurredAt": "2026-09-03T08:00:00.000Z",
+                        }
+                        for index in range(6)
+                    ],
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+
     def test_rejects_more_than_20_history_messages(self):
         history = [
             {"role": "user", "content": f"message {index}"}

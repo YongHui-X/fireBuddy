@@ -5,7 +5,9 @@ FireBuddy is a balanced Singapore-focused personal finance app with FIRE as its 
 
 > FireBuddy helps Singapore users understand their everyday finances and turn them into an explainable path toward financial independence.
 
-Everyday account, transaction, category, budget, and insight workflows must remain useful without a FIRE profile. The next product milestone will connect transaction-derived spending to a transparent FIRE projection. Carefully scoped CPF support comes later, after the base calculation is trusted.
+The primary audience is a Singapore based emerging FIRE planner, roughly 25 to 39 years old. Everyday account, transaction, category, budget, and insight workflows must remain useful without a FIRE profile.
+
+The real data dashboard foundation is implemented with wealth positions, dated snapshots, contributions, deterministic financial summaries, and an explainable FIRE projection. The first public deployment waits for the remaining manual localhost browser and signed in account isolation smoke. Spending Plan, Life Goals, CSV import, recurring detection, unified Ember, and deeper Singapore planning follow in phases. `docs/PRD.md` owns the detailed requirements and backlog.
 
 The product supports:
 - Primary role: AI Engineer
@@ -20,12 +22,13 @@ Build strategy:
 Current repo state:
 - The repo now uses a root monorepo layout with `apps/`, `packages/`, and `docs/`
 - `apps/web/` is the active React and Vite frontend
-- `apps/web/` includes Supabase auth, income and expense tracking, read-only system categories, persisted accounts, expense-only insights, optional expense category suggestions, a card-based dashboard, Ember with empty opening topics, streamed answers, local topic history, and per-answer citations, and demo-only local fallback state
-- `apps/backend/` is a FastAPI backend with mounted accounts, typed transactions, compatibility expenses, categories, AI suggestion, health, and Ember JSON and SSE RAG routes
+- `apps/web/` includes Supabase auth, income and expense tracking, read-only system categories, persisted accounts, expense-only insights, wealth and FIRE setup, a real data dashboard, optional expense category suggestions, Ember with streamed cited answers and a page-aware quick-chat launcher, and versioned demo-only local state
+- `apps/backend/` is a FastAPI backend with mounted accounts, typed transactions, compatibility expenses, categories, wealth, FIRE, analytics, AI suggestion, health, and Ember JSON and SSE RAG routes
 - `apps/mobile/` contains the earlier Expo implementation and is currently deferred
-- `packages/shared/` contains shared TypeScript contracts, category data, add-expense helpers, and API route constants
-- `supabase/` contains timestamped SQL migrations for the UUID-aligned app schema, persisted accounts, typed income and expense transactions, security, HNSW indexing, and private hybrid RAG retrieval
+- `packages/shared/` contains shared TypeScript contracts, deterministic demo FIRE calculations, category data, add-expense helpers, and API route constants
+- `supabase/` contains timestamped SQL migrations for the UUID-aligned app schema, persisted accounts, typed transactions, wealth and FIRE records, security, HNSW indexing, and private hybrid RAG retrieval
 - `docs/Figmamake/` remains a visual reference, not production source code
+- `docs/design/firebuddy-dashboard-roadmap.png` is the primary visual reference for the current dashboard
 
 Ongoing repo direction:
 - `apps/web` remains the active React and Vite frontend
@@ -85,6 +88,10 @@ Design language:
 Figma reference:
 - https://www.figma.com/make/jTSdUVMcEefft60bnt4vig/Firebuddy
 
+Dashboard roadmap reference:
+- [`docs/design/firebuddy-dashboard-roadmap.png`](docs/design/firebuddy-dashboard-roadmap.png)
+- The FireBuddy mockup is the visual authority. WealthWise is a functional benchmark only and must not be copied for code, architecture, branding, navigation, or pixel-level design.
+
 ## Data Model Notes
 Key decisions:
 - Use UUID primary keys for app tables so IDs stay consistent across auth, frontend types, and backend APIs
@@ -102,7 +109,20 @@ Current core tables:
 - `categories`
 - `accounts`
 - `expenses`
+- `wealth_positions`
+- `wealth_position_snapshots`
+- `wealth_contributions`
+- `fire_profiles`
+- `essential_expense_categories`
 - `rag_chunks`
+
+Current dashboard data boundary:
+- Keep payment accounts unchanged and separate from balance sheet values
+- Asset and liability wealth positions store liquidity, FI inclusion, emergency fund, and CPF or restricted classifications
+- Dated wealth snapshots support current values and historical paths
+- Dedicated wealth contributions never count as expenses
+- Current investable assets derive from eligible wealth positions instead of a duplicated `FireProfile` value
+- `WealthPosition`, `WealthPositionSnapshot`, `WealthContribution`, `FinancialSummary`, `MonthlyMoneyPulse`, `RecommendedAction`, and revised FIRE types are current shared contracts
 
 Seed default categories:
 - Food & Drink
@@ -124,7 +144,7 @@ Security rules:
 - Frontends use Supabase only for authentication and do not receive direct Data API access to application tables
 - FastAPI validates the Supabase JWT, scopes every user data query, and uses a backend-only secret or service-role key for application data access
 - System default categories are read-only, while users can manage only their own custom categories
-- Accounts and transactions are always scoped to the authenticated user
+- Accounts, transactions, wealth records, FIRE profiles, and essential category selections are always scoped to the authenticated user
 - RAG chunks and retrieval RPCs are private to backend service-role clients
 
 Automation:
@@ -158,6 +178,20 @@ Mounted FastAPI routes:
 - `POST /categories`
 - `PUT /categories/{category_id}`
 - `DELETE /categories/{category_id}`
+- `GET /wealth/positions`
+- `POST /wealth/positions`
+- `GET /wealth/positions/{position_id}`
+- `PUT /wealth/positions/{position_id}`
+- `DELETE /wealth/positions/{position_id}`
+- Snapshot CRUD under `/wealth/positions/{position_id}/snapshots`
+- Contribution CRUD under `/wealth/contributions`
+- `GET /analytics/financial-summary`
+- `GET /fire/essential-categories`
+- `PUT /fire/essential-categories`
+- `GET /fire/profile`
+- `PUT /fire/profile`
+- `POST /fire/calculate`
+- `POST /fire/scenario`
 - `POST /ai/parse-input`
 - `POST /api/chat/financial-advisor`
 - `POST /api/chat/financial-advisor/stream`
@@ -177,22 +211,32 @@ Current web screens:
 7. Accounts
 8. Add transaction modal
 9. Ember Singapore finance guide
+10. Wealth positions, snapshots, and contributions
+11. FIRE setup and temporary scenario
+12. Plan and Goals Later placeholders
 
 Next product focus:
-1. Deploy and smoke test the public web MVP on Vercel, Railway, and the existing Supabase project
-2. Replace the illustrative FIRE snapshot with a small persisted profile, deterministic financial summary and FIRE calculation, explainable dashboard results, and one temporary scenario
-3. Add reviewable CSV import, savings-rate analytics, period comparisons, and transaction drilldowns
-4. Route one FireBuddy assistant between deterministic analytics, deterministic FIRE results, and Singapore finance RAG
-5. Add selective depth through saved FIRE scenarios, progress history, recurring-transaction detection, and carefully scoped CPF assumptions
+1. Complete manual responsive browser acceptance and a signed in two user isolation smoke
+2. Deploy only after the dashboard foundation passes all localhost acceptance criteria
+
+Later product focus:
+1. Evolve category budgets into a period based Spending Plan and add Life Goals
+2. Add reviewable CSV import, expanded analytics, transaction drilldowns, and recurring detection
+3. Route Ember among deterministic analytics, FIRE results, scenarios, and Singapore finance RAG
+4. Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivity ranges, and resilience modelling
 
 Navigation:
 - Bottom tab bar with `Home`, `Transactions`, `Categories`, and `Profile`
 - `Add transaction` is launched from a floating action button, modal, or sheet flow rather than a main tab
-- Ember is a secondary desktop navigation item and Home card, while mobile keeps the four primary tabs
+- Current desktop order is `Home`, `Transactions`, `Categories`, `Plan`, `Goals`, and `Profile`, followed by a separated `Ember` entry
+- `Log out` and `Add Transaction` remain at the bottom of the desktop sidebar
+- Mobile keeps the four primary tabs. Plan, Goals, Ember, Accounts, and detailed Insights remain secondary mobile flows
+- Home does not use large Goals or Ember panels because they have dedicated pages
 
 ## AI Roadmap
 Current:
-- Ember RAG experience at `GET /ember`, backed by the authenticated streaming endpoint `POST /api/chat/financial-advisor/stream`. The JSON endpoint `POST /api/chat/financial-advisor` remains unchanged for compatibility.
+- Ember RAG experience at `GET /ember` plus a persistent authenticated quick-chat launcher, backed by the streaming endpoint `POST /api/chat/financial-advisor/stream`. The JSON endpoint `POST /api/chat/financial-advisor` remains available for compatibility.
+- Ember requests may include bounded interface context: the current route label and up to five generic action labels from the current browser session. This context never includes amounts, descriptions, account names, or record IDs, and is used only to tailor answer emphasis.
 - Ember opens with an empty transcript and supported starter questions. It streams search status, grounded answer text, and citations without automatically submitting a starter or greeting the user.
 - Ember uses curated CPF, CPFIS, Singapore Savings Bonds, MoneySense, IRAS relief, Singapore investing, and FIRE planning sources plus recent conversation context. It does not inspect accounts or transactions, calculate personal FIRE results, retrieve live prices, or provide regulated financial advice.
 - Authenticated category suggestions at `POST /ai/parse-input`, limited to 10 requests per user per 60 seconds by default
@@ -230,26 +274,28 @@ Current public MVP implementation:
 - Web and backend regression tests plus Vercel and Railway configuration
 - Private HNSW and hybrid RRF retrieval improved the 30-question retrieval evaluation from MRR `0.7861` to `0.8622`, while Hit@5 remained `1.0000`
 
-Next, baseline release:
-- Deploy and smoke test the implemented web, backend, and Supabase flows
-- Verify authentication, ownership, CORS, CRUD, Insights, AI suggestions, and Ember in production
+Current dashboard foundation before first deployment:
+- Separate wealth positions, snapshots, and contributions are implemented
+- The one-per-user FIRE profile derives investable assets from wealth positions
+- Financial summary, Monthly Money Pulse, recommended action, FIRE target, progress, paths, and temporary scenarios are deterministic
+- Setup prompts replace unavailable figures and facts, projections, warnings, and incomplete states are distinguished
+- Automated local calculation, schema, RLS, build, and regression checks pass; manual responsive and signed in smoke checks remain before deployment
 
-Next, FIRE core:
-- Add a one-per-user FIRE profile and deterministic financial summary
-- Derive retirement spending from completed expense history with a manual override
-- Add an explainable FIRE target, progress, projection, and one unsaved comparison scenario
+Later, monthly planning:
+- Evolve existing category budgets into a period based Spending Plan with an overall limit, category limits, projection, and optional rollover
+- Add Life Goals with target, date, progress, contributions, and status
 
-Later, CSV and analytics:
+Later, data depth:
 - Add reviewable CSV mapping, preview, validation, duplicate detection, and import reporting
-- Add savings rate, period comparisons, and links to supporting transactions
+- Add expanded analytics, supporting transaction drilldowns, anomaly depth, and recurring subscription or bill detection
+- Detect recurring records only. Do not schedule or execute payments
 
-Later, unified assistant:
-- Route one FireBuddy assistant between deterministic transaction analytics, deterministic FIRE results, and Singapore finance RAG
-- Use the language model to explain structured results, never to calculate authoritative totals
+Later, unified Ember:
+- Route one assistant between deterministic analytics, FIRE results, scenarios, and Singapore finance RAG
+- Use the language model to explain structured results, never to calculate authoritative totals or change records
 
-Later, selective finance depth:
-- Add saved FIRE scenarios, progress history, recurring-transaction detection, and carefully scoped CPF assumptions
-- Continue using category budgets instead of adding a separate broad budgeting product
+Later, planning depth:
+- Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivity ranges, resilience modelling, and progress history
 
 After shared web contracts are stable:
 - Continue evolving the Expo app in `apps/mobile` around shared logic extracted into `packages/shared`
@@ -280,7 +326,8 @@ The web app is now ahead of mobile for current product direction. Treat `apps/mo
 ## Deployment Direction
 - Web: Vercel Hobby, built from the repository root using `vercel.json`
 - Backend: Railway Hobby using `apps/backend/railway.toml`, Railpack, Python 3.11, `/health`, and the Singapore region
-- Deploy Railway first, then set `VITE_API_BASE_URL` for Vercel and restrict `CORS_ALLOWED_ORIGINS` to the production and required preview origins
+- The first public deployment follows completion of the dashboard foundation and localhost acceptance in `docs/PRD.md`
+- At deployment time, deploy Railway first, then set `VITE_API_BASE_URL` for Vercel and restrict `CORS_ALLOWED_ORIGINS` to production and required preview origins
 - Android: EAS Build later
 - iOS: out of scope for now
 
@@ -299,10 +346,11 @@ RAG:
 - Telegram bot integration
 - iOS App Store submission
 - AWS-heavy infrastructure work
-- Account balances, transfers, and full net-worth aggregation before the core flow is stable
-- Direct bank connections, market feeds, investment execution, and generic portfolio management
-- Generic financial goals, a separate full budgeting system, and a recurring payment scheduler
-- Ember account inspection, transaction-aware claims, personal FIRE calculations, and regulated financial advice
+- Direct bank connections, stored banking credentials, market feeds, payment execution, investment execution, and generic brokerage portfolio management
+- Transfers and automatic reconciliation between payment accounts, wealth positions, and contributions in the first dashboard foundation
+- Recurring payment scheduling or execution
+- Ember account inspection, transaction aware claims, and personal FIRE calculations until deterministic services exist
+- Regulated financial advice and silent AI changes to financial records
 - MCP tool sprawl, graph context infrastructure, multiple agent services, Kubernetes, Terraform, and multi-cloud deployment
 - Custom authentication or migration away from React, Vite, FastAPI, Supabase Auth, and Postgres
 - Pixel-for-pixel copying of external products or feature-count competition

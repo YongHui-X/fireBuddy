@@ -19,6 +19,8 @@ class FakeQuery:
         self.values: dict | None = None
         self.filters: list[tuple[str, object]] = []
         self.limit_count: int | None = None
+        self.range_start: int | None = None
+        self.range_end: int | None = None
 
     def select(self, _columns: str):
         return self
@@ -56,6 +58,11 @@ class FakeQuery:
         self.limit_count = count
         return self
 
+    def range(self, start: int, end: int):
+        self.range_start = start
+        self.range_end = end
+        return self
+
     def execute(self) -> FakeResponse:
         rows = self.client.rows.setdefault(self.table_name, [])
 
@@ -65,13 +72,15 @@ class FakeQuery:
             return FakeResponse([deepcopy(row)])
 
         matches = [row for row in rows if self._matches(row)]
+        if self.range_start is not None and self.range_end is not None:
+            matches = matches[self.range_start:self.range_end + 1]
         if self.limit_count is not None:
             matches = matches[: self.limit_count]
 
         if self.operation == "update":
             for row in matches:
                 row.update(self.values or {})
-                if self.table_name == "expenses":
+                if self.table_name in {"expenses", "accounts", "wealth_positions", "wealth_position_snapshots", "wealth_contributions", "fire_profiles"}:
                     row["updated_at"] = datetime.now(timezone.utc).isoformat()
             return FakeResponse(deepcopy(matches))
 
@@ -135,5 +144,26 @@ class FakeSupabase:
                 "updated_at": now,
                 **values,
             }
+
+        if table_name == "wealth_positions":
+            return {
+                "id": generated_id,
+                "is_archived": False,
+                "archived_at": None,
+                "created_at": now,
+                "updated_at": now,
+                **values,
+            }
+
+        if table_name in {"wealth_position_snapshots", "wealth_contributions", "fire_profiles"}:
+            return {
+                "id": generated_id,
+                "created_at": now,
+                "updated_at": now,
+                **values,
+            }
+
+        if table_name == "essential_expense_categories":
+            return {"created_at": now, **values}
 
         return {"id": generated_id, **values}

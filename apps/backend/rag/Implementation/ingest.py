@@ -9,6 +9,18 @@ Changes from original:
 - Writes embeddings to Supabase pgvector instead of ChromaDB
 - Skips .md files that are backup or system files
 
+Optional manual Markdown front matter:
+    ---
+    source_title: Human-readable source title
+    source_url: https://example.com/source
+    agency: Source publisher
+    topic: fire
+    ingest: true
+    ---
+
+Only these five fields are read. Front matter is removed before chunking, and
+manual documents with `ingest: false` are omitted from the ingestion batch.
+
 Run:
     python backend/rag/ingest.py
 
@@ -50,6 +62,13 @@ CHUNK_OVERLAP_PARAGRAPHS = 1
 CHUNK_OVERLAP_MAX_CHARS = 600
 SUPABASE_SELECT_PAGE_SIZE = 1000
 STALE_DELETE_BATCH_SIZE = 100
+MANUAL_FRONT_MATTER_FIELDS = {
+    "source_title",
+    "source_url",
+    "agency",
+    "topic",
+    "ingest",
+}
 
 if str(FETCH_AND_CONVERT_DIR) not in sys.path:
     sys.path.append(str(FETCH_AND_CONVERT_DIR))
@@ -167,6 +186,61 @@ def build_source_url_map() -> dict[str, str]:
 SOURCE_URL_MAP = build_source_url_map()
 
 
+def parse_manual_front_matter(text: str) -> tuple[dict[str, str | bool], str]:
+    """
+    Parse the supported front matter fields from a manual Markdown document.
+
+    This intentionally supports only simple `key: value` lines so ingestion
+    does not need a YAML dependency. Unknown fields are ignored. If the block
+    is missing or unclosed, the original text is returned unchanged.
+    """
+
+    normalized_text = text.removeprefix("\ufeff")
+    lines = normalized_text.splitlines(keepends=True)
+
+    if not lines or lines[0].strip() != "---":
+        return {}, text
+
+    closing_index = next(
+        (
+            index
+            for index, line in enumerate(lines[1:], start=1)
+            if line.strip() == "---"
+        ),
+        None,
+    )
+    if closing_index is None:
+        return {}, text
+
+    metadata: dict[str, str | bool] = {}
+    for line in lines[1:closing_index]:
+        stripped_line = line.strip()
+        if (
+            not stripped_line
+            or stripped_line.startswith("#")
+            or ":" not in stripped_line
+        ):
+            continue
+
+        key, raw_value = stripped_line.split(":", 1)
+        key = key.strip()
+        if key not in MANUAL_FRONT_MATTER_FIELDS:
+            continue
+
+        value = raw_value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+
+        if key == "ingest":
+            if value.lower() in {"true", "false"}:
+                metadata[key] = value.lower() == "true"
+        else:
+            metadata[key] = value
+
+    content = "".join(lines[closing_index + 1:]).lstrip("\r\n")
+    return metadata, content
+
+
 def md_to_doc_obj(file_path: Path) -> dict:
     """
     Read a Markdown file and convert it into the common document shape.
@@ -180,6 +254,7 @@ def md_to_doc_obj(file_path: Path) -> dict:
 
     source_group = relative_path.parts[0]
     source_url = None
+    front_matter: dict[str, str | bool] = {}
 
     if source_group == "markdown-cache":
         doc_type = "pdf_cache"
@@ -191,6 +266,10 @@ def md_to_doc_obj(file_path: Path) -> dict:
         doc_type = "manual"
         agency = None
         topic = relative_path.parts[1]
+        front_matter, text = parse_manual_front_matter(text)
+        source_url = front_matter.get("source_url") or None
+        agency = front_matter.get("agency") or None
+        topic = front_matter.get("topic") or topic
     else:
         doc_type = "unknown"
         agency = None
@@ -199,12 +278,28 @@ def md_to_doc_obj(file_path: Path) -> dict:
     return {
         "source": str(relative_path).replace("\\", "/"),
         "type": doc_type,
-        "title": file_path.stem.replace("-", " ").title(),
+        "title": (
+            front_matter.get("source_title")
+            if source_group == "manual" and front_matter.get("source_title")
+            else file_path.stem.replace("-", " ").title()
+        ),
         "agency": agency,
         "topic": topic,
         "source_url": source_url,
         "text": text,
+        "ingest": (
+            front_matter.get("ingest", True)
+            if source_group == "manual"
+            else True
+        ),
     }
+
+
+def load_ingestable_documents(files: list[Path]) -> list[dict]:
+    """Load Markdown files and omit manual documents marked `ingest: false`."""
+
+    documents = [md_to_doc_obj(file_path) for file_path in files]
+    return [document for document in documents if document["ingest"]]
 
 
 
@@ -570,6 +665,69 @@ def find_stale_chunk_rows(
     return stale_rows
 
 
+def compare_chunk_store(
+    existing_rows: list[dict],
+    current_keys: set[tuple[str, int]],
+) -> dict[str, object]:
+    """Compare stored chunk keys with the deterministic local knowledge base."""
+
+    existing_keys = {
+        key
+        for row in existing_rows
+        if (key := chunk_storage_key(
+            row.get("source_path"),
+            row.get("chunk_index"),
+        ))
+    }
+    invalid_row_count = len(existing_rows) - len(existing_keys)
+
+    return {
+        "expected_count": len(current_keys),
+        "stored_count": len(existing_rows),
+        "missing_keys": current_keys - existing_keys,
+        "stale_keys": existing_keys - current_keys,
+        "invalid_row_count": invalid_row_count,
+    }
+
+
+def verify_rag_store(
+    supabase_client,
+    current_keys: set[tuple[str, int]],
+) -> dict[str, object]:
+    """Fail unless Supabase contains the exact current nonempty chunk index."""
+
+    if not current_keys:
+        raise RuntimeError(
+            "Knowledge-base verification cannot use an empty local chunk set."
+        )
+
+    result = compare_chunk_store(
+        fetch_existing_chunk_rows(supabase_client),
+        current_keys,
+    )
+    print(
+        "\nRAG store verification: "
+        f"expected {result['expected_count']} row(s), "
+        f"found {result['stored_count']} row(s), "
+        f"missing {len(result['missing_keys'])}, "
+        f"stale {len(result['stale_keys'])}, "
+        f"invalid {result['invalid_row_count']}."
+    )
+
+    if (
+        result["missing_keys"]
+        or result["stale_keys"]
+        or result["invalid_row_count"]
+    ):
+        raise RuntimeError(
+            "Supabase rag_chunks does not match the current knowledge base. "
+            "Run the full ingestion before serving Ember."
+        )
+
+    print("RAG store verification passed.")
+    return result
+
+
 def delete_stale_chunk_rows(supabase_client, stale_rows: list[dict]) -> int:
     """
     Delete stale RAG chunks by id using filtered Supabase delete calls.
@@ -675,6 +833,7 @@ def main(
     limit: int | None = None,
     dry_run: bool = False,
     skip_cleanup: bool = False,
+    verify_store: bool = False,
 ):
     """
     Run the full ingestion workflow.
@@ -683,10 +842,16 @@ def main(
     batch for testing, and either dry-runs or embeds/upserts into Supabase.
     """
 
+    if verify_store and (limit is not None or dry_run or skip_cleanup):
+        raise ValueError(
+            "--verify-store must be used without --limit, --dry-run, or "
+            "--skip-cleanup."
+        )
+
     files = find_md_files(KNOWLEDGE_BASE_PATH)
     print(f"Found {len(files)} markdown files")
 
-    documents = [md_to_doc_obj(file_path) for file_path in files]
+    documents = load_ingestable_documents(files)
     print(f"Loaded {len(documents)} documents")
 
     print_chunk_size_summary(documents)
@@ -699,6 +864,15 @@ def main(
     print(f"\nCreated {len(ingestable_chunks)} ingestable chunks")
     print_sample_chunk(ingestable_chunks)
     current_keys = build_current_chunk_keys(ingestable_chunks)
+
+    if len(current_keys) != len(ingestable_chunks):
+        raise RuntimeError(
+            "Generated RAG chunks contain duplicate or invalid storage keys."
+        )
+
+    if verify_store:
+        verify_rag_store(get_supabase_client(), current_keys)
+        return
 
     if dry_run:
         print("\nDry run complete. No embeddings created and no rows written.")
@@ -755,6 +929,16 @@ if __name__ == "__main__":
         action="store_true",
         help="Skip stale rag_chunks cleanup after successful upserts",
     )
+    parser.add_argument(
+        "--verify-store",
+        action="store_true",
+        help="Verify Supabase exactly matches the local knowledge base",
+    )
     args = parser.parse_args()
 
-    main(limit=args.limit, dry_run=args.dry_run, skip_cleanup=args.skip_cleanup)
+    main(
+        limit=args.limit,
+        dry_run=args.dry_run,
+        skip_cleanup=args.skip_cleanup,
+        verify_store=args.verify_store,
+    )

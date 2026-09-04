@@ -55,6 +55,13 @@ describe('AddExpense', () => {
     mocks.accounts = [...accounts];
   });
 
+  it('presents the transaction form as a labelled modal dialog', () => {
+    render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+
+    expect(screen.getByRole('dialog', { name: 'Add transaction' }).getAttribute('aria-modal')).toBe('true');
+    expect(document.activeElement).toBe(screen.getByPlaceholderText('Netflix'));
+  });
+
   it('applies an AI suggestion but saves the user override as a negative expense', async () => {
     mocks.suggestExpenseCategory.mockResolvedValue({
       categoryId: 'transport',

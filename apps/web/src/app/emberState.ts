@@ -1,12 +1,14 @@
 import type { RagChatMessage, RagChatRole, RagChatSource } from '@firebuddy/shared';
 
-export const EMBER_TOPICS_STORAGE_KEY = 'firebuddy_ember_topics_v2';
-export const EMBER_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_ember_active_topic_v2';
+export const EMBER_TOPICS_STORAGE_KEY = 'firebuddy_ember_topics_v3';
+export const EMBER_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_ember_active_topic_v3';
+export const LEGACY_V2_EMBER_TOPICS_STORAGE_KEY = 'firebuddy_ember_topics_v2';
+export const LEGACY_V2_EMBER_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_ember_active_topic_v2';
 export const LEGACY_EMBER_TOPICS_STORAGE_KEY = 'firebuddy_ember_topics_v1';
 export const LEGACY_EMBER_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_ember_active_topic_v1';
 export const LEGACY_CHAT_TOPICS_STORAGE_KEY = 'firebuddy_chat_topics_v1';
 export const LEGACY_CHAT_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_chat_active_topic_v1';
-export const EMBER_STORAGE_VERSION = 2;
+export const EMBER_STORAGE_VERSION = 3;
 
 export const EMBER_GREETING =
   'Hello, I am Ember. Ask me about CPF, SRS, HDB grants, Singapore Savings Bonds, MoneySense guidance, or FIRE concepts in Singapore.';
@@ -35,6 +37,7 @@ export interface EmberMessage {
   content: string;
   createdAt: string;
   sources: EmberSource[];
+  suggestedQuestions: string[];
   status: EmberMessageStatus;
   streamStatus?: EmberRequestStatus;
   error?: EmberMessageError;
@@ -82,7 +85,7 @@ export function createEmberId(prefix: string): string {
 export function createEmberMessage(
   role: RagChatRole,
   content: string,
-  options: Partial<Pick<EmberMessage, 'id' | 'createdAt' | 'sources' | 'status' | 'streamStatus' | 'error'>> = {},
+  options: Partial<Pick<EmberMessage, 'id' | 'createdAt' | 'sources' | 'suggestedQuestions' | 'status' | 'streamStatus' | 'error'>> = {},
 ): EmberMessage {
   return {
     id: options.id ?? createEmberId('message'),
@@ -90,6 +93,7 @@ export function createEmberMessage(
     content,
     createdAt: options.createdAt ?? new Date().toISOString(),
     sources: options.sources ?? [],
+    suggestedQuestions: options.suggestedQuestions ?? [],
     status: options.status ?? 'complete',
     ...(options.streamStatus ? { streamStatus: options.streamStatus } : {}),
     ...(options.error ? { error: options.error } : {}),
@@ -174,6 +178,9 @@ function normalizeStoredMessage(value: unknown): EmberMessage | null {
   const sources = Array.isArray(value.sources)
     ? value.sources.map(normalizeSource).filter((source): source is EmberSource => source !== null)
     : [];
+  const suggestedQuestions = Array.isArray(value.suggestedQuestions)
+    ? value.suggestedQuestions.filter((question): question is string => typeof question === 'string' && question.trim().length > 0)
+    : [];
 
   return {
     id: value.id,
@@ -181,6 +188,7 @@ function normalizeStoredMessage(value: unknown): EmberMessage | null {
     content: value.content,
     createdAt: typeof value.createdAt === 'string' ? value.createdAt : new Date().toISOString(),
     sources,
+    suggestedQuestions,
     status: value.status === 'streaming' ? 'streaming' : 'complete',
     ...(value.streamStatus === 'searching' || value.streamStatus === 'preparing'
       ? { streamStatus: value.streamStatus }
@@ -228,6 +236,7 @@ function normalizeStoredTopic(value: unknown): EmberTopic | null {
       ...message,
       content: '',
       sources: [],
+      suggestedQuestions: [],
       status: 'complete' as const,
       streamStatus: undefined,
       error: {
@@ -331,7 +340,7 @@ function migrateLegacyTopics(rawValue: string | null): EmberTopic[] {
     .filter((topic): topic is EmberTopic => topic !== null);
 }
 
-/** Load v2 history first, then copy v1 and legacy histories without removing their keys. */
+/** Load v3 history first, then copy v2, v1, and legacy histories without removing their keys. */
 export function loadEmberState(storage: Pick<Storage, 'getItem'> = window.localStorage): LoadedEmberState {
   try {
     const storedTopics = parseEmberTopics(storage.getItem(EMBER_TOPICS_STORAGE_KEY), EMBER_STORAGE_VERSION);
@@ -343,6 +352,18 @@ export function loadEmberState(storage: Pick<Storage, 'getItem'> = window.localS
           ? storedActiveId
           : storedTopics[0].id,
         migratedLegacyHistory: false,
+      };
+    }
+
+    const migratedV2Topics = parseEmberTopics(storage.getItem(LEGACY_V2_EMBER_TOPICS_STORAGE_KEY), 2);
+    if (migratedV2Topics.length > 0) {
+      const v2ActiveId = storage.getItem(LEGACY_V2_EMBER_ACTIVE_TOPIC_STORAGE_KEY);
+      return {
+        topics: migratedV2Topics,
+        activeTopicId: v2ActiveId && migratedV2Topics.some((topic) => topic.id === v2ActiveId)
+          ? v2ActiveId
+          : migratedV2Topics[0].id,
+        migratedLegacyHistory: true,
       };
     }
 

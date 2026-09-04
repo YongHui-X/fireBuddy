@@ -15,7 +15,7 @@
     "lint:mobile": "npm run lint --workspace=@firebuddy/mobile",
     "typecheck:mobile": "npm run typecheck --workspace=@firebuddy/mobile",
     "typecheck:shared": "npm run typecheck --workspace=@firebuddy/shared",
-    "dev:backend": "uvicorn main:app --reload --app-dir apps/backend",
+    "dev:backend": "uvicorn main:app --reload --reload-dir apps/backend --app-dir apps/backend",
     "android": "npm run android --workspace=@firebuddy/mobile",
     "ios": "npm run ios --workspace=@firebuddy/mobile",
     "web": "npm run web --workspace=@firebuddy/mobile",

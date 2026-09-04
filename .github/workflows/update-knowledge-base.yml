@@ -42,6 +42,12 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: Verify stored knowledge base
+        run: python apps/backend/rag/Implementation/ingest.py --verify-store
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
       - name: Run retrieval evaluation
         run: >-
           python apps/backend/rag/evaluation/eval_retrieval.py

@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ChatMessage(BaseModel):
@@ -17,9 +18,39 @@ class ChatMessage(BaseModel):
     return value
 
 
+class AdvisorAppAction(BaseModel):
+  model_config = ConfigDict(populate_by_name=True)
+
+  type: Literal["create", "update", "delete", "calculate"]
+  label: str = Field(..., min_length=1, max_length=80)
+  occurred_at: datetime = Field(..., alias="occurredAt")
+
+  @field_validator("label")
+  @classmethod
+  def normalize_label(cls, value):
+    """Collapse action label whitespace before it enters the model prompt."""
+
+    return " ".join(value.split()) if isinstance(value, str) else value
+
+
+class AdvisorAppContext(BaseModel):
+  model_config = ConfigDict(populate_by_name=True)
+
+  current_page: str = Field(..., alias="currentPage", min_length=1, max_length=60)
+  current_path: str = Field(..., alias="currentPath", min_length=1, max_length=100)
+  recent_actions: list[AdvisorAppAction] = Field(
+    default_factory=list,
+    alias="recentActions",
+    max_length=5,
+  )
+
+
 class AdvisorRequest(BaseModel):
+  model_config = ConfigDict(populate_by_name=True)
+
   question: str = Field(..., min_length=1, max_length=2000)
   history: list[ChatMessage] = Field(default_factory=list, max_length=20)
+  app_context: AdvisorAppContext | None = Field(default=None, alias="appContext")
 
   @field_validator("question")
   @classmethod

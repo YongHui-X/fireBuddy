@@ -259,5 +259,91 @@
     ],
     "expected_topics": ["investing", "basic-financial-planning-guide"],
     "tags": ["investing", "cpf", "planning"]
+  },
+  {
+    "id": "fire_deterministic_projection_vs_monte_carlo",
+    "question": "How is a deterministic FIRE projection different from a Monte Carlo simulation?",
+    "expected_source_paths": [
+      "manual/fire/sources/sg-fire-planner.md",
+      "manual/fire/sources/sg-fire-planner-repository.md",
+      "manual/fire/sources/tree-of-wealth.md"
+    ],
+    "expected_topics": ["fire_calculators"],
+    "tags": ["fire", "projection", "monte-carlo"]
+  },
+  {
+    "id": "fire_early_retirement_cpf_bridge",
+    "question": "Why does someone retiring early in Singapore need a liquid bridge before CPF LIFE starts?",
+    "expected_source_paths": [
+      "manual/fire/sources/retirecan.md",
+      "manual/fire/sources/finsight-sg.md"
+    ],
+    "expected_topics": ["fire_calculators"],
+    "tags": ["fire", "cpf-life", "bridge"]
+  },
+  {
+    "id": "fire_expense_categories_partial_milestones",
+    "question": "How can expense categories be turned into partial FIRE milestones without double counting my portfolio?",
+    "expected_source_paths": [
+      "manual/fire/sources/the-financial-coconut.md",
+      "manual/fire/sources/fire-path-lion.md"
+    ],
+    "expected_topics": ["fire_calculators"],
+    "tags": ["fire", "expenses", "milestones"]
+  },
+  {
+    "id": "fire_historical_backtesting_limitations",
+    "question": "Why does a 100 percent success rate in historical FIRE backtesting not guarantee future success?",
+    "expected_source_paths": [
+      "manual/fire/sources/fi-calc.md",
+      "manual/fire/sources/sg-fire-planner.md"
+    ],
+    "expected_topics": ["fire_calculators"],
+    "tags": ["fire", "backtesting", "limitations"]
+  },
+  {
+    "id": "fire_target_vs_retirement_drawdown",
+    "question": "What is the difference between a FIRE target and a retirement drawdown simulation?",
+    "expected_source_paths": [
+      "manual/fire/sources/fi-calc.md",
+      "manual/fire/sources/retirecan.md",
+      "manual/fire/sources/tree-of-wealth.md"
+    ],
+    "expected_topics": ["fire_calculators"],
+    "tags": ["fire", "target", "drawdown"]
+  },
+  {
+    "id": "ember_starter_cpf_rates_by_age",
+    "question": "What are the CPF contribution rates for 2026, and how do they vary by age?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-contribution-rates-2026.md"],
+    "expected_topics": ["cpf-contribution-rates-2026"],
+    "tags": ["ember-starter", "cpf", "contributions", "2026"]
+  },
+  {
+    "id": "ember_starter_retirement_sums",
+    "question": "How do the Basic, Full, and Enhanced Retirement Sums differ?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-retirement-sums.md"],
+    "expected_topics": ["cpf-retirement-sums"],
+    "tags": ["ember-starter", "cpf", "retirement-sums"]
+  },
+  {
+    "id": "ember_starter_savings_bonds",
+    "question": "How do Singapore Savings Bonds work, and what should I understand before applying?",
+    "expected_source_paths": [
+      "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+      "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+    ],
+    "expected_topics": ["singapore-savings-bonds-faqs", "singapore-savings-bonds-factsheet"],
+    "tags": ["ember-starter", "mas", "ssb", "application"]
+  },
+  {
+    "id": "ember_starter_fire_before_55",
+    "question": "What should a Singapore FIRE plan consider before age 55?",
+    "expected_source_paths": [
+      "manual/fire/fire-planning-singapore.md",
+      "manual/fire/FIRE.md"
+    ],
+    "expected_topics": ["fire"],
+    "tags": ["ember-starter", "fire", "cpf", "liquidity"]
   }
 ]

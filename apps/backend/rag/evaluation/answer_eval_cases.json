@@ -106,5 +106,41 @@
     "required_numbers": [],
     "reference_answer": "The advisor should refuse because FireBuddy does not provide live market prices.",
     "expected_refusal": true
+  },
+  {
+    "id": "ember_starter_cpf_rates_by_age",
+    "question": "What are the CPF contribution rates for 2026, and how do they vary by age?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-contribution-rates-2026.md"],
+    "required_concepts": [["age", "age band"], ["contribution rate", "cpf rate"]],
+    "required_numbers": [],
+    "reference_answer": "CPF contribution rates in 2026 vary by employee age, and the official table should be used for the applicable total, employer, and employee rates.",
+    "expected_refusal": false
+  },
+  {
+    "id": "ember_starter_retirement_sums",
+    "question": "How do the Basic, Full, and Enhanced Retirement Sums differ?",
+    "expected_source_paths": ["markdown-cache/cpf/cpf-retirement-sums.md"],
+    "required_concepts": [["basic retirement sum", "brs"], ["full retirement sum", "frs"], ["enhanced retirement sum", "ers"]],
+    "required_numbers": [],
+    "reference_answer": "The source table presents the Full Retirement Sum as twice the Basic Retirement Sum and the Enhanced Retirement Sum as three times the Basic Retirement Sum for the listed years.",
+    "expected_refusal": false
+  },
+  {
+    "id": "ember_starter_savings_bonds",
+    "question": "How do Singapore Savings Bonds work, and what should I understand before applying?",
+    "expected_source_paths": ["markdown-cache/mas/singapore-savings-bonds-faqs.md", "markdown-cache/mas/singapore-savings-bonds-factsheet.md"],
+    "required_concepts": [["singapore savings bond", "ssb"], ["apply", "application"], ["redeem", "redemption"]],
+    "required_numbers": [],
+    "reference_answer": "Singapore Savings Bonds are government backed savings products with application and redemption procedures described in the MAS factsheet and FAQ.",
+    "expected_refusal": false
+  },
+  {
+    "id": "ember_starter_fire_before_55",
+    "question": "What should a Singapore FIRE plan consider before age 55?",
+    "expected_source_paths": ["manual/fire/fire-planning-singapore.md", "manual/fire/FIRE.md"],
+    "required_concepts": [["before age 55", "pre-55"], ["liquid", "liquidity"], ["cpf"]],
+    "required_numbers": [],
+    "reference_answer": "A Singapore FIRE plan before age 55 needs enough non-CPF liquid assets for the early retirement bridge because CPF savings are generally restricted before the applicable access ages.",
+    "expected_refusal": false
   }
 ]

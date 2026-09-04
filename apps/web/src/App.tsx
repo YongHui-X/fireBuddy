@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router';
 
 import { AppProvider, useFireBuddy } from './app/FireBuddyProvider';
+import { FinancialFoundationProvider } from './app/FinancialFoundationProvider';
 import AuthShell from './routes/AuthShell';
 
 const AppShell = lazy(() => import('./routes/AppShell'));
@@ -74,9 +75,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <FinancialFoundationProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </FinancialFoundationProvider>
     </AppProvider>
   );
 }

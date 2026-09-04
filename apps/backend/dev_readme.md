@@ -61,3 +61,17 @@ Configure:
 ## RAG chunk overlap
 
 The ingestion script at `rag/Implementation/ingest.py` splits Markdown by headings and then paragraph groups. It carries one trailing paragraph, up to 600 characters, into the next oversized section chunk. This keeps facts near boundaries with their context without changing the live advisor contract.
+
+After creating or resetting a Supabase environment, populate and verify Ember's
+private knowledge base from the repository root:
+
+```powershell
+python apps\backend\rag\Implementation\ingest.py
+python apps\backend\rag\Implementation\ingest.py --verify-store
+python apps\backend\rag\evaluation\eval_retrieval.py
+```
+
+The backend returns a retryable `knowledge_base_unavailable` error when
+`rag_chunks` is empty. It does not ingest automatically during startup. For
+deployment, confirm that Railway and the `Update Knowledge Base` GitHub Actions
+workflow use the same `SUPABASE_URL` before running the workflow manually.

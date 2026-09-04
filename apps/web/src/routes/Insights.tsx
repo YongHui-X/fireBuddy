@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router';
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
   Cell,
   Pie,
@@ -14,22 +12,22 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ArrowLeft, Download, Filter } from 'lucide-react';
+import { Download, Filter } from 'lucide-react';
 
 import {
   colors,
-  fireData,
   formatDateLabel,
   formatSGD,
   formatTooltipValue,
   getCategoryIcon,
   getDeviceDateKey,
-  netWorthHistory,
   useFireBuddy,
   type Account,
   type Category,
   type Transaction,
 } from '../app/FireBuddyProvider';
+import { useFinancialFoundation } from '../app/FinancialFoundationProvider';
+import { PageToolbar } from '../components/PageToolbar';
 
 export type InsightRange = 'Day' | 'Week' | 'Month' | 'Year';
 
@@ -122,9 +120,9 @@ export function buildExpenseCsv(
 
 function Insights() {
   const { transactions, categories, accounts } = useFireBuddy();
+  const { summary } = useFinancialFoundation();
   const navigate = useNavigate();
   const [range, setRange] = useState<InsightRange>('Month');
-  const firePercent = (fireData.currentNetWorth / fireData.targetNetWorth) * 100;
   const filteredExpenses = useMemo(
     () => filterExpensesForRange(transactions, range),
     [range, transactions],
@@ -158,15 +156,14 @@ function Insights() {
 
   return (
     <main className="page">
-      <section className="analytics-header">
-        <button className="plain-icon-button" type="button" onClick={() => navigate(-1)}>
-          <ArrowLeft size={20} />
-        </button>
-        <h2>Insights</h2>
-        <button className="plain-icon-button" type="button" onClick={downloadCsv} aria-label="Export filtered expenses as CSV">
-          <Download size={20} />
-        </button>
-      </section>
+      <PageToolbar
+        title="Insights"
+        description="Explore expense-only trends and your saved FIRE projection."
+        backAction={() => navigate(-1)}
+        actions={<button className="secondary-button" type="button" onClick={downloadCsv}>
+          <Download size={15} /> Export CSV
+        </button>}
+      />
 
       <section className="analytics-content">
         <div className="range-tabs">
@@ -200,20 +197,11 @@ function Insights() {
         <article className="white-card">
           <div className="section-title-row">
             <div>
-              <p className="eyebrow">Illustrative only</p>
-              <h3>FIRE projection</h3>
+              <h3>FIRE progress</h3>
             </div>
-            <strong>{firePercent.toFixed(1)}%</strong>
+            <strong>{summary?.fire.progressRate ? `${(Number(summary.fire.progressRate) * 100).toFixed(1)}%` : 'Setup needed'}</strong>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={netWorthHistory}>
-              <CartesianGrid vertical={false} stroke={colors.border} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} />
-              <YAxis hide />
-              <Tooltip formatter={formatTooltipValue} />
-              <Bar dataKey="netWorth" fill={colors.primary} radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {summary?.fire.fiTarget ? <div className="insights-fire-facts"><p>Included FI assets <strong>{formatSGD(Number(summary.fire.currentInvestableAssets), 0)}</strong></p><p>FI target <strong>{formatSGD(Number(summary.fire.fiTarget), 0)}</strong></p><p>{summary.fire.status === 'projected' ? `Estimated year ${summary.fire.estimatedFiYear}` : summary.fire.status.replaceAll('_', ' ')}</p><small>As of {summary.effectiveDate}. Projection uses the assumptions saved in FIRE setup.</small></div> : <div className="empty-chart">Add wealth values and FIRE assumptions to calculate progress.</div>}
         </article>
 
         <article className="white-card">

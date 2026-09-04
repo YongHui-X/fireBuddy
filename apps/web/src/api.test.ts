@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { askFinancialAdvisor, getAccounts, streamFinancialAdvisor } from './api';
+import { askFinancialAdvisor, getAccounts, getFinancialSummary, streamFinancialAdvisor } from './api';
 
 
 afterEach(() => {
@@ -20,6 +20,20 @@ describe('web API errors', () => {
     await expect(getAccounts('access-token')).resolves.toEqual([{ id: 'account-id', name: 'Cash' }]);
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8000/accounts',
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer access-token' }) }),
+    );
+  });
+
+  it('requests the financial summary with an explicit effective date', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ effectiveDate: '2026-08-23' }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getFinancialSummary('access-token', '2026-08-23');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8000/analytics/financial-summary?asOf=2026-08-23',
       expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer access-token' }) }),
     );
   });
@@ -55,6 +69,11 @@ describe('web API errors', () => {
     await askFinancialAdvisor('access-token', {
       question: 'What is CPF?',
       history: transcript,
+      appContext: {
+        currentPage: 'Transactions',
+        currentPath: '/transactions',
+        recentActions: [{ type: 'create', label: 'Added a transaction', occurredAt: '2026-09-03T08:00:00.000Z' }],
+      },
     });
 
     const request = fetchMock.mock.calls[0][1] as RequestInit;
@@ -67,6 +86,11 @@ describe('web API errors', () => {
         content: message.content.replace(/\s+/g, ' ').trim(),
       })),
     );
+    expect((body as { appContext?: unknown }).appContext).toEqual({
+      currentPage: 'Transactions',
+      currentPath: '/transactions',
+      recentActions: [{ type: 'create', label: 'Added a transaction', occurredAt: '2026-09-03T08:00:00.000Z' }],
+    });
     expect(transcript).toHaveLength(10);
     expect(JSON.parse(window.localStorage.getItem('test-chat-transcript') ?? '[]')).toHaveLength(10);
   });
@@ -105,7 +129,7 @@ describe('web API errors', () => {
     );
   });
 
-  it('preserves an SSE error status for retry classification', async () => {
+  it('preserves an SSE error status and code for retry classification', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
       'event: error\ndata: {"code":"rate_limit","message":"Try again shortly.","retryable":true,"status":429}\n\n',
       { status: 429, headers: { 'Content-Type': 'text/event-stream' } },
@@ -115,6 +139,6 @@ describe('web API errors', () => {
       onStatus: vi.fn(),
       onDelta: vi.fn(),
       onSources: vi.fn(),
-    })).rejects.toMatchObject({ status: 429, name: 'ApiRequestError' });
+    })).rejects.toMatchObject({ status: 429, code: 'rate_limit', name: 'ApiRequestError' });
   });
 });

@@ -16,8 +16,8 @@ from collections.abc import Iterator
 
 from openai import OpenAI
 
-from rag.retrieval import retrieve_chunks
-from schemas.rag import AdvisorResponse, AdvisorSource, ChatMessage
+from rag.retrieval import RagStoreUnavailableError, retrieve_chunks
+from schemas.rag import AdvisorAppContext, AdvisorResponse, AdvisorSource, ChatMessage
 
 
 ANSWER_MODEL = os.getenv("RAG_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
@@ -47,17 +47,41 @@ OUT_OF_SCOPE_TERMS = {
     "movie", "recipe", "sports score", "translate", "weather",
 }
 LIVE_MARKET_TERMS = {"bitcoin", "crypto", "exchange rate", "share price", "stock price"}
+PAGE_RETRIEVAL_HINTS = {
+    "Home dashboard": "Singapore personal finance and FIRE planning",
+    "Transactions": "income expenses spending and FIRE planning",
+    "Categories": "budgeting spending categories and FIRE planning",
+    "Accounts": "cash accounts emergency savings and financial planning",
+    "Insights": "spending insights budgeting and FIRE planning",
+    "Wealth": "assets liabilities liquidity CPF and FIRE planning",
+    "FIRE setup": "Singapore FIRE assumptions and retirement planning",
+    "Spending Plan": "budgeting spending plan and FIRE planning",
+    "Life Goals": "financial goals saving investing and FIRE planning",
+    "Add transaction": "financial record keeping income and expenses",
+    "Profile": "Singapore personal financial planning",
+}
 
 logger = logging.getLogger(__name__)
 
 
-def build_answer_messages(question: str, context: str, history: list[ChatMessage]) -> list[dict]:
+def build_answer_messages(
+    question: str,
+    context: str,
+    history: list[ChatMessage],
+    app_context: AdvisorAppContext | None = None,
+) -> list[dict]:
     """Build the single grounded prompt shared by JSON and streaming answers."""
 
     history_text = format_chat_history(history)
     history_block = (
         f"Recent conversation:\n{history_text}\n\n"
         if history_text
+        else ""
+    )
+    app_context_text = format_app_context(app_context)
+    app_context_block = (
+        f"FireBuddy interface context:\n{app_context_text}\n\n"
+        if app_context_text
         else ""
     )
     return [
@@ -82,13 +106,17 @@ def build_answer_messages(question: str, context: str, history: list[ChatMessage
                 "Do not give personalized financial advice; provide "
                 "general educational information only. Do not include "
                 "source numbers in the answer; citations are returned "
-                "separately by the API."
+                "separately by the API. Interface context contains only "
+                "page and generic activity labels. Use it to tailor emphasis, "
+                "but never claim to have inspected financial records, infer "
+                "values, or treat interface activity as financial evidence."
             ),
         },
         {
             "role": "user",
             "content": (
                 history_block
+                + app_context_block
                 + f"Question:\n{question}\n\n"
                 + f"Retrieved context:\n{context}\n\n"
                 + "Write a concise answer without source-number citations."
@@ -267,6 +295,42 @@ def select_recent_chat_history(history: list[ChatMessage]) -> list[ChatMessage]:
     return history[-MAX_HISTORY_MESSAGES:]
 
 
+def format_app_context(app_context: AdvisorAppContext | None) -> str:
+    """Format bounded, nonfinancial interface metadata for answer tailoring."""
+
+    if app_context is None:
+        return ""
+
+    lines = [
+        f"Current page: {app_context.current_page}",
+        f"Current path: {app_context.current_path}",
+    ]
+    if app_context.recent_actions:
+        lines.append("Recent actions:")
+        lines.extend(
+            f"- {action.label}"
+            for action in app_context.recent_actions[-5:]
+        )
+    else:
+        lines.append("Recent actions: none recorded in this session")
+    return "\n".join(lines)
+
+
+def build_contextual_retrieval_question(
+    question: str,
+    app_context: AdvisorAppContext | None,
+) -> str:
+    """Add bounded page and action hints so short contextual questions retrieve relevant guidance."""
+
+    if app_context is None:
+        return question
+
+    page_hint = PAGE_RETRIEVAL_HINTS.get(app_context.current_page, "")
+    action_hints = " ".join(action.label for action in app_context.recent_actions[-5:])
+    hints = " ".join(part for part in (page_hint, action_hints) if part)
+    return f"{question} Context: {hints}" if hints else question
+
+
 def format_retrieved_context(matches: list[dict]) -> str:
     """
     Turn retrieved rows into the context block sent to the answer model.
@@ -303,7 +367,12 @@ def format_retrieved_context(matches: list[dict]) -> str:
     return "\n\n---\n\n".join(context_blocks)
 
 
-def generate_grounded_answer(question: str, context: str, history: list[ChatMessage] | None = None) -> str:
+def generate_grounded_answer(
+    question: str,
+    context: str,
+    history: list[ChatMessage] | None = None,
+    app_context: AdvisorAppContext | None = None,
+) -> str:
     """
     Ask the LLM to answer using only the retrieved RAG context.
 
@@ -315,7 +384,12 @@ def generate_grounded_answer(question: str, context: str, history: list[ChatMess
     response = client.chat.completions.create(
         model=ANSWER_MODEL,
         temperature=0.2,
-        messages=build_answer_messages(question, context, history or []),
+        messages=build_answer_messages(
+            question,
+            context,
+            history or [],
+            app_context,
+        ),
     )
 
     answer = response.choices[0].message.content
@@ -326,6 +400,7 @@ def stream_grounded_answer(
     question: str,
     context: str,
     history: list[ChatMessage] | None = None,
+    app_context: AdvisorAppContext | None = None,
 ) -> Iterator[str]:
     """Yield grounded OpenAI answer tokens as they become available."""
 
@@ -333,7 +408,12 @@ def stream_grounded_answer(
     response = client.chat.completions.create(
         model=ANSWER_MODEL,
         temperature=0.2,
-        messages=build_answer_messages(question, context, history or []),
+        messages=build_answer_messages(
+            question,
+            context,
+            history or [],
+            app_context,
+        ),
         stream=True,
     )
 
@@ -355,6 +435,7 @@ def chunk_static_answer(answer: str, chunk_size: int = 72) -> Iterator[str]:
 def stream_financial_advisor_question(
     question: str,
     history: list[ChatMessage] | None = None,
+    app_context: AdvisorAppContext | None = None,
     *,
     retrieved_matches: list[dict] | None = None,
 ) -> Iterator[dict]:
@@ -393,8 +474,29 @@ def stream_financial_advisor_question(
         matches = (
             retrieved_matches
             if retrieved_matches is not None
-            else retrieve_chunks(cleaned_question)
+            else retrieve_chunks(
+                build_contextual_retrieval_question(cleaned_question, app_context)
+            )
         )
+        if not matches:
+            raise RagStoreUnavailableError(
+                "The RAG service received no retrieved matches."
+            )
+    except RagStoreUnavailableError:
+        logger.error(
+            "rag_knowledge_base_unavailable",
+            extra={"question_hash": question_hash(cleaned_question)},
+        )
+        yield {
+            "event": "error",
+            "data": {
+                "code": "knowledge_base_unavailable",
+                "message": "Ember's curated sources are temporarily unavailable.",
+                "retryable": True,
+                "status": 503,
+            },
+        }
+        return
     except Exception:
         logger.exception(
             "rag_retrieval_failed",
@@ -410,28 +512,14 @@ def stream_financial_advisor_question(
             },
         }
         return
-    if not matches:
-        answer = "Ember could not find relevant information in the FireBuddy knowledge base."
-        log_rag_event(
-            question=cleaned_question,
-            matches=[],
-            source_count=0,
-            outcome="no_matches",
-            started_at=started_at,
-        )
-        for text in chunk_static_answer(answer):
-            yield {"event": "delta", "data": {"text": text}}
-        yield {"event": "sources", "data": {"sources": []}}
-        yield {"event": "done", "data": {}}
-        return
-
     source_details = build_unique_sources(matches)
     yield {
         "event": "status",
         "data": {"status": "preparing", "message": "Preparing a grounded answer"},
     }
 
-    if match_similarity(matches[0]) < get_rag_min_similarity():
+    strongest_similarity = max(match_similarity(match) for match in matches)
+    if strongest_similarity < get_rag_min_similarity():
         log_rag_event(
             question=cleaned_question,
             matches=matches,
@@ -457,7 +545,12 @@ def stream_financial_advisor_question(
 
     answer_parts = []
     bounded_history = select_recent_chat_history(history or [])
-    for text in stream_grounded_answer(cleaned_question, context, bounded_history):
+    for text in stream_grounded_answer(
+        cleaned_question,
+        context,
+        bounded_history,
+        app_context,
+    ):
         answer_parts.append(text)
         yield {"event": "delta", "data": {"text": text}}
 
@@ -487,6 +580,7 @@ def stream_financial_advisor_question(
 def answer_financial_advisor_question(
     question: str,
     history: list[ChatMessage] | None = None,
+    app_context: AdvisorAppContext | None = None,
     *,
     retrieved_matches: list[dict] | None = None,
 ):
@@ -531,30 +625,20 @@ def answer_financial_advisor_question(
     matches = (
         retrieved_matches
         if retrieved_matches is not None
-        else retrieve_chunks(cleaned_question)
+        else retrieve_chunks(
+            build_contextual_retrieval_question(cleaned_question, app_context)
+        )
     )
 
     if not matches:
-        log_rag_event(
-            question=cleaned_question,
-            matches=[],
-            source_count=0,
-            outcome="no_matches",
-            started_at=started_at,
-        )
-        return AdvisorResponse(
-            answer=(
-                "Ember could not find relevant information in the FireBuddy "
-                "knowledge base."
-            ),
-            sources=[],
-            source_details=[],
+        raise RagStoreUnavailableError(
+            "The RAG service received no retrieved matches."
         )
 
-    top_similarity = match_similarity(matches[0])
+    strongest_similarity = max(match_similarity(match) for match in matches)
     source_details = build_unique_sources(matches)
 
-    if top_similarity < get_rag_min_similarity():
+    if strongest_similarity < get_rag_min_similarity():
         log_rag_event(
             question=cleaned_question,
             matches=matches,
@@ -589,7 +673,12 @@ def answer_financial_advisor_question(
         )
 
     bounded_history = select_recent_chat_history(history or [])
-    answer = generate_grounded_answer(cleaned_question, context, bounded_history)
+    answer = generate_grounded_answer(
+        cleaned_question,
+        context,
+        bounded_history,
+        app_context,
+    )
 
     log_rag_event(
         question=cleaned_question,

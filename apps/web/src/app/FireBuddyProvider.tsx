@@ -62,6 +62,12 @@ import {
   updateTransaction as updateApiTransaction,
 } from '../api';
 import { hasSupabaseConfig, supabase } from '../supabase';
+import {
+  ACCOUNTS_STORAGE_KEY,
+  CATEGORIES_STORAGE_KEY,
+  TRANSACTIONS_STORAGE_KEY,
+} from './demoStorage';
+import { clearEmberAppActions, recordEmberAppAction } from './emberAppContext';
 type AccountType = ApiAccountType;
 type IconComponent = ComponentType<{ size?: number; strokeWidth?: number }>;
 
@@ -165,8 +171,6 @@ const colors = {
 };
 
 const fireData = {
-  name: 'Alex Tan',
-  initials: 'AT',
   currentNetWorth: 124850,
   targetNetWorth: 1800000,
   invested: 98400,
@@ -371,8 +375,6 @@ const netWorthHistory = [
 ];
 
 const THEME_STORAGE_KEY = 'firebuddy_theme_v1';
-const TRANSACTIONS_STORAGE_KEY = 'firebuddy_web_transactions_v3';
-const CATEGORIES_STORAGE_KEY = 'firebuddy_web_categories_v3';
 const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true';
 const missingSupabaseConfigMessage =
   'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY. Add them to apps/web/.env.local, or set VITE_SKIP_AUTH=true for local demo mode.';
@@ -549,13 +551,15 @@ function accountTypeLabel(type: AccountType) {
 
 function AppProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    sortTransactionsNewestFirst(normalizeStoredTransactions(loadStored(TRANSACTIONS_STORAGE_KEY, initialTransactions))),
+    skipAuth
+      ? sortTransactionsNewestFirst(normalizeStoredTransactions(loadStored(TRANSACTIONS_STORAGE_KEY, initialTransactions)))
+      : [],
   );
   const [categories, setCategories] = useState<Category[]>(() =>
-    normalizeStoredCategories(loadStored(CATEGORIES_STORAGE_KEY, initialCategories)),
+    skipAuth ? normalizeStoredCategories(loadStored(CATEGORIES_STORAGE_KEY, initialCategories)) : [],
   );
   const [accounts, setAccounts] = useState<Account[]>(() =>
-    skipAuth ? loadStored('firebuddy_web_accounts_v2', initialAccounts) : [],
+    skipAuth ? loadStored(ACCOUNTS_STORAGE_KEY, initialAccounts) : [],
   );
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => loadThemeMode());
   const [session, setSession] = useState<Session | null>(null);
@@ -564,6 +568,7 @@ function AppProvider({ children }: { children: ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
   const [notification, setNotification] = useState<AppNotification | null>(null);
+  const authenticatedUserId = session?.user.id ?? null;
 
   function notify(message: string) {
     setNotification({
@@ -575,6 +580,20 @@ function AppProvider({ children }: { children: ReactNode }) {
   function dismissNotification() {
     setNotification(null);
   }
+
+  useEffect(() => {
+    if (skipAuth) {
+      return;
+    }
+
+    // Clear app-owned state whenever the authenticated identity changes.
+    setTransactions([]);
+    setCategories([]);
+    setAccounts([]);
+    window.localStorage.removeItem(TRANSACTIONS_STORAGE_KEY);
+    window.localStorage.removeItem(CATEGORIES_STORAGE_KEY);
+    window.localStorage.removeItem(ACCOUNTS_STORAGE_KEY);
+  }, [authenticatedUserId]);
 
   useEffect(() => {
     if (skipAuth || !supabase) {
@@ -650,16 +669,20 @@ function AppProvider({ children }: { children: ReactNode }) {
   }, [session]);
 
   useEffect(() => {
-    window.localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
+    if (skipAuth) {
+      window.localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
+    }
   }, [transactions]);
 
   useEffect(() => {
-    window.localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+    if (skipAuth) {
+      window.localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+    }
   }, [categories]);
 
   useEffect(() => {
     if (skipAuth) {
-      window.localStorage.setItem('firebuddy_web_accounts_v2', JSON.stringify(accounts));
+      window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
     }
   }, [accounts]);
 
@@ -782,11 +805,13 @@ function AppProvider({ children }: { children: ReactNode }) {
         setAuthError(null);
         if (!supabase) {
           setSession(null);
+          clearEmberAppActions();
           return;
         }
 
         const auth = supabase.auth;
         await runAuthRequest(() => auth.signOut());
+        clearEmberAppActions();
       },
       clearAuthError: () => setAuthError(null),
       addTransaction: async (transaction) => {
@@ -807,6 +832,7 @@ function AppProvider({ children }: { children: ReactNode }) {
 
         setTransactions((current) => sortTransactionsNewestFirst([nextTransaction, ...current]));
         notify('Transaction has been added.');
+        recordEmberAppAction('create', 'Added a transaction');
         return nextTransaction;
       },
       updateTransaction: async (id, updates) => {
@@ -834,6 +860,7 @@ function AppProvider({ children }: { children: ReactNode }) {
             ),
           );
           notify('Transaction has been updated.');
+          recordEmberAppAction('update', 'Updated a transaction');
           return;
         }
 
@@ -843,6 +870,7 @@ function AppProvider({ children }: { children: ReactNode }) {
           ),
         );
         notify('Transaction has been updated.');
+        recordEmberAppAction('update', 'Updated a transaction');
       },
       deleteTransaction: async (id) => {
         if (session) {
@@ -851,6 +879,7 @@ function AppProvider({ children }: { children: ReactNode }) {
 
         setTransactions((current) => current.filter((transaction) => transaction.id !== id));
         notify('Transaction has been deleted.');
+        recordEmberAppAction('delete', 'Deleted a transaction');
       },
       addCategory: async (category) => {
         if (session) {
@@ -865,12 +894,14 @@ function AppProvider({ children }: { children: ReactNode }) {
           const nextCategory = mapApiCategory(savedCategory);
           setCategories((current) => [...current, nextCategory]);
           notify('Category has been added.');
+          recordEmberAppAction('create', 'Added a category');
           return nextCategory;
         }
 
         const nextCategory = { ...category, id: crypto.randomUUID(), isDefault: false };
         setCategories((current) => [...current, nextCategory]);
         notify('Category has been added.');
+        recordEmberAppAction('create', 'Added a category');
         return nextCategory;
       },
       updateCategory: async (id, updates) => {
@@ -899,6 +930,7 @@ function AppProvider({ children }: { children: ReactNode }) {
             ),
           );
           notify('Category has been updated.');
+          recordEmberAppAction('update', 'Updated a category');
           return;
         }
 
@@ -906,6 +938,7 @@ function AppProvider({ children }: { children: ReactNode }) {
           current.map((category) => (category.id === id ? { ...category, ...updates } : category)),
         );
         notify('Category has been updated.');
+        recordEmberAppAction('update', 'Updated a category');
       },
       deleteCategory: async (id) => {
         const category = categories.find((item) => item.id === id);
@@ -919,6 +952,7 @@ function AppProvider({ children }: { children: ReactNode }) {
 
         setCategories((current) => current.filter((category) => category.id !== id));
         notify('Category has been deleted.');
+        recordEmberAppAction('delete', 'Deleted a category');
       },
       addAccount: async (account) => {
         if (session) {
@@ -931,12 +965,14 @@ function AppProvider({ children }: { children: ReactNode }) {
           const nextAccount = mapApiAccount(savedAccount);
           setAccounts((current) => [...current, nextAccount]);
           notify('Account has been added.');
+          recordEmberAppAction('create', 'Added an account');
           return nextAccount;
         }
 
         const nextAccount = { ...account, id: crypto.randomUUID(), isDefault: false };
         setAccounts((current) => [...current, nextAccount]);
         notify('Account has been added.');
+        recordEmberAppAction('create', 'Added an account');
         return nextAccount;
       },
       updateAccount: async (id, updates) => {
@@ -951,11 +987,13 @@ function AppProvider({ children }: { children: ReactNode }) {
             current.map((account) => (account.id === id ? mapApiAccount(savedAccount) : account)),
           );
           notify('Account has been updated.');
+          recordEmberAppAction('update', 'Updated an account');
           return;
         }
 
         setAccounts((current) => current.map((account) => (account.id === id ? { ...account, ...updates } : account)));
         notify('Account has been updated.');
+        recordEmberAppAction('update', 'Updated an account');
       },
       deleteAccount: async (id) => {
         if (session) {
@@ -964,6 +1002,7 @@ function AppProvider({ children }: { children: ReactNode }) {
 
         setAccounts((current) => current.filter((account) => account.id !== id));
         notify('Account has been deleted.');
+        recordEmberAppAction('delete', 'Deleted an account');
       },
       getCategoryById,
       getAccountById,
@@ -1013,7 +1052,6 @@ export {
   getCategoryIcon,
   getDeviceDateKey,
   getDeviceMonthKey,
-  initialCategories,
   netWorthHistory,
   polarPoint,
   legacyCategoryIconIds,

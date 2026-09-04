@@ -12,7 +12,9 @@ import {
   type Category,
 } from '../app/FireBuddyProvider';
 import { suggestExpenseCategory } from '../api';
-import { AccountSheet, CategorySheet } from './AppShell';
+import { AccountSheet } from '../components/AccountSheet';
+import { CategorySheet } from '../components/CategorySheet';
+import { useAccessibleDialog } from '../components/useAccessibleDialog';
 
 function AddExpense() {
   const navigate = useNavigate();
@@ -40,6 +42,12 @@ function AddExpense() {
   function closeAddTransaction() {
     navigate(backgroundPath ?? '/');
   }
+
+  const dialogRef = useAccessibleDialog<HTMLFormElement>({
+    isOpen: !isAddingCategory && !isAddingAccount,
+    onClose: closeAddTransaction,
+    canClose: !isSaving,
+  });
 
   useEffect(() => {
     if (!category || !availableCategories.some((item) => item.id === category)) {
@@ -129,10 +137,19 @@ function AddExpense() {
 
   return (
     <main className="add-route" onClick={closeAddTransaction}>
-      <form className="add-panel" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
+      <form
+        ref={dialogRef}
+        className="add-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-transaction-title"
+        tabIndex={-1}
+        onSubmit={submit}
+        onClick={(event) => event.stopPropagation()}
+      >
         <header className="add-header">
           <span aria-hidden="true" />
-          <h2>Add transaction</h2>
+          <h2 id="add-transaction-title">Add transaction</h2>
           <button
             className="plain-icon-button inverse-plain"
             type="button"
@@ -163,7 +180,7 @@ function AddExpense() {
 
           <label className="form-field add-name-field">
             <span>Description</span>
-            <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Netflix" />
+            <input data-dialog-initial-focus value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Netflix" />
           </label>
 
           <label className="amount-field add-amount-field">

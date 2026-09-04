@@ -3,31 +3,24 @@ import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'reac
 import type { Session } from '@supabase/supabase-js';
 import { type TransactionType } from '@firebuddy/shared';
 import {
-  ArrowLeft,
   ArrowLeftRight,
   ArrowUpRight,
   Banknote,
-  Bell,
-  Building2,
   Check,
   ChevronDown,
   ChevronRight,
   CircleHelp,
-  CreditCard,
-  Database,
+  ClipboardList,
   Filter,
+  Flag,
   Grid2X2,
-  HelpCircle,
   Home,
-  Lock,
   LogOut,
-  MessageSquare,
+  Menu,
   Moon,
   Pencil,
   Plus,
   Search,
-  Shield,
-  Smartphone,
   Sun,
   Trash2,
   TrendingUp,
@@ -39,7 +32,6 @@ import {
 import {
   accountTypeLabel,
   categoryColors,
-  categoryIconOptions,
   colors,
   describeDonutSegment,
   fireData,
@@ -49,35 +41,52 @@ import {
   getCategoryIcon,
   getDeviceDateKey,
   getDeviceMonthKey,
-  legacyCategoryIconIds,
   polarPoint,
   sortTransactionsNewestFirst,
   useFireBuddy,
   type Account,
-  type AccountType,
   type Category,
   type Transaction,
 } from '../app/FireBuddyProvider';
 import { EmberMark, FireBuddyMark } from '../app/BrandMarks';
 import { getDisplayName } from '../app/displayName';
+import { AppUtilityActions } from '../components/AppUtilityActions';
+import { CategorySheet } from '../components/CategorySheet';
+import { EmberFloatingAssistant } from '../components/EmberFloatingAssistant';
+import { PageToolbar } from '../components/PageToolbar';
+import { useAccessibleDialog } from '../components/useAccessibleDialog';
+import Accounts from './Accounts';
+import Dashboard from './Dashboard';
+import FireSetup from './FireSetup';
+import PlaceholderPage from './PlaceholderPage';
+import Profile from './Profile';
+import Wealth from './Wealth';
 
 const Insights = lazy(() => import('./Insights'));
 const Ember = lazy(() => import('./Ember'));
-const navItems = [
+const desktopNavItems = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
   { path: '/categories', icon: Grid2X2, label: 'Categories' },
+  { path: '/plan', icon: ClipboardList, label: 'Plan' },
+  { path: '/goals', icon: Flag, label: 'Goals' },
   { path: '/profile', icon: User, label: 'Profile' },
 ] as const;
+const mobileNavItems = desktopNavItems.filter((item) => ['/', '/transactions', '/categories', '/profile'].includes(item.path));
 const secondaryNavItems = [
-  { path: '/ember', icon: MessageSquare, label: 'Ember' },
+  { path: '/ember', icon: EmberNavIcon, label: 'Ask Ember', indicator: 'AI' },
 ] as const;
-const categoryBudgetInputPattern = /^\d{0,8}(?:\.\d{0,2})?$/;
+
+/** Adapt Ember's custom brand mark to the shared navigation icon contract. */
+function EmberNavIcon({ size = 18 }: { size?: number; strokeWidth?: number }) {
+  return <EmberMark className="ember-nav-mark" size={size} />;
+}
 
 function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session, signOut, notify } = useFireBuddy();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -102,6 +111,12 @@ function Layout() {
     window.addEventListener('keydown', preventBackspaceNavigation, true);
     return () => window.removeEventListener('keydown', preventBackspaceNavigation, true);
   }, []);
+
+  useEffect(() => {
+    if (location.pathname !== '/ember') {
+      setIsSidebarCollapsed(false);
+    }
+  }, [location.pathname]);
 
   function openAddTransaction() {
     navigate('/add', {
@@ -130,7 +145,7 @@ function Layout() {
 
   return (
     <div className="figma-app-root">
-      <aside className="desktop-sidebar">
+      <aside id="main-sidebar" className="desktop-sidebar" hidden={isSidebarCollapsed}>
         <div className="sidebar-logo">
           <FireBuddyMark className="sidebar-brand-mark" size={38} />
           <div>
@@ -140,13 +155,12 @@ function Layout() {
         </div>
 
         <nav className="desktop-nav" aria-label="Primary">
-          {navItems.map((item) => (
+          {desktopNavItems.map((item) => (
             <SidebarNavItem key={item.path} {...item} />
           ))}
         </nav>
 
-        <nav className="desktop-nav desktop-secondary-nav" aria-label="Guides">
-          <span className="desktop-nav-label">Guide</span>
+        <nav className="desktop-nav desktop-secondary-nav" aria-label="Assistant">
           {secondaryNavItems.map((item) => (
             <SidebarNavItem key={item.path} {...item} />
           ))}
@@ -171,8 +185,9 @@ function Layout() {
         </div>
       </aside>
 
-      <div className="app-container">
+      <div className={`app-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="content-wrapper">
+          <MobileTopbar />
           <div className="scroll-area">
             <Routes>
               <Route index element={<Dashboard />} />
@@ -182,13 +197,26 @@ function Layout() {
               <Route path="insights" element={<Suspense fallback={<InsightsFallback />}><Insights /></Suspense>} />
               <Route path="analytics" element={<Navigate to="/insights" replace />} />
               <Route path="accounts" element={<Accounts />} />
-              <Route path="ember" element={<Suspense fallback={<EmberFallback />}><Ember /></Suspense>} />
+              <Route path="wealth" element={<Wealth />} />
+              <Route path="fire" element={<FireSetup />} />
+              <Route path="plan" element={<PlaceholderPage kind="plan" />} />
+              <Route path="goals" element={<PlaceholderPage kind="goals" />} />
+              <Route path="ember" element={(
+                <Suspense fallback={<EmberFallback />}>
+                  <Ember
+                    isMainSidebarOpen={!isSidebarCollapsed}
+                    onToggleMainSidebar={() => setIsSidebarCollapsed((current) => !current)}
+                    appContextPathname={location.pathname}
+                  />
+                </Suspense>
+              )} />
             </Routes>
           </div>
           <MobileNav />
         </div>
       </div>
       <CrudToast />
+      <EmberFloatingAssistant pathname={location.pathname} onOpenFullEmber={() => navigate('/ember')} />
       <LogoutConfirmationDialog
         isOpen={showLogoutDialog}
         isSigningOut={isSigningOut}
@@ -213,6 +241,12 @@ function LogoutConfirmationDialog({
   onCancel,
   onConfirm,
 }: LogoutConfirmationDialogProps) {
+  const dialogRef = useAccessibleDialog<HTMLElement>({
+    isOpen,
+    canClose: !isSigningOut,
+    onClose: onCancel,
+  });
+
   if (!isOpen) {
     return null;
   }
@@ -220,16 +254,18 @@ function LogoutConfirmationDialog({
   return (
     <div className="sheet-backdrop">
       <aside
+        ref={dialogRef}
         className="confirm-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="logout-dialog-title"
         aria-describedby="logout-dialog-description"
+        tabIndex={-1}
       >
         <h3 id="logout-dialog-title">Log out?</h3>
         <p id="logout-dialog-description">Are you sure you want to log out of FireBuddy?</p>
         <div className="sheet-actions">
-          <button className="secondary-button" type="button" onClick={onCancel} disabled={isSigningOut}>
+          <button data-dialog-initial-focus className="secondary-button" type="button" onClick={onCancel} disabled={isSigningOut}>
             Cancel
           </button>
           <button className="danger-button" type="button" onClick={onConfirm} disabled={isSigningOut}>
@@ -265,10 +301,12 @@ function SidebarNavItem({
   path,
   icon: Icon,
   label,
+  indicator,
 }: {
   path: string;
   icon: ComponentType<{ size?: number; strokeWidth?: number }>;
   label: string;
+  indicator?: string;
 }) {
   return (
     <NavLink
@@ -278,6 +316,7 @@ function SidebarNavItem({
     >
       <Icon size={18} strokeWidth={1.7} />
       <span>{label}</span>
+      {indicator ? <span className="nav-ai-indicator" aria-hidden="true">{indicator}</span> : null}
     </NavLink>
   );
 }
@@ -297,20 +336,51 @@ function MobileNav() {
   return (
     <nav className="mobile-nav" aria-label="Primary mobile">
       <div className="mobile-nav-group">
-        {navItems.slice(0, 2).map((item) => (
+        {mobileNavItems.slice(0, 2).map((item) => (
           <MobileTabItem key={item.path} {...item} />
         ))}
       </div>
       <div className="mobile-fab-spacer" />
       <div className="mobile-nav-group">
-        {navItems.slice(2).map((item) => (
+        {mobileNavItems.slice(2).map((item) => (
           <MobileTabItem key={item.path} {...item} />
         ))}
       </div>
-      <button className="mobile-fab button-press fab-pulse" type="button" onClick={openAddTransaction}>
-        <Plus size={24} strokeWidth={2.4} />
+      <button className="mobile-fab button-press fab-pulse" type="button" onClick={openAddTransaction} aria-label="Add transaction">
+        <Plus size={20} strokeWidth={2.4} />
+        <span>Add</span>
       </button>
     </nav>
+  );
+}
+
+function MobileTopbar() {
+  return (
+    <header className="mobile-topbar">
+      <NavLink className="mobile-brand" to="/" aria-label="FireBuddy home">
+        <FireBuddyMark size={30} />
+        <span>FireBuddy</span>
+      </NavLink>
+      <div className="mobile-topbar-actions">
+        <AppUtilityActions className="app-utility-actions-mobile" />
+        <details className="mobile-more-menu">
+          <summary><Menu size={18} /><span>More</span></summary>
+          <nav aria-label="More FireBuddy pages">
+            <NavLink className="mobile-ember-link" to="/ember" title="AI-powered financial assistant">
+              <EmberMark className="ember-nav-mark" size={20} />
+              <span>Ask Ember</span>
+              <span className="nav-ai-indicator" aria-hidden="true">AI</span>
+            </NavLink>
+            <NavLink to="/insights">Insights</NavLink>
+            <NavLink to="/accounts">Accounts</NavLink>
+            <NavLink to="/wealth">Wealth</NavLink>
+            <NavLink to="/fire">FIRE setup</NavLink>
+            <NavLink to="/plan">Plan</NavLink>
+            <NavLink to="/goals">Goals</NavLink>
+          </nav>
+        </details>
+      </div>
+    </header>
   );
 }
 
@@ -334,7 +404,7 @@ function MobileTabItem({
   );
 }
 
-function Dashboard() {
+function LegacyDashboardReference() {
   const navigate = useNavigate();
   const {
     transactions,
@@ -384,9 +454,6 @@ function Dashboard() {
               title={themeMode === 'dark' ? 'Light mode' : 'Dark mode'}
             >
               {themeMode === 'dark' ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
-            </button>
-            <button className="icon-button translucent" type="button" aria-label="Notifications">
-              <Bell size={22} strokeWidth={1.6} />
             </button>
             <button className="icon-button translucent" type="button" aria-label="Profile" onClick={() => navigate('/profile')}>
               <User size={21} strokeWidth={1.7} />
@@ -781,14 +848,20 @@ function Transactions() {
     getCategoryById,
     getAccountById,
   } = useFireBuddy();
-  const [searchQuery, setSearchQuery] = useState('');
+  const initialSearchQuery = new URLSearchParams(location.search).get('search') ?? '';
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
-  const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month'>('month');
+  const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month'>('all');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
   const [transactionDeleteError, setTransactionDeleteError] = useState<string | null>(null);
+  const transactionDeleteDialogRef = useAccessibleDialog<HTMLElement>({
+    isOpen: Boolean(deletingTransaction),
+    canClose: !isDeletingTransaction,
+    onClose: () => setDeletingTransaction(null),
+  });
 
   const filteredTransactions = useMemo(() => {
     const currentMonthKey = getDeviceMonthKey();
@@ -855,33 +928,35 @@ function Transactions() {
     }
   }
 
-  return (
-    <main className="page">
-      <section className="screen-header">
-        <div className="header-row">
-          <h2>Transactions</h2>
-          <div className="header-actions">
-            <button className="pill-button inverse" type="button" onClick={() => navigate('/accounts')}>
-              <Wallet size={14} />
-              Accounts
-            </button>
-            <button
-              className="pill-button inverse-white"
-              type="button"
-              onClick={() =>
-                navigate('/add', {
-                  state: {
-                    backgroundPath: `${location.pathname}${location.search}${location.hash}`,
-                  },
-                })
-              }
-            >
-              <Plus size={14} />
-              Add
-            </button>
-          </div>
-        </div>
+  /** Reset every transaction filter so the complete history is visible again. */
+  function clearTransactionFilters() {
+    setSearchQuery('');
+    setSelectedCategory(null);
+    setSelectedAccount(null);
+    setDateFilter('all');
+  }
 
+  return (
+    <main className="page page-transactions">
+      <PageToolbar
+        title="Transactions"
+        description="Review income and expenses across your accounts."
+        actions={<>
+          <button className="secondary-button" type="button" onClick={() => navigate('/accounts')}>
+            <Wallet size={15} /> Accounts
+          </button>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => navigate('/add', { state: { backgroundPath: `${location.pathname}${location.search}${location.hash}` } })}
+          >
+            <Plus size={15} /> Add transaction
+          </button>
+        </>}
+      />
+
+      <section className="screen-content">
+        <div className="page-filter-toolbar">
         <label className="search-field">
           <Search size={18} />
           <input
@@ -898,7 +973,7 @@ function Transactions() {
         </label>
 
         <div className="filter-row">
-          {(['month', 'week', 'all'] as const).map((filter) => (
+          {(['all', 'month', 'week'] as const).map((filter) => (
             <button
               className={`filter-chip ${dateFilter === filter ? 'filter-chip-active' : ''}`}
               key={filter}
@@ -909,9 +984,7 @@ function Transactions() {
             </button>
           ))}
         </div>
-      </section>
-
-      <section className="screen-content">
+        </div>
         <article className="summary-strip">
           <div className="summary-expense">
             <span>Filtered expenses</span>
@@ -949,7 +1022,7 @@ function Transactions() {
         </div>
 
         <div className="grouped-list">
-          {groupedTransactions.map(([date, dateTransactions]) => (
+          {groupedTransactions.length ? groupedTransactions.map(([date, dateTransactions]) => (
             <section key={date}>
               <p className="date-label">{formatDateLabel(date)}</p>
               <div className="transaction-list card-list">
@@ -973,7 +1046,25 @@ function Transactions() {
                 })}
               </div>
             </section>
-          ))}
+          )) : (
+            <div className="transactions-empty" role="status">
+              <strong>{transactions.length ? 'No transactions match these filters' : 'No transactions yet'}</strong>
+              <p>
+                {transactions.length
+                  ? 'Clear the filters to return to your complete transaction history.'
+                  : 'Add your first income or expense to start building your history.'}
+              </p>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={transactions.length
+                  ? clearTransactionFilters
+                  : () => navigate('/add', { state: { backgroundPath: `${location.pathname}${location.search}${location.hash}` } })}
+              >
+                {transactions.length ? 'Clear filters' : 'Add transaction'}
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -1003,19 +1094,23 @@ function Transactions() {
           onClick={isDeletingTransaction ? undefined : () => setDeletingTransaction(null)}
         >
           <aside
+            ref={transactionDeleteDialogRef}
             className="confirm-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-transaction-title"
+            aria-describedby="delete-transaction-description"
+            tabIndex={-1}
             onClick={(event) => event.stopPropagation()}
           >
             <h3 id="delete-transaction-title">Delete transaction?</h3>
-            <p>
+            <p id="delete-transaction-description">
               Delete <strong>{activeDeletingTransaction.description}</strong>? This action cannot be undone.
             </p>
             {transactionDeleteError ? <p className="form-error">{transactionDeleteError}</p> : null}
             <div className="sheet-actions">
               <button
+                data-dialog-initial-focus
                 className="secondary-button"
                 type="button"
                 onClick={() => setDeletingTransaction(null)}
@@ -1078,6 +1173,7 @@ function TransactionSheet({
     [categories, session, transactionType],
   );
   const isBusy = isSaving || isDeleting;
+  const dialogRef = useAccessibleDialog<HTMLElement>({ onClose, canClose: !isBusy });
 
   useEffect(() => {
     if (!category && availableCategories[0]) {
@@ -1148,10 +1244,18 @@ function TransactionSheet({
 
   return (
     <div className="sheet-backdrop" onClick={isBusy ? undefined : onClose}>
-      <aside className="center-sheet transaction-sheet" onClick={(event) => event.stopPropagation()}>
+      <aside
+        ref={dialogRef}
+        className="center-sheet transaction-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="transaction-sheet-title"
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="sheet-header">
-          <h3>Edit transaction</h3>
-          <button className="plain-icon-button" type="button" onClick={onClose} disabled={isBusy}>
+          <h3 id="transaction-sheet-title">Edit transaction</h3>
+          <button className="plain-icon-button" type="button" onClick={onClose} disabled={isBusy} aria-label="Close transaction editor">
             <X size={18} />
           </button>
         </div>
@@ -1175,6 +1279,7 @@ function TransactionSheet({
           <label className="form-field">
             <span>Description</span>
             <input
+              data-dialog-initial-focus
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Netflix"
@@ -1269,20 +1374,15 @@ function Categories() {
 
   return (
     <main className="page">
-      <section className="screen-header slim">
-        <div className="header-row">
-          <h2>Categories</h2>
-          <button className="pill-button inverse-white" type="button" onClick={() => setIsAdding(true)}>
-            <Plus size={14} />
-            Add
-          </button>
-        </div>
-        <p className="header-subtitle">
-          {categoryType === 'expense'
-            ? 'Manage your spend buckets and monthly budgets.'
-            : 'Manage the sources used to classify income.'}
-        </p>
-      </section>
+      <PageToolbar
+        title="Categories"
+        description={categoryType === 'expense'
+          ? 'Manage your spend categories and monthly budgets.'
+          : 'Manage the sources used to classify income.'}
+        actions={<button className="primary-button" type="button" onClick={() => setIsAdding(true)}>
+          <Plus size={15} /> Add category
+        </button>}
+      />
 
       <section className="screen-content">
         <div className="transaction-type-toggle category-type-tabs" role="tablist" aria-label="Category type">
@@ -1396,297 +1496,6 @@ function Categories() {
   );
 }
 
-export function CategorySheet({
-  mode,
-  initial,
-  categoryType,
-  onSave,
-  onDelete,
-  onClose,
-}: {
-  mode: 'add' | 'edit';
-  initial: Partial<Category>;
-  categoryType: TransactionType;
-  onSave: (data: Partial<Category>) => Promise<void>;
-  onDelete?: () => Promise<void>;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState(initial.name ?? '');
-  const [icon, setIcon] = useState(legacyCategoryIconIds[initial.icon ?? ''] ?? initial.icon ?? 'others');
-  const [color, setColor] = useState(initial.color ?? categoryColors[0]);
-  const [monthlyBudget, setMonthlyBudget] = useState(String(initial.monthlyBudget ?? 0));
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [budgetError, setBudgetError] = useState<string | null>(null);
-  const isBusy = isSaving || isDeleting;
-
-  async function save() {
-    if (!name.trim() || isBusy) {
-      return;
-    }
-
-    const normalizedBudget = categoryType === 'income' ? '0' : monthlyBudget.trim();
-    if (
-      normalizedBudget === '.' ||
-      !categoryBudgetInputPattern.test(normalizedBudget) ||
-      Number(normalizedBudget || 0) > 99999999.99
-    ) {
-      setBudgetError('Enter a budget up to 99,999,999.99 with no more than two decimal places.');
-      return;
-    }
-
-    setIsSaving(true);
-    setFormError(null);
-
-    try {
-      await onSave({
-        name: name.trim(),
-        icon,
-        color,
-        monthlyBudget: Number(normalizedBudget) || 0,
-        categoryType,
-        isDefault: initial.isDefault,
-      });
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Unable to save category.');
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function confirmDelete() {
-    if (!onDelete || isBusy) {
-      return;
-    }
-
-    setIsDeleting(true);
-    setFormError(null);
-
-    try {
-      await onDelete();
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Unable to delete category.');
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
-  return (
-    <div className="sheet-backdrop" onClick={isBusy ? undefined : onClose}>
-      <aside className="center-sheet" onClick={(event) => event.stopPropagation()}>
-        <div className="sheet-header">
-          <h3>{mode === 'add' ? 'New category' : 'Edit category'}</h3>
-          <button className="plain-icon-button" type="button" onClick={onClose} disabled={isBusy}>
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="sheet-body">
-          <div className="locked-type-row">
-            <span>Type</span>
-            <strong>{categoryType === 'expense' ? 'Expense' : 'Income'}</strong>
-          </div>
-
-          <label className="form-field">
-            <span>Category name</span>
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Dining out" disabled={isBusy} />
-          </label>
-
-          <div className="form-field">
-            <span>Icon</span>
-            <div className="icon-option-grid">
-              {categoryIconOptions.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    className={`icon-option ${icon === item.id ? 'icon-option-active' : ''}`}
-                    key={item.id}
-                    type="button"
-                    onClick={() => setIcon(item.id)}
-                    disabled={isBusy}
-                    aria-label={item.label}
-                    title={item.label}
-                  >
-                    <Icon size={18} strokeWidth={1.8} />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {categoryType === 'expense' ? <label className="form-field">
-            <span>Monthly budget</span>
-            <input
-              value={monthlyBudget}
-              onChange={(event) => {
-                const nextValue = event.target.value.startsWith('.') ? `0${event.target.value}` : event.target.value;
-                if (categoryBudgetInputPattern.test(nextValue)) {
-                  setMonthlyBudget(nextValue);
-                  setBudgetError(null);
-                } else {
-                  setBudgetError('Use numbers only, with up to two decimal places.');
-                }
-              }}
-              inputMode="decimal"
-              aria-invalid={Boolean(budgetError)}
-              disabled={isBusy}
-            />
-          </label> : null}
-          {categoryType === 'expense' && budgetError ? <p className="form-error">{budgetError}</p> : null}
-
-          <div className="swatch-grid">
-            {categoryColors.map((item) => (
-              <button
-                className={`swatch ${item === color ? 'swatch-active' : ''}`}
-                key={item}
-                style={{ backgroundColor: item }}
-                type="button"
-                onClick={() => setColor(item)}
-                disabled={isBusy}
-                aria-label={item}
-              >
-                {item === color ? <Check size={14} color="#fff" strokeWidth={3} /> : null}
-              </button>
-            ))}
-          </div>
-
-          {showDeleteConfirm ? (
-            <div className="delete-confirm">
-              <p>Delete this category?</p>
-              <button type="button" onClick={confirmDelete} disabled={isBusy}>
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          ) : null}
-
-          {formError ? <p className="form-error">{formError}</p> : null}
-
-          <div className="sheet-actions">
-            {onDelete ? (
-              <button className="danger-button" type="button" onClick={() => setShowDeleteConfirm(true)} disabled={isBusy}>
-                <Trash2 size={15} />
-                Delete
-              </button>
-            ) : null}
-            <button className="primary-button" type="button" onClick={save} disabled={isBusy}>
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </div>
-      </aside>
-    </div>
-  );
-}
-
-type ProfileProps = {
-  onRequestLogout: () => void;
-};
-
-function Profile({ onRequestLogout }: ProfileProps) {
-  const { session, themeMode, toggleTheme, demoMode } = useFireBuddy();
-  const [showClearDialog, setShowClearDialog] = useState(false);
-  const comingSoonSettings = [
-    { icon: User, label: 'Account info' },
-    { icon: Bell, label: 'Notifications' },
-    { icon: Shield, label: 'Login and security' },
-    { icon: Lock, label: 'Data and privacy' },
-    { icon: HelpCircle, label: 'Help & feedback' },
-  ];
-  const displayName = getDisplayName(session?.user);
-  const initials = displayName
-    .split(/[._\s-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || 'FB';
-
-  function clearAllData() {
-    window.localStorage.removeItem('firebuddy_web_transactions_v3');
-    window.localStorage.removeItem('firebuddy_web_categories_v3');
-    window.localStorage.removeItem('firebuddy_web_accounts_v2');
-    window.location.reload();
-  }
-
-  return (
-    <main className="page">
-      <section className="profile-header">
-        <div className="profile-avatar">{initials}</div>
-        <h2>{displayName}</h2>
-        <p>{session?.user.email ?? 'Local demo mode'}</p>
-      </section>
-
-      <section className="profile-content">
-        <article className="settings-card profile-account-card">
-          <div className="setting-row setting-row-static">
-            <span className="setting-icon">
-              <User size={20} />
-            </span>
-            <strong>{session?.user.email ?? 'Signed in'}</strong>
-          </div>
-        </article>
-
-        <article className="settings-card">
-          <button
-            className="setting-row setting-row-toggle"
-            type="button"
-            onClick={toggleTheme}
-            aria-pressed={themeMode === 'dark'}
-          >
-            <span className="setting-icon">{themeMode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</span>
-            <strong>Dark mode</strong>
-            <span className="setting-state">{themeMode === 'dark' ? 'On' : 'Off'}</span>
-          </button>
-          {comingSoonSettings.map((setting) => (
-            <button
-              className="setting-row setting-row-disabled"
-              key={setting.label}
-              type="button"
-              disabled
-            >
-              <span className="setting-icon">
-                <setting.icon size={20} />
-              </span>
-              <strong>{setting.label}</strong>
-              <span className="setting-state">Coming soon</span>
-            </button>
-          ))}
-          {demoMode ? (
-            <button className="setting-row setting-row-danger" type="button" onClick={() => setShowClearDialog(true)}>
-              <span className="setting-icon"><Database size={20} /></span>
-              <strong>Clear local demo data</strong>
-            </button>
-          ) : null}
-          {session ? (
-            <button className="setting-row setting-row-danger" type="button" onClick={onRequestLogout}>
-              <span className="setting-icon"><LogOut size={20} /></span>
-              <strong>Log out</strong>
-            </button>
-          ) : null}
-        </article>
-      </section>
-
-      {showClearDialog ? (
-        <div className="sheet-backdrop">
-          <aside className="confirm-dialog">
-            <h3>Clear all local data?</h3>
-            <p>This resets demo transactions, categories, and accounts.</p>
-            <div className="sheet-actions">
-              <button className="secondary-button" type="button" onClick={() => setShowClearDialog(false)}>
-                Cancel
-              </button>
-              <button className="danger-button" type="button" onClick={clearAllData}>
-                Clear
-              </button>
-            </div>
-          </aside>
-        </div>
-      ) : null}
-    </main>
-  );
-}
-
 function InsightsFallback() {
   return <main className="page" />;
 }
@@ -1694,229 +1503,5 @@ function InsightsFallback() {
 function EmberFallback() {
   return <main className="page ember-page" aria-label="Loading Ember" />;
 }
-
-const accountTypes: {
-  id: AccountType;
-  label: string;
-  icon: ComponentType<{ size?: number; strokeWidth?: number }>;
-}[] = [
-  { id: 'bank', label: 'Bank', icon: Building2 },
-  { id: 'credit_card', label: 'Credit Card', icon: CreditCard },
-  { id: 'debit_card', label: 'Debit Card', icon: WalletCards },
-  { id: 'cash', label: 'Cash', icon: Banknote },
-  { id: 'ewallet', label: 'E-Wallet', icon: Smartphone },
-];
-
-function Accounts() {
-  const navigate = useNavigate();
-  const { accounts, transactions, addAccount, updateAccount, deleteAccount } = useFireBuddy();
-  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
-
-  return (
-    <main className="page">
-      <section className="analytics-header">
-        <button className="plain-icon-button" type="button" onClick={() => navigate(-1)}>
-          <ArrowLeft size={20} />
-        </button>
-        <h2>Accounts</h2>
-        <button className="plain-icon-button" type="button" onClick={() => setIsAdding(true)}>
-          <Plus size={20} />
-        </button>
-      </section>
-
-      <section className="screen-content">
-        <div className="account-list">
-          {accounts.map((account) => {
-            const usageCount = transactions.filter((transaction) => transaction.account === account.id).length;
-            const typeConfig = accountTypes.find((item) => item.id === account.type) ?? accountTypes[0];
-            const Icon = typeConfig.icon;
-
-            return (
-              <article className="account-card-row" key={account.id}>
-                <span className="account-icon" style={{ backgroundColor: `${account.color}22`, color: account.color }}>
-                  <Icon size={20} />
-                </span>
-                <div>
-                  <strong>{account.name}</strong>
-                  <span>
-                    {accountTypeLabel(account.type)}
-                    {account.lastFour ? ` \u00B7 ${account.lastFour}` : ''} {'\u00B7'} {usageCount} transactions
-                    {account.isDefault ? ' · Default' : ''}
-                  </span>
-                </div>
-                <button className="plain-icon-button muted" type="button" onClick={() => setEditingAccount(account)}>
-                  <Pencil size={16} />
-                </button>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      {isAdding ? (
-        <AccountSheet
-          mode="add"
-          initial={{ color: categoryColors[0], type: 'bank' }}
-          onClose={() => setIsAdding(false)}
-          onSave={async (account) => {
-            await addAccount(account as Omit<Account, 'id'>);
-            setIsAdding(false);
-          }}
-        />
-      ) : null}
-
-      {editingAccount ? (
-        <AccountSheet
-          mode="edit"
-          initial={editingAccount}
-          onClose={() => setEditingAccount(null)}
-          onSave={async (updates) => {
-            await updateAccount(editingAccount.id, updates);
-            setEditingAccount(null);
-          }}
-          onDelete={editingAccount.isDefault ? undefined : async () => {
-            await deleteAccount(editingAccount.id);
-            setEditingAccount(null);
-          }}
-        />
-      ) : null}
-    </main>
-  );
-}
-
-export function AccountSheet({
-  mode,
-  initial,
-  onSave,
-  onDelete,
-  onClose,
-}: {
-  mode: 'add' | 'edit';
-  initial: Partial<Account>;
-  onSave: (data: Partial<Account>) => Promise<void>;
-  onDelete?: () => Promise<void>;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState(initial.name ?? '');
-  const [type, setType] = useState<AccountType>(initial.type ?? 'bank');
-  const [color, setColor] = useState(initial.color ?? categoryColors[0]);
-  const [lastFour, setLastFour] = useState(initial.lastFour ?? '');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  async function save() {
-    if (!name.trim() || isSaving || isDeleting) {
-      return;
-    }
-
-    if (lastFour && !/^\d{4}$/.test(lastFour)) {
-      setFormError('Last four digits must contain exactly four numbers.');
-      return;
-    }
-
-    setIsSaving(true);
-    setFormError(null);
-    try {
-      await onSave({
-        name: name.trim(),
-        type,
-        color,
-        lastFour: lastFour.trim() || undefined,
-      });
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Unable to save account.');
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function removeAccount() {
-    if (!onDelete || isSaving || isDeleting) {
-      return;
-    }
-
-    setIsDeleting(true);
-    setFormError(null);
-    try {
-      await onDelete();
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Unable to delete account.');
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
-  return (
-    <div className="sheet-backdrop" onClick={onClose}>
-      <aside className="center-sheet account-sheet" onClick={(event) => event.stopPropagation()}>
-        <div className="sheet-handle" />
-        <div className="sheet-header">
-          <h3>{mode === 'add' ? 'New account' : 'Edit account'}</h3>
-          <button className="plain-icon-button" type="button" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-        <div className="sheet-body">
-          <div className="type-chip-grid">
-            {accountTypes.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  className={`type-chip ${type === item.id ? 'type-chip-active' : ''}`}
-                  key={item.id}
-                  type="button"
-                onClick={() => setType(item.id)}
-                disabled={isSaving || isDeleting}
-                >
-                  <Icon size={14} />
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-          <label className="form-field">
-            <span>Account name</span>
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="DBS Savings" disabled={isSaving || isDeleting} />
-          </label>
-          <label className="form-field">
-            <span>Last four digits</span>
-            <input value={lastFour} onChange={(event) => setLastFour(event.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="4521" disabled={isSaving || isDeleting} />
-          </label>
-          <div className="swatch-grid">
-            {categoryColors.map((item) => (
-              <button
-                className={`swatch ${item === color ? 'swatch-active' : ''}`}
-                key={item}
-                style={{ backgroundColor: item }}
-                type="button"
-                onClick={() => setColor(item)}
-                disabled={isSaving || isDeleting}
-                aria-label={item}
-              >
-                {item === color ? <Check size={14} color="#fff" strokeWidth={3} /> : null}
-              </button>
-            ))}
-          </div>
-          {initial.isDefault ? <p className="field-help">The default account can be edited but not deleted.</p> : null}
-          {formError ? <p className="form-error">{formError}</p> : null}
-          <div className="sheet-actions">
-            {onDelete ? (
-              <button className="danger-button" type="button" onClick={removeAccount} disabled={isSaving || isDeleting}>
-                <Trash2 size={15} />
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            ) : null}
-            <button className="primary-button" type="button" onClick={save} disabled={isSaving || isDeleting}>
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </div>
-      </aside>
-    </div>
-  );
-}
-
 
 export default Layout;

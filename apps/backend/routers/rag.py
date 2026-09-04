@@ -88,7 +88,11 @@ def financial_advisor(body: AdvisorRequest, current_user: CurrentUser):
         )
 
     try:
-        return answer_financial_advisor_question(body.question, body.history)
+        return answer_financial_advisor_question(
+            body.question,
+            body.history,
+            body.app_context,
+        )
     except Exception as exc:
         # Keep raw finance questions out of logs; the user id is enough to trace failures.
         logger.exception("rag_advisor_failed", extra={"user_id": current_user.id})
@@ -125,6 +129,7 @@ def financial_advisor_stream(body: AdvisorRequest, current_user: StreamUser):
             for event in stream_financial_advisor_question(
                 body.question,
                 body.history,
+                body.app_context,
             ):
                 yield encode_sse(event["event"], event["data"])
         except Exception:

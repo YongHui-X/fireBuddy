@@ -6,6 +6,8 @@ import {
   EMBER_TOPICS_STORAGE_KEY,
   LEGACY_EMBER_ACTIVE_TOPIC_STORAGE_KEY,
   LEGACY_EMBER_TOPICS_STORAGE_KEY,
+  LEGACY_V2_EMBER_ACTIVE_TOPIC_STORAGE_KEY,
+  LEGACY_V2_EMBER_TOPICS_STORAGE_KEY,
   LEGACY_CHAT_ACTIVE_TOPIC_STORAGE_KEY,
   LEGACY_CHAT_TOPICS_STORAGE_KEY,
   getSafeExternalUrl,
@@ -56,7 +58,7 @@ describe('Ember local history', () => {
     expect(storage.getItem(LEGACY_CHAT_TOPICS_STORAGE_KEY)).toBe(JSON.stringify(legacyTopics));
 
     saveEmberTopics(storage, loaded.topics);
-    expect(JSON.parse(storage.getItem(EMBER_TOPICS_STORAGE_KEY) ?? '{}').version).toBe(2);
+    expect(JSON.parse(storage.getItem(EMBER_TOPICS_STORAGE_KEY) ?? '{}').version).toBe(3);
   });
 
   it('prefers Ember history and validates the active topic', () => {
@@ -73,13 +75,14 @@ describe('Ember local history', () => {
 
   it('excludes error placeholders from normalized API history', () => {
     const messages = [
-      { id: 'one', role: 'user' as const, content: 'Question', createdAt: '', sources: [], status: 'complete' as const },
+      { id: 'one', role: 'user' as const, content: 'Question', createdAt: '', sources: [], suggestedQuestions: [], status: 'complete' as const },
       {
         id: 'two',
         role: 'assistant' as const,
         content: '',
         createdAt: '',
         sources: [],
+        suggestedQuestions: [],
         status: 'complete' as const,
         error: { kind: 'unavailable' as const, message: 'Try again', retryable: true, retryOfMessageId: 'one' },
       },
@@ -127,7 +130,7 @@ describe('Ember local history', () => {
 
   it('turns a persisted interrupted stream into a retryable saved error', () => {
     const storage = createMemoryStorage({
-      [EMBER_TOPICS_STORAGE_KEY]: JSON.stringify({
+      [LEGACY_V2_EMBER_TOPICS_STORAGE_KEY]: JSON.stringify({
         version: 2,
         topics: [{
           id: 'stream-topic',
@@ -149,5 +152,50 @@ describe('Ember local history', () => {
     expect(interrupted.content).toBe('');
     expect(interrupted.error?.retryable).toBe(true);
     expect(interrupted.error?.retryOfMessageId).toBe('user-message');
+  });
+
+  it('migrates v2 topics, citations, messages, and selection without changing v2 keys', () => {
+    const v2Payload = JSON.stringify({
+      version: 2,
+      topics: [
+        {
+          id: 'first-topic',
+          title: 'CPF chat',
+          messages: [],
+          createdAt: '2026-08-01T00:00:00.000Z',
+          updatedAt: '2026-08-01T00:00:00.000Z',
+        },
+        {
+          id: 'selected-topic',
+          title: 'SSB chat',
+          messages: [{
+            id: 'answer',
+            role: 'assistant',
+            content: 'SSBs are issued by the Singapore Government.',
+            createdAt: '2026-08-02T00:00:00.000Z',
+            sources: [{ title: 'MAS SSB', url: 'https://www.mas.gov.sg/bonds-and-bills/singapore-savings-bonds' }],
+            status: 'complete',
+          }],
+          createdAt: '2026-08-02T00:00:00.000Z',
+          updatedAt: '2026-08-02T00:00:00.000Z',
+        },
+      ],
+    });
+    const storage = createMemoryStorage({
+      [LEGACY_V2_EMBER_TOPICS_STORAGE_KEY]: v2Payload,
+      [LEGACY_V2_EMBER_ACTIVE_TOPIC_STORAGE_KEY]: 'selected-topic',
+    });
+
+    const loaded = loadEmberState(storage);
+
+    expect(loaded.migratedLegacyHistory).toBe(true);
+    expect(loaded.activeTopicId).toBe('selected-topic');
+    expect(loaded.topics).toHaveLength(2);
+    expect(loaded.topics[1].messages[0]).toMatchObject({
+      content: 'SSBs are issued by the Singapore Government.',
+      suggestedQuestions: [],
+      sources: [{ title: 'MAS SSB' }],
+    });
+    expect(storage.getItem(LEGACY_V2_EMBER_TOPICS_STORAGE_KEY)).toBe(v2Payload);
   });
 });

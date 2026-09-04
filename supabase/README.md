@@ -53,6 +53,18 @@ Use these files when setting up FireBuddy in Supabase.
 - `validate_expense_account_ownership()` protects against linking an expense to another user's account.
 - `expenses.account_id` is nonnull after existing expenses are backfilled to their owner's default Cash account. Referenced accounts use restricted deletion.
 - `seed.sql` is safe to re-run because it uses `on conflict do nothing`.
+
+## Reseed the local Jen demo account
+
+The Jen finance dataset is intentionally separate from the global category seed. It preserves the existing Supabase Auth user and replaces only that user's application data. The rolling dataset uses Singapore's current date, includes every available expense category in the current month, and never inserts a future dated transaction.
+
+From the repository root in PowerShell:
+
+```powershell
+.\scripts\reseed-jen-demo.ps1 -Email 'jen@demo.com'
+```
+
+The command only connects to the local `supabase_db_fireBuddy` Docker container. It refuses to run unless exactly one matching Auth user exists, and PostgreSQL rolls back every change if validation fails.
 - `categories.legacy_id` and `expenses.legacy_id` are rollback mappings for one
   stable release. New rows leave them null. Remove them in a later verified migration.
 - The backend must use `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` for RAG ingestion and retrieval. Never expose that key to either frontend.

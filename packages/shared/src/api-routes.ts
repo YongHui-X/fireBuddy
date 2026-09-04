@@ -7,4 +7,11 @@ export const apiRoutes = {
   health: '/health',
   financialAdvisorChat: '/api/chat/financial-advisor',
   financialAdvisorChatStream: '/api/chat/financial-advisor/stream',
+  wealthPositions: '/wealth/positions',
+  wealthContributions: '/wealth/contributions',
+  financialSummary: '/analytics/financial-summary',
+  fireEssentialCategories: '/fire/essential-categories',
+  fireProfile: '/fire/profile',
+  fireCalculate: '/fire/calculate',
+  fireScenario: '/fire/scenario',
 } as const;

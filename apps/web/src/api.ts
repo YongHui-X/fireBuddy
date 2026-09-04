@@ -4,9 +4,14 @@ import {
   type Category,
   type CreateAccountInput,
   type CreateCategoryInput,
-  type CreateExpenseInput,
   type CreateTransactionInput,
-  type Expense,
+  type CreateWealthContributionInput,
+  type CreateWealthPositionInput,
+  type CreateWealthSnapshotInput,
+  type FinancialSummary,
+  type FireCalculationResult,
+  type FireProfile,
+  type FireScenarioRequest,
   type ParseInputRequest,
   type ParseInputResponse,
   type RagChatRequest,
@@ -16,8 +21,14 @@ import {
   type Transaction,
   type UpdateCategoryInput,
   type UpdateAccountInput,
-  type UpdateExpenseInput,
   type UpdateTransactionInput,
+  type UpdateFireProfileInput,
+  type UpdateWealthContributionInput,
+  type UpdateWealthPositionInput,
+  type UpdateWealthSnapshotInput,
+  type WealthContribution,
+  type WealthPosition,
+  type WealthPositionSnapshot,
 } from '@firebuddy/shared';
 import { selectRecentChatHistory } from './app/chatHistory';
 
@@ -32,12 +43,14 @@ export interface RagStreamHandlers {
 
 export class ApiRequestError extends Error {
   readonly status: number;
+  readonly code?: string;
 
   /** Preserve the response status so feature UIs can offer precise recovery. */
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.name = 'ApiRequestError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -99,16 +112,85 @@ export function getCategories(token: string) {
   return request<Category[]>(apiRoutes.categories, token);
 }
 
-export function getExpenses(token: string) {
-  return request<Expense[]>(apiRoutes.expenses, token);
-}
-
 export function getTransactions(token: string) {
   return request<Transaction[]>(apiRoutes.transactions, token);
 }
 
 export function getAccounts(token: string) {
   return request<Account[]>(apiRoutes.accounts, token);
+}
+
+export function getWealthPositions(token: string) {
+  return request<WealthPosition[]>(apiRoutes.wealthPositions, token);
+}
+
+export function createWealthPosition(token: string, input: CreateWealthPositionInput) {
+  return request<WealthPosition>(apiRoutes.wealthPositions, token, { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateWealthPosition(token: string, id: string, input: UpdateWealthPositionInput) {
+  return request<WealthPosition>(`${apiRoutes.wealthPositions}/${id}`, token, { method: 'PUT', body: JSON.stringify(input) });
+}
+
+export function deleteWealthPosition(token: string, id: string) {
+  return request<void>(`${apiRoutes.wealthPositions}/${id}`, token, { method: 'DELETE' });
+}
+
+export function getWealthSnapshots(token: string, positionId: string) {
+  return request<WealthPositionSnapshot[]>(`${apiRoutes.wealthPositions}/${positionId}/snapshots`, token);
+}
+
+export function createWealthSnapshot(token: string, positionId: string, input: CreateWealthSnapshotInput) {
+  return request<WealthPositionSnapshot>(`${apiRoutes.wealthPositions}/${positionId}/snapshots`, token, { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateWealthSnapshot(token: string, positionId: string, snapshotId: string, input: UpdateWealthSnapshotInput) {
+  return request<WealthPositionSnapshot>(`${apiRoutes.wealthPositions}/${positionId}/snapshots/${snapshotId}`, token, { method: 'PUT', body: JSON.stringify(input) });
+}
+
+export function deleteWealthSnapshot(token: string, positionId: string, snapshotId: string) {
+  return request<void>(`${apiRoutes.wealthPositions}/${positionId}/snapshots/${snapshotId}`, token, { method: 'DELETE' });
+}
+
+export function getWealthContributions(token: string) {
+  return request<WealthContribution[]>(apiRoutes.wealthContributions, token);
+}
+
+export function createWealthContribution(token: string, input: CreateWealthContributionInput) {
+  return request<WealthContribution>(apiRoutes.wealthContributions, token, { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateWealthContribution(token: string, id: string, input: UpdateWealthContributionInput) {
+  return request<WealthContribution>(`${apiRoutes.wealthContributions}/${id}`, token, { method: 'PUT', body: JSON.stringify(input) });
+}
+
+export function deleteWealthContribution(token: string, id: string) {
+  return request<void>(`${apiRoutes.wealthContributions}/${id}`, token, { method: 'DELETE' });
+}
+
+export function getFinancialSummary(token: string, asOf?: string) {
+  const query = asOf ? `?asOf=${encodeURIComponent(asOf)}` : '';
+  return request<FinancialSummary>(`${apiRoutes.financialSummary}${query}`, token);
+}
+
+export function getFireProfile(token: string) {
+  return request<{ configured: boolean; profile: FireProfile | null }>(apiRoutes.fireProfile, token);
+}
+
+export function saveFireProfile(token: string, input: UpdateFireProfileInput) {
+  return request<FireProfile>(apiRoutes.fireProfile, token, { method: 'PUT', body: JSON.stringify(input) });
+}
+
+export function getEssentialCategories(token: string) {
+  return request<{ categoryIds: string[] }>(apiRoutes.fireEssentialCategories, token);
+}
+
+export function saveEssentialCategories(token: string, categoryIds: string[]) {
+  return request<{ categoryIds: string[] }>(apiRoutes.fireEssentialCategories, token, { method: 'PUT', body: JSON.stringify({ categoryIds }) });
+}
+
+export function calculateFireScenario(token: string, input: FireScenarioRequest) {
+  return request<FireCalculationResult>(apiRoutes.fireScenario, token, { method: 'POST', body: JSON.stringify(input) });
 }
 
 export function createAccount(token: string, input: CreateAccountInput) {
@@ -127,26 +209,6 @@ export function updateAccount(token: string, id: string, input: UpdateAccountInp
 
 export function deleteAccount(token: string, id: string) {
   return request<void>(`${apiRoutes.accounts}/${id}`, token, {
-    method: 'DELETE',
-  });
-}
-
-export function createExpense(token: string, input: CreateExpenseInput) {
-  return request<Expense>(apiRoutes.expenses, token, {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-}
-
-export function updateExpense(token: string, id: string, input: UpdateExpenseInput) {
-  return request<Expense>(`${apiRoutes.expenses}/${id}`, token, {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
-}
-
-export function deleteExpense(token: string, id: string) {
-  return request<void>(`${apiRoutes.expenses}/${id}`, token, {
     method: 'DELETE',
   });
 }
@@ -264,6 +326,7 @@ export async function streamFinancialAdvisor(
       throw new ApiRequestError(
         typeof data.message === 'string' ? data.message : 'Ember could not complete the answer.',
         typeof data.status === 'number' ? data.status : response.status || 503,
+        typeof data.code === 'string' ? data.code : undefined,
       );
     }
   }

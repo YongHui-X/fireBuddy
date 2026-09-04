@@ -144,6 +144,12 @@ forward slashes.
   current `(source_path, chunk_index)` keys with existing `rag_chunks` rows and
   deletes obsolete rows by id. Use `--skip-cleanup` to disable it. Cleanup is
   skipped automatically when `--limit` is used.
+- Added `ingest.py --verify-store` to compare the complete deterministic local
+  chunk key set with Supabase without creating embeddings or writing rows.
+- Added a retrieval preflight that detects an empty store before generating a
+  paid question embedding. Empty or anomalous stores now return the typed
+  retryable `knowledge_base_unavailable` error instead of describing the user
+  question as irrelevant.
 - Added paragraph overlap for oversized deterministic chunks and unit coverage
   for overlap and maximum chunk size.
 - Added persisted retrieval reports with Hit@k, Precision@k, Recall@k, MAP@k,
@@ -163,15 +169,15 @@ forward slashes.
 
 ## Latest Live Results
 
-Retrieval results across 30 representative questions:
+The latest HNSW and hybrid RRF retrieval results across 30 representative questions are:
 
-- Hit@1: `0.6000`
+- Hit@1: `0.7667`
 - Hit@3: `0.9667`
 - Hit@5: `1.0000`
-- Recall@5: `0.8500`
-- MAP@5: `0.6694`
-- nDCG@5: `0.7467`
-- MRR: `0.7861`
+- Recall@5: `0.9167`
+- MAP@5: `0.7750`
+- nDCG@5: `0.8353`
+- MRR: `0.8622`
 
 Answer results across six supported questions and six out-of-scope questions:
 
@@ -200,6 +206,7 @@ Run the live retrieval eval after configuring `apps/backend/.env` with
 python apps/backend/rag/evaluation/eval_retrieval.py
 python apps/backend/rag/evaluation/eval_answers.py
 python apps/backend/rag/Implementation/answer.py "What is CPF?"
+python apps/backend/rag/Implementation/ingest.py --verify-store
 ```
 
 Add `--run-label "Description"` when recording a named major run. The shared

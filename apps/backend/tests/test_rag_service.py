@@ -11,7 +11,7 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from services import rag_service
-from schemas.rag import ChatMessage
+from schemas.rag import AdvisorAppContext, ChatMessage
 
 
 class RagServiceTests(unittest.TestCase):
@@ -32,6 +32,47 @@ class RagServiceTests(unittest.TestCase):
             "Ember, FireBuddy's educational Singapore finance guide",
             system_prompt,
         )
+
+    def test_answer_prompt_uses_interface_context_without_treating_it_as_financial_data(self):
+        app_context = AdvisorAppContext.model_validate({
+            "currentPage": "FIRE setup",
+            "currentPath": "/fire",
+            "recentActions": [{
+                "type": "update",
+                "label": "Updated FIRE assumptions",
+                "occurredAt": "2026-09-03T08:00:00.000Z",
+            }],
+        })
+
+        messages = rag_service.build_answer_messages(
+            "What should I review here?",
+            "Retrieved planning guidance",
+            [],
+            app_context,
+        )
+
+        self.assertIn("Current page: FIRE setup", messages[1]["content"])
+        self.assertIn("Updated FIRE assumptions", messages[1]["content"])
+        self.assertIn("never claim to have inspected financial records", messages[0]["content"])
+
+    def test_contextual_retrieval_uses_page_and_generic_action_hints(self):
+        app_context = AdvisorAppContext.model_validate({
+            "currentPage": "FIRE setup",
+            "currentPath": "/fire",
+            "recentActions": [{
+                "type": "update",
+                "label": "Updated FIRE assumptions",
+                "occurredAt": "2026-09-03T08:00:00.000Z",
+            }],
+        })
+
+        query = rag_service.build_contextual_retrieval_question(
+            "What should I review here?",
+            app_context,
+        )
+
+        self.assertIn("Singapore FIRE assumptions", query)
+        self.assertIn("Updated FIRE assumptions", query)
 
     def test_build_unique_sources_deduplicates_by_url_then_path(self):
         matches = [
@@ -85,17 +126,44 @@ class RagServiceTests(unittest.TestCase):
         self.assertEqual(response.sources, [])
         self.assertEqual(response.source_details, [])
 
-    def test_no_match_returns_no_match_answer(self):
+    def test_no_match_is_treated_as_an_unavailable_store(self):
         with patch.object(rag_service, "retrieve_chunks", return_value=[]):
             with patch.object(rag_service, "generate_grounded_answer") as chat:
-                response = rag_service.answer_financial_advisor_question(
-                    "What is not in the knowledge base?"
-                )
+                with self.assertRaises(rag_service.RagStoreUnavailableError):
+                    rag_service.answer_financial_advisor_question(
+                        "What is not in the knowledge base?"
+                    )
 
         chat.assert_not_called()
-        self.assertIn("could not find relevant information", response.answer)
-        self.assertEqual(response.sources, [])
-        self.assertEqual(response.source_details, [])
+
+    def test_similarity_gate_uses_the_strongest_fused_match(self):
+        matches = [
+            {
+                "source_title": "Keyword result",
+                "source_path": "keyword.md",
+                "content": "Keyword context",
+                "similarity": 0.31,
+            },
+            {
+                "source_title": "Semantic result",
+                "source_path": "semantic.md",
+                "content": "Strong semantic context",
+                "similarity": 0.82,
+            },
+        ]
+
+        with patch.object(
+            rag_service,
+            "generate_grounded_answer",
+            return_value="Grounded answer",
+        ) as chat:
+            response = rag_service.answer_financial_advisor_question(
+                "How does CPF work?",
+                retrieved_matches=matches,
+            )
+
+        chat.assert_called_once()
+        self.assertEqual(response.answer, "Grounded answer")
 
     def test_clearly_out_of_scope_question_refuses_before_retrieval(self):
         with patch.object(rag_service, "retrieve_chunks") as retrieve:
@@ -213,7 +281,7 @@ class RagServiceTests(unittest.TestCase):
                 )
                 self.assertEqual(events[-2]["data"]["sources"][0]["title"], "Official Singapore finance guide")
 
-    def test_streams_no_match_and_refusal_as_normal_completed_answers(self):
+    def test_streams_no_match_as_unavailable_and_refusal_as_completed(self):
         with patch.object(rag_service, "retrieve_chunks", return_value=[]):
             no_match_events = list(
                 rag_service.stream_financial_advisor_question(
@@ -226,9 +294,13 @@ class RagServiceTests(unittest.TestCase):
             )
         )
 
-        self.assertEqual(no_match_events[-1]["event"], "done")
+        self.assertEqual(no_match_events[-1]["event"], "error")
+        self.assertEqual(
+            no_match_events[-1]["data"]["code"],
+            "knowledge_base_unavailable",
+        )
+        self.assertEqual(no_match_events[-1]["data"]["status"], 503)
         self.assertEqual(refusal_events[-1]["event"], "done")
-        self.assertNotIn("error", [event["event"] for event in no_match_events])
         self.assertNotIn("error", [event["event"] for event in refusal_events])
 
     def test_stream_reports_an_empty_model_answer(self):

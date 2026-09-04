@@ -24,6 +24,18 @@ FULL_TEXT_RRF_WEIGHT = 0.6
 SEMANTIC_RRF_WEIGHT = 1.0
 RRF_SMOOTHING = 50
 wait = wait_exponential(multiplier=1, min=10, max=240)
+_rag_store_ready = False
+
+
+class RagStoreUnavailableError(RuntimeError):
+    """Signal that the curated RAG store cannot currently serve retrieval."""
+
+
+def reset_rag_store_readiness_cache() -> None:
+    """Clear the positive readiness cache for tests and explicit diagnostics."""
+
+    global _rag_store_ready
+    _rag_store_ready = False
 
 
 def get_required_env(name: str) -> str:
@@ -63,6 +75,32 @@ def get_supabase_client():
     return create_client(supabase_url, supabase_key)
 
 
+def ensure_rag_store_ready(supabase_client) -> None:
+    """
+    Confirm that at least one curated chunk exists before generating embeddings.
+
+    A successful check is cached for the process lifetime. Empty results are not
+    cached, so an explicit ingestion can recover the running backend immediately.
+    """
+
+    global _rag_store_ready
+    if _rag_store_ready:
+        return
+
+    response = (
+        supabase_client.table("rag_chunks")
+        .select("id")
+        .limit(1)
+        .execute()
+    )
+    if not (response.data or []):
+        raise RagStoreUnavailableError(
+            "The FireBuddy RAG store is empty. Run knowledge-base ingestion."
+        )
+
+    _rag_store_ready = True
+
+
 @retry(wait=wait, stop=stop_after_attempt(5))
 def embed_question(client: OpenAI, question: str) -> list[float]:
     """
@@ -87,8 +125,10 @@ def retrieve_chunks(question: str, match_count: int = 5) -> list[dict]:
     documents, and returns the best requested chunks with citation metadata.
     """
 
-    openai_client = OpenAI()
     supabase_client = get_supabase_client()
+    ensure_rag_store_ready(supabase_client)
+
+    openai_client = OpenAI()
     embedding = embed_question(openai_client, question)
 
     response = supabase_client.rpc(
@@ -104,4 +144,10 @@ def retrieve_chunks(question: str, match_count: int = 5) -> list[dict]:
         },
     ).execute()
 
-    return response.data or []
+    matches = response.data or []
+    if not matches:
+        raise RagStoreUnavailableError(
+            "Hybrid retrieval returned no rows from a non-empty RAG store."
+        )
+
+    return matches
