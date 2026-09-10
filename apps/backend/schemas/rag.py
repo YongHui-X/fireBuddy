@@ -69,7 +69,23 @@ class AdvisorSource(BaseModel):
   headline: str | None = None
 
 
+class AdvisorDataEvidence(BaseModel):
+  tool: Literal[
+    "expense_summary",
+    "spending_comparison",
+    "financial_summary",
+    "fire_projection",
+    "financial_health_review",
+  ]
+  label: str
+  period: str
+  record_count: int | None = None
+  destination: str
+
+
 class AdvisorResponse(BaseModel):
   answer: str
   sources: list[str] = Field(default_factory=list)
   source_details: list[AdvisorSource] = Field(default_factory=list)
+  mode: Literal["knowledge", "data", "hybrid", "clarification", "unsupported"] = "knowledge"
+  data_evidence: AdvisorDataEvidence | None = None

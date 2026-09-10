@@ -51,6 +51,7 @@ export interface Transaction {
   transactionType: TransactionType;
   createdAt: string;
   updatedAt: string;
+  tagIds: UUID[];
 }
 
 export interface CreateTransactionInput {
@@ -60,6 +61,7 @@ export interface CreateTransactionInput {
   amount: string;
   date: string;
   transactionType: TransactionType;
+  tagIds: UUID[];
 }
 
 export interface UpdateTransactionInput {
@@ -69,6 +71,34 @@ export interface UpdateTransactionInput {
   amount?: string;
   date?: string;
   transactionType?: TransactionType;
+  tagIds?: UUID[];
+}
+
+export interface Tag {
+  id: UUID;
+  userId: UUID;
+  name: string;
+  usageCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTagInput {
+  name: string;
+}
+
+export interface UpdateTagInput {
+  name: string;
+}
+
+export interface TransactionExportFilters {
+  startDate?: string;
+  endDate?: string;
+  transactionType?: TransactionType;
+  categoryId?: UUID;
+  accountId?: UUID;
+  tagId?: UUID;
+  search?: string;
 }
 
 export interface UpdateExpenseInput {
@@ -168,11 +198,31 @@ export interface RagChatSource {
   headline: string | null;
 }
 
+export type RagAnswerMode = 'knowledge' | 'data' | 'hybrid' | 'clarification' | 'unsupported';
+
+export type RagDataTool =
+  | 'expense_summary'
+  | 'spending_comparison'
+  | 'financial_summary'
+  | 'fire_projection'
+  | 'financial_health_review';
+
+export interface RagDataEvidence {
+  tool: RagDataTool;
+  label: string;
+  period: string;
+  record_count: number | null;
+  destination: string;
+}
+
 export interface RagChatResponse {
   answer: string;
   sources: string[];
   sourceDetails?: RagChatSource[];
   source_details?: RagChatSource[];
+  mode?: RagAnswerMode;
+  dataEvidence?: RagDataEvidence;
+  data_evidence?: RagDataEvidence;
 }
 
 export type RagStreamStatus = 'searching' | 'preparing';
@@ -180,6 +230,7 @@ export type RagStreamStatus = 'searching' | 'preparing';
 export type RagStreamEvent =
   | { type: 'status'; status: RagStreamStatus; message: string }
   | { type: 'delta'; text: string }
+  | { type: 'evidence'; mode: RagAnswerMode; dataEvidence: RagDataEvidence }
   | { type: 'sources'; sources: RagChatSource[] }
   | { type: 'done' }
   | { type: 'error'; code: string; message: string; retryable: boolean; status?: number };
@@ -238,7 +289,49 @@ export type UpdateWealthSnapshotInput = CreateWealthSnapshotInput;
 export type CreateWealthContributionInput = Pick<WealthContribution, 'wealthPositionId' | 'contributionDate' | 'amount' | 'note'>;
 export type UpdateWealthContributionInput = Omit<CreateWealthContributionInput, 'wealthPositionId'>;
 
+export interface RetirementIncome {
+  label: string;
+  monthlyAmount: number;
+  startMonth: string;
+  endMonth: string;
+  annualGrowth: number;
+}
+
+export interface RetirementPlan {
+  version: 2;
+  spendingMonth: string;
+  birthMonth: string;
+  retirementMonth: string;
+  endAge: number;
+  monthlySpending: number;
+  monthlyContribution: number;
+  assetIds: string[];
+  portfolioOverride: { amount: number; date: string } | null;
+  cpfPlan: 'unknown' | 'standard' | 'escalating' | 'basic';
+  cpfStartAge: number;
+  cpfMonthlyPayout: number;
+  otherIncome: RetirementIncome[];
+  beforeReturn: number;
+  afterReturn: number;
+  inflation: number;
+  provenance: Record<string, 'recorded' | 'user-entered' | 'assumed'>;
+}
+
+export interface RetirementDraft { step: number; inputs: RetirementPlan }
+export interface RetirementCashFlow {
+  month: string;
+  phase: 'accumulation' | 'retirement';
+  growth: string;
+  contribution: string;
+  expenses: string;
+  cpf: string;
+  otherIncome: string;
+  balance: string;
+}
+
 export interface FireProfile {
+  draftPlan?: RetirementDraft | null;
+  activePlan?: RetirementPlan | null;
   id: UUID;
   userId: UUID;
   monthlyContribution: string;
@@ -292,11 +385,21 @@ export interface FireCalculationRequest {
 }
 
 export interface FireScenarioRequest extends FireCalculationRequest {
+  planOverrides?: Partial<Pick<RetirementPlan, 'retirementMonth' | 'monthlyContribution' | 'monthlySpending' | 'beforeReturn' | 'afterReturn' | 'inflation'>>;
   monthlyContribution?: string;
   retirementSpending?: string;
 }
 
 export interface FireCalculationResult {
+  calculationVersion?: 'sg-monthly.v2';
+  plan?: RetirementPlan | null;
+  fundingStatus?: 'funded' | 'shortfall' | 'review_required';
+  projectedPortfolio?: string | null;
+  fundingGap?: string | null;
+  targetToday?: string | null;
+  portfolioToday?: string | null;
+  earliestRetirementMonth?: string | null;
+  monthlyCashFlows?: RetirementCashFlow[];
   status: FireCalculationStatus;
   effectiveDate: string;
   currentInvestableAssets: string | null;

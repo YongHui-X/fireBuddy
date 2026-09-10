@@ -60,7 +60,7 @@ export default function Profile({ onRequestLogout }: ProfileProps) {
           </button>
           <button className="setting-row" type="button" onClick={() => navigate('/fire')}>
             <span className="setting-icon"><Flame size={20} /></span>
-            <strong>FIRE setup</strong>
+            <strong>FIRE Planner</strong>
             <span className="setting-state">Review</span>
           </button>
           <button

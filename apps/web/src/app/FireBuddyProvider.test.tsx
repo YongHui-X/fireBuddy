@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   getCategories: vi.fn(),
   getAccounts: vi.fn(),
   getTransactions: vi.fn(),
+  getTags: vi.fn(),
   getSession: vi.fn(),
   resetPasswordForEmail: vi.fn(),
   signInWithPassword: vi.fn(),
@@ -31,6 +32,10 @@ vi.mock('../api', () => ({
   getAccounts: mocks.getAccounts,
   getCategories: mocks.getCategories,
   getTransactions: mocks.getTransactions,
+  getTags: mocks.getTags,
+  createTag: vi.fn(),
+  updateTag: vi.fn(),
+  deleteTag: vi.fn(),
   updateAccount: vi.fn(),
   updateCategory: vi.fn(),
   updateTransaction: vi.fn(),
@@ -104,6 +109,7 @@ describe('authenticated FireBuddy synchronisation', () => {
       data: { session: { access_token: 'access-token', user: { id: 'user-id', email: 'sam@example.com' } } },
       error: null,
     });
+    mocks.getTags.mockResolvedValue([]);
     mocks.authStateChangeHandler = null;
     mocks.getCategories.mockResolvedValue([
       {

@@ -5,14 +5,14 @@ from datetime import date, timedelta
 from decimal import Decimal
 from statistics import median
 
+from services.retirement_calculator import calculate_retirement
+
 from services.financial_calculator import (
-    ProjectionInput,
     add_months,
     calculate_savings_rate,
     latest_values,
     money,
     previous_month_end,
-    project_fire,
     rate,
 )
 
@@ -103,7 +103,7 @@ def recommend_action(*, positions: list[dict], selected_essentials: list[str], p
     """Choose at most one future-oriented action using versioned deterministic precedence."""
 
     if not positions:
-        return _action("add_position", "Add your first wealth position", "Net worth and FIRE progress need a dated asset or liability value.", "No wealth positions", "/wealth", "foundation.v1.add_position")
+        return _action("add_position", "Add your first wealth position", "Net worth needs a dated asset or liability value.", "No wealth positions", "/wealth", "foundation.v1.add_position")
     missing = [row for row in positions if str(row["id"]) not in latest]
     if missing:
         return _action("add_snapshot", f"Add a value for {missing[0]['name']}", "This position has no snapshot on or before the dashboard date.", as_of.isoformat(), "/wealth", "foundation.v1.missing_snapshot")
@@ -113,16 +113,11 @@ def recommend_action(*, positions: list[dict], selected_essentials: list[str], p
     if not any(row["is_emergency_fund"] for row in positions):
         return _action("designate_emergency_fund", "Designate an emergency fund", "Runway needs one liquid, unrestricted asset marked for emergencies.", "Current wealth positions", "/wealth", "foundation.v1.emergency_fund")
     if not selected_essentials:
-        return _action("select_essentials", "Choose essential spending categories", "Emergency runway needs your confirmed essential expense categories.", "Expense categories", "/fire", "foundation.v1.essential_categories")
-    if profile is None:
-        return _action("configure_fire", "Set your FIRE assumptions", "A projection needs contribution, return, inflation, and withdrawal assumptions.", "No FIRE profile", "/fire", "foundation.v1.fire_profile")
+        return _action("select_essentials", "Choose essential spending categories", "Emergency runway needs your confirmed essential expense categories.", "Expense categories", "/plan", "foundation.v1.essential_categories")
     if _decimal(pulse["savingsAmount"]) < 0:
         return _action("review_cashflow", "Review this month's negative cash flow", "Spending is currently higher than income.", pulse["month"], "/transactions", "foundation.v1.negative_cashflow")
     if runway is not None and runway < 3:
         return _action("build_runway", "Build emergency runway toward 3 months", "Your confirmed emergency fund covers fewer than 3 months of essential spending.", f"{rate(runway)} months", "/wealth", "foundation.v1.low_runway")
-    required = fire.get("requiredMonthlyInvestment")
-    if as_of.day >= 21 and required is not None and _decimal(pulse["investedAmount"]) < _decimal(required):
-        return _action("review_contribution", "Review this month's investment contribution", "Recorded contributions are below the amount required for the target date.", pulse["month"], "/wealth", "foundation.v1.contribution_gap")
     return None
 
 
@@ -134,7 +129,7 @@ def _action(action_type: str, title: str, rationale: str, evidence: str, destina
 def build_financial_summary(*, positions: list[dict], snapshots: list[dict], contributions: list[dict],
                             transactions: list[dict], selected_essentials: list[str], profile: dict | None,
                             as_of: date, scenario_contribution: Decimal | None = None,
-                            scenario_spending: Decimal | None = None) -> dict:
+                            scenario_spending: Decimal | None = None, scenario_overrides: dict | None = None) -> dict:
     """Derive every dashboard fact from dated records and disclosed assumptions."""
 
     active = [row for row in positions if not row.get("is_archived", False)]
@@ -175,32 +170,40 @@ def build_financial_summary(*, positions: list[dict], snapshots: list[dict], con
         essential_average = sum((_decimal(row["amount"]) for row in essential_rows), Decimal("0")) / Decimal(baseline["completedMonths"])
     runway = emergency / essential_average if emergency is not None and essential_average and essential_average > 0 else None
 
-    annual_spending = scenario_spending * Decimal("12") if scenario_spending is not None else None
-    if annual_spending is None and profile and profile.get("retirement_spending_override") is not None:
-        annual_spending = _decimal(profile["retirement_spending_override"]) * Decimal("12")
-        baseline = {**baseline, "status": "manual_override", "source": "manual_override", "annualisedSpending": money(annual_spending)}
-    elif annual_spending is None and baseline["annualisedSpending"] is not None:
-        annual_spending = _decimal(baseline["annualisedSpending"])
-
-    contribution = scenario_contribution if scenario_contribution is not None else _decimal(profile["monthly_contribution"]) if profile else Decimal("0")
-    fire = project_fire(ProjectionInput(
-        effective_date=as_of, current_assets=investable, annual_spending=annual_spending,
-        monthly_contribution=contribution,
-        nominal_return=_decimal(profile["expected_return_rate"]) if profile else Decimal("0"),
-        inflation_rate=_decimal(profile["inflation_rate"]) if profile else Decimal("0"),
-        withdrawal_rate=_decimal(profile["withdrawal_rate"]) if profile else Decimal("0"),
-        target_date=date.fromisoformat(str(profile["target_fi_date"])[:10]) if profile and profile.get("target_fi_date") else None,
-    ))
+    plan = profile.get("active_plan") if profile else None
+    if plan:
+        plan = {**plan, **(scenario_overrides or {})}
+        if scenario_contribution is not None:
+            plan["monthlyContribution"] = float(scenario_contribution)
+        if scenario_spending is not None:
+            plan["monthlySpending"] = float(scenario_spending)
+    eligible = [row for row in active if row["position_kind"] == "asset"
+                and row["position_type"] not in ["cpf", "property"]
+                and row["restriction_type"] == "none" and row["liquidity_class"] != "restricted"
+                and not row["is_emergency_fund"] and plan and str(row["id"]) in plan["assetIds"]]
+    selected_ids = set(plan["assetIds"]) if plan else set()
+    complete_portfolio = selected_ids == {str(row["id"]) for row in eligible} and all(str(row["id"]) in latest for row in eligible)
+    spendable = sum((float(latest[str(row["id"])]["amount"]) for row in eligible), 0.0) if complete_portfolio else None
+    fire = calculate_retirement(plan, spendable, as_of)
+    if plan and not plan.get('portfolioOverride'):
+        fire['actualPath'] = build_actual_path([{**row, 'include_in_fi': True} for row in eligible], snapshots, as_of)
     fire["spendingBaseline"] = baseline
-    fire["actualPath"] = build_actual_path(active, snapshots, as_of)
+    if baseline["completedMonths"] < 12:
+        fire["warnings"].append({"code": "limited_history", "message": "Fewer than 12 completed months of recorded expenses. Missing records do not prove zero spending."})
+    if baseline["completedMonths"]:
+        recorded_income = sum((float(row["amount"]) for row in transactions if row.get("transaction_type") == "income" and baseline["startDate"] <= str(row["date"])[:10] <= baseline["endDate"]), 0.0)
+        recorded_savings = (recorded_income - float(baseline["expenseTotal"])) / baseline["completedMonths"]
+        if plan and plan["monthlyContribution"] > recorded_savings:
+            fire["warnings"].append({"code": "contribution_above_savings", "message": "Confirmed investment contributions exceed recorded average savings. Review affordability and incomplete records."})
 
     dates = [date.fromisoformat(str(row["value_date"])[:10]) for row in latest.values()]
     latest_date = max(dates) if dates else None
     stale = any((as_of - value).days > 35 for value in dates)
     snapshot_status = "missing" if not has_complete_wealth else "stale" if stale else "mixed" if len(set(dates)) > 1 else "current"
-    warnings = list(fire["warnings"])
+    warnings = []
     if stale:
         warnings.append({"code": "stale_snapshot", "message": "At least one wealth value is older than 35 days."})
+        fire["warnings"].extend(warnings)
     action = recommend_action(positions=active, selected_essentials=selected_essentials, profile=profile,
                               latest=latest, runway=runway, pulse=pulse, fire=fire, as_of=as_of)
     return {

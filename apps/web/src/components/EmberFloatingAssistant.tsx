@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { ArrowUp, ExternalLink, MessageCircle, Sparkles, X } from 'lucide-react';
+import { ArrowUp, ExternalLink, Sparkles, X } from 'lucide-react';
 import type { RagChatSource } from '@firebuddy/shared';
 
 import { streamFinancialAdvisor } from '../api';
@@ -13,6 +13,7 @@ import { useFireBuddy } from '../app/FireBuddyProvider';
 import {
   EMBER_ACTIVE_TOPIC_STORAGE_KEY,
   createEmberMessage,
+  getEmberAccountStorageKey,
   getEmberTopicTitle,
   getSafeExternalUrl,
   loadEmberState,
@@ -45,7 +46,12 @@ function FloatingMessage({ message }: { message: EmberMessage }) {
   return (
     <article className={`ember-float-message ember-float-message-${message.role}`}>
       <strong>{message.role === 'user' ? 'You' : 'Ember'}</strong>
-      <p>{message.content || (message.streamStatus === 'preparing' ? 'Preparing an answer...' : 'Searching curated sources...')}</p>
+      <p>{message.content || (message.streamStatus === 'preparing' ? 'Preparing an answer...' : 'Understanding your question...')}</p>
+      {message.dataEvidence ? (
+        <a className="ember-float-evidence" href={message.dataEvidence.destination}>
+          {message.dataEvidence.label} | {message.dataEvidence.period}
+        </a>
+      ) : null}
       {message.sources.length > 0 ? (
         <ul aria-label="Sources for this answer">
           {message.sources.slice(0, 2).map((source, index) => {
@@ -67,7 +73,12 @@ type EmberFloatingAssistantProps = {
 
 /** Render Ember as a persistent, page-aware quick-chat drawer alongside the full route. */
 export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloatingAssistantProps) {
-  const initialStateRef = useRef(loadEmberState());
+  const { session } = useFireBuddy();
+  const storageUserId = session?.user?.id;
+  const initialStateRef = useRef(loadEmberState(window.localStorage, storageUserId));
+  const loadedStorageUserIdRef = useRef(storageUserId);
+  const persistedStorageUserIdRef = useRef(storageUserId);
+  const persistedActiveUserIdRef = useRef(storageUserId);
   const [topics, setTopics] = useState<EmberTopic[]>(initialStateRef.current.topics);
   const [activeTopicId, setActiveTopicId] = useState(initialStateRef.current.activeTopicId);
   const [isOpen, setIsOpen] = useState(false);
@@ -78,7 +89,6 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const responseStartRef = useRef<HTMLElement | null>(null);
   const lastScrolledMessageIdRef = useRef<string | null>(null);
-  const { session } = useFireBuddy();
   const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
   const appContext = useMemo(() => buildEmberAppContext(pathname), [actionRevision, pathname]);
   const pageSuggestion = getEmberPageSuggestion(pathname);
@@ -88,18 +98,34 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
   useEffect(() => subscribeToEmberAppActions(() => setActionRevision((current) => current + 1)), []);
 
   useEffect(() => {
-    saveEmberTopics(window.localStorage, topics);
-  }, [topics]);
+    if (loadedStorageUserIdRef.current === storageUserId) return;
+    loadedStorageUserIdRef.current = storageUserId;
+    const loaded = loadEmberState(window.localStorage, storageUserId);
+    setTopics(loaded.topics);
+    setActiveTopicId(loaded.activeTopicId);
+  }, [storageUserId]);
 
   useEffect(() => {
-    window.localStorage.setItem(EMBER_ACTIVE_TOPIC_STORAGE_KEY, activeTopicId);
-  }, [activeTopicId]);
+    if (persistedStorageUserIdRef.current !== storageUserId) {
+      persistedStorageUserIdRef.current = storageUserId;
+      return;
+    }
+    saveEmberTopics(window.localStorage, topics, storageUserId);
+  }, [storageUserId, topics]);
+
+  useEffect(() => {
+    if (persistedActiveUserIdRef.current !== storageUserId) {
+      persistedActiveUserIdRef.current = storageUserId;
+      return;
+    }
+    window.localStorage.setItem(getEmberAccountStorageKey(EMBER_ACTIVE_TOPIC_STORAGE_KEY, storageUserId), activeTopicId);
+  }, [activeTopicId, storageUserId]);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
-    const latest = loadEmberState();
+    const latest = loadEmberState(window.localStorage, storageUserId);
     setTopics(latest.topics);
     setActiveTopicId(latest.activeTopicId);
     window.setTimeout(() => composerRef.current?.focus(), 0);
@@ -190,6 +216,12 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
               : message),
           }));
         },
+        onEvidence: (mode, dataEvidence) => updateTopic(topicSnapshot.id, (topic) => ({
+          ...topic,
+          messages: topic.messages.map((message) => message.id === assistantMessage.id
+            ? { ...message, answerMode: mode, dataEvidence }
+            : message),
+        })),
       });
       if (!answer.trim()) {
         throw new Error('Ember returned an empty answer.');
@@ -237,6 +269,10 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
     }
   }
 
+  if (pathname === '/ember') {
+    return null;
+  }
+
   return (
     <div className="ember-floating-root">
       {isOpen && pathname !== '/ember' ? (
@@ -253,7 +289,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
           </header>
           <details className="ember-floating-context">
             <summary><Sparkles size={14} />Using context from {appContext.currentPage}</summary>
-            <p>Shared with this question: the current page and generic action labels only. No amounts, descriptions, account names, or record IDs.</p>
+            <p>The page and generic action labels help interpret the question. If you ask about your finances, the backend may also calculate read only aggregates for your signed in account.</p>
             {appContext.recentActions.length > 0 ? (
               <ul>{appContext.recentActions.map((action) => <li key={`${action.occurredAt}-${action.label}`}>{action.label}</li>)}</ul>
             ) : <p>No recent actions recorded in this session.</p>}
@@ -261,7 +297,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
           <div className="ember-floating-messages" aria-live="polite">
             {activeTopic.messages.length === 0 ? (
               <section className="ember-floating-empty">
-                <p>Ask for educational guidance related to what you are viewing.</p>
+                <p>Ask about what you are viewing or request a read only summary of your FireBuddy data.</p>
                 <button type="button" onClick={() => { setQuestion(pageSuggestion); composerRef.current?.focus(); }}>{pageSuggestion}</button>
               </section>
             ) : activeTopic.messages.slice(-6).map((message) => (
@@ -302,7 +338,10 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
         aria-label={pathname === '/ember' ? 'Focus Ember conversation' : isOpen ? 'Close Ember' : `Ask Ember about ${appContext.currentPage}`}
         title={pathname === '/ember' ? 'Focus Ember conversation' : 'Ask Ember'}
       >
-        {isOpen ? <X size={22} /> : <><EmberMark size={28} /><span>Ask Ember</span><MessageCircle size={12} aria-hidden="true" /></>}
+        {isOpen ? <X size={22} /> : <>
+          <span className="ember-floating-launcher-icon" aria-hidden="true"><EmberMark size={30} /></span>
+          <span className="ember-floating-launcher-label">Ask Ember</span>
+        </>}
       </button>
     </div>
   );

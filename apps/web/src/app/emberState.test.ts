@@ -10,6 +10,7 @@ import {
   LEGACY_V2_EMBER_TOPICS_STORAGE_KEY,
   LEGACY_CHAT_ACTIVE_TOPIC_STORAGE_KEY,
   LEGACY_CHAT_TOPICS_STORAGE_KEY,
+  createEmberTopic,
   getSafeExternalUrl,
   loadEmberState,
   saveEmberTopics,
@@ -26,6 +27,14 @@ function createMemoryStorage(entries: Record<string, string> = {}) {
 }
 
 describe('Ember local history', () => {
+  it('keeps authenticated account histories under separate keys', () => {
+    const storage = createMemoryStorage();
+    saveEmberTopics(storage, [createEmberTopic('User A chat')], 'user-a');
+
+    expect(loadEmberState(storage, 'user-a').topics[0].title).toBe('User A chat');
+    expect(loadEmberState(storage, 'user-b').topics[0].title).toBe('New chat');
+  });
+
   it('copies legacy topics without changing their old keys and attaches citations to the latest assistant answer', () => {
     const legacyTopics = [{
       id: 'legacy-topic',

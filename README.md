@@ -314,7 +314,7 @@ npm run typecheck:mobile
 npm run typecheck:shared
 npm run test:web
 python -m unittest discover apps/backend/tests -v
-python -m py_compile apps/backend/services/rag_service.py apps/backend/rag/retrieval.py apps/backend/rag/Implementation/ingest.py apps/backend/rag/Implementation/answer.py apps/backend/rag/evaluation/report_history.py apps/backend/rag/evaluation/eval_retrieval.py apps/backend/rag/evaluation/eval_answers.py
+python -m py_compile apps/backend/services/ember_planner.py apps/backend/services/ember_data_tools.py apps/backend/services/ember_service.py apps/backend/services/rag_service.py apps/backend/rag/retrieval.py
 ```
 
 The web app expects:
@@ -322,6 +322,7 @@ The web app expects:
 - `apps/web/.env.local` with `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `VITE_API_BASE_URL`
 - Copy `apps/backend/.env.example` to `apps/backend/.env`, then configure `SUPABASE_URL`, `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, and `OPENAI_API_KEY`.
 - `RAG_MIN_SIMILARITY` is optional and defaults to `0.45`. Ember refuses to answer when the top retrieved chunk is below this similarity threshold.
+- `EMBER_PLANNER_MODEL` is optional and defaults to `gpt-4o-mini`. It must support Structured Outputs.
 - `CORS_ALLOWED_ORIGINS` is a comma-separated production allowlist. Wildcard origins are rejected because authenticated requests use credentials.
 - `ADVISOR_RATE_LIMIT_REQUESTS` and `ADVISOR_RATE_LIMIT_WINDOW_SECONDS` default to 10 requests per authenticated user per 60 seconds.
 - `AI_SUGGESTION_RATE_LIMIT_REQUESTS` and `AI_SUGGESTION_RATE_LIMIT_WINDOW_SECONDS` independently default to 10 requests per authenticated user per 60 seconds.
@@ -366,9 +367,49 @@ The repository includes production configuration but does not deploy without acc
 - Set the Railway public URL as `VITE_API_BASE_URL` in Vercel, then deploy Vercel and tighten `CORS_ALLOWED_ORIGINS` to the production URL and required preview origins.
 - Hosting plans and pricing can change, so confirm the current [Vercel plans](https://vercel.com/docs/plans) and [Railway pricing](https://docs.railway.com/pricing) before deployment.
 
+### Cost estimate
+
+This planning estimate is for the maintainer's reference. It was checked on 4 September 2026, uses USD, and excludes taxes, a custom domain, email delivery, monitoring add-ons, and usage above included plan allowances.
+
+Current model prices used in the estimate:
+
+| Model | Input per 1M tokens | Cached input per 1M tokens | Output per 1M tokens |
+|---|---:|---:|---:|
+| [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini) | $0.15 | $0.075 | $0.60 |
+| [text-embedding-3-small](https://developers.openai.com/api/docs/models/text-embedding-3-small) | $0.02 | Not applicable | Not applicable |
+
+Approximate Ember cost per question, based on typical short questions, bounded history, and concise answers:
+
+| Question path | Calls | Approximate cost |
+|---|---|---:|
+| Simple personal total | One planner call, one deterministic data tool | $0.00014 |
+| Explained personal result | One planner call, one data tool, one answer call | $0.00047 |
+| Curated knowledge answer | One planner call, one embedding, one answer call | $0.00084 |
+| Personal result plus curated guidance | One planner call, one data tool, one embedding, one answer call | $0.00095 |
+
+The data tool is ordinary backend and database computation, so it has no separate AI fee. Simple totals return deterministic text without a second answer generation call. Explained, knowledge, and hybrid questions send the trusted tool result or retrieved context back to the answer model. Actual cost depends on prompt length, retrieved context, output length, retries, and traffic.
+
+Practical monthly AI allowance:
+
+| Ember questions per month | Suggested OpenAI allowance |
+|---:|---:|
+| 2,000 | $2 to $5 |
+| 10,000 | $15 to $30 |
+| 30,000 | $25 to $60 |
+| 100,000 | $150 to $300 |
+
+Approximate platform totals:
+
+| Deployment shape | Supabase | Railway | Vercel | OpenAI | Approximate total |
+|---|---:|---:|---:|---:|---:|
+| Portfolio or small beta | $25 Pro | $5 Hobby minimum | $0 Hobby for eligible personal use | $2 to $5 | $32 to $35 per month |
+| Small production setup | $25 Pro | $20 Pro minimum | $20 Pro | $2 to $10 | $67 to $75 per month |
+
+Pricing references: [Supabase Pro starts at $25](https://supabase.com/pricing), [Railway Hobby is $5 and Pro is $20 with matching included usage](https://docs.railway.com/pricing/plans), and [Vercel Hobby is $0 while Pro starts at $20](https://vercel.com/pricing). Vercel Hobby is intended for personal, non-commercial use. Recheck all prices before deployment.
+
 ## RAG Workspace
 
-The RAG workspace under `apps/backend/rag/` supports Ember through the streaming endpoint while retaining the JSON compatibility endpoint.
+The RAG workspace under `apps/backend/rag/` supports Ember's curated knowledge path. The same streaming endpoint now routes personal questions to fixed read-only data tools and can combine their aggregate results with RAG context, while retaining the JSON compatibility endpoint.
 
 Notes:
 

@@ -10,6 +10,7 @@ from routers.expenses import router as expenses_router
 from routers.fire import router as fire_router
 from routers.rag import router as rag_router
 from routers.transactions import router as transactions_router
+from routers.tags import router as tags_router
 from routers.wealth import router as wealth_router
 
 app = FastAPI(title='FireBuddy API')
@@ -43,4 +44,5 @@ app.include_router(expenses_router)
 app.include_router(fire_router)
 app.include_router(rag_router)
 app.include_router(transactions_router)
+app.include_router(tags_router)
 app.include_router(wealth_router)

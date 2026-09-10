@@ -2,28 +2,37 @@
 name: FireBuddy Web
 description: A calm, capable Singapore finance workspace for everyday money tracking and explainable FIRE planning.
 colors:
-  primary-lime: "#9FE870"
-  primary-lime-hover: "#8FDD61"
-  deep-green: "#163300"
-  secondary-green: "#3F7D45"
-  canvas-sage: "#E8EBE6"
+  primary-forest: "#25543D"
+  primary-forest-hover: "#1B422F"
+  on-primary: "#FFFFFF"
+  selected: "#E7EFE8"
+  control-border: "#788579"
+  ember: "#B6532B"
+  dark-action: "#A4CFB0"
+  dark-action-hover: "#BBDFC4"
+  dark-on-action: "#162C1E"
+  dark-selected: "#283D2E"
+  dark-ember: "#EFAB87"
+  deep-green: "#25543D"
+  secondary-green: "#46684F"
+  canvas-sage: "#F7F8F5"
   surface-white: "#FFFFFF"
-  surface-muted: "#F2F5F0"
-  text-primary: "#0E0F0C"
-  text-muted: "#5F665F"
-  border-muted: "#CBD2C9"
+  surface-muted: "#F0F3EE"
+  text-primary: "#202820"
+  text-muted: "#626B63"
+  border-muted: "#D8DFD7"
   income: "#267A3D"
   income-soft: "#EDF7EE"
   danger: "#B42318"
   expense-soft: "#FFF1EF"
-  chart-projection: "#4F8F55"
-  chart-target: "#8AC95E"
-  dark-canvas: "#0F150F"
-  dark-surface: "#172017"
+  chart-projection: "#386D82"
+  chart-target: "#855509"
+  dark-canvas: "#101810"
+  dark-surface: "#19231B"
   dark-text: "#F2F5EF"
-  dark-text-muted: "#ADB8AC"
-  dark-border: "#354235"
-  dark-deep-green: "#C8F4AA"
+  dark-text-muted: "#B1BCB2"
+  dark-border: "#3D4E40"
+  dark-deep-green: "#B6D9BF"
 typography:
   headline:
     fontFamily: "DM Sans, Segoe UI, sans-serif"
@@ -90,15 +99,15 @@ spacing:
   5xl: "40px"
 components:
   button-primary:
-    backgroundColor: "{colors.primary-lime}"
-    textColor: "{colors.deep-green}"
+    backgroundColor: "{colors.primary-forest}"
+    textColor: "{colors.on-primary}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0 {spacing.lg}"
     height: "40px"
   button-primary-hover:
-    backgroundColor: "{colors.primary-lime-hover}"
-    textColor: "{colors.deep-green}"
+    backgroundColor: "{colors.primary-forest-hover}"
+    textColor: "{colors.on-primary}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0 {spacing.lg}"
@@ -144,8 +153,8 @@ components:
     rounded: "{rounded.selected}"
     padding: "{spacing.sm} {spacing.md-plus}"
   mobile-add-action:
-    backgroundColor: "{colors.primary-lime}"
-    textColor: "{colors.deep-green}"
+    backgroundColor: "{colors.primary-forest}"
+    textColor: "{colors.on-primary}"
     typography: "{typography.caption}"
     rounded: "{rounded.control}"
     width: "62px"
@@ -158,7 +167,7 @@ components:
 
 **Creative North Star: "The Calm Financial Workbench"**
 
-FireBuddy is a capable operational workspace for Singapore personal finance and FIRE planning. Its sage canvas lowers visual pressure while white work surfaces, fine grey green borders, and compact controls make dense financial information easy to scan. Lime is the precise signal for a primary action or selected state, while deep green carries confident emphasis without making the product feel promotional.
+FireBuddy is a capable operational workspace for Singapore personal finance and FIRE planning. Its sage canvas lowers visual pressure while white work surfaces, fine grey green borders, and compact controls make dense financial information easy to scan. Forest green is the precise signal for a primary action or selected state, while deep green carries confident emphasis without making the product feel promotional.
 
 The interface is restrained, practical, and quietly warm. It favors ledgers, open sections, clear labels, tabular figures, and visible data provenance over decorative hero treatments. FireBuddy remains the visible identity, while `@myfirequest` stays out of the foreground unless explicitly requested.
 
@@ -166,7 +175,7 @@ The interface is restrained, practical, and quietly warm. It favors ledgers, ope
 
 - Soft sage canvas with white primary work surfaces in light mode.
 - Near black text, muted grey green supporting copy, and restrained borders.
-- Bright lime reserved for primary actions and selected states.
+- Forest green reserved for primary actions and selected states.
 - Compact borderless page toolbars and flat, structured financial ledgers.
 - A fixed 248px desktop sidebar that becomes a mobile topbar and four tabs with a labeled central Add action.
 - Dark mode built from a deep green black canvas and slightly lighter green surfaces.
@@ -178,36 +187,36 @@ The palette combines fresh action color with quiet natural neutrals, keeping sem
 
 ### Primary
 
-- **Action Lime** (`{colors.primary-lime}`, `#9FE870`): Primary buttons, the central mobile Add action, selections, and active controls. Its scarcity preserves meaning.
-- **Action Lime Hover** (`{colors.primary-lime-hover}`, `#8FDD61`): The deliberate hover fill for primary actions.
-- **Deep Emphasis Green** (`{colors.deep-green}`, `#163300`): Text on lime, emphasized links, focus in light mode, and selected navigation content.
-- **Working Green** (`{colors.secondary-green}`, `#3F7D45`): Supporting data visualization and subdued positive emphasis.
+- **Forest Action** (`{colors.primary-forest}`, `#25543D`): Primary buttons, the central mobile Add action, selections, and active controls. Its scarcity preserves meaning.
+- **Forest Hover** (`{colors.primary-forest-hover}`, `#1B422F`): The deliberate hover fill for primary actions.
+- **Deep Emphasis Green** (`{colors.deep-green}`, `#25543D`): Emphasized text, emphasized links, focus in light mode, and selected navigation content.
+- **Working Green** (`{colors.secondary-green}`, `#46684F`): Supporting data visualization and subdued positive emphasis.
 
 ### Secondary
 
 - **Income Green** (`{colors.income}`, `#267A3D`): Recorded income and positive financial values.
-- **Projection Green** (`{colors.chart-projection}`, `#4F8F55`): Estimated FIRE paths, visually distinct from historical facts.
-- **Target Green** (`{colors.chart-target}`, `#8AC95E`): Targets and thresholds in charts.
+- **Projection Blue** (`{colors.chart-projection}`, `#386D82`): Estimated FIRE paths, visually distinct from historical facts.
+- **Target Ochre** (`{colors.chart-target}`, `#855509`): Targets and thresholds in charts.
 - **Alert Red** (`{colors.danger}`, `#B42318`): Destructive actions, errors, liabilities, and expenses that require semantic emphasis.
 
 ### Neutral
 
-- **Sage Canvas** (`{colors.canvas-sage}`, `#E8EBE6`): The light theme page canvas.
+- **Sage Canvas** (`{colors.canvas-sage}`, `#F7F8F5`): The light theme page canvas.
 - **Working White** (`{colors.surface-white}`, `#FFFFFF`): Cards, tool controls, sidebars, topbars, drawers, and list containers.
-- **Muted Wash** (`{colors.surface-muted}`, `#F2F5F0`): Quiet hover states, progress tracks, and secondary grouped controls.
-- **Near Black** (`{colors.text-primary}`, `#0E0F0C`): Primary text and financial figures.
-- **Grey Green Copy** (`{colors.text-muted}`, `#5F665F`): Descriptions, labels, metadata, placeholders, and secondary navigation.
-- **Grey Green Border** (`{colors.border-muted}`, `#CBD2C9`): Card edges, dividers, field strokes, and navigation separation.
+- **Muted Wash** (`{colors.surface-muted}`, `#F0F3EE`): Quiet hover states, progress tracks, and secondary grouped controls.
+- **Near Black** (`{colors.text-primary}`, `#202820`): Primary text and financial figures.
+- **Grey Green Copy** (`{colors.text-muted}`, `#626B63`): Descriptions, labels, metadata, placeholders, and secondary navigation.
+- **Grey Green Border** (`{colors.border-muted}`, `#D8DFD7`): Card edges, dividers, field strokes, and navigation separation.
 - **Income Wash** (`{colors.income-soft}`, `#EDF7EE`): Selected controls and income rows where a quiet semantic surface helps.
 - **Expense Wash** (`{colors.expense-soft}`, `#FFF1EF`): Expense rows and light negative context.
-- **Night Canvas** (`{colors.dark-canvas}`, `#0F150F`): Dark theme page canvas.
-- **Night Surface** (`{colors.dark-surface}`, `#172017`): Dark theme cards and navigation surfaces.
+- **Night Canvas** (`{colors.dark-canvas}`, `#101810`): Dark theme page canvas.
+- **Night Surface** (`{colors.dark-surface}`, `#19231B`): Dark theme cards and navigation surfaces.
 - **Night Text** (`{colors.dark-text}`, `#F2F5EF`): Primary dark theme text.
-- **Night Muted Copy** (`{colors.dark-text-muted}`, `#ADB8AC`): Secondary dark theme text.
-- **Night Border** (`{colors.dark-border}`, `#354235`): Dark theme dividers and field strokes.
-- **Night Emphasis Green** (`{colors.dark-deep-green}`, `#C8F4AA`): Dark theme active content and chart targets.
+- **Night Muted Copy** (`{colors.dark-text-muted}`, `#B1BCB2`): Secondary dark theme text.
+- **Night Border** (`{colors.dark-border}`, `#3D4E40`): Dark theme dividers and field strokes.
+- **Night Emphasis Green** (`{colors.dark-deep-green}`, `#B6D9BF`): Dark theme active content and chart targets.
 
-**The Lime Signal Rule.** Lime marks an action or selection. Do not use it as a decorative background field or a general success color.
+**The Action Color Rule.** Forest green marks an action or selection. Do not use it as a decorative background field or a general success color.
 
 **The Semantic Truth Rule.** Income, expense, historical, projected, and target data keep distinct semantic colors and labels. Color never collapses facts and estimates into one visual category.
 
@@ -240,7 +249,7 @@ Financial values use tabular numerals. Headings and important values use 650 or 
 
 Desktop uses a fixed 248px sidebar and a flexible application canvas. Page toolbars and route content share a maximum width of 1540px, center within the available canvas, and use responsive horizontal padding from 18px to 40px. Toolbars are borderless, compact, and aligned to the work below them rather than presented as cards.
 
-Primary screen content uses a practical 16px to 20px internal rhythm and 14px to 16px gaps between peer cards. Dense financial records appear in full width ledgers with one outer border and row dividers. Dashboard data uses a three metric summary followed by balanced chart and ledger regions. Ember uses a 250px topic column, a flexible conversation region, and a 260px context column at desktop sizes.
+Primary screen content uses a practical 16px to 20px internal rhythm and 14px to 16px gaps between peer cards. Dense financial records appear in full width ledgers with one outer border and row dividers. Dashboard data uses a three metric summary followed by balanced chart and ledger regions. Ember uses a flexible conversation canvas and a 300px searchable history rail from 1180px; below that width, history becomes a right drawer.
 
 At widths below 1024px, the sidebar gives way to a 56px topbar and a safe area aware bottom navigation. The bottom navigation keeps Home, Transactions, Categories, and Profile as the four stable tabs, with a labeled central Add action. Below 768px, toolbars stack their actions, filters become one column, cards use 10px corners where space is tight, drawers become bottom sheets, and Ember hides its supporting side columns.
 
@@ -278,8 +287,8 @@ Borders are fine, consistent, and usually one pixel. Rows inside ledgers remain 
 ### Buttons
 
 - **Shape:** Compact rectangular controls with gently curved corners (`{rounded.control}`) and a minimum height of 40px.
-- **Primary:** Action Lime background, Deep Emphasis Green text, a subtle darker lime border, and 16px horizontal padding.
-- **Hover and Focus:** Hover moves to Action Lime Hover with a darker border. Keyboard focus uses a 3px Deep Emphasis Green ring in light mode and Action Lime in dark mode, offset by 2px.
+- **Primary:** Forest Action background, white text, a subtle matching forest border, and 16px horizontal padding.
+- **Hover and Focus:** Hover moves to Forest Hover with a darker border. Keyboard focus uses a 3px Deep Emphasis Green ring in light mode and Forest Action in dark mode, offset by 2px.
 - **Secondary:** Working White with a Grey Green Border and primary text. Hover strengthens the border and moves to Muted Wash.
 - **Icon:** Quiet 38px square controls are borderless at rest, then gain a border and muted background on hover.
 - **Pressed and Disabled:** Pressed controls move down by 1px. Disabled controls remain recognizable at 55 percent opacity and use a not allowed cursor.
@@ -302,14 +311,14 @@ Summary cards may rise by only 1px on hover while strengthening their border. Th
 ### Inputs / Fields
 
 - **Style:** White or Night Surface fill, one pixel border, 8px corners, and compact 42px to 48px height depending on form context.
-- **Focus:** The border becomes Deep Emphasis Green and receives a soft 3px lime derived ring. A global 3px accessible focus outline remains available for keyboard navigation.
+- **Focus:** The border becomes Deep Emphasis Green and receives a soft 3px forest derived ring. A global 3px accessible focus outline remains available for keyboard navigation.
 - **Error / Disabled:** Errors use Alert Red with a soft negative context. Disabled fields lower opacity without changing their fundamental structure.
 
 ### Navigation
 
 The desktop sidebar is 248px wide with a white or Night Surface background and a single right divider. Navigation rows are 44px high, use 8px corners, and carry muted text at rest. Hover uses Muted Wash. Active rows use Income Wash with Deep Emphasis Green text. FireBuddy and `SG FIRE Tracker` anchor the rail without competing with task content.
 
-Mobile uses a compact topbar and fixed bottom navigation. The four stable destinations sit around a circular lime Add action with a visible `Add` label. Secondary destinations live in the More menu, which is a temporary bordered surface with modest overlay shadow.
+Mobile uses a compact topbar and fixed bottom navigation. The four stable destinations sit around a circular forest Add action with a visible `Add` label. Secondary destinations live in the More menu, which is a temporary bordered surface with modest overlay shadow.
 
 ### Page Toolbar
 
@@ -325,13 +334,13 @@ The transaction editor is a right side drawer on desktop and a bottom sheet on m
 
 ### Ember Conversation
 
-Ember is a reading workspace rather than a bubble chat. Topic, conversation, and context regions use the same bordered 12px surface language. User and assistant messages are open text blocks with dividers, cited sources remain legible, and the composer stays visually grounded at the bottom of the conversation.
+Ember is a reading workspace with restrained chat cues. User messages use compact right aligned forest bubbles, while assistant answers use one generous white or Night Surface reading panel with citations inside the same surface. A subtle sage grid gives the conversation canvas structure, the deep green composer remains grounded at the bottom, and searchable history uses flat rows in the right rail or responsive drawer. Essential educational boundaries stay in the empty state and composer note rather than a separate guide panel.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** use Action Lime for primary actions, selected filters, and active mobile Add affordance.
+- **Do** use Forest Action for primary actions, selected filters, and active mobile Add affordance.
 - **Do** keep white work surfaces on the sage canvas and use fine borders as the main structural cue.
 - **Do** use 12px card corners, 8px control corners, and compact 16px to 20px card padding.
 - **Do** keep route toolbars borderless and aligned to the content grid.
@@ -346,7 +355,9 @@ Ember is a reading workspace rather than a bubble chat. Topic, conversation, and
 - **Don't** turn ordinary buttons, cards, filters, or navigation into excessive pills.
 - **Don't** add heavy ambient shadows or nested cards to create hierarchy.
 - **Don't** use weights 800 or 900, oversized workspace headings, or marketing scale typography.
-- **Don't** use lime as a decorative wash or as a replacement for semantic success, income, or projection colors.
+- **Don't** use brand color as a decorative wash or as a replacement for semantic success, income, or projection colors.
 - **Don't** add decorative eyebrows, notification bells, glossy device framing, or watermark treatments.
 - **Don't** collapse mobile navigation into a floating pill or omit the visible Add label.
 - **Don't** present Ember as decorative chat bubbles or blur educational guidance with authoritative personal calculations.
+
+Ember uses a simple ember symbol in `#B6532B` (light) and `#EFAB87` (dark). FireBuddy retains its original flame and growth mark. The warm forest palette is retained without the proposed layout, typography, or interaction changes.

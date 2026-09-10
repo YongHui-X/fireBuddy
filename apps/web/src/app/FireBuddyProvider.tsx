@@ -45,6 +45,7 @@ import {
   type Category as ApiCategory,
   type Transaction as ApiTransaction,
   type TransactionType,
+  type Tag as ApiTag,
 } from '@firebuddy/shared';
 
 import {
@@ -57,6 +58,10 @@ import {
   getCategories,
   getAccounts,
   getTransactions,
+  getTags,
+  createTag,
+  updateTag as updateApiTag,
+  deleteTag as deleteApiTag,
   updateAccount as updateApiAccount,
   updateCategory as updateApiCategory,
   updateTransaction as updateApiTransaction,
@@ -66,6 +71,7 @@ import {
   ACCOUNTS_STORAGE_KEY,
   CATEGORIES_STORAGE_KEY,
   TRANSACTIONS_STORAGE_KEY,
+  TAGS_STORAGE_KEY,
 } from './demoStorage';
 import { clearEmberAppActions, recordEmberAppAction } from './emberAppContext';
 type AccountType = ApiAccountType;
@@ -79,7 +85,12 @@ interface Transaction {
   date: string;
   account: string;
   transactionType: TransactionType;
+  tagIds?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+type Tag = ApiTag;
 
 interface Category {
   id: string;
@@ -109,6 +120,7 @@ interface AppContextValue {
   transactions: Transaction[];
   categories: Category[];
   accounts: Account[];
+  tags: Tag[];
   themeMode: ThemeMode;
   notification: AppNotification | null;
   session: Session | null;
@@ -126,6 +138,9 @@ interface AppContextValue {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<Transaction>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  addTag: (name: string) => Promise<Tag>;
+  updateTag: (id: string, name: string) => Promise<void>;
+  deleteTag: (id: string) => Promise<void>;
   addCategory: (category: Omit<Category, 'id'>) => Promise<Category>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
@@ -156,18 +171,18 @@ function getDeviceMonthKey(dateKey = getDeviceDateKey()) {
 }
 
 const colors = {
-  primary: '#3C8A61',
+  primary: '#25543D',
   primaryDark: '#25543D',
-  primarySoft: '#DCEBDD',
-  secondary: '#67B47C',
-  background: '#F5F8F4',
+  primarySoft: '#E7EFE8',
+  secondary: '#46684F',
+  background: '#F7F8F5',
   card: '#FFFFFF',
-  muted: '#EEF5EF',
-  border: '#D7E3D8',
-  text: '#1F3D2E',
-  textMuted: '#6B8577',
-  danger: '#D64545',
-  gold: '#E5B24A',
+  muted: '#F0F3EE',
+  border: '#D8DFD7',
+  text: '#202820',
+  textMuted: '#626B63',
+  danger: '#B42318',
+  gold: '#855509',
 };
 
 const fireData = {
@@ -319,6 +334,9 @@ function mapApiTransaction(transaction: ApiTransaction): Transaction {
     date: transaction.date,
     account: transaction.accountId,
     transactionType: transaction.transactionType,
+    tagIds: transaction.tagIds,
+    createdAt: transaction.createdAt,
+    updatedAt: transaction.updatedAt,
   };
 }
 
@@ -417,6 +435,9 @@ function normalizeStoredTransactions(items: Transaction[]): Transaction[] {
   return items.map((transaction) => ({
     ...transaction,
     transactionType: transaction.transactionType ?? (transaction.amount > 0 ? 'income' : 'expense'),
+    tagIds: Array.isArray(transaction.tagIds) ? transaction.tagIds : [],
+    createdAt: transaction.createdAt ?? `${transaction.date}T00:00:00.000Z`,
+    updatedAt: transaction.updatedAt ?? `${transaction.date}T00:00:00.000Z`,
   }));
 }
 
@@ -561,6 +582,7 @@ function AppProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>(() =>
     skipAuth ? loadStored(ACCOUNTS_STORAGE_KEY, initialAccounts) : [],
   );
+  const [tags, setTags] = useState<Tag[]>(() => skipAuth ? loadStored(TAGS_STORAGE_KEY, []) : []);
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => loadThemeMode());
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -590,9 +612,11 @@ function AppProvider({ children }: { children: ReactNode }) {
     setTransactions([]);
     setCategories([]);
     setAccounts([]);
+    setTags([]);
     window.localStorage.removeItem(TRANSACTIONS_STORAGE_KEY);
     window.localStorage.removeItem(CATEGORIES_STORAGE_KEY);
     window.localStorage.removeItem(ACCOUNTS_STORAGE_KEY);
+    window.localStorage.removeItem(TAGS_STORAGE_KEY);
   }, [authenticatedUserId]);
 
   useEffect(() => {
@@ -643,8 +667,9 @@ function AppProvider({ children }: { children: ReactNode }) {
       getCategories(session.access_token),
       getAccounts(session.access_token),
       getTransactions(session.access_token),
+      getTags(session.access_token),
     ])
-      .then(([apiCategories, apiAccounts, apiTransactions]) => {
+      .then(([apiCategories, apiAccounts, apiTransactions, apiTags]) => {
         if (!isActive) {
           return;
         }
@@ -652,6 +677,7 @@ function AppProvider({ children }: { children: ReactNode }) {
         setCategories(apiCategories.map(mapApiCategory));
         setAccounts(apiAccounts.map(mapApiAccount));
         setTransactions(sortTransactionsNewestFirst(apiTransactions.map(mapApiTransaction)));
+        setTags(apiTags);
         setSyncStatus('ready');
       })
       .catch((error: unknown) => {
@@ -685,6 +711,10 @@ function AppProvider({ children }: { children: ReactNode }) {
       window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
     }
   }, [accounts]);
+
+  useEffect(() => {
+    if (skipAuth) window.localStorage.setItem(TAGS_STORAGE_KEY, JSON.stringify(tags));
+  }, [tags]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeMode;
@@ -735,6 +765,7 @@ function AppProvider({ children }: { children: ReactNode }) {
       transactions,
       categories,
       accounts,
+      tags,
       notification,
       session,
       authLoading,
@@ -815,7 +846,8 @@ function AppProvider({ children }: { children: ReactNode }) {
       },
       clearAuthError: () => setAuthError(null),
       addTransaction: async (transaction) => {
-        let nextTransaction: Transaction = { ...transaction, id: crypto.randomUUID() };
+        const createdAt = new Date().toISOString();
+        let nextTransaction: Transaction = { ...transaction, id: crypto.randomUUID(), createdAt, updatedAt: createdAt };
 
         if (session) {
           const savedTransaction = await createTransaction(session.access_token, {
@@ -825,6 +857,7 @@ function AppProvider({ children }: { children: ReactNode }) {
             amount: Math.abs(transaction.amount).toFixed(2),
             date: transaction.date,
             transactionType: transaction.transactionType,
+            tagIds: transaction.tagIds ?? [],
           });
 
           nextTransaction = mapApiTransaction(savedTransaction);
@@ -851,6 +884,7 @@ function AppProvider({ children }: { children: ReactNode }) {
             amount: Math.abs(nextTransaction.amount).toFixed(2),
             date: nextTransaction.date,
             transactionType: nextTransaction.transactionType,
+            tagIds: nextTransaction.tagIds ?? [],
           });
           const syncedTransaction = mapApiTransaction(savedTransaction);
 
@@ -866,7 +900,7 @@ function AppProvider({ children }: { children: ReactNode }) {
 
         setTransactions((current) =>
           sortTransactionsNewestFirst(
-            current.map((transaction) => (transaction.id === id ? { ...transaction, ...updates } : transaction)),
+            current.map((transaction) => (transaction.id === id ? { ...transaction, ...updates, updatedAt: new Date().toISOString() } : transaction)),
           ),
         );
         notify('Transaction has been updated.');
@@ -880,6 +914,34 @@ function AppProvider({ children }: { children: ReactNode }) {
         setTransactions((current) => current.filter((transaction) => transaction.id !== id));
         notify('Transaction has been deleted.');
         recordEmberAppAction('delete', 'Deleted a transaction');
+      },
+      addTag: async (name) => {
+        const cleanName = name.trim().replace(/\s+/g, ' ');
+        if (!cleanName || cleanName.length > 40 || cleanName.includes('|')) throw new Error('Use 1 to 40 characters without |.');
+        if (tags.some((tag) => tag.name.toLocaleLowerCase() === cleanName.toLocaleLowerCase())) throw new Error('A tag with this name already exists.');
+        const nextTag = session
+          ? await createTag(session.access_token, { name: cleanName })
+          : { id: crypto.randomUUID(), userId: 'demo', name: cleanName, usageCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        setTags((current) => [...current, nextTag].sort((left, right) => left.name.localeCompare(right.name)));
+        notify('Tag has been added.');
+        return nextTag;
+      },
+      updateTag: async (id, name) => {
+        const cleanName = name.trim().replace(/\s+/g, ' ');
+        if (!cleanName || cleanName.length > 40 || cleanName.includes('|')) throw new Error('Use 1 to 40 characters without |.');
+        if (tags.some((tag) => tag.id !== id && tag.name.toLocaleLowerCase() === cleanName.toLocaleLowerCase())) throw new Error('A tag with this name already exists.');
+        const saved = session ? await updateApiTag(session.access_token, id, { name: cleanName }) : null;
+        setTags((current) => current.map((tag) => tag.id === id ? { ...tag, ...(saved ?? { name: cleanName, updatedAt: new Date().toISOString() }) } : tag));
+        notify('Tag has been renamed.');
+      },
+      deleteTag: async (id) => {
+        if (session) await deleteApiTag(session.access_token, id);
+        setTags((current) => current.filter((tag) => tag.id !== id));
+        setTransactions((current) => current.map((transaction) => ({
+          ...transaction,
+          tagIds: (transaction.tagIds ?? []).filter((tagId) => tagId !== id),
+        })));
+        notify('Tag has been deleted. Transactions were kept.');
       },
       addCategory: async (category) => {
         if (session) {
@@ -1021,7 +1083,7 @@ function AppProvider({ children }: { children: ReactNode }) {
       notify,
       dismissNotification,
     };
-  }, [accounts, authError, authLoading, categories, notification, session, syncError, syncStatus, transactions, themeMode]);
+  }, [accounts, authError, authLoading, categories, notification, session, syncError, syncStatus, tags, transactions, themeMode]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
@@ -1059,4 +1121,4 @@ export {
   useFireBuddy,
 };
 
-export type { Account, AccountType, AppContextValue, AppNotification, Category, IconComponent, ThemeMode, Transaction };
+export type { Account, AccountType, AppContextValue, AppNotification, Category, IconComponent, Tag, ThemeMode, Transaction };

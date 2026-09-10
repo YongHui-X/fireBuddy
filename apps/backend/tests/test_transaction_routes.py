@@ -27,6 +27,8 @@ OTHER_CATEGORY_ID = "20000000-0000-4000-8000-000000000003"
 ACCOUNT_ID = "25000000-0000-4000-8000-000000000001"
 OTHER_ACCOUNT_ID = "25000000-0000-4000-8000-000000000002"
 EXPENSE_ID = "30000000-0000-4000-8000-000000000001"
+TAG_ID = "40000000-0000-4000-8000-000000000001"
+OTHER_TAG_ID = "40000000-0000-4000-8000-000000000002"
 
 
 def transaction_row() -> dict:
@@ -60,6 +62,11 @@ class TransactionRouteTests(unittest.TestCase):
                     {"id": OTHER_ACCOUNT_ID, "user_id": OTHER_USER_ID},
                 ],
                 "expenses": [transaction_row()],
+                "tags": [
+                    {"id": TAG_ID, "user_id": USER_ID, "name": "Tax"},
+                    {"id": OTHER_TAG_ID, "user_id": OTHER_USER_ID, "name": "Hidden"},
+                ],
+                "transaction_tags": [],
             }
         )
         self.patcher = patch.object(transactions_router, "supabase", self.supabase)
@@ -142,6 +149,37 @@ class TransactionRouteTests(unittest.TestCase):
         response = self.client.get("/expenses")
         self.assertEqual(response.status_code, 200)
         self.assertEqual([EXPENSE_ID], [row["id"] for row in response.json()])
+
+    def test_attaches_lists_and_atomically_replaces_owned_tags(self):
+        created = self.client.post("/transactions", json={
+            "categoryId": EXPENSE_CATEGORY_ID, "accountId": ACCOUNT_ID,
+            "description": "Receipt", "amount": "12.00", "date": "2026-08-14",
+            "transactionType": "expense", "tagIds": [TAG_ID],
+        })
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(created.json()["tagIds"], [TAG_ID])
+        transaction_id = created.json()["id"]
+        listed = self.client.get("/transactions")
+        listed_row = next(row for row in listed.json() if row["id"] == transaction_id)
+        self.assertEqual(listed_row["tagIds"], [TAG_ID])
+
+        updated = self.client.put(f"/transactions/{transaction_id}", json={"tagIds": []})
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()["tagIds"], [])
+        self.assertFalse(any(link["transaction_id"] == transaction_id for link in self.supabase.rows["transaction_tags"]))
+
+    def test_rejects_foreign_or_duplicate_tags_before_creating_transaction(self):
+        original_count = len(self.supabase.rows["expenses"])
+        base = {
+            "categoryId": EXPENSE_CATEGORY_ID, "accountId": ACCOUNT_ID,
+            "description": "Receipt", "amount": "12.00", "date": "2026-08-14",
+            "transactionType": "expense",
+        }
+        foreign = self.client.post("/transactions", json={**base, "tagIds": [OTHER_TAG_ID]})
+        duplicate = self.client.post("/transactions", json={**base, "tagIds": [TAG_ID, TAG_ID]})
+        self.assertEqual(foreign.status_code, 400)
+        self.assertEqual(duplicate.status_code, 400)
+        self.assertEqual(len(self.supabase.rows["expenses"]), original_count)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,21 @@
+{
+  "base": {
+    "version": 2, "spendingMonth": "2026-01", "birthMonth": "1976-01", "retirementMonth": "2026-01", "endAge": 95,
+    "monthlySpending": 3000, "monthlyContribution": 0, "assetIds": [], "portfolioOverride": null,
+    "cpfPlan": "standard", "cpfStartAge": 65, "cpfMonthlyPayout": 1500, "otherIncome": [],
+    "beforeReturn": 0, "afterReturn": 0, "inflation": 0, "provenance": {"monthlySpending": "user-entered"}
+  },
+  "cases": [
+    {"name": "CPF bridge", "assets": 1080000, "overrides": {}, "target": "1080000.00"},
+    {"name": "Without CPF", "assets": 0, "overrides": {"cpfPlan": "unknown"}, "target": "1620000.00"},
+    {"name": "Basic excluded", "assets": 0, "overrides": {"cpfPlan": "basic"}, "target": "1620000.00"},
+    {"name": "Negative returns", "assets": 100000, "overrides": {"beforeReturn": -0.02, "afterReturn": -0.01, "retirementMonth": "2036-01", "monthlyContribution": 3000}},
+    {"name": "Equal return inflation", "assets": 100000, "overrides": {"beforeReturn": 0.025, "afterReturn": 0.025, "inflation": 0.025, "retirementMonth": "2036-01"}},
+    {"name": "Escalating CPF", "assets": 1000000, "overrides": {"cpfPlan": "escalating", "inflation": 0.025, "afterReturn": 0.03}},
+    {"name": "Future income cannot fund bridge", "assets": 0, "overrides": {"cpfMonthlyPayout": 10000}, "target": "540000.00"},
+    {"name": "Zero capital", "assets": 0, "overrides": {"birthMonth": "1961-01", "endAge": 95, "cpfMonthlyPayout": 3000}, "target": "0.00"},
+    {"name": "Already funded", "assets": 2000000, "overrides": {"retirementMonth": "2036-01", "monthlyContribution": 500}},
+    {"name": "Dated override replaces assets", "assets": 999999, "overrides": {"portfolioOverride": {"amount": 1080000, "date": "2025-10-01"}}},
+    {"name": "Other income growth and end", "assets": 50000.55, "overrides": {"beforeReturn": 0.05, "afterReturn": 0.03, "inflation": 0.025, "retirementMonth": "2028-03", "monthlyContribution": 2500.25, "otherIncome": [{"label": "Pension", "monthlyAmount": 500.50, "startMonth": "2040-06", "endMonth": "2045-06", "annualGrowth": 0.02}]}}
+  ]
+}

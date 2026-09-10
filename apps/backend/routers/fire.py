@@ -20,6 +20,7 @@ from schemas.financial import (
 )
 from services.financial_repository import load_financial_records
 from services.financial_summary import build_financial_summary
+from services.retirement_calculator import validate_timeline
 
 
 router = APIRouter(prefix="/fire", tags=["fire"])
@@ -78,10 +79,21 @@ def get_fire_profile(current_user: CurrentUser):
 
 @router.put("/profile", response_model=FireProfileResponse)
 def replace_fire_profile(payload: FireProfileInput, current_user: CurrentUser):
-    """Create or replace the user's validated FIRE assumptions without storing asset totals."""
+    """Save an isolated draft or a confirmed active plan while preserving legacy fields."""
 
     existing = supabase.table("fire_profiles").select("id").eq("user_id", current_user.id).limit(1).execute()
-    values = {"user_id": current_user.id, **payload.model_dump(mode="json")}
+    if payload.active_plan:
+        try:
+            validate_timeline(payload.active_plan.model_dump(mode="json"), singapore_today())
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        if payload.active_plan.portfolioOverride is None:
+            records = load_financial_records(current_user.id, singapore_today())
+            candidate = {**(records['profile'] or {}), 'active_plan': payload.active_plan.model_dump(mode='json')}
+            checked = build_financial_summary(**{**records, 'profile': candidate}, as_of=singapore_today())['fire']
+            if checked['fundingStatus'] == 'review_required':
+                raise HTTPException(status_code=422, detail='Selected retirement assets must be owned, eligible and have dated snapshots')
+    values = {"user_id": current_user.id, **payload.model_dump(mode="json", exclude_unset=True)}
     if existing.data:
         response = supabase.table("fire_profiles").update(values).eq("user_id", current_user.id).execute()
     else:
@@ -89,11 +101,11 @@ def replace_fire_profile(payload: FireProfileInput, current_user: CurrentUser):
     return serialize_row(FireProfileResponse, response.data[0])
 
 
-def calculate_for_user(user_id: str, as_of: date, contribution: Decimal | None = None, spending: Decimal | None = None) -> dict:
+def calculate_for_user(user_id: str, as_of: date, contribution: Decimal | None = None, spending: Decimal | None = None, overrides: dict | None = None) -> dict:
     """Run the shared financial summary and return its FIRE calculation portion."""
 
     records = load_financial_records(user_id, as_of)
-    return build_financial_summary(**records, as_of=as_of, scenario_contribution=contribution, scenario_spending=spending)["fire"]
+    return build_financial_summary(**records, as_of=as_of, scenario_contribution=contribution, scenario_spending=spending, scenario_overrides=overrides)["fire"]
 
 
 @router.post("/calculate", response_model=FireCalculationResponse)
@@ -107,4 +119,4 @@ def calculate_fire(payload: FireCalculationRequest, current_user: CurrentUser):
 def calculate_fire_scenario(payload: FireScenarioRequest, current_user: CurrentUser):
     """Calculate permitted temporary overrides without persisting any profile changes."""
 
-    return calculate_for_user(current_user.id, validated_as_of(payload.as_of), payload.monthly_contribution, payload.retirement_spending)
+    return calculate_for_user(current_user.id, validated_as_of(payload.as_of), payload.monthly_contribution, payload.retirement_spending, payload.plan_overrides.model_dump(exclude_none=True) if payload.plan_overrides else None)

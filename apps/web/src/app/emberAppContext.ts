@@ -10,7 +10,8 @@ const pageLabels: Array<[prefix: string, label: string]> = [
   ['/accounts', 'Accounts'],
   ['/insights', 'Insights'],
   ['/wealth', 'Wealth'],
-  ['/fire', 'FIRE setup'],
+  ['/fire/setup', 'FIRE setup'],
+  ['/fire', 'FIRE Planner'],
   ['/plan', 'Spending Plan'],
   ['/goals', 'Life Goals'],
   ['/add', 'Add transaction'],
@@ -67,13 +68,14 @@ export function buildEmberAppContext(pathname: string): RagAppContext {
 export function getEmberPageSuggestion(pathname: string): string {
   const { currentPage } = getEmberPageContext(pathname);
   const suggestions: Record<string, string> = {
-    'Home dashboard': 'What should I review on my dashboard when planning for FIRE?',
+    'Home dashboard': 'What should I review about my income, spending and emergency reserves?',
     Transactions: 'What transaction patterns should I review when planning for FIRE?',
     Categories: 'How can spending categories support a realistic FIRE plan?',
     Accounts: 'How should I think about cash accounts and emergency savings?',
     Insights: 'Which spending insights are most useful for financial planning?',
     Wealth: 'How should liquidity and CPF restrictions affect a FIRE plan?',
     'FIRE setup': 'Which assumptions should I stress test in a Singapore FIRE plan?',
+    'FIRE Planner': 'Explain my saved retirement funding gap and its assumptions.',
     'Spending Plan': 'How can I build a sustainable spending plan for FIRE?',
     'Life Goals': 'How should I balance nearer-term goals with FIRE investing?',
     'Add transaction': 'What transaction details help keep financial records useful?',

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { askFinancialAdvisor, getAccounts, getFinancialSummary, streamFinancialAdvisor } from './api';
+import { askFinancialAdvisor, exportTransactions, getAccounts, getFinancialSummary, streamFinancialAdvisor } from './api';
 
 
 afterEach(() => {
@@ -35,6 +35,22 @@ describe('web API errors', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8000/analytics/financial-summary?asOf=2026-08-23',
       expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer access-token' }) }),
+    );
+  });
+
+  it('sends export filters and preserves the response filename', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('\uFEFFcsv', {
+      status: 200,
+      headers: { 'Content-Disposition': 'attachment; filename="firebuddy-transactions-2026-09-10.csv"' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await exportTransactions('access-token', { transactionType: 'expense', tagId: 'tag-id', search: 'tax record' });
+
+    expect(result.filename).toBe('firebuddy-transactions-2026-09-10.csv');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8000/transactions/export?transactionType=expense&tagId=tag-id&search=tax+record',
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer access-token', Accept: 'text/csv' }) }),
     );
   });
 
@@ -95,12 +111,13 @@ describe('web API errors', () => {
     expect(JSON.parse(window.localStorage.getItem('test-chat-transcript') ?? '[]')).toHaveLength(10);
   });
 
-  it('reads ordered SSE status, deltas, sources, and completion events', async () => {
+  it('reads ordered SSE status, deltas, data evidence, sources, and completion events', async () => {
     const eventBody = [
       'event: status\ndata: {"status":"searching","message":"Searching curated sources"}',
       'event: status\ndata: {"status":"preparing","message":"Preparing a grounded answer"}',
       'event: delta\ndata: {"text":"CPF "}',
       'event: delta\ndata: {"text":"answer"}',
+      'event: evidence\ndata: {"mode":"data","dataEvidence":{"tool":"expense_summary","label":"Expense summary","period":"2026-08","record_count":2,"destination":"/insights"}}',
       'event: sources\ndata: {"sources":[{"title":"CPF","url":"https://cpf.gov.sg","path":null,"headline":null}]}',
       'event: done\ndata: {}',
       '',
@@ -115,11 +132,12 @@ describe('web API errors', () => {
     await streamFinancialAdvisor('access-token', { question: 'What is CPF?', history: [] }, {
       onStatus: (status) => events.push(status),
       onDelta: (text) => events.push(text),
+      onEvidence: (mode, evidence) => events.push(`${mode}:${evidence.label}`),
       onSources: (sources) => events.push(sources[0].title ?? ''),
       onDone: () => events.push('done'),
     });
 
-    expect(events).toEqual(['searching', 'preparing', 'CPF ', 'answer', 'CPF', 'done']);
+    expect(events).toEqual(['searching', 'preparing', 'CPF ', 'answer', 'data:Expense summary', 'CPF', 'done']);
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8000/api/chat/financial-advisor/stream',
       expect.objectContaining({

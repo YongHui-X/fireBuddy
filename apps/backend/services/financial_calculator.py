@@ -3,7 +3,7 @@ from __future__ import annotations
 from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP, localcontext
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Iterable
 
 
@@ -70,81 +70,13 @@ class ProjectionInput:
     inflation_rate: Decimal
     withdrawal_rate: Decimal
     target_date: date | None = None
+    plan: dict | None = None
 
 
 def project_fire(values: ProjectionInput) -> dict:
-    """Project FI deterministically using real returns and month-end contributions."""
-
-    empty_baseline = {
-        "status": "insufficient_data", "source": "none", "startDate": None,
-        "endDate": None, "completedMonths": 0, "expenseTotal": None,
-        "annualisedSpending": None,
-    }
-    if values.current_assets is None or values.annual_spending is None or values.withdrawal_rate <= 0:
-        return {
-            "status": "insufficient_data", "effectiveDate": values.effective_date.isoformat(),
-            "currentInvestableAssets": money(values.current_assets) if values.current_assets is not None else None,
-            "fiTarget": None, "progressRate": None, "progressRateCapped": None,
-            "estimatedMonths": None, "estimatedFiYear": None, "requiredMonthlyInvestment": None,
-            "assumptions": None, "spendingBaseline": empty_baseline,
-            "actualPath": [], "projectedPath": [],
-            "warnings": [{"code": "missing_fire_inputs", "message": "Add wealth values and FIRE spending assumptions to calculate a projection."}],
-        }
-
-    with localcontext() as context:
-        context.prec = 34
-        target = values.annual_spending / values.withdrawal_rate
-        progress = values.current_assets / target if target else Decimal("1")
-        real_return = (Decimal("1") + values.nominal_return) / (Decimal("1") + values.inflation_rate) - Decimal("1")
-        monthly_rate = (Decimal("1") + real_return) ** (Decimal("1") / Decimal("12")) - Decimal("1")
-        target_date = values.target_date or add_months(values.effective_date, 16 * 12)
-        target_months = max(1, (target_date.year - values.effective_date.year) * 12 + target_date.month - values.effective_date.month)
-        required = required_monthly_investment(values.current_assets, target, monthly_rate, target_months)
-        assumptions = {
-            "monthlyContribution": money(values.monthly_contribution),
-            "nominalAnnualReturn": rate(values.nominal_return),
-            "inflationRate": rate(values.inflation_rate),
-            "realAnnualReturn": rate(real_return),
-            "withdrawalRate": rate(values.withdrawal_rate),
-            "contributionTiming": "month_end", "horizonMonths": 1200,
-        }
-
-        if values.current_assets >= target:
-            return {
-                "status": "already_reached", "effectiveDate": values.effective_date.isoformat(),
-                "currentInvestableAssets": money(values.current_assets), "fiTarget": money(target),
-                "progressRate": rate(progress), "progressRateCapped": "1.000000",
-                "estimatedMonths": 0, "estimatedFiYear": values.effective_date.year,
-                "requiredMonthlyInvestment": "0.00", "assumptions": assumptions,
-                "spendingBaseline": empty_baseline, "actualPath": [], "projectedPath": [], "warnings": [],
-            }
-
-        balance = values.current_assets
-        estimated_months = None
-        path = []
-        for month in range(1, 1201):
-            balance = balance * (Decimal("1") + monthly_rate) + values.monthly_contribution
-            if month == 1 or month % 12 == 0 or balance >= target:
-                path.append({"date": add_months(values.effective_date, month).isoformat(), "amount": money(balance), "kind": "projected"})
-            if balance >= target:
-                estimated_months = month
-                break
-            if balance <= 0 and monthly_rate <= 0 and values.monthly_contribution <= 0:
-                break
-
-        warnings = [] if estimated_months is not None else [{
-            "code": "unreachable_horizon",
-            "message": "The FI target is not reached within the 100 year projection horizon.",
-        }]
-        return {
-            "status": "projected" if estimated_months is not None else "unreachable",
-            "effectiveDate": values.effective_date.isoformat(), "currentInvestableAssets": money(values.current_assets),
-            "fiTarget": money(target), "progressRate": rate(progress),
-            "progressRateCapped": rate(min(progress, Decimal("1"))), "estimatedMonths": estimated_months,
-            "estimatedFiYear": add_months(values.effective_date, estimated_months).year if estimated_months is not None else None,
-            "requiredMonthlyInvestment": money(required), "assumptions": assumptions,
-            "spendingBaseline": empty_baseline, "actualPath": [], "projectedPath": path, "warnings": warnings,
-        }
+    """Legacy callers must supply a confirmed v2 plan; no legacy target is calculated."""
+    from services.retirement_calculator import calculate_retirement
+    return calculate_retirement(values.plan, values.current_assets, values.effective_date)
 
 
 def latest_values(positions: Iterable[dict], snapshots: Iterable[dict], as_of: date) -> dict[str, dict]:

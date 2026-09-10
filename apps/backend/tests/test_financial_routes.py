@@ -101,6 +101,44 @@ class FinancialRouteTests(unittest.TestCase):
         response = self.client.post(f"/wealth/positions/{POSITION_ID}/snapshots", json={"valueDate": "2200-01-01", "amount": "1"})
         self.assertEqual(response.status_code, 422)
 
+    def test_retirement_draft_active_scenario_and_owner_isolation(self):
+        from test_retirement_calculator import FIXTURES
+        from copy import deepcopy
+        plan = {**FIXTURES['base'], 'birthMonth': '1990-01', 'retirementMonth': '2040-01',
+                'portfolioOverride': {'amount': 100000, 'date': '2026-01-01'}}
+        legacy = {'monthlyContribution': '0', 'expectedReturnRate': '0.05', 'inflationRate': '0.025', 'withdrawalRate': '0.04'}
+        activated = self.client.put('/fire/profile', json={**legacy, 'activePlan': plan})
+        self.assertEqual(activated.status_code, 200, activated.text)
+        before = self.client.post('/fire/calculate', json={}).json()
+        self.assertEqual(before['calculationVersion'], 'sg-monthly.v2')
+        saved = self.client.put('/fire/profile', json={**legacy, 'draftPlan': {'step': 2, 'inputs': {**plan, 'monthlySpending': 9999}}})
+        self.assertEqual(saved.status_code, 200, saved.text)
+        self.assertEqual(saved.json()['activePlan'], activated.json()['activePlan'])
+        self.assertEqual(self.client.get('/fire/profile').json()['profile']['draftPlan']['step'], 2)
+        bad = self.client.put('/fire/profile', json={**legacy, 'activePlan': {**plan, 'retirementMonth': '2200-01'}})
+        self.assertEqual(bad.status_code, 422)
+        records = deepcopy(self.supabase.rows)
+        scenario = self.client.post('/fire/scenario', json={'planOverrides': {'monthlySpending': 2000, 'beforeReturn': -0.02}})
+        self.assertEqual(scenario.status_code, 200, scenario.text)
+        self.assertNotEqual(scenario.json()['fiTarget'], before['fiTarget'])
+        self.assertEqual(self.supabase.rows, records)
+        self.assertEqual(self.client.post('/fire/calculate', json={}).json(), before)
+        app.dependency_overrides[get_current_user] = lambda: AuthenticatedUser(id=OTHER_USER_ID)
+        self.assertIsNone(self.client.get('/fire/profile').json()['profile'])
+        self.assertEqual(self.client.post('/fire/calculate', json={}).json()['fundingStatus'], 'review_required')
+
+    def test_retirement_activation_rejects_foreign_and_restricted_assets(self):
+        from test_retirement_calculator import FIXTURES
+        plan = {**FIXTURES['base'], 'birthMonth': '1990-01', 'retirementMonth': '2040-01', 'assetIds': [OTHER_POSITION_ID]}
+        legacy = {'monthlyContribution': '0', 'expectedReturnRate': '0.05', 'inflationRate': '0.025', 'withdrawalRate': '0.04'}
+        response = self.client.put('/fire/profile', json={**legacy, 'activePlan': plan})
+        self.assertEqual(response.status_code, 422)
+        self.client.post(f'/wealth/positions/{POSITION_ID}/snapshots', json={'amount': '50000', 'valueDate': '2026-01-01'})
+        owned = next(p for p in self.supabase.rows['wealth_positions'] if p['id'] == POSITION_ID)
+        owned['position_type'] = 'property'
+        response = self.client.put('/fire/profile', json={**legacy, 'activePlan': {**plan, 'assetIds': [POSITION_ID]}})
+        self.assertEqual(response.status_code, 422)
+
 
 if __name__ == "__main__":
     unittest.main()

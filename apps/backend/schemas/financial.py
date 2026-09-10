@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
+from schemas.retirement import RetirementDraft, RetirementPlan, RetirementOverrides
 
 
 Money = Annotated[Decimal, Field(max_digits=10, decimal_places=2)]
@@ -168,6 +169,8 @@ class WealthContributionResponse(CreateWealthContributionRequest):
 
 
 class FireProfileInput(FinancialModel):
+    draft_plan: RetirementDraft | None = None
+    active_plan: RetirementPlan | None = None
     monthly_contribution: Annotated[Decimal, Field(ge=0, max_digits=10, decimal_places=2)]
     expected_return_rate: Annotated[Decimal, Field(ge=Decimal("-0.20"), le=Decimal("0.30"))]
     inflation_rate: Annotated[Decimal, Field(ge=0, le=Decimal("0.20"))]
@@ -181,8 +184,7 @@ class FireProfileInput(FinancialModel):
     def require_future_target(cls, value: date | None) -> date | None:
         """A target date is useful only when it is still in the future."""
 
-        if value is not None and value <= singapore_today():
-            raise ValueError("Target FI date must be in the future")
+        # This legacy field remains readable after its date passes; v2 validates its own timeline.
         return value
 
 
@@ -218,6 +220,7 @@ class FireCalculationRequest(FinancialModel):
 
 
 class FireScenarioRequest(FireCalculationRequest):
+    plan_overrides: RetirementOverrides | None = None
     monthly_contribution: Annotated[Decimal | None, Field(ge=0, max_digits=10, decimal_places=2)] = None
     retirement_spending: PositiveMoney | None = None
 
@@ -225,7 +228,7 @@ class FireScenarioRequest(FireCalculationRequest):
     def require_override(self):
         """Temporary scenarios must change at least one supported assumption."""
 
-        if self.monthly_contribution is None and self.retirement_spending is None:
+        if self.monthly_contribution is None and self.retirement_spending is None and not (self.plan_overrides and self.plan_overrides.model_dump(exclude_none=True)):
             raise ValueError("Provide a contribution or retirement spending override")
         return self
 
@@ -237,7 +240,7 @@ class FireWarningResponse(FinancialModel):
 
 class FirePathPointResponse(FinancialModel):
     date: date
-    amount: Money
+    amount: str
     kind: Literal["actual", "projected"]
 
 
@@ -262,15 +265,24 @@ class FireAssumptionsResponse(FinancialModel):
 
 
 class FireCalculationResponse(FinancialModel):
+    calculation_version: Literal['sg-monthly.v2'] | None = None
+    plan: RetirementPlan | None = None
+    funding_status: Literal['funded', 'shortfall', 'review_required'] = 'review_required'
+    projected_portfolio: str | None = None
+    funding_gap: str | None = None
+    target_today: str | None = None
+    portfolio_today: str | None = None
+    earliest_retirement_month: str | None = None
+    monthly_cash_flows: list[dict] = Field(default_factory=list)
     status: Literal["already_reached", "projected", "unreachable", "insufficient_data"]
     effective_date: date
     current_investable_assets: Money | None
-    fi_target: Money | None
-    progress_rate: Rate | None
-    progress_rate_capped: Rate | None
+    fi_target: str | None
+    progress_rate: str | None
+    progress_rate_capped: str | None
     estimated_months: int | None
     estimated_fi_year: int | None
-    required_monthly_investment: Money | None
+    required_monthly_investment: str | None
     assumptions: FireAssumptionsResponse | None
     spending_baseline: SpendingBaselineResponse
     actual_path: list[FirePathPointResponse]

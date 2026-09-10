@@ -7,7 +7,7 @@ FireBuddy is a balanced Singapore-focused personal finance app with FIRE as its 
 
 The primary audience is a Singapore based emerging FIRE planner, roughly 25 to 39 years old. Everyday account, transaction, category, budget, and insight workflows must remain useful without a FIRE profile.
 
-The real data dashboard foundation is implemented with wealth positions, dated snapshots, contributions, deterministic financial summaries, and an explainable FIRE projection. The first public deployment waits for the remaining manual localhost browser and signed in account isolation smoke. Spending Plan, Life Goals, CSV import, recurring detection, unified Ember, and deeper Singapore planning follow in phases. `docs/PRD.md` owns the detailed requirements and backlog.
+The real data dashboard foundation is implemented with wealth positions, dated snapshots, contributions, deterministic financial summaries, and an explainable FIRE projection. Ember now routes questions to bounded read-only data tools, curated Singapore finance RAG, or both. The first public deployment waits for the remaining manual localhost browser and signed in account isolation smoke. Spending Plan, Life Goals, CSV import, recurring detection, and deeper Singapore planning follow in phases. `docs/PRD.md` owns the detailed requirements and backlog.
 
 The product supports:
 - Primary role: AI Engineer
@@ -17,6 +17,12 @@ The product supports:
 Build strategy:
 - Web first for early deployment and job applications
 - Mobile later, after the core web experience and shared contracts are stable
+
+## Retirement planner update (September 2026)
+
+Everyday finances now remain on Home and expense Insights. FIRE Planner at `/fire` owns versioned monthly cash flow projections, CPF income gaps, drawdown, assumptions and one unsaved scenario. `/fire/setup` provides five resumable steps with separate draft and active plans. Essential expense categories now live on `/plan`; wealth remains separate. Existing profiles require confirmation before producing new results. Desktop adds FIRE Planner after Goals; the four mobile tabs remain unchanged.
+
+See [the implemented method and migration notes](docs/FIRE_PLANNER.md). The later roadmap descriptions below predate this update where they refer to CPF layers and a Plan placeholder. Browser visual acceptance remains pending; the new migration is local and has not been deployed.
 
 ## Current State Vs Target State
 Current repo state:
@@ -45,7 +51,7 @@ Ongoing repo direction:
 | Database | Supabase (Postgres) | Data storage, auth, and row level security |
 | AI - Current RAG | OpenAI embeddings and chat, Supabase pgvector, Postgres full text search | Ember, a source-backed educational Singapore finance guide |
 | AI - Categorisation | OpenAI API (GPT-4o mini) | Optional expense category suggestions for user review |
-| AI - Later assistant | Current Ember RAG plus deterministic backend analytics and FIRE services | One routed assistant that explains structured results or uses Singapore finance RAG |
+| AI - Routed assistant | Structured-output planning, deterministic backend analytics and FIRE services, and current Ember RAG | One bounded assistant that explains structured results or uses Singapore finance RAG |
 | Monorepo tooling | Turborepo | Coordinates web, mobile, backend, and shared packages |
 
 ## Architecture Principles
@@ -62,18 +68,16 @@ Visual style:
 - Revolut-inspired restraint
 
 Colour palette:
-- Primary background: `#F5F8F4`
-- Primary accent: `#3C8A61`
-- Deep green: `#25543D`
-- Secondary green: `#67B47C`
-- Surface cards: `#FFFFFF`
-- Muted surfaces: `#EEF5EF`
-- Soft mint: `#DCEBDD`
-- Text primary: `#1F3D2E`
-- Text secondary: `#6B8577`
-- Borders and dividers: `#D7E3D8`
-- Lime accent, use sparingly: `#CBEA63`
-- Chart support gold, use sparingly: `#E5B24A`
+- Canvas: `#F7F8F5`
+- White work surfaces: `#FFFFFF`
+- Primary text: `#202820`
+- Secondary text: `#626B63`
+- Forest actions and links: `#25543D`, with white action text
+- Selected surfaces: `#E7EFE8`
+- Borders: `#D8DFD7`
+- Ember accent: `#B6532B`
+- Keep income, expense, warning, and projection colors separate from brand colors
+- `DESIGN.md` and the web CSS tokens specify dark mode and control states
 
 Design language:
 - Mobile-first app column with a fixed desktop sidebar
@@ -222,7 +226,7 @@ Next product focus:
 Later product focus:
 1. Evolve category budgets into a period based Spending Plan and add Life Goals
 2. Add reviewable CSV import, expanded analytics, transaction drilldowns, and recurring detection
-3. Route Ember among deterministic analytics, FIRE results, scenarios, and Singapore finance RAG
+3. Expand Ember's deterministic tools to supporting-record drilldowns and temporary scenarios
 4. Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivity ranges, and resilience modelling
 
 Navigation:
@@ -238,7 +242,8 @@ Current:
 - Ember RAG experience at `GET /ember` plus a persistent authenticated quick-chat launcher, backed by the streaming endpoint `POST /api/chat/financial-advisor/stream`. The JSON endpoint `POST /api/chat/financial-advisor` remains available for compatibility.
 - Ember requests may include bounded interface context: the current route label and up to five generic action labels from the current browser session. This context never includes amounts, descriptions, account names, or record IDs, and is used only to tailor answer emphasis.
 - Ember opens with an empty transcript and supported starter questions. It streams search status, grounded answer text, and citations without automatically submitting a starter or greeting the user.
-- Ember uses curated CPF, CPFIS, Singapore Savings Bonds, MoneySense, IRAS relief, Singapore investing, and FIRE planning sources plus recent conversation context. It does not inspect accounts or transactions, calculate personal FIRE results, retrieve live prices, or provide regulated financial advice.
+- Ember uses one structured planning call to select a fixed read-only expense summary, spending comparison, financial summary, FIRE projection, financial health review, curated finance RAG, or a hybrid of data and RAG. FastAPI injects the authenticated user ID, tools scope every query to that ID, and only aggregate tool results can enter the answer prompt.
+- Ember can explain saved deterministic personal results but cannot change records, generate SQL, run an iterative tool loop, retrieve live prices, or provide regulated financial advice.
 - Authenticated category suggestions at `POST /ai/parse-input`, limited to 10 requests per user per 60 seconds by default
 - Knowledge base under `apps/backend/rag/knowledge-base/`
 - Ingestion script under `apps/backend/rag/Implementation/ingest.py`
@@ -254,8 +259,7 @@ Suggestion flow:
 - Model choice: `GPT-4o mini`
 
 Later:
-- Route one FireBuddy assistant between deterministic transaction analytics, deterministic FIRE calculations, and the existing Singapore finance RAG
-- Require the language model to explain structured results rather than calculate authoritative totals
+- Add supporting-record drilldowns and temporary scenario tools after their user experience is validated
 - Continue expanding curated Singapore finance coverage only with traceable sources and preserved evaluations
 
 ## Delivery Phases
@@ -290,9 +294,9 @@ Later, data depth:
 - Add expanded analytics, supporting transaction drilldowns, anomaly depth, and recurring subscription or bill detection
 - Detect recurring records only. Do not schedule or execute payments
 
-Later, unified Ember:
-- Route one assistant between deterministic analytics, FIRE results, scenarios, and Singapore finance RAG
-- Use the language model to explain structured results, never to calculate authoritative totals or change records
+Current, routed Ember:
+- Route one bounded assistant between expense analytics, financial summaries, FIRE results, financial health reviews, and Singapore finance RAG
+- Use the language model to plan and explain structured results, never to calculate authoritative totals, generate database queries, or change records
 
 Later, planning depth:
 - Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivity ranges, resilience modelling, and progress history
@@ -349,7 +353,7 @@ RAG:
 - Direct bank connections, stored banking credentials, market feeds, payment execution, investment execution, and generic brokerage portfolio management
 - Transfers and automatic reconciliation between payment accounts, wealth positions, and contributions in the first dashboard foundation
 - Recurring payment scheduling or execution
-- Ember account inspection, transaction aware claims, and personal FIRE calculations until deterministic services exist
+- Ember write tools, generated SQL, autonomous tool loops, and access to raw records in answer prompts
 - Regulated financial advice and silent AI changes to financial records
 - MCP tool sprawl, graph context infrastructure, multiple agent services, Kubernetes, Terraform, and multi-cloud deployment
 - Custom authentication or migration away from React, Vite, FastAPI, Supabase Auth, and Postgres

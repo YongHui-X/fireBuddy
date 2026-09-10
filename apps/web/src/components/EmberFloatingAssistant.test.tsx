@@ -32,12 +32,14 @@ describe('floating Ember assistant', () => {
     render(<EmberFloatingAssistant pathname="/transactions" onOpenFullEmber={vi.fn()} />);
 
     const launcher = screen.getByRole('button', { name: 'Ask Ember about Transactions' });
+    expect(launcher.querySelector('svg')).toBeTruthy();
+    expect(launcher.querySelector('.lucide-sparkles')).toBeNull();
     fireEvent.click(launcher);
 
     const drawer = screen.getByRole('dialog', { name: 'Ask Ember' });
     expect(within(drawer).getByText(/Using context from Transactions/i)).toBeTruthy();
     fireEvent.click(within(drawer).getByText(/Using context from Transactions/i));
-    expect(within(drawer).getByText(/No amounts, descriptions, account names, or record IDs/i)).toBeTruthy();
+    expect(within(drawer).getByText(/backend may also calculate read only aggregates for your signed in account/i)).toBeTruthy();
     expect(within(drawer).getByText('Added a transaction')).toBeTruthy();
     await waitFor(() => expect(document.activeElement).toBe(within(drawer).getByRole('textbox', { name: 'Ask about this page' })));
   });
@@ -61,7 +63,7 @@ describe('floating Ember assistant', () => {
       handlers.onDone?.();
     });
     render(<EmberFloatingAssistant pathname="/fire" onOpenFullEmber={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Ember about FIRE setup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Ember about FIRE Planner' }));
     const composer = screen.getByRole('textbox', { name: 'Ask about this page' });
     fireEvent.change(composer, { target: { value: 'What should I review here?' } });
 
@@ -72,7 +74,7 @@ describe('floating Ember assistant', () => {
       expect.objectContaining({
         question: 'What should I review here?',
         appContext: expect.objectContaining({
-          currentPage: 'FIRE setup',
+          currentPage: 'FIRE Planner',
           currentPath: '/fire',
           recentActions: [expect.objectContaining({ label: 'Updated FIRE assumptions' })],
         }),
@@ -96,9 +98,9 @@ describe('floating Ember assistant', () => {
     expect(onOpenFullEmber).toHaveBeenCalledOnce();
   });
 
-  it('retains an accessible launcher on the full Ember page', () => {
+  it('stays hidden on the full Ember page', () => {
     render(<EmberFloatingAssistant pathname="/ember" onOpenFullEmber={vi.fn()} />);
-    expect(screen.getByRole('button', { name: 'Focus Ember conversation' })).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'Ask Ember' })).toBeNull();
   });
 });

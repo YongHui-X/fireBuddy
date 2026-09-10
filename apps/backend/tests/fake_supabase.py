@@ -51,6 +51,10 @@ class FakeQuery:
         self.filters.append((column, ("lte", value)))
         return self
 
+    def in_(self, column: str, values: list[object]):
+        self.filters.append((column, ("in", values)))
+        return self
+
     def order(self, _column: str, desc: bool = False):
         return self
 
@@ -85,6 +89,18 @@ class FakeQuery:
             return FakeResponse(deepcopy(matches))
 
         if self.operation == "delete":
+            if self.table_name == "tags":
+                deleted_tag_ids = {str(row["id"]) for row in matches}
+                self.client.rows["transaction_tags"] = [
+                    row for row in self.client.rows.get("transaction_tags", [])
+                    if str(row.get("tag_id")) not in deleted_tag_ids
+                ]
+            if self.table_name == "expenses":
+                deleted_transaction_ids = {str(row["id"]) for row in matches}
+                self.client.rows["transaction_tags"] = [
+                    row for row in self.client.rows.get("transaction_tags", [])
+                    if str(row.get("transaction_id")) not in deleted_transaction_ids
+                ]
             matched_ids = {id(row) for row in matches}
             self.client.rows[self.table_name] = [row for row in rows if id(row) not in matched_ids]
             return FakeResponse(deepcopy(matches))
@@ -100,6 +116,8 @@ class FakeQuery:
                     return False
                 if operation == "lte" and actual > boundary:
                     return False
+                if operation == "in" and str(actual).lower() not in {str(value).lower() for value in boundary}:
+                    return False
             elif str(actual).lower() != str(expected).lower():
                 return False
         return True
@@ -114,6 +132,9 @@ class FakeSupabase:
 
     def table(self, table_name: str) -> FakeQuery:
         return FakeQuery(self, table_name)
+
+    def rpc(self, function_name: str, params: dict):
+        return FakeRpcQuery(self, function_name, params)
 
     def complete_row(self, table_name: str, values: dict) -> dict:
         now = datetime.now(timezone.utc).isoformat()
@@ -134,6 +155,14 @@ class FakeSupabase:
                 "created_at": now,
                 "updated_at": now,
                 "transaction_type": "expense",
+                **values,
+            }
+
+        if table_name == "tags":
+            return {
+                "id": generated_id,
+                "created_at": now,
+                "updated_at": now,
                 **values,
             }
 
@@ -167,3 +196,59 @@ class FakeSupabase:
             return {"created_at": now, **values}
 
         return {"id": generated_id, **values}
+
+
+class FakeRpcQuery:
+    """Emulate the two atomic transaction functions used by route tests."""
+
+    def __init__(self, client: FakeSupabase, function_name: str, params: dict):
+        self.client = client
+        self.function_name = function_name
+        self.params = deepcopy(params)
+
+    def execute(self) -> FakeResponse:
+        tag_ids = [str(value) for value in self.params.get("p_tag_ids", [])]
+        user_id = str(self.params["p_user_id"])
+        owned_tag_ids = {
+            str(row["id"]) for row in self.client.rows.get("tags", [])
+            if str(row.get("user_id")) == user_id
+        }
+        if len(tag_ids) > 10 or len(tag_ids) != len(set(tag_ids)) or any(tag not in owned_tag_ids for tag in tag_ids):
+            raise ValueError("Invalid tag assignment")
+
+        values = {
+            "user_id": user_id,
+            "category_id": self.params.get("p_category_id"),
+            "account_id": self.params["p_account_id"],
+            "description": self.params["p_description"],
+            "amount": self.params["p_amount"],
+            "date": self.params["p_date"],
+            "transaction_type": self.params["p_transaction_type"],
+        }
+        if self.function_name == "create_transaction_with_tags":
+            transaction = self.client.complete_row("expenses", values)
+            self.client.rows.setdefault("expenses", []).append(transaction)
+        elif self.function_name == "update_transaction_with_tags":
+            transaction_id = str(self.params["p_transaction_id"])
+            transaction = next(
+                (row for row in self.client.rows.get("expenses", []) if str(row["id"]) == transaction_id and str(row["user_id"]) == user_id),
+                None,
+            )
+            if transaction is None:
+                return FakeResponse([])
+            transaction.update(values)
+            transaction["updated_at"] = datetime.now(timezone.utc).isoformat()
+            self.client.rows["transaction_tags"] = [
+                row for row in self.client.rows.get("transaction_tags", [])
+                if not (str(row.get("transaction_id")) == transaction_id and str(row.get("user_id")) == user_id)
+            ]
+        else:
+            raise ValueError(f"Unsupported fake RPC: {self.function_name}")
+
+        for tag_id in tag_ids:
+            self.client.rows.setdefault("transaction_tags", []).append({
+                "user_id": user_id,
+                "transaction_id": str(transaction["id"]),
+                "tag_id": tag_id,
+            })
+        return FakeResponse([deepcopy(transaction)])

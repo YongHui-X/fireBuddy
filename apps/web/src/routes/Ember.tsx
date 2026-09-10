@@ -5,29 +5,18 @@ import {
   useState,
   type FormEvent,
   type KeyboardEvent,
-  type ReactNode,
 } from 'react';
 import {
   AlertCircle,
   ArrowUp,
-  BookOpen,
   Check,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
   Copy,
   Download,
   ExternalLink,
-  History,
-  LockKeyhole,
-  Maximize2,
   Menu,
-  MessageSquareText,
-  Minimize2,
-  PanelRightClose,
   PanelRightOpen,
   Plus,
-  ShieldCheck,
+  Search,
   Sparkles,
   Trash2,
   X,
@@ -40,12 +29,12 @@ import { formatEmberConversationMarkdown, getEmberExportFilename } from '../app/
 import { buildEmberAppContext } from '../app/emberAppContext';
 import { useFireBuddy } from '../app/FireBuddyProvider';
 import { getEmberSuggestedQuestions } from '../app/emberSuggestions';
-import { PageToolbar } from '../components/PageToolbar';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';
 import {
   EMBER_ACTIVE_TOPIC_STORAGE_KEY,
   createEmberMessage,
   createEmberTopic,
+  getEmberAccountStorageKey,
   getEmberTopicTitle,
   getSafeExternalUrl,
   loadEmberState,
@@ -60,6 +49,16 @@ import {
 const MAX_QUESTION_LENGTH = 2000;
 
 const starterPrompts = [
+  {
+    title: 'Review my spending',
+    description: 'Summarise this month and identify the largest categories.',
+    question: 'How much have I spent this month, and which categories are highest?',
+  },
+  {
+    title: 'Check my FIRE timeline',
+    description: 'Explain the projection from your saved FireBuddy assumptions.',
+    question: 'How long more to FIRE based on my current FireBuddy data?',
+  },
   {
     title: 'Understand CPF rates',
     description: 'Review how contribution rates work and what can change by age.',
@@ -251,24 +250,12 @@ async function writeClipboardText(content: string): Promise<void> {
   }
 }
 
-/** Keep the guide visible by default only when the full three-column workspace fits. */
-function shouldShowContextPanelByDefault(): boolean {
+/** Keep history inline on wide workspaces and closed as a drawer elsewhere. */
+function isWideHistoryLayout(): boolean {
   if (typeof window === 'undefined') {
     return true;
   }
-  return window.innerWidth >= 1440;
-}
-
-function ContextCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
-  return (
-    <article className="ember-context-card">
-      <span className="ember-context-icon">{icon}</span>
-      <div>
-        <h3>{title}</h3>
-        {children}
-      </div>
-    </article>
-  );
+  return window.innerWidth >= 1180;
 }
 
 function SourceList({ sources }: { sources: EmberSource[] }) {
@@ -308,6 +295,21 @@ function SourceList({ sources }: { sources: EmberSource[] }) {
         </button>
       ) : null}
     </section>
+  );
+}
+
+function DataEvidence({ message }: { message: EmberMessage }) {
+  const evidence = message.dataEvidence;
+  if (!evidence) return null;
+  const recordCopy = evidence.record_count === null
+    ? ''
+    : ` | ${evidence.record_count} matching ${evidence.record_count === 1 ? 'record' : 'records'}`;
+  return (
+    <a className="ember-data-evidence" href={evidence.destination}>
+      <span>Calculated from your FireBuddy data</span>
+      <strong>{evidence.label}</strong>
+      <small>{evidence.period}{recordCopy}</small>
+    </a>
   );
 }
 
@@ -373,10 +375,11 @@ function ConversationMessage({
           message.content ? <EmberRichText content={message.content} /> : (
             <p className="ember-stream-placeholder">
               <Sparkles size={16} aria-hidden="true" />
-              {message.streamStatus === 'preparing' ? 'Preparing a grounded answer...' : 'Searching curated sources...'}
+              {message.streamStatus === 'preparing' ? 'Preparing your answer...' : 'Understanding your question...'}
             </p>
           )
         ) : <p>{message.content}</p>}
+        {message.role === 'assistant' ? <DataEvidence message={message} /> : null}
         {message.sources.length > 0 ? <SourceList sources={message.sources} /> : null}
       </div>
       {message.role === 'assistant' && message.status === 'complete' && message.suggestedQuestions.length > 0 ? (
@@ -407,14 +410,19 @@ export default function Ember({
   onToggleMainSidebar = () => undefined,
   appContextPathname,
 }: EmberProps) {
-  const initialStateRef = useRef(loadEmberState());
+  const { session } = useFireBuddy();
+  const storageUserId = session?.user?.id;
+  const initialStateRef = useRef(loadEmberState(window.localStorage, storageUserId));
+  const loadedStorageUserIdRef = useRef(storageUserId);
+  const persistedStorageUserIdRef = useRef(storageUserId);
+  const persistedActiveUserIdRef = useRef(storageUserId);
   const [topics, setTopics] = useState<EmberTopic[]>(initialStateRef.current.topics);
   const [activeTopicId, setActiveTopicId] = useState(initialStateRef.current.activeTopicId);
   const [question, setQuestion] = useState('');
   const [isAsking, setIsAsking] = useState(false);
-  const [isTopicsOpen, setIsTopicsOpen] = useState(true);
-  const [isContextOpen, setIsContextOpen] = useState(shouldShowContextPanelByDefault);
-  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [historyQuery, setHistoryQuery] = useState('');
+  const [isCompactHistory, setIsCompactHistory] = useState(() => !isWideHistoryLayout());
+  const [isHistoryOpen, setIsHistoryOpen] = useState(isWideHistoryLayout);
   const [requestStatus, setRequestStatus] = useState<'ready' | 'searching' | 'preparing' | 'error'>('ready');
   const [topicPendingDeletion, setTopicPendingDeletion] = useState<EmberTopic | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<{ messageId: string; status: 'copied' | 'error' } | null>(null);
@@ -424,31 +432,72 @@ export default function Ember({
   const responseStartElementRef = useRef<HTMLElement | null>(null);
   const [responseStartMessageId, setResponseStartMessageId] = useState<string | null>(null);
   const lastScrolledResponseIdRef = useRef<string | null>(null);
-  const panelStateBeforeFocusRef = useRef({ topics: true, context: shouldShowContextPanelByDefault() });
-  const { session } = useFireBuddy();
   const deleteDialogRef = useAccessibleDialog<HTMLElement>({
     isOpen: Boolean(topicPendingDeletion),
     canClose: !isAsking,
     onClose: () => setTopicPendingDeletion(null),
   });
+  const historyDialogRef = useAccessibleDialog<HTMLElement>({
+    isOpen: isCompactHistory && isHistoryOpen && !topicPendingDeletion,
+    onClose: () => setIsHistoryOpen(false),
+  });
 
   const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
-  const recentContext = useMemo(
-    () => activeTopic.messages.filter((message) => !message.error).slice(-3),
-    [activeTopic.messages],
-  );
+  const filteredTopics = useMemo(() => {
+    const normalizedQuery = historyQuery.trim().toLocaleLowerCase('en-SG');
+    return normalizedQuery
+      ? topics.filter((topic) => topic.title.toLocaleLowerCase('en-SG').includes(normalizedQuery))
+      : topics;
+  }, [historyQuery, topics]);
   const canSend = question.trim().length > 0 && question.length <= MAX_QUESTION_LENGTH && !isAsking;
   const canExportConversation = activeTopic.messages.some((message) => !message.error && message.content.trim())
     && !isAsking
     && activeTopic.messages.every((message) => message.status === 'complete');
 
   useEffect(() => {
-    saveEmberTopics(window.localStorage, topics);
-  }, [topics]);
+    if (loadedStorageUserIdRef.current === storageUserId) return;
+    loadedStorageUserIdRef.current = storageUserId;
+    const loaded = loadEmberState(window.localStorage, storageUserId);
+    setTopics(loaded.topics);
+    setActiveTopicId(loaded.activeTopicId);
+  }, [storageUserId]);
 
   useEffect(() => {
-    window.localStorage.setItem(EMBER_ACTIVE_TOPIC_STORAGE_KEY, activeTopicId);
-  }, [activeTopicId]);
+    if (persistedStorageUserIdRef.current !== storageUserId) {
+      persistedStorageUserIdRef.current = storageUserId;
+      return;
+    }
+    saveEmberTopics(window.localStorage, topics, storageUserId);
+  }, [storageUserId, topics]);
+
+  useEffect(() => {
+    if (persistedActiveUserIdRef.current !== storageUserId) {
+      persistedActiveUserIdRef.current = storageUserId;
+      return;
+    }
+    window.localStorage.setItem(getEmberAccountStorageKey(EMBER_ACTIVE_TOPIC_STORAGE_KEY, storageUserId), activeTopicId);
+  }, [activeTopicId, storageUserId]);
+
+  useEffect(() => {
+    /** Move history between an inline rail and a closed drawer at the layout breakpoint. */
+    function syncHistoryLayout() {
+      const isWide = isWideHistoryLayout();
+      setIsCompactHistory(!isWide);
+      setIsHistoryOpen(isWide);
+    }
+
+    window.addEventListener('resize', syncHistoryLayout);
+    return () => window.removeEventListener('resize', syncHistoryLayout);
+  }, []);
+
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (!composer) {
+      return;
+    }
+    composer.style.height = 'auto';
+    composer.style.height = `${Math.min(Math.max(composer.scrollHeight, 52), 160)}px`;
+  }, [question]);
 
   useEffect(() => {
     if (responseStartMessageId
@@ -476,6 +525,9 @@ export default function Ember({
     setActiveTopicId(topic.id);
     setQuestion('');
     setRequestStatus('ready');
+    if (isCompactHistory) {
+      setIsHistoryOpen(false);
+    }
     window.setTimeout(() => composerRef.current?.focus(), 0);
   }
 
@@ -545,20 +597,6 @@ export default function Ember({
     link.click();
     link.remove();
     URL.revokeObjectURL(objectUrl);
-  }
-
-  /** Temporarily hide or restore supporting panels for a larger reading view. */
-  function toggleFocusMode() {
-    if (isFocusMode) {
-      setIsTopicsOpen(panelStateBeforeFocusRef.current.topics);
-      setIsContextOpen(panelStateBeforeFocusRef.current.context);
-      setIsFocusMode(false);
-      return;
-    }
-    panelStateBeforeFocusRef.current = { topics: isTopicsOpen, context: isContextOpen };
-    setIsTopicsOpen(false);
-    setIsContextOpen(false);
-    setIsFocusMode(true);
   }
 
   /** Fill the composer from a starter card while leaving submission under user control. */
@@ -660,6 +698,14 @@ export default function Ember({
               : message),
           }));
         },
+        onEvidence: (mode, dataEvidence) => {
+          updateTopic(topicSnapshot.id, (topic) => ({
+            ...topic,
+            messages: topic.messages.map((message) => message.id === assistantMessage.id
+              ? { ...message, answerMode: mode, dataEvidence }
+              : message),
+          }));
+        },
         onDone: () => undefined,
       });
       if (!streamedAnswer.trim()) {
@@ -728,138 +774,78 @@ export default function Ember({
 
   return (
     <main className="page ember-page">
-      <PageToolbar
-        className="ember-toolbar"
-        title="Meet Ember"
-        description="Grounded guidance for Singapore personal finance."
-        leadingAction={(
-          <button
-            className="icon-button quiet ember-main-sidebar-toggle"
-            type="button"
-            onClick={onToggleMainSidebar}
-            aria-controls="main-sidebar"
-            aria-expanded={isMainSidebarOpen}
-            aria-label={isMainSidebarOpen ? 'Hide main navigation' : 'Show main navigation'}
-            title={isMainSidebarOpen ? 'Hide main navigation' : 'Show main navigation'}
-          >
-            <Menu size={19} />
-          </button>
-        )}
-        actions={<>
-          {!isFocusMode ? <button
-            className="secondary-button ember-context-toggle"
-            type="button"
-            onClick={() => setIsContextOpen((current) => !current)}
-            aria-controls="ember-context-panel"
-            aria-expanded={isContextOpen}
-          >
-            {isContextOpen ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
-            {isContextOpen ? 'Hide answer guide' : 'Show answer guide'}
-          </button> : null}
-          <button
-            className="secondary-button ember-focus-toggle"
-            type="button"
-            onClick={toggleFocusMode}
-            aria-pressed={isFocusMode}
-          >
-            {isFocusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            {isFocusMode ? 'Exit focus view' : 'Expand conversation'}
-          </button>
-          <button className="primary-button" type="button" onClick={startNewChat}>
-            <Plus size={15} /> New chat
-          </button>
-        </>}
-      />
-
-      <section className={`ember-layout ${isTopicsOpen ? '' : 'ember-layout-topics-hidden'} ${isContextOpen ? '' : 'ember-layout-context-hidden'} ${isFocusMode ? 'ember-layout-focus' : ''}`.trim()}>
-        <aside id="ember-topics-panel" className="ember-topics-panel" aria-label="Ember conversations" hidden={!isTopicsOpen}>
-          <div className="ember-panel-heading">
-            <div>
-              <span>Conversations</span>
-              <h3>Your topics</h3>
-            </div>
-            <button type="button" onClick={startNewChat} aria-label="Start new chat"><Plus size={17} /></button>
-          </div>
-          <div className="ember-topic-list">
-            {topics.map((topic) => (
-              <div className="ember-topic-row" key={topic.id}>
-                <button
-                  className={`ember-topic-select ${topic.id === activeTopic.id ? 'ember-topic-active' : ''}`.trim()}
-                  type="button"
-                  onClick={() => {
-                    setActiveTopicId(topic.id);
-                    setRequestStatus('ready');
-                  }}
-                >
-                  <MessageSquareText size={16} aria-hidden="true" />
-                  <span><strong>{topic.title}</strong><small>{formatTopicDate(topic.updatedAt)}</small></span>
-                </button>
-                <button
-                  className="ember-topic-delete"
-                  type="button"
-                  onClick={() => setTopicPendingDeletion(topic)}
-                  disabled={isAsking}
-                  aria-label={`Delete conversation ${topic.title}`}
-                  title={isAsking ? 'Wait for Ember to finish before deleting a conversation' : `Delete ${topic.title}`}
-                >
-                  <Trash2 size={14} aria-hidden="true" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <button className="ember-new-chat-button" type="button" onClick={startNewChat}>
-            <Plus size={16} /> New chat
-          </button>
-        </aside>
-
+      <section className={`ember-layout ${isHistoryOpen ? 'ember-layout-history-open' : 'ember-layout-history-closed'}`}>
         <section className="ember-conversation-card" aria-label={`Conversation: ${activeTopic.title}`}>
-          <div className="ember-conversation-header">
+          <header className="ember-conversation-header">
             <div className="ember-conversation-title">
-              {!isFocusMode ? <button
-                className="ember-history-toggle"
+              <button
+                className="ember-header-icon-button ember-main-sidebar-toggle"
                 type="button"
-                onClick={() => setIsTopicsOpen((current) => !current)}
-                aria-controls="ember-topics-panel"
-                aria-expanded={isTopicsOpen}
-                aria-label={isTopicsOpen ? 'Hide chat history' : 'Show chat history'}
-                title={isTopicsOpen ? 'Hide chat history' : 'Show chat history'}
+                onClick={onToggleMainSidebar}
+                aria-controls="main-sidebar"
+                aria-expanded={isMainSidebarOpen}
+                aria-label={isMainSidebarOpen ? 'Hide main navigation' : 'Show main navigation'}
+                title={isMainSidebarOpen ? 'Hide main navigation' : 'Show main navigation'}
               >
-                {isTopicsOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-              </button> : null}
+                <Menu size={19} />
+              </button>
+              <span className="ember-header-mark"><EmberMark size={26} /></span>
               <div>
-                <span>Current topic</span>
-                <h3>{activeTopic.title}</h3>
+                <h2>Ember</h2>
+                <p>Singapore finance guide</p>
               </div>
             </div>
             <div className="ember-conversation-header-actions">
+              <div className={`ember-request-status ember-request-status-${requestStatus}`} role="status" aria-live="polite">
+                <span aria-hidden="true" />
+                {requestStatus === 'searching'
+                  ? 'Understanding your question'
+                  : requestStatus === 'preparing'
+                    ? 'Preparing your answer'
+                    : requestStatus === 'error'
+                      ? 'Needs attention'
+                      : 'Ready'}
+              </div>
               <button
+                className="ember-header-icon-button"
                 type="button"
                 onClick={() => void copyWholeConversation()}
                 disabled={!canExportConversation}
                 aria-label={copyFeedback?.messageId === 'conversation' && copyFeedback.status === 'copied'
                   ? 'Copied conversation'
                   : 'Copy conversation'}
+                title="Copy conversation"
               >
                 {copyFeedback?.messageId === 'conversation' && copyFeedback.status === 'copied'
-                  ? <Check size={14} />
-                  : <Copy size={14} />}
-                <span>{copyFeedback?.messageId === 'conversation' && copyFeedback.status === 'copied' ? 'Copied' : 'Copy'}</span>
+                  ? <Check size={16} />
+                  : <Copy size={16} />}
               </button>
-              <button type="button" onClick={downloadConversation} disabled={!canExportConversation} aria-label="Download Markdown">
-                <Download size={14} /><span>Markdown</span>
+              <button
+                className="ember-header-icon-button"
+                type="button"
+                onClick={downloadConversation}
+                disabled={!canExportConversation}
+                aria-label="Download Markdown"
+                title="Download Markdown"
+              >
+                <Download size={16} />
               </button>
-              <div className={`ember-request-status ember-request-status-${requestStatus}`} role="status" aria-live="polite">
-                <span aria-hidden="true" />
-                {requestStatus === 'searching'
-                  ? 'Searching curated sources'
-                  : requestStatus === 'preparing'
-                    ? 'Preparing a grounded answer'
-                    : requestStatus === 'error'
-                      ? 'Needs attention'
-                      : 'Ready'}
-              </div>
+              <button className="ember-header-new-chat" type="button" onClick={startNewChat}>
+                <Plus size={16} /> <span>New chat</span>
+              </button>
+              <button
+                className="ember-header-icon-button ember-history-toggle"
+                type="button"
+                onClick={() => setIsHistoryOpen((current) => !current)}
+                aria-controls="ember-history-panel"
+                aria-expanded={isHistoryOpen}
+                aria-label={isHistoryOpen ? 'Hide chat history' : 'Show chat history'}
+                title={isHistoryOpen ? 'Hide chat history' : 'Show chat history'}
+              >
+                <PanelRightOpen size={18} />
+              </button>
             </div>
-          </div>
+          </header>
 
           <div className="ember-messages" aria-live="polite">
             {activeTopic.messages.map((message) => (
@@ -879,11 +865,11 @@ export default function Ember({
             {activeTopic.messages.length === 0 ? (
               <section className="ember-starters" aria-labelledby="ember-starters-title">
                 <div className="ember-empty-introduction">
-                  <span className="ember-empty-mark"><EmberMark size={26} /></span>
+                  <span className="ember-empty-mark"><EmberMark size={30} /></span>
                   <div>
                     <h3>Your Singapore finance guide</h3>
-                    <p>Ember is an AI guide for CPF, CPFIS, Singapore Savings Bonds, IRAS reliefs, MoneySense guidance, investing basics, and FIRE planning.</p>
-                    <p>It cannot inspect your accounts, calculate personal FIRE results, retrieve live prices, or provide regulated financial advice.</p>
+                    <p>Ember can explain your FireBuddy spending and FIRE results, then connect them to curated Singapore finance guidance.</p>
+                    <p>It uses read only calculations, cannot change records or retrieve live prices, and does not provide regulated financial advice.</p>
                   </div>
                 </div>
                 <div className="ember-starter-heading">
@@ -910,7 +896,8 @@ export default function Ember({
           </div>
 
           <form className="ember-composer" onSubmit={handleSubmit}>
-            <label htmlFor="ember-question">Ask Ember</label>
+            <p className="ember-education-note">Educational information only. Ember uses read only FireBuddy calculations and curated sources.</p>
+            <label className="visually-hidden" htmlFor="ember-question">Ask Ember</label>
             <div className="ember-composer-field">
               <textarea
                 id="ember-question"
@@ -918,9 +905,9 @@ export default function Ember({
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 onKeyDown={handleComposerKeyDown}
-                placeholder="Ask about CPF, CPFIS, SSBs, IRAS reliefs, or FIRE planning"
+                placeholder="Ask about your spending, FIRE progress, CPF, SSBs, or IRAS reliefs"
                 maxLength={MAX_QUESTION_LENGTH}
-                rows={3}
+                rows={1}
                 disabled={isAsking}
                 aria-describedby="ember-composer-help ember-character-count"
               />
@@ -933,36 +920,94 @@ export default function Ember({
           </form>
         </section>
 
-        <aside id="ember-context-panel" className="ember-context-panel" aria-label="How Ember uses context" hidden={!isContextOpen}>
-          <div className="ember-context-heading">
+        <aside
+          id="ember-history-panel"
+          ref={historyDialogRef}
+          className={`ember-history-panel ${isHistoryOpen ? 'ember-history-panel-open' : ''}`.trim()}
+          role={isCompactHistory && isHistoryOpen ? 'dialog' : undefined}
+          aria-modal={isCompactHistory && isHistoryOpen ? true : undefined}
+          aria-labelledby="ember-history-title"
+          tabIndex={-1}
+        >
+          <header className="ember-history-header">
             <div>
-              <span>Visible context</span>
-              <h3>How Ember answers</h3>
+              <h2 id="ember-history-title">Chat history</h2>
+              <p>{topics.length.toLocaleString('en-SG')} {topics.length === 1 ? 'conversation' : 'conversations'}</p>
             </div>
-            <button type="button" onClick={() => setIsContextOpen(false)} aria-label="Close answer guide" title="Close answer guide">
-              <X size={17} />
+            <button
+              className="ember-header-icon-button"
+              type="button"
+              onClick={() => setIsHistoryOpen(false)}
+              aria-label="Close chat history"
+              title="Close chat history"
+            >
+              <X size={18} />
             </button>
+          </header>
+          <label className="ember-history-search" htmlFor="ember-history-query">
+            <Search size={17} aria-hidden="true" />
+            <span className="visually-hidden">Search conversations</span>
+            <input
+              id="ember-history-query"
+              data-dialog-initial-focus
+              type="search"
+              value={historyQuery}
+              onChange={(event) => setHistoryQuery(event.target.value)}
+              placeholder="Search conversations"
+            />
+          </label>
+          <p className="ember-history-results" aria-live="polite">
+            {historyQuery.trim()
+              ? `${filteredTopics.length.toLocaleString('en-SG')} of ${topics.length.toLocaleString('en-SG')} conversations`
+              : `${topics.length.toLocaleString('en-SG')} ${topics.length === 1 ? 'conversation' : 'conversations'}`}
+          </p>
+          <div className="ember-topic-list">
+            {filteredTopics.map((topic) => (
+              <div className={`ember-topic-row ${topic.id === activeTopic.id ? 'ember-topic-active' : ''}`.trim()} key={topic.id}>
+                <button
+                  className="ember-topic-select"
+                  type="button"
+                  onClick={() => {
+                    setActiveTopicId(topic.id);
+                    setRequestStatus('ready');
+                    if (isCompactHistory) {
+                      setIsHistoryOpen(false);
+                    }
+                  }}
+                >
+                  <strong>{topic.title}</strong>
+                  <small>{formatTopicDate(topic.updatedAt)}</small>
+                </button>
+                <button
+                  className="ember-topic-delete"
+                  type="button"
+                  onClick={() => setTopicPendingDeletion(topic)}
+                  disabled={isAsking}
+                  aria-label={`Delete conversation ${topic.title}`}
+                  title={isAsking ? 'Wait for Ember to finish before deleting a conversation' : `Delete ${topic.title}`}
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+            {filteredTopics.length === 0 ? (
+              <div className="ember-history-empty">
+                <strong>No matching conversations</strong>
+                <p>Try another title or clear the search.</p>
+              </div>
+            ) : null}
           </div>
-          <ContextCard icon={<BookOpen size={18} />} title="Grounded guidance">
-            <p>Ember uses curated Singapore finance sources and recent conversation context.</p>
-          </ContextCard>
-          <ContextCard icon={<LockKeyhole size={18} />} title="Current boundaries">
-            <p>Ember does not inspect your accounts or transactions, calculate personal FIRE results, retrieve live prices, or provide regulated financial advice.</p>
-          </ContextCard>
-          <ContextCard icon={<ShieldCheck size={18} />} title="Careful by design">
-            <p>Low-confidence and unsupported questions may be refused.</p>
-          </ContextCard>
-          <ContextCard icon={<History size={18} />} title="Recent context">
-            <p>Up to the latest six normalized messages are shared with the existing answer service.</p>
-            <ul className="ember-recent-context">
-              {recentContext.map((message) => (
-                <li key={message.id}><strong>{message.role === 'user' ? 'You' : 'Ember'}</strong><span>{message.content}</span></li>
-              ))}
-            </ul>
-          </ContextCard>
-          <div className="ember-education-note"><Clock3 size={16} /><span>Educational information only. Verify important decisions with official sources or a qualified financial professional.</span></div>
         </aside>
       </section>
+
+      {isCompactHistory && isHistoryOpen ? (
+        <button
+          className="ember-history-backdrop"
+          type="button"
+          onClick={() => setIsHistoryOpen(false)}
+          aria-label="Close chat history"
+        />
+      ) : null}
 
       {topicPendingDeletion ? (
         <div className="sheet-backdrop" onClick={isAsking ? undefined : () => setTopicPendingDeletion(null)}>

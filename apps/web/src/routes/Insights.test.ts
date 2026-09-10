@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildExpenseCsv, buildExpenseSeries, filterExpensesForRange } from './Insights';
+import { buildCategorySpendingData, buildExpenseCsv, buildExpenseSeries, filterExpensesForMonth, filterExpensesForRange, getInsightDateBounds } from './Insights';
 import type { Account, Category, Transaction } from '../app/FireBuddyProvider';
 
 
@@ -20,6 +20,18 @@ describe('Insights expense aggregation', () => {
     expect(series.reduce((total, point) => total + point.expenses, 0)).toBe(14);
   });
 
+  it('keeps explicit period bounds when a range has no expense rows', () => {
+    expect(getInsightDateBounds('Week', new Date('2026-08-14T12:00:00'))).toEqual({
+      startDate: '2026-08-08',
+      endDate: '2026-08-14',
+    });
+  });
+
+  it('filters an explicit dashboard month without including income', () => {
+    expect(filterExpensesForMonth(transactions, '2026-07').map((transaction) => transaction.id)).toEqual(['3']);
+    expect(filterExpensesForMonth(transactions, '2026-08').map((transaction) => transaction.id)).toEqual(['1', '2']);
+  });
+
   it('exports only the supplied filtered expenses with account and category names', () => {
     const categories: Category[] = [
       { id: 'food', name: 'Food & Drink', color: '#3C8A61', icon: 'food', monthlyBudget: 600, categoryType: 'expense' },
@@ -30,7 +42,19 @@ describe('Insights expense aggregation', () => {
 
     const csv = buildExpenseCsv([transactions[0]], categories, accounts);
 
-    expect(csv).toContain('Lunch,12.00,Food & Drink,Cash');
+    expect(csv).toContain('expense,Lunch,-12.00,Food & Drink,food,Cash,cash');
     expect(csv).not.toContain('Train');
+  });
+
+  it('builds actual spending totals for the detailed category rows', () => {
+    const categories: Category[] = [
+      { id: 'food', name: 'Food & Drink', color: '#3C8A61', icon: 'food', monthlyBudget: 600, categoryType: 'expense' },
+      { id: 'transport', name: 'Transport', color: '#E5B24A', icon: 'transport', monthlyBudget: 300, categoryType: 'expense' },
+    ];
+
+    expect(buildCategorySpendingData(transactions.slice(0, 2), categories)).toEqual([
+      { name: 'Food & Drink', value: 12, color: '#3C8A61' },
+      { name: 'Transport', value: 2, color: '#E5B24A' },
+    ]);
   });
 });

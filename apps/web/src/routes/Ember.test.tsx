@@ -34,6 +34,7 @@ function askQuestion(question: string) {
 
 describe('Ember page', () => {
   beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
     window.localStorage.clear();
     clearEmberAppActions();
     mocks.clipboardWrite.mockReset().mockResolvedValue(undefined);
@@ -73,33 +74,44 @@ describe('Ember page', () => {
     render(<Ember />);
 
     expect(screen.getByRole('heading', { name: 'Your Singapore finance guide' })).toBeTruthy();
-    expect(screen.getByText(/CPFIS, Singapore Savings Bonds, IRAS reliefs/i)).toBeTruthy();
-    expect(screen.getByText(/cannot inspect your accounts, calculate personal FIRE results/i)).toBeTruthy();
+    expect(screen.getByText(/explain your FireBuddy spending and FIRE results/i)).toBeTruthy();
+    expect(screen.getByText(/uses read only calculations, cannot change records/i)).toBeTruthy();
     expect(screen.queryByText('Ember', { selector: '.ember-message-author' })).toBeNull();
   });
 
-  it('lets users collapse and restore both supporting panels', () => {
+  it('opens and closes chat history as a compact drawer', async () => {
     render(<Ember />);
 
-    const topicsPanel = document.getElementById('ember-topics-panel') as HTMLElement;
-    const contextPanel = document.getElementById('ember-context-panel') as HTMLElement;
-    expect(topicsPanel.hidden).toBe(false);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Hide chat history' }));
-    expect(topicsPanel.hidden).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Show chat history' }));
-    expect(topicsPanel.hidden).toBe(false);
+    const historyDialog = screen.getByRole('dialog', { name: 'Chat history' });
+    expect(historyDialog.classList.contains('ember-history-panel-open')).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(within(historyDialog).getByRole('searchbox')));
 
-    if (contextPanel.hidden) {
-      fireEvent.click(screen.getByRole('button', { name: 'Show answer guide' }));
-    }
-    expect(contextPanel.hidden).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Close answer guide' }));
-    expect(contextPanel.hidden).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Show answer guide' }));
-    expect(contextPanel.hidden).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Hide answer guide' }));
-    expect(contextPanel.hidden).toBe(true);
+    fireEvent.click(within(historyDialog).getByRole('button', { name: 'Close chat history' }));
+    expect(screen.getByRole('button', { name: 'Show chat history' }).getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('filters local history by title without changing the active conversation', () => {
+    const timestamp = '2026-09-03T10:00:00.000Z';
+    window.localStorage.setItem(EMBER_TOPICS_STORAGE_KEY, JSON.stringify({
+      version: 3,
+      topics: [
+        { id: 'cpf-topic', title: 'CPF contribution guide', messages: [], createdAt: timestamp, updatedAt: timestamp },
+        { id: 'fire-topic', title: 'My FIRE plan', messages: [], createdAt: timestamp, updatedAt: timestamp },
+      ],
+    }));
+    window.localStorage.setItem(EMBER_ACTIVE_TOPIC_STORAGE_KEY, 'fire-topic');
+    render(<Ember />);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search conversations' }), { target: { value: 'cpf' } });
+
+    expect(screen.getByRole('button', { name: /^CPF contribution guide/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^My FIRE plan/i })).toBeNull();
+    expect(screen.getByText('1 of 2 conversations')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Conversation: My FIRE plan' })).toBeTruthy();
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search conversations' }), { target: { value: 'missing' } });
+    expect(screen.getByText('No matching conversations')).toBeTruthy();
   });
 
   it('delegates the main navigation hamburger to the app shell', () => {
@@ -129,13 +141,13 @@ describe('Ember page', () => {
     fireEvent.keyDown(composer, { key: 'Enter', shiftKey: false });
 
     expect(mocks.streamFinancialAdvisor).toHaveBeenCalledOnce();
-    expect(screen.getByRole('status').textContent).toContain('Searching curated sources');
+    expect(screen.getByRole('status').textContent).toContain('Understanding your question');
     expect((composer as HTMLTextAreaElement).disabled).toBe(true);
 
     await act(async () => {
       handlers?.onStatus('preparing', 'Preparing a grounded answer');
     });
-    expect(screen.getByRole('status').textContent).toContain('Preparing a grounded answer');
+    expect(screen.getByRole('status').textContent).toContain('Preparing your answer');
     await act(async () => {
       handlers?.onDelta('CPF is a social ');
       handlers?.onDelta('security savings system.');
@@ -271,25 +283,16 @@ describe('Ember page', () => {
     expect(mocks.streamFinancialAdvisor).toHaveBeenCalledOnce();
   });
 
-  it('expands the conversation temporarily and restores both panels', () => {
+  it('collapses and restores the desktop history rail', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
     render(<Ember />);
-    const topicsPanel = document.getElementById('ember-topics-panel') as HTMLElement;
-    const contextPanel = document.getElementById('ember-context-panel') as HTMLElement;
-    if (contextPanel.hidden) {
-      fireEvent.click(screen.getByRole('button', { name: 'Show answer guide' }));
-    }
 
-    const expand = screen.getByRole('button', { name: 'Expand conversation' });
-    expect(expand.getAttribute('aria-pressed')).toBe('false');
-    fireEvent.click(expand);
-    expect(topicsPanel.hidden).toBe(true);
-    expect(contextPanel.hidden).toBe(true);
-
-    const exit = screen.getByRole('button', { name: 'Exit focus view' });
-    expect(exit.getAttribute('aria-pressed')).toBe('true');
-    fireEvent.click(exit);
-    expect(topicsPanel.hidden).toBe(false);
-    expect(contextPanel.hidden).toBe(false);
+    const layout = document.querySelector('.ember-layout') as HTMLElement;
+    expect(layout.classList.contains('ember-layout-history-open')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Hide chat history' }));
+    expect(layout.classList.contains('ember-layout-history-closed')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Show chat history' }));
+    expect(layout.classList.contains('ember-layout-history-open')).toBe(true);
   });
 
   it('copies user and Ember message text with visible success feedback', async () => {
@@ -396,12 +399,12 @@ describe('Ember page', () => {
     askQuestion('Explain SSBs');
     expect(await screen.findByText(/returned an empty answer/i)).toBeTruthy();
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Start new chat' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
     expect(screen.getAllByText('New chat').length).toBeGreaterThan(0);
     expect(window.localStorage.getItem(EMBER_TOPICS_STORAGE_KEY)).toContain('Explain SSBs');
     const topicButton = screen.getByRole('button', { name: /^Explain SSBs/i });
     fireEvent.click(topicButton);
-    expect(screen.getByRole('heading', { name: 'Explain SSBs' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Conversation: Explain SSBs' })).toBeTruthy();
   });
 
   it('confirms deletion of a past conversation and persists the remaining history', async () => {
@@ -427,7 +430,7 @@ describe('Ember page', () => {
       .getByRole('button', { name: 'Delete conversation' }));
 
     await waitFor(() => expect(screen.queryByRole('button', { name: /^Past CPF chat/ })).toBeNull());
-    expect(screen.getByRole('heading', { name: 'Current FIRE chat' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Conversation: Current FIRE chat' })).toBeTruthy();
     await waitFor(() => expect(window.localStorage.getItem(EMBER_TOPICS_STORAGE_KEY)).not.toContain('Past CPF chat'));
   });
 
@@ -449,7 +452,7 @@ describe('Ember page', () => {
 
     expect(screen.queryByText(/Hello, I am Ember/i)).toBeNull();
     expect(screen.queryByText('Ember', { selector: '.ember-message-author' })).toBeNull();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Start new chat' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
     expect(screen.queryByText(/Hello, I am Ember/i)).toBeNull();
     expect(screen.getAllByRole('button', { name: /Understand CPF rates/i }).length).toBeGreaterThan(0);
   });

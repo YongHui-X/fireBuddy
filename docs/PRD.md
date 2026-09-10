@@ -1,6 +1,6 @@
 # FireBuddy Product Requirements Document
 
-Last updated: 23 August 2026
+Last updated: 4 September 2026
 
 ## 1. Purpose and ownership
 
@@ -65,7 +65,7 @@ Repository inspection confirms these **Current** capabilities:
 6. Typed expense and income categories. Current `monthly_budget` applies to expenses, while income categories require zero.
 7. Expense only Insights with Day, Week, Month, and Year ranges, charts, category share, and CSV export.
 8. Optional expense category suggestions that require explicit user action and review before saving.
-9. Ember with an empty opening transcript, starter topics, streamed answers, local topic history, and per answer citations.
+9. Ember with an empty opening transcript, starter topics, streamed answers, per answer citations, and searchable local topic history in a responsive right rail or drawer.
 10. Real data Home dashboard with net worth, savings rate, emergency fund runway, explainable FIRE progress, monthly spending, Monthly Money Pulse, one deterministic next action, and transparent recent transaction indicators.
 11. Wealth position, dated snapshot, and contribution management, separate from payment accounts.
 12. FIRE assumptions, essential expense category selection, and nonpersistent contribution or retirement spending scenarios.
@@ -123,10 +123,11 @@ The **Current** layout uses [design/firebuddy-dashboard-roadmap.png](design/fire
 
 The dashboard order is:
 
-1. Net worth, savings rate, and emergency runway.
-2. FIRE Progress with actual and projected paths, beside monthly spending breakdown.
-3. Monthly Money Pulse with income, spending, invested amount, savings rate, and one deterministic next move.
-4. Recent transactions with transparent anomaly indicators when enough evidence exists.
+1. FIRE Progress with actual and projected paths, beside monthly spending breakdown.
+2. Monthly Money Pulse with income, expenses, savings, one stacked income allocation bar, and one deterministic next move when available.
+3. Recent transactions beside Monthly Money Pulse, with transparent anomaly indicators when enough evidence exists.
+
+The monthly spending solid pie follows the supplied mobile chart reference and shows the four largest expense categories, combining the remainder into an `Others` segment. Every visible segment, including `Others`, must retain its complete category name and percentage connected to that exact segment by one straight radial leader line in the matching slice colour. The label and line endpoint follow the slice midpoint rather than a separately adjusted lane, keeping the connector geometrically straight. A visible gap separates each line endpoint from its text. Category names must never be cropped or shortened with an ellipsis. Narrow layouts wrap long names at a word boundary, and labels must remain inside the card without overlapping at desktop, tablet, and mobile widths. The total expense amount sits above the pie so the chart remains visually clear. Hovering or selecting a slice moves it, its straight connector, and its label slightly outward as one unit while exposing its exact SGD value. The movement must respect the user's reduced motion preference. View More opens the complete detailed Insights breakdown. The detailed view must repeat the same pie and include a matching row for every visible segment with its percentage, category name, colour, and actual SGD spending amount.
 
 Home must not contain a large Goals or Ember panel because both have dedicated pages. Compact contextual links are acceptable when they support a result or empty state.
 
@@ -290,19 +291,19 @@ Expanded analytics are **Later**. They include explicit period totals, savings t
 
 Recurring detection is **Later**. It identifies likely subscriptions and bills using reviewable merchant, amount, and interval evidence. It does not create, schedule, or execute payments.
 
-## 9. Later: unified Ember
+## 9. Current: routed Ember
 
-Unified Ember is **Later** and requires deterministic tools first.
+Routed Ember is **Current**. It uses one structured planning call, one fixed read-only data tool when needed, optional curated retrieval, and at most one final answer generation call. It is a bounded orchestrator, not an autonomous or iterative agent.
 
 | Question type | Authoritative source |
 | --- | --- |
 | Transaction total, monthly pulse, or savings rate | Deterministic analytics |
-| Spending change, anomaly, or supporting records | Deterministic comparison and transaction query |
+| Spending change or anomaly summary | Deterministic comparison or financial health tool |
 | FI target, progress, or estimate | Deterministic FIRE result |
-| Temporary comparison | Deterministic scenario result |
+| Temporary comparison | Later deterministic scenario tool |
 | Singapore finance concept | Curated Singapore finance RAG |
 
-Ember explains structured results in plain language. It never invents figures, assumptions, records, or citations and never silently changes data. Answers identify periods and assumptions. Missing inputs produce a limitation or setup request.
+FastAPI supplies the authenticated user ID after JWT verification. The planner cannot supply identity fields or SQL, each tool scopes its queries to that server identity, and answer prompts receive aggregate facts rather than raw transaction rows. Browser conversation history is partitioned by account. Ember explains structured results in plain language and never silently changes data. Answers identify periods and assumptions. Missing inputs produce a limitation or setup request.
 
 ## 10. Later: planning depth
 
@@ -313,6 +314,8 @@ CPF and other restricted balances remain distinct from pre retirement liquidity.
 ## 11. Design, architecture, and trust
 
 The FireBuddy mockup is the primary visual reference. Preserve the green identity, warm professional tone, curved headers, restrained gradients, thin borders, rounded surfaces, whitespace, and sentence case. Desktop follows the target sidebar. Tablet and mobile reflow the same hierarchy without changing the four mobile tabs.
+
+The **Current** Ember route is a focused two region reading workspace. Its flexible conversation canvas uses distinct user and cited assistant surfaces with a grounded bottom composer. Searchable local conversation history sits in a right rail from `1180px` and becomes a keyboard accessible right drawer below that width. The dedicated answer guide panel is not part of this layout; essential scope and educational guidance remain visible in the empty state and composer note.
 
 Charts need text summaries, keyboard reachable details, and non color distinctions. Currency defaults to Singapore dollars. Dates and assumptions use plain language.
 
@@ -369,9 +372,9 @@ Evolve category budgets into Spending Plan and add Life Goals.
 
 Add reviewable CSV import, expanded analytics, drilldowns, anomaly depth, and recurring detection.
 
-### Phase 4: Later unified Ember
+### Phase 4: Current routed Ember
 
-Route questions through deterministic analytics, FIRE calculations, scenario results, or Singapore finance RAG.
+The bounded planner, expense tools, financial summary, FIRE projection, financial health review, hybrid RAG path, provenance UI, and account-scoped history are implemented. Supporting-record drilldowns and temporary scenario tools remain later.
 
 ### Phase 5: Later planning depth
 
@@ -428,3 +431,29 @@ Resume claims describe only **Current** implemented and verified functionality.
 > Built a Singapore focused personal finance app with authenticated transaction workflows, a dated asset and liability ledger, deterministic net worth and cash flow summaries, and an explainable FIRE projection, plus Ember, a private hybrid RAG guide over Singapore finance sources.
 
 Spending Plan, Life Goals, CSV import, recurring detection, data aware Ember, and deeper planning remain future portfolio targets until implemented and verified. Public deployment still requires the manual localhost acceptance steps in section 15.2.
+
+## 17. FireBuddy user stories
+
+| Rank | User Story | Priority |
+| --- | --- | --- |
+| 1 | As a user, I want to **add income and expense transactions** so that I can keep track of my finances. | Must |
+| 2 | As a user, I want to **import transactions via CSV** so that I don't have to enter everything manually. | Must |
+| 3 | As a user, I want to see my **monthly income, expenses and savings** so that I can understand my cash flow. | Must |
+| 4 | As a user, I want to see my **current net worth** so that I can understand my overall financial position. | Must |
+| 5 | As a user, I want to **set a FIRE target** so that I have a financial-independence goal to work toward. | Must |
+| 6 | As a user, I want to see my **progress toward my FIRE target** so that I know how close I am to financial independence. | Must |
+| 7 | As a user, I want to see my **spending by category** so that I can understand where my money goes. | Must |
+| 8 | As a user, I want to **ask FireBuddy questions about my financial data in natural language** so that I can easily understand my finances. | Must |
+| 9 | As a user, I want FireBuddy to provide **personalized insights based on my financial data** so that I can improve my FIRE progress. | Must |
+| 10 | As a user, I want to **set monthly/category budgets** so that I can control my spending. | Should |
+| 11 | As a user, I want to see **budget vs actual spending** so that I know whether I'm staying within my budget. | Should |
+| 12 | As a user, I want to see my **net worth over time** so that I can understand my long-term financial progress. | Should |
+| 13 | As a user, I want to **compare spending across different months** so that I can identify changes in my spending habits. | Should |
+| 14 | As a user, I want FireBuddy to **detect duplicate CSV transactions** so that importing files doesn't create duplicate records. | Should |
+| 15 | As a user, I want to **search and filter my transactions** so that I can quickly find specific financial records. | Should |
+| 16 | As a user, I want to **export my transactions to CSV with their assigned tags/categories** so that I can back up, analyze, or reuse my financial data outside FireBuddy. | Should |
+| 17 | As a user, I want to **edit or delete transactions** so that I can correct mistakes in my financial records. | Should |
+| 18 | As a user, I want to **preview transactions before importing a CSV** so that I can verify the data before adding it. | Could |
+| 19 | As a user, I want to receive **warnings when I am approaching or exceeding my budget** so that I can adjust my spending. | Could |
+| 20 | As a user, I want to **adjust my FIRE assumptions** so that my FIRE projections reflect my circumstances. | Could |
+| 21 | As a user, I want FireBuddy to explain **why my spending or savings changed compared with previous months** so that I can understand changes in my financial behaviour. | Could |

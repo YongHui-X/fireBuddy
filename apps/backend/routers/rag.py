@@ -8,10 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from config import settings
 from lib.auth import AuthenticatedUser, bearer_scheme, get_current_user
-from services.rag_service import (
-    answer_financial_advisor_question,
-    stream_financial_advisor_question,
-)
+from services.ember_service import answer_ember_question, stream_ember_question
 from services.rate_limiter import SlidingWindowRateLimiter
 from schemas.rag import AdvisorRequest, AdvisorResponse
 
@@ -88,7 +85,8 @@ def financial_advisor(body: AdvisorRequest, current_user: CurrentUser):
         )
 
     try:
-        return answer_financial_advisor_question(
+        return answer_ember_question(
+            current_user.id,
             body.question,
             body.history,
             body.app_context,
@@ -126,7 +124,8 @@ def financial_advisor_stream(body: AdvisorRequest, current_user: StreamUser):
 
     def generate_events():
         try:
-            for event in stream_financial_advisor_question(
+            for event in stream_ember_question(
+                current_user.id,
                 body.question,
                 body.history,
                 body.app_context,

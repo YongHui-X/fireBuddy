@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  calculateFireProjection,
+  calculateRetirement,
   calculateSavingsRate,
   type CreateWealthContributionInput,
   type CreateWealthPositionInput,
@@ -80,7 +80,7 @@ const FinancialFoundationContext = createContext<FinancialFoundationContextValue
 const demoUserId = '00000000-0000-4000-8000-00000000f100';
 
 function localDate(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 
 function monthsAgo(months: number, day = 1) {
@@ -193,42 +193,42 @@ export function buildDemoFinancialSummary(
   const expenseTotal = periodExpenses.reduce((sum, item) => sum + Math.abs(item.amount), 0);
   const essentialTotal = periodExpenses.filter((item) => essentialIds.includes(item.category)).reduce((sum, item) => sum + Math.abs(item.amount), 0);
   const essentialAverage = completedMonths > 0 && essentialIds.length > 0 ? essentialTotal / completedMonths : null;
-  const annualSpending = scenario.retirementSpending !== undefined
-    ? Number(scenario.retirementSpending) * 12
-    : profile?.retirementSpendingOverride ? Number(profile.retirementSpendingOverride) * 12
-      : completedMonths > 0 ? expenseTotal / completedMonths * 12 : null;
-  const actualPath = [...new Set(snapshots.map((item) => item.valueDate.slice(0, 7)))].sort().map((pathMonth) => {
-    const values = latestByPosition(snapshots, `${pathMonth}-31`);
-    const amount = active.filter((item) => item.positionKind === 'asset' && item.includeInFi)
-      .reduce((sum, item) => sum + Number(values.get(item.id)?.amount ?? 0), 0);
-    return { date: `${pathMonth}-01`, amount: amount.toFixed(2), kind: 'actual' as const };
-  });
-  const fire = calculateFireProjection({
-    effectiveDate: asOf, currentInvestableAssets: investable, annualRetirementSpending: annualSpending,
-    monthlyContribution: Number(scenario.monthlyContribution ?? profile?.monthlyContribution ?? 0),
-    nominalAnnualReturn: Number(profile?.expectedReturnRate ?? 0), inflationRate: Number(profile?.inflationRate ?? 0),
-    withdrawalRate: Number(profile?.withdrawalRate ?? 0), actualPath,
-    targetDate: profile?.targetFiDate,
-    spendingBaseline: profile?.retirementSpendingOverride ? {
-      status: 'manual_override', source: 'manual_override', startDate: null, endDate: null,
-      completedMonths, expenseTotal: expenseTotal.toFixed(2), annualisedSpending: annualSpending?.toFixed(2) ?? null,
-    } : {
-      status: completedMonths === 12 ? 'available' : completedMonths > 0 ? 'limited' : 'insufficient_data', source: completedMonths > 0 ? 'transactions' : 'none',
-      startDate: completedMonths > 0 ? `${baselineStartKey}-01` : null, endDate: completedMonths > 0 ? localDate(completedEnd) : null,
-      completedMonths, expenseTotal: completedMonths ? expenseTotal.toFixed(2) : null,
-      annualisedSpending: annualSpending?.toFixed(2) ?? null,
-    },
-  });
+  const plan = profile?.activePlan ? { ...profile.activePlan, ...scenario.planOverrides,
+    ...(scenario.monthlyContribution !== undefined ? { monthlyContribution: Number(scenario.monthlyContribution) } : {}),
+    ...(scenario.retirementSpending !== undefined ? { monthlySpending: Number(scenario.retirementSpending) } : {}),
+  } : null;
+  const eligible = active.filter(item => item.positionKind === 'asset' && !['cpf', 'property'].includes(item.positionType)
+    && item.restrictionType === 'none' && item.liquidityClass !== 'restricted' && !item.isEmergencyFund && plan?.assetIds.includes(item.id));
+  const completePortfolio = plan && plan.assetIds.every(id => eligible.some(item => item.id === id) && latest.has(id));
+  const spendable = completePortfolio ? eligible.reduce((sum, item) => sum + Number(latest.get(item.id)!.amount), 0) : null;
+  const fire = calculateRetirement(plan, spendable, asOf);
+  if (plan && !plan.portfolioOverride) {
+    fire.actualPath = [...new Set(snapshots.filter(item => item.valueDate <= asOf).map(item => item.valueDate.slice(0, 7)))].sort().flatMap(pathMonth => {
+      const values = latestByPosition(snapshots, pathMonth === month ? asOf : `${pathMonth}-31`);
+      if (!eligible.length || !eligible.every(item => values.has(item.id))) return [];
+      return [{ date: `${pathMonth}-01`, amount: eligible.reduce((sum, item) => sum + Number(values.get(item.id)!.amount), 0).toFixed(2), kind: 'actual' as const }];
+    });
+  }
+  fire.spendingBaseline = {
+    status: completedMonths === 12 ? 'available' : completedMonths > 0 ? 'limited' : 'insufficient_data',
+    source: completedMonths > 0 ? 'transactions' : 'none', startDate: completedMonths > 0 ? `${baselineStartKey}-01` : null,
+    endDate: completedMonths > 0 ? localDate(completedEnd) : null, completedMonths,
+    expenseTotal: completedMonths ? expenseTotal.toFixed(2) : null,
+    annualisedSpending: completedMonths ? (expenseTotal / completedMonths * 12).toFixed(2) : null,
+  };
+  if (completedMonths < 12) fire.warnings.push({ code: 'limited_history', message: 'Fewer than 12 completed months of recorded expenses. Missing records do not prove zero spending.' });
+  const recordedIncome = transactions.filter(item => item.transactionType === 'income' && item.date.slice(0, 7) >= baselineStartKey && item.date.slice(0, 7) < month).reduce((sum, item) => sum + Math.abs(item.amount), 0);
+  if (completedMonths && plan && plan.monthlyContribution > (recordedIncome - expenseTotal) / completedMonths) fire.warnings.push({ code: 'contribution_above_savings', message: 'Confirmed investment contributions exceed recorded average savings. Review affordability and incomplete records.' });
   const snapshotDates = [...latest.values()].map((item) => item.valueDate);
   const stale = snapshotDates.some((value) => (new Date(`${asOf}T00:00:00`).getTime() - new Date(`${value}T00:00:00`).getTime()) / 86_400_000 > 35);
+  if (stale) fire.warnings.push({ code: 'stale_snapshot', message: 'At least one wealth value is older than 35 days.' });
   const snapshotStatus = !complete ? 'missing' : stale ? 'stale' : new Set(snapshotDates).size > 1 ? 'mixed' : 'current';
   let recommendedAction: FinancialSummary['recommendedAction'] = null;
   if (!active.length) recommendedAction = action('add_position', 'Add your first wealth position', 'Net worth needs a dated asset or liability value.', '/wealth', 'foundation.v1.add_position');
   else if (!complete) recommendedAction = action('add_snapshot', 'Complete your wealth values', 'One or more positions has no current value.', '/wealth', 'foundation.v1.missing_snapshot');
   else if (stale) recommendedAction = action('refresh_snapshot', 'Refresh a stale wealth value', 'A value is older than 35 days.', '/wealth', 'foundation.v1.stale_snapshot');
   else if (!active.some((item) => item.isEmergencyFund)) recommendedAction = action('designate_emergency_fund', 'Designate an emergency fund', 'Runway needs one eligible liquid asset.', '/wealth', 'foundation.v1.emergency_fund');
-  else if (!essentialIds.length) recommendedAction = action('select_essentials', 'Choose essential categories', 'Runway needs confirmed essential expenses.', '/fire', 'foundation.v1.essential_categories');
-  else if (!profile) recommendedAction = action('configure_fire', 'Set your FIRE assumptions', 'A projection needs saved assumptions.', '/fire', 'foundation.v1.fire_profile');
+  else if (!essentialIds.length) recommendedAction = action('select_essentials', 'Choose essential categories', 'Runway needs confirmed essential expenses.', '/plan', 'foundation.v1.essential_categories');
   return {
     effectiveDate: asOf, dataMode: 'demo', netWorth: complete ? (assets - liabilities).toFixed(2) : null,
     assetTotal: complete ? assets.toFixed(2) : null, liabilityTotal: complete ? liabilities.toFixed(2) : null,
@@ -336,7 +336,12 @@ export function FinancialFoundationProvider({ children }: { children: ReactNode 
     if (demoMode || session) recordEmberAppAction('delete', 'Deleted a wealth contribution');
   }
   async function updateProfile(input: UpdateFireProfileInput) {
-    if (demoMode) setProfile((current) => ({ id: current?.id ?? newId(), userId: demoUserId, ...input, createdAt: current?.createdAt ?? timestamp(), updatedAt: timestamp() }));
+    if (demoMode) {
+      const next = { id: profile?.id ?? newId(), userId: demoUserId, ...profile, ...input, createdAt: profile?.createdAt ?? timestamp(), updatedAt: timestamp() };
+      // A failed local write must not activate a plan only in memory.
+      window.localStorage.setItem(FIRE_PROFILE_STORAGE_KEY, JSON.stringify(next));
+      setProfile(next);
+    }
     else if (session) { setProfile(await saveFireProfile(session.access_token, input)); await refresh(); }
     if (demoMode || session) recordEmberAppAction('update', 'Updated FIRE assumptions');
   }

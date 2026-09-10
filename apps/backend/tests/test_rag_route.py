@@ -58,7 +58,7 @@ class RagRouteTests(unittest.TestCase):
     def test_returns_successful_advisor_response(self):
         with patch.object(
             rag_router,
-            "answer_financial_advisor_question",
+            "answer_ember_question",
             return_value={
                 "answer": "CPF is Singapore's social security savings system.",
                 "sources": ["CPF"],
@@ -100,7 +100,7 @@ class RagRouteTests(unittest.TestCase):
 
         with patch.object(
             rag_router,
-            "answer_financial_advisor_question",
+            "answer_ember_question",
             return_value={"answer": "Answer", "sources": [], "source_details": []},
         ) as advisor:
             response = self.client.post(
@@ -109,14 +109,15 @@ class RagRouteTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        submitted_history = advisor.call_args.args[1]
+        self.assertEqual(advisor.call_args.args[0], "test-user")
+        submitted_history = advisor.call_args.args[2]
         self.assertEqual(len(submitted_history), 20)
         self.assertEqual(submitted_history[0].content, "first message")
 
     def test_accepts_bounded_interface_context_and_passes_it_to_the_service(self):
         with patch.object(
             rag_router,
-            "answer_financial_advisor_question",
+            "answer_ember_question",
             return_value={"answer": "Answer", "sources": [], "source_details": []},
         ) as advisor:
             response = self.client.post(
@@ -137,7 +138,7 @@ class RagRouteTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        submitted_context = advisor.call_args.args[2]
+        submitted_context = advisor.call_args.args[3]
         self.assertEqual(submitted_context.current_page, "Transactions")
         self.assertEqual(submitted_context.recent_actions[0].label, "Added a transaction")
 
@@ -199,7 +200,7 @@ class RagRouteTests(unittest.TestCase):
     def test_sanitizes_service_failures(self):
         with patch.object(
             rag_router,
-            "answer_financial_advisor_question",
+            "answer_ember_question",
             side_effect=RuntimeError("secret upstream detail"),
         ):
             response = self.client.post(
@@ -253,7 +254,7 @@ class RagRouteTests(unittest.TestCase):
         )
         with patch.object(
             rag_router,
-            "stream_financial_advisor_question",
+            "stream_ember_question",
             return_value=events,
         ):
             response = self.client.post(
@@ -271,7 +272,7 @@ class RagRouteTests(unittest.TestCase):
     def test_stream_sanitizes_service_failures_as_error_event(self):
         with patch.object(
             rag_router,
-            "stream_financial_advisor_question",
+            "stream_ember_question",
             side_effect=RuntimeError("secret upstream detail"),
         ):
             response = self.client.post(

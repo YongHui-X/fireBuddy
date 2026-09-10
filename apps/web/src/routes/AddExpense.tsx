@@ -15,17 +15,19 @@ import { suggestExpenseCategory } from '../api';
 import { AccountSheet } from '../components/AccountSheet';
 import { CategorySheet } from '../components/CategorySheet';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';
+import { TransactionTagSelector } from '../components/TransactionTagSelector';
 
 function AddExpense() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addTransaction, addCategory, addAccount, categories, accounts, session, syncStatus } = useFireBuddy();
+  const { addTransaction, addCategory, addAccount, addTag, categories, accounts, tags, session, syncStatus } = useFireBuddy();
   const [transactionType, setTransactionType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(() => getDeviceDateKey());
   const [category, setCategory] = useState('');
   const [account, setAccount] = useState(accounts[0]?.id ?? '');
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -126,6 +128,7 @@ function AddExpense() {
         date,
         account,
         transactionType,
+        tagIds: selectedTagIds,
       });
       closeAddTransaction();
     } catch (error) {
@@ -272,6 +275,14 @@ function AddExpense() {
               ))}
             </select>
           </div>
+
+          <TransactionTagSelector
+            tags={tags}
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+            onCreate={addTag}
+            disabled={isSaving}
+          />
 
           {saveError ? <p className="form-error add-form-status">{saveError}</p> : null}
 

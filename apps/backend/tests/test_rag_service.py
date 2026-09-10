@@ -53,7 +53,8 @@ class RagServiceTests(unittest.TestCase):
 
         self.assertIn("Current page: FIRE setup", messages[1]["content"])
         self.assertIn("Updated FIRE assumptions", messages[1]["content"])
-        self.assertIn("never claim to have inspected financial records", messages[0]["content"])
+        self.assertIn("never claim that interface activity is financial evidence", messages[0]["content"])
+        self.assertIn("Only a clearly labelled trusted FireBuddy data block", messages[0]["content"])
 
     def test_contextual_retrieval_uses_page_and_generic_action_hints(self):
         app_context = AdvisorAppContext.model_validate({

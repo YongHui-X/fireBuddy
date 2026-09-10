@@ -9,9 +9,11 @@ const mocks = vi.hoisted(() => ({
   addAccount: vi.fn(),
   addCategory: vi.fn(),
   addTransaction: vi.fn(),
+  addTag: vi.fn(),
   suggestExpenseCategory: vi.fn(),
   categories: [] as Array<Record<string, unknown>>,
   accounts: [] as Array<Record<string, unknown>>,
+  tags: [] as Array<Record<string, unknown>>,
 }));
 
 const categories = [
@@ -33,8 +35,10 @@ vi.mock('../app/FireBuddyProvider', async () => {
       addAccount: mocks.addAccount,
       addCategory: mocks.addCategory,
       addTransaction: mocks.addTransaction,
+      addTag: mocks.addTag,
       categories: mocks.categories,
       accounts: mocks.accounts,
+      tags: mocks.tags,
       session: { access_token: 'access-token' },
       syncStatus: 'ready',
     }),
@@ -48,11 +52,13 @@ vi.mock('../api', () => ({
 describe('AddExpense', () => {
   beforeEach(() => {
     mocks.addTransaction.mockReset().mockResolvedValue(undefined);
+    mocks.addTag.mockReset();
     mocks.addAccount.mockReset();
     mocks.addCategory.mockReset();
     mocks.suggestExpenseCategory.mockReset();
     mocks.categories = [...categories];
     mocks.accounts = [...accounts];
+    mocks.tags = [];
   });
 
   it('presents the transaction form as a labelled modal dialog', () => {
@@ -60,6 +66,19 @@ describe('AddExpense', () => {
 
     expect(screen.getByRole('dialog', { name: 'Add transaction' }).getAttribute('aria-modal')).toBe('true');
     expect(document.activeElement).toBe(screen.getByPlaceholderText('Netflix'));
+  });
+
+  it('creates and attaches an inline tag before saving', async () => {
+    mocks.addTag.mockResolvedValue({ id: 'tax-tag', userId: 'user', name: 'Tax', usageCount: 0, createdAt: '', updatedAt: '' });
+    render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'New tag name' }), { target: { value: 'Tax' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    await waitFor(() => expect(mocks.addTag).toHaveBeenCalledWith('Tax'));
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '10' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
+
+    await waitFor(() => expect(mocks.addTransaction).toHaveBeenCalledWith(expect.objectContaining({ tagIds: ['tax-tag'] })));
   });
 
   it('applies an AI suggestion but saves the user override as a negative expense', async () => {

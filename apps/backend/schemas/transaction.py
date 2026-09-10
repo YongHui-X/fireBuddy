@@ -22,6 +22,7 @@ class CreateTransactionRequest(TransactionModel):
     amount: Annotated[Decimal, Field(gt=0, decimal_places=2)]
     date: Date
     transaction_type: TransactionType
+    tag_ids: Annotated[list[UUID], Field(max_length=10)] = Field(default_factory=list)
 
     @field_validator("description")
     @classmethod
@@ -38,6 +39,7 @@ class UpdateTransactionRequest(TransactionModel):
     amount: Annotated[Decimal | None, Field(gt=0, decimal_places=2)] = None
     date: Date | None = None
     transaction_type: TransactionType | None = None
+    tag_ids: Annotated[list[UUID] | None, Field(max_length=10)] = None
 
     @field_validator("description")
     @classmethod
@@ -56,6 +58,8 @@ class UpdateTransactionRequest(TransactionModel):
             raise ValueError("accountId cannot be null")
         if "transaction_type" in self.model_fields_set and self.transaction_type is None:
             raise ValueError("transactionType cannot be null")
+        if "tag_ids" in self.model_fields_set and self.tag_ids is None:
+            raise ValueError("tagIds cannot be null")
         return self
 
 
@@ -70,9 +74,10 @@ class TransactionResponse(TransactionModel):
     transaction_type: TransactionType
     created_at: str
     updated_at: str
+    tag_ids: list[UUID]
 
 
-def serialize_transaction(row: dict[str, Any]) -> TransactionResponse:
+def serialize_transaction(row: dict[str, Any], tag_ids: list[str] | None = None) -> TransactionResponse:
     """Map a stored row to the typed public transaction contract."""
 
     return TransactionResponse(
@@ -86,6 +91,7 @@ def serialize_transaction(row: dict[str, Any]) -> TransactionResponse:
         transactionType=str(row.get("transaction_type") or "expense"),
         createdAt=_serialize_datetime(row.get("created_at")),
         updatedAt=_serialize_datetime(row.get("updated_at")),
+        tagIds=tag_ids or [],
     )
 
 

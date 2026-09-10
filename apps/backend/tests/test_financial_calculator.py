@@ -14,7 +14,7 @@ from services.financial_summary import build_financial_summary, detect_transacti
 
 
 class FinancialCalculatorTests(unittest.TestCase):
-    def test_matches_prd_fi_target_progress_and_required_contribution(self):
+    def test_legacy_inputs_require_review_instead_of_old_formula(self):
         result = project_fire(ProjectionInput(
             effective_date=date(2026, 8, 23),
             current_assets=Decimal("223200"),
@@ -26,10 +26,8 @@ class FinancialCalculatorTests(unittest.TestCase):
             target_date=date(2042, 8, 23),
         ))
 
-        self.assertEqual(result["fiTarget"], "1200000.00")
-        self.assertEqual(result["progressRate"], "0.186000")
-        self.assertAlmostEqual(float(result["requiredMonthlyInvestment"]), 2501, delta=15)
-        self.assertEqual(result["status"], "projected")
+        self.assertIsNone(result["fiTarget"])
+        self.assertEqual(result["fundingStatus"], "review_required")
 
     def test_handles_zero_income_and_unreachable_projection(self):
         self.assertIsNone(calculate_savings_rate(Decimal("0"), Decimal("100")))
@@ -39,15 +37,15 @@ class FinancialCalculatorTests(unittest.TestCase):
             nominal_return=Decimal("-0.20"), inflation_rate=Decimal("0.20"),
             withdrawal_rate=Decimal("0.04"),
         ))
-        self.assertEqual(result["status"], "unreachable")
+        self.assertEqual(result["status"], "insufficient_data")
         self.assertIsNone(result["estimatedFiYear"])
 
     def test_summary_derives_net_worth_pulse_runway_and_action(self):
         positions = [
-            {"id": "cash", "name": "Cash reserve", "position_kind": "asset", "include_in_fi": True, "is_emergency_fund": True, "is_archived": False},
-            {"id": "broker", "name": "Brokerage", "position_kind": "asset", "include_in_fi": True, "is_emergency_fund": False, "is_archived": False},
-            {"id": "home", "name": "Home", "position_kind": "asset", "include_in_fi": False, "is_emergency_fund": False, "is_archived": False},
-            {"id": "mortgage", "name": "Mortgage", "position_kind": "liability", "include_in_fi": False, "is_emergency_fund": False, "is_archived": False},
+            {"id": "cash", "name": "Cash reserve", "position_kind": "asset", "include_in_fi": True, "is_emergency_fund": True, "is_archived": False, "position_type": "investment", "restriction_type": "none", "liquidity_class": "liquid"},
+            {"id": "broker", "name": "Brokerage", "position_kind": "asset", "include_in_fi": True, "is_emergency_fund": False, "is_archived": False, "position_type": "investment", "restriction_type": "none", "liquidity_class": "liquid"},
+            {"id": "home", "name": "Home", "position_kind": "asset", "include_in_fi": False, "is_emergency_fund": False, "is_archived": False, "position_type": "investment", "restriction_type": "none", "liquidity_class": "liquid"},
+            {"id": "mortgage", "name": "Mortgage", "position_kind": "liability", "include_in_fi": False, "is_emergency_fund": False, "is_archived": False, "position_type": "investment", "restriction_type": "none", "liquidity_class": "liquid"},
         ]
         snapshots = [
             {"wealth_position_id": "cash", "value_date": "2026-08-20", "amount": "31200"},

@@ -26,7 +26,7 @@ export function FireBuddyMark({ className = '', size = 36 }: MarkProps) {
   );
 }
 
-/** Render Ember's guided spark as a distinct but related AI sub-brand. */
+/** Keep Ember's small glowing coal subordinate to the FireBuddy identity. */
 export function EmberMark({ className = '', size = 24 }: MarkProps) {
   return (
     <svg
@@ -38,13 +38,10 @@ export function EmberMark({ className = '', size = 24 }: MarkProps) {
       aria-hidden="true"
       focusable="false"
     >
-      <rect width="28" height="28" rx="9" fill="var(--ember-mark-fill, #e0f4d3)" />
       <path
-        d="M13.7 5.2c.7 4.5 2.9 6.7 7.4 7.5-4.5.7-6.7 3-7.4 7.4-.8-4.4-3-6.7-7.5-7.4 4.5-.8 6.7-3 7.5-7.5Z"
-        fill="var(--ember-mark-symbol, #163300)"
+        d="M15 4c1 5-5 6-5 10 0 1 .4 2 1.2 2.7C11 13 15 12 17 9c.2 3.6 5 6.2 5 10a8 8 0 0 1-16 0C6 12 12 10 15 4Z"
+        fill="var(--ember-mark-symbol, #b6532b)"
       />
-      <circle cx="20.7" cy="7.2" r="1.7" fill="var(--ember-mark-accent, #5f9f3d)" />
-      <circle cx="7.2" cy="20.6" r="1.15" fill="var(--ember-mark-accent, #5f9f3d)" />
     </svg>
   );
 }

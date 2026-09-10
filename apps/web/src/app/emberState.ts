@@ -1,4 +1,4 @@
-import type { RagChatMessage, RagChatRole, RagChatSource } from '@firebuddy/shared';
+import type { RagAnswerMode, RagChatMessage, RagChatRole, RagChatSource, RagDataEvidence } from '@firebuddy/shared';
 
 export const EMBER_TOPICS_STORAGE_KEY = 'firebuddy_ember_topics_v3';
 export const EMBER_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_ember_active_topic_v3';
@@ -40,6 +40,8 @@ export interface EmberMessage {
   suggestedQuestions: string[];
   status: EmberMessageStatus;
   streamStatus?: EmberRequestStatus;
+  answerMode?: RagAnswerMode;
+  dataEvidence?: RagDataEvidence;
   error?: EmberMessageError;
 }
 
@@ -85,7 +87,7 @@ export function createEmberId(prefix: string): string {
 export function createEmberMessage(
   role: RagChatRole,
   content: string,
-  options: Partial<Pick<EmberMessage, 'id' | 'createdAt' | 'sources' | 'suggestedQuestions' | 'status' | 'streamStatus' | 'error'>> = {},
+  options: Partial<Pick<EmberMessage, 'id' | 'createdAt' | 'sources' | 'suggestedQuestions' | 'status' | 'streamStatus' | 'answerMode' | 'dataEvidence' | 'error'>> = {},
 ): EmberMessage {
   return {
     id: options.id ?? createEmberId('message'),
@@ -96,6 +98,8 @@ export function createEmberMessage(
     suggestedQuestions: options.suggestedQuestions ?? [],
     status: options.status ?? 'complete',
     ...(options.streamStatus ? { streamStatus: options.streamStatus } : {}),
+    ...(options.answerMode ? { answerMode: options.answerMode } : {}),
+    ...(options.dataEvidence ? { dataEvidence: options.dataEvidence } : {}),
     ...(options.error ? { error: options.error } : {}),
   };
 }
@@ -148,6 +152,17 @@ function isRole(value: unknown): value is RagChatRole {
   return value === 'user' || value === 'assistant';
 }
 
+function normalizeDataEvidence(value: unknown): RagDataEvidence | undefined {
+  if (!isRecord(value)
+    || typeof value.tool !== 'string'
+    || typeof value.label !== 'string'
+    || typeof value.period !== 'string'
+    || typeof value.destination !== 'string') {
+    return undefined;
+  }
+  return value as unknown as RagDataEvidence;
+}
+
 function normalizeSource(value: unknown): EmberSource | null {
   if (typeof value === 'string' && value.trim()) {
     return { title: value.trim() };
@@ -193,6 +208,11 @@ function normalizeStoredMessage(value: unknown): EmberMessage | null {
     ...(value.streamStatus === 'searching' || value.streamStatus === 'preparing'
       ? { streamStatus: value.streamStatus }
       : {}),
+    ...(value.answerMode === 'knowledge' || value.answerMode === 'data' || value.answerMode === 'hybrid'
+      || value.answerMode === 'clarification' || value.answerMode === 'unsupported'
+      ? { answerMode: value.answerMode }
+      : {}),
+    ...(normalizeDataEvidence(value.dataEvidence) ? { dataEvidence: normalizeDataEvidence(value.dataEvidence) } : {}),
     ...(isRecord(value.error) && typeof value.error.message === 'string' && typeof value.error.retryOfMessageId === 'string'
       ? {
           error: {
@@ -341,11 +361,16 @@ function migrateLegacyTopics(rawValue: string | null): EmberTopic[] {
 }
 
 /** Load v3 history first, then copy v2, v1, and legacy histories without removing their keys. */
-export function loadEmberState(storage: Pick<Storage, 'getItem'> = window.localStorage): LoadedEmberState {
+export function loadEmberState(
+  storage: Pick<Storage, 'getItem'> = window.localStorage,
+  userId?: string,
+): LoadedEmberState {
   try {
-    const storedTopics = parseEmberTopics(storage.getItem(EMBER_TOPICS_STORAGE_KEY), EMBER_STORAGE_VERSION);
+    const topicsKey = getEmberAccountStorageKey(EMBER_TOPICS_STORAGE_KEY, userId);
+    const activeKey = getEmberAccountStorageKey(EMBER_ACTIVE_TOPIC_STORAGE_KEY, userId);
+    const storedTopics = parseEmberTopics(storage.getItem(topicsKey), EMBER_STORAGE_VERSION);
     if (storedTopics.length > 0) {
-      const storedActiveId = storage.getItem(EMBER_ACTIVE_TOPIC_STORAGE_KEY);
+      const storedActiveId = storage.getItem(activeKey);
       return {
         topics: storedTopics,
         activeTopicId: storedActiveId && storedTopics.some((topic) => topic.id === storedActiveId)
@@ -353,6 +378,12 @@ export function loadEmberState(storage: Pick<Storage, 'getItem'> = window.localS
           : storedTopics[0].id,
         migratedLegacyHistory: false,
       };
+    }
+
+    // Unscoped legacy history may belong to another account, so authenticated users start isolated.
+    if (userId) {
+      const topic = createEmberTopic();
+      return { topics: [topic], activeTopicId: topic.id, migratedLegacyHistory: false };
     }
 
     const migratedV2Topics = parseEmberTopics(storage.getItem(LEGACY_V2_EMBER_TOPICS_STORAGE_KEY), 2);
@@ -399,7 +430,16 @@ export function loadEmberState(storage: Pick<Storage, 'getItem'> = window.localS
 }
 
 /** Persist the current Ember topic shape under its versioned storage key. */
-export function saveEmberTopics(storage: Pick<Storage, 'setItem'>, topics: EmberTopic[]): void {
+export function saveEmberTopics(
+  storage: Pick<Storage, 'setItem'>,
+  topics: EmberTopic[],
+  userId?: string,
+): void {
   const payload: EmberStoragePayload = { version: EMBER_STORAGE_VERSION, topics };
-  storage.setItem(EMBER_TOPICS_STORAGE_KEY, JSON.stringify(payload));
+  storage.setItem(getEmberAccountStorageKey(EMBER_TOPICS_STORAGE_KEY, userId), JSON.stringify(payload));
+}
+
+/** Scope sensitive conversation history to one authenticated browser account. */
+export function getEmberAccountStorageKey(baseKey: string, userId?: string): string {
+  return userId ? `${baseKey}:${userId}` : baseKey;
 }

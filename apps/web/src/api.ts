@@ -17,8 +17,14 @@ import {
   type RagChatRequest,
   type RagChatResponse,
   type RagChatSource,
+  type RagAnswerMode,
+  type RagDataEvidence,
   type RagStreamStatus,
   type Transaction,
+  type Tag,
+  type CreateTagInput,
+  type UpdateTagInput,
+  type TransactionExportFilters,
   type UpdateCategoryInput,
   type UpdateAccountInput,
   type UpdateTransactionInput,
@@ -38,6 +44,7 @@ export interface RagStreamHandlers {
   onStatus: (status: RagStreamStatus, message: string) => void;
   onDelta: (text: string) => void;
   onSources: (sources: RagChatSource[]) => void;
+  onEvidence?: (mode: RagAnswerMode, evidence: RagDataEvidence) => void;
   onDone?: () => void;
 }
 
@@ -114,6 +121,37 @@ export function getCategories(token: string) {
 
 export function getTransactions(token: string) {
   return request<Transaction[]>(apiRoutes.transactions, token);
+}
+
+export function getTags(token: string) {
+  return request<Tag[]>(apiRoutes.tags, token);
+}
+
+export function createTag(token: string, input: CreateTagInput) {
+  return request<Tag>(apiRoutes.tags, token, { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateTag(token: string, id: string, input: UpdateTagInput) {
+  return request<Tag>(`${apiRoutes.tags}/${id}`, token, { method: 'PUT', body: JSON.stringify(input) });
+}
+
+export function deleteTag(token: string, id: string) {
+  return request<void>(`${apiRoutes.tags}/${id}?confirm=true`, token, { method: 'DELETE' });
+}
+
+/** Download an authenticated export while preserving the backend filename. */
+export async function exportTransactions(token: string, filters: TransactionExportFilters = {}) {
+  const query = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) query.set(key, String(value));
+  });
+  const response = await fetch(`${API_BASE_URL}${apiRoutes.transactionExport}${query.size ? `?${query}` : ''}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'text/csv' },
+  });
+  if (!response.ok) throw await readApiError(response);
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? 'firebuddy-transactions.csv';
+  return { blob: await response.blob(), filename };
 }
 
 export function getAccounts(token: string) {
@@ -317,6 +355,8 @@ export async function streamFinancialAdvisor(
       handlers.onStatus(data.status, typeof data.message === 'string' ? data.message : 'Working');
     } else if (eventName === 'delta' && typeof data.text === 'string') {
       handlers.onDelta(data.text);
+    } else if (eventName === 'evidence' && typeof data.mode === 'string' && data.dataEvidence) {
+      handlers.onEvidence?.(data.mode as RagAnswerMode, data.dataEvidence as RagDataEvidence);
     } else if (eventName === 'sources' && Array.isArray(data.sources)) {
       handlers.onSources(data.sources as RagChatSource[]);
     } else if (eventName === 'done') {

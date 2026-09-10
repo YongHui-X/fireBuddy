@@ -1,5 +1,7 @@
 export const apiRoutes = {
   transactions: '/transactions',
+  transactionExport: '/transactions/export',
+  tags: '/tags',
   expenses: '/expenses',
   categories: '/categories',
   accounts: '/accounts',

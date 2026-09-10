@@ -89,7 +89,9 @@ def build_answer_messages(
             "role": "system",
             "content": (
                 "You are Ember, FireBuddy's educational Singapore finance guide. "
-                "Answer only using the retrieved context. If the context "
+                "Answer only using the supplied evidence context. It may contain "
+                "trusted FireBuddy aggregates calculated by the backend, curated "
+                "educational sources, or both. If the context "
                 "does not contain enough evidence, say that clearly. Do "
                 "not invent facts, URLs, rates, dates, or source names. "
                 "Preserve numeric values and formulas exactly as they "
@@ -103,13 +105,15 @@ def build_answer_messages(
                 "rate. Never join repeated OW and AW rates with a plus "
                 "sign because that falsely implies they should be added. "
                 "Answer only the breakdowns the question asks for. "
-                "Do not give personalized financial advice; provide "
-                "general educational information only. Do not include "
+                "You may explain the user's supplied FireBuddy aggregates, but do "
+                "not recommend specific financial products or present projections "
+                "as guarantees. Do not include "
                 "source numbers in the answer; citations are returned "
                 "separately by the API. Interface context contains only "
                 "page and generic activity labels. Use it to tailor emphasis, "
-                "but never claim to have inspected financial records, infer "
-                "values, or treat interface activity as financial evidence."
+                "but never claim that interface activity is financial evidence. "
+                "Only a clearly labelled trusted FireBuddy data block may support "
+                "claims about the user's records."
             ),
         },
         {
@@ -118,7 +122,7 @@ def build_answer_messages(
                 history_block
                 + app_context_block
                 + f"Question:\n{question}\n\n"
-                + f"Retrieved context:\n{context}\n\n"
+                + f"Evidence context:\n{context}\n\n"
                 + "Write a concise answer without source-number citations."
             ),
         },
@@ -384,6 +388,7 @@ def generate_grounded_answer(
     response = client.chat.completions.create(
         model=ANSWER_MODEL,
         temperature=0.2,
+        store=False,
         messages=build_answer_messages(
             question,
             context,
@@ -408,6 +413,7 @@ def stream_grounded_answer(
     response = client.chat.completions.create(
         model=ANSWER_MODEL,
         temperature=0.2,
+        store=False,
         messages=build_answer_messages(
             question,
             context,

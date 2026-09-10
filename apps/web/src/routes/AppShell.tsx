@@ -1,16 +1,34 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType, type FormEvent } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router';
 import type { Session } from '@supabase/supabase-js';
-import { type TransactionType } from '@firebuddy/shared';
+import { type TransactionExportFilters, type TransactionType } from '@firebuddy/shared';
 import {
   ArrowLeftRight,
   ArrowUpRight,
   Banknote,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronsUpDown,
   CircleHelp,
   ClipboardList,
+  Copy,
+  Download,
+  Ellipsis,
   Filter,
   Flag,
   Grid2X2,
@@ -23,6 +41,7 @@ import {
   Search,
   Sun,
   Trash2,
+  Tags as TagsIcon,
   TrendingUp,
   User,
   Wallet,
@@ -39,25 +58,33 @@ import {
   formatSGD,
   getAccountMeta,
   getCategoryIcon,
-  getDeviceDateKey,
   getDeviceMonthKey,
+  getDeviceDateKey,
   polarPoint,
   sortTransactionsNewestFirst,
   useFireBuddy,
   type Account,
   type Category,
   type Transaction,
+  type Tag,
 } from '../app/FireBuddyProvider';
+import { exportTransactions as exportApiTransactions } from '../api';
+import { buildTransactionCsv, downloadCsvBlob, filterLocalExportTransactions, getTransactionExportFilename } from '../app/transactionExport';
 import { EmberMark, FireBuddyMark } from '../app/BrandMarks';
 import { getDisplayName } from '../app/displayName';
 import { AppUtilityActions } from '../components/AppUtilityActions';
 import { CategorySheet } from '../components/CategorySheet';
 import { EmberFloatingAssistant } from '../components/EmberFloatingAssistant';
 import { PageToolbar } from '../components/PageToolbar';
+import { TagManagerDialog } from '../components/TagManagerDialog';
+import { TransactionExportDialog, type TransactionExportScope } from '../components/TransactionExportDialog';
+import { TransactionTagSelector } from '../components/TransactionTagSelector';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';
 import Accounts from './Accounts';
 import Dashboard from './Dashboard';
 import FireSetup from './FireSetup';
+import FirePlanner from './FirePlanner';
+import SpendingPlan from './SpendingPlan';
 import PlaceholderPage from './PlaceholderPage';
 import Profile from './Profile';
 import Wealth from './Wealth';
@@ -70,6 +97,7 @@ const desktopNavItems = [
   { path: '/categories', icon: Grid2X2, label: 'Categories' },
   { path: '/plan', icon: ClipboardList, label: 'Plan' },
   { path: '/goals', icon: Flag, label: 'Goals' },
+  { path: '/fire', icon: TrendingUp, label: 'FIRE Planner' },
   { path: '/profile', icon: User, label: 'Profile' },
 ] as const;
 const mobileNavItems = desktopNavItems.filter((item) => ['/', '/transactions', '/categories', '/profile'].includes(item.path));
@@ -198,8 +226,9 @@ function Layout() {
               <Route path="analytics" element={<Navigate to="/insights" replace />} />
               <Route path="accounts" element={<Accounts />} />
               <Route path="wealth" element={<Wealth />} />
-              <Route path="fire" element={<FireSetup />} />
-              <Route path="plan" element={<PlaceholderPage kind="plan" />} />
+              <Route path="fire" element={<FirePlanner />} />
+              <Route path="fire/setup" element={<FireSetup />} />
+              <Route path="plan" element={<SpendingPlan />} />
               <Route path="goals" element={<PlaceholderPage kind="goals" />} />
               <Route path="ember" element={(
                 <Suspense fallback={<EmberFallback />}>
@@ -374,7 +403,7 @@ function MobileTopbar() {
             <NavLink to="/insights">Insights</NavLink>
             <NavLink to="/accounts">Accounts</NavLink>
             <NavLink to="/wealth">Wealth</NavLink>
-            <NavLink to="/fire">FIRE setup</NavLink>
+            <NavLink to="/fire">FIRE Planner</NavLink>
             <NavLink to="/plan">Plan</NavLink>
             <NavLink to="/goals">Goals</NavLink>
           </nav>
@@ -410,10 +439,12 @@ function LegacyDashboardReference() {
     transactions,
     accounts,
     categories,
+    tags,
     session,
     syncStatus,
     updateTransaction,
     deleteTransaction,
+    addTag,
     getCategoryById,
     getAccountById,
     themeMode,
@@ -602,9 +633,11 @@ function LegacyDashboardReference() {
           transaction={activeEditingTransaction}
           accounts={accounts}
           categories={categories}
+          tags={tags}
           session={session}
           syncStatus={syncStatus}
           onClose={() => setEditingTransaction(null)}
+          onCreateTag={addTag}
           onSave={async (updates) => {
             await updateTransaction(activeEditingTransaction.id, updates);
             setEditingTransaction(null);
@@ -756,6 +789,117 @@ function TransactionRow({
   return <article className={className}>{content}</article>;
 }
 
+type TransactionSortKey = 'date' | 'description' | 'category' | 'account' | 'type' | 'amount';
+type SortDirection = 'asc' | 'desc';
+
+type TransactionSort = {
+  key: TransactionSortKey;
+  direction: SortDirection;
+};
+
+type TransactionActionMenuState = {
+  transaction: Transaction;
+  top: number;
+  left: number;
+};
+
+const transactionSortLabels: Record<TransactionSortKey, string> = {
+  date: 'Date',
+  description: 'Description',
+  category: 'Category',
+  account: 'Account',
+  type: 'Type',
+  amount: 'Amount',
+};
+
+/** List every transaction month plus the current device month, newest first. */
+function getTransactionMonthOptions(transactions: Transaction[], latestMonth: string) {
+  const months = new Set([latestMonth]);
+  transactions.forEach((transaction) => {
+    const month = transaction.date.slice(0, 7);
+    if (/^\d{4}-\d{2}$/.test(month)) {
+      months.add(month);
+    }
+  });
+  return [...months].sort((left, right) => right.localeCompare(left));
+}
+
+/** Move between available transaction months without crossing the list ends. */
+function getAdjacentTransactionMonth(
+  months: string[],
+  selectedMonth: string,
+  direction: 'older' | 'newer',
+) {
+  const selectedIndex = months.indexOf(selectedMonth);
+  if (selectedIndex < 0) return selectedMonth;
+  const nextIndex = direction === 'older' ? selectedIndex + 1 : selectedIndex - 1;
+  return months[nextIndex] ?? selectedMonth;
+}
+
+/** Match a transaction against the selected month or inclusive custom date range. */
+function matchesTransactionDateRange(
+  transaction: Transaction,
+  selectedMonth: string,
+  startDate: string,
+  endDate: string,
+) {
+  if (!startDate && !endDate) {
+    return transaction.date.startsWith(selectedMonth);
+  }
+
+  return (!startDate || transaction.date >= startDate) && (!endDate || transaction.date <= endDate);
+}
+
+/** Sort table rows by the selected display column using resolved category and account labels. */
+function sortTransactionTableRows(
+  rows: Array<{ transaction: Transaction; category?: Category; account?: Account }>,
+  sort: TransactionSort,
+) {
+  const direction = sort.direction === 'asc' ? 1 : -1;
+
+  return [...rows].sort((left, right) => {
+    let comparison = 0;
+
+    if (sort.key === 'amount') {
+      comparison = Math.abs(left.transaction.amount) - Math.abs(right.transaction.amount);
+    } else {
+      const leftValue = getTransactionSortValue(left, sort.key);
+      const rightValue = getTransactionSortValue(right, sort.key);
+      comparison = leftValue.localeCompare(rightValue, 'en-SG', { sensitivity: 'base', numeric: true });
+    }
+
+    if (comparison === 0) {
+      comparison = right.transaction.date.localeCompare(left.transaction.date);
+    }
+
+    return comparison * direction;
+  });
+}
+
+function getTransactionSortValue(
+  row: { transaction: Transaction; category?: Category; account?: Account },
+  key: Exclude<TransactionSortKey, 'amount'>,
+) {
+  if (key === 'date') return row.transaction.date;
+  if (key === 'description') return row.transaction.description;
+  if (key === 'category') return row.category?.name ?? 'Category';
+  if (key === 'account') return row.account ? accountTypeLabel(row.account.type) : 'Account';
+  return row.transaction.transactionType;
+}
+
+function formatMonthOptionLabel(month: string) {
+  return new Date(`${month}-01T00:00:00`).toLocaleDateString('en-SG', { month: 'long', year: 'numeric' });
+}
+
+/** Format a transaction date without relative labels for the details dialog. */
+function formatTransactionFullDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-SG', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 function MiniCategoryChart() {
   const { transactions, categories } = useFireBuddy();
   const chartData = categories
@@ -841,20 +985,40 @@ function Transactions() {
     transactions,
     accounts,
     categories,
+    tags,
     session,
     syncStatus,
+    addTransaction,
     updateTransaction,
     deleteTransaction,
+    addTag,
+    updateTag,
+    deleteTag,
     getCategoryById,
     getAccountById,
+    notify,
   } = useFireBuddy();
-  const initialSearchQuery = new URLSearchParams(location.search).get('search') ?? '';
+  const initialParams = new URLSearchParams(location.search);
+  const initialSearchQuery = initialParams.get('search') ?? '';
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
-  const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month'>('all');
+  const [selectedType, setSelectedType] = useState<TransactionType | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const latestMonth = getDeviceMonthKey();
+  const requestedMonth = initialParams.get('month');
+  const [selectedMonth, setSelectedMonth] = useState(requestedMonth && /^\d{4}-\d{2}$/.test(requestedMonth) ? requestedMonth : latestMonth);
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [sort, setSort] = useState<TransactionSort>({ key: 'date', direction: 'desc' });
+  const [openTransactionMenu, setOpenTransactionMenu] = useState<TransactionActionMenuState | null>(null);
+  const [duplicatingTransactionId, setDuplicatingTransactionId] = useState<string | null>(null);
+  const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
+  const [showTagManager, setShowTagManager] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const dismissedRequestedTransactionId = useRef<string | null>(null);
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
   const [transactionDeleteError, setTransactionDeleteError] = useState<string | null>(null);
   const transactionDeleteDialogRef = useAccessibleDialog<HTMLElement>({
@@ -862,52 +1026,143 @@ function Transactions() {
     canClose: !isDeletingTransaction,
     onClose: () => setDeletingTransaction(null),
   });
+  const transactionDetailsDialogRef = useAccessibleDialog<HTMLElement>({
+    isOpen: Boolean(viewingTransaction),
+    onClose: closeTransactionDetails,
+  });
+  const transactionMonthOptions = useMemo(
+    () => getTransactionMonthOptions(transactions, latestMonth),
+    [latestMonth, transactions],
+  );
+  const selectedMonthIndex = transactionMonthOptions.indexOf(selectedMonth);
+  const isCustomRangeMode = Boolean(customStartDate || customEndDate);
+  const requestedTransactionId = new URLSearchParams(location.search).get('transactionId');
 
-  const filteredTransactions = useMemo(() => {
-    const currentMonthKey = getDeviceMonthKey();
-    const weekAgo = new Date(`${getDeviceDateKey()}T00:00:00`);
-    weekAgo.setDate(weekAgo.getDate() - 7);
+  /** Close transaction details and keep the remaining transaction filters in the URL. */
+  function closeTransactionDetails() {
+    dismissedRequestedTransactionId.current = requestedTransactionId;
+    setViewingTransaction(null);
+    const params = new URLSearchParams(location.search);
+    params.delete('transactionId');
+    navigate({ pathname: location.pathname, search: params.size ? `?${params.toString()}` : '' }, { replace: true });
+  }
 
-    return sortTransactionsNewestFirst(transactions).filter((transaction) => {
-      const category = getCategoryById(transaction.category);
-      const account = transaction.account ? getAccountById(transaction.account) : undefined;
-      const normalizedQuery = searchQuery.toLowerCase();
-      const matchesSearch =
-        !normalizedQuery ||
-        transaction.description.toLowerCase().includes(normalizedQuery) ||
-        category?.name.toLowerCase().includes(normalizedQuery) ||
-        account?.name.toLowerCase().includes(normalizedQuery);
-      const matchesCategory = !selectedCategory || transaction.category === selectedCategory;
-      const matchesAccount = !selectedAccount || transaction.account === selectedAccount;
-      const transactionDate = new Date(`${transaction.date}T00:00:00`);
-      const matchesDate =
-        dateFilter === 'all' ||
-        (dateFilter === 'month' && transaction.date.startsWith(currentMonthKey)) ||
-        (dateFilter === 'week' && transactionDate >= weekAgo);
+  useEffect(() => {
+    if ((syncStatus === 'ready' || !session) && !transactionMonthOptions.includes(selectedMonth)) {
+      setSelectedMonth(transactionMonthOptions[0] ?? latestMonth);
+    }
+  }, [latestMonth, selectedMonth, session, syncStatus, transactionMonthOptions]);
 
-      return matchesSearch && matchesCategory && matchesAccount && matchesDate;
-    });
-  }, [dateFilter, getAccountById, getCategoryById, searchQuery, selectedAccount, selectedCategory, transactions]);
+  useEffect(() => {
+    if (!requestedTransactionId) {
+      dismissedRequestedTransactionId.current = null;
+      return;
+    }
+    if (dismissedRequestedTransactionId.current === requestedTransactionId) return;
+    const requestedTransaction = transactions.find((transaction) => transaction.id === requestedTransactionId);
+    if (requestedTransaction) {
+      setSelectedMonth(requestedTransaction.date.slice(0, 7));
+      setViewingTransaction((current) => current?.id === requestedTransaction.id ? current : requestedTransaction);
+      return;
+    }
+    if (syncStatus === 'ready' || !session) {
+      notify('That transaction is no longer available.');
+      const params = new URLSearchParams(location.search);
+      params.delete('transactionId');
+      navigate({ pathname: location.pathname, search: params.size ? `?${params.toString()}` : '' }, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate, notify, requestedTransactionId, session, syncStatus, transactions]);
 
-  const groupedTransactions = useMemo(() => {
-    const groups = new Map<string, Transaction[]>();
-    filteredTransactions.forEach((transaction) => {
-      groups.set(transaction.date, [...(groups.get(transaction.date) ?? []), transaction]);
-    });
-    return Array.from(groups.entries()).sort((left, right) => right[0].localeCompare(left[0]));
-  }, [filteredTransactions]);
+  useEffect(() => {
+    if (!openTransactionMenu) {
+      return undefined;
+    }
 
-  const monthTotal = filteredTransactions
-    .filter((transaction) => transaction.transactionType === 'expense')
-    .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
-  const incomeTotal = filteredTransactions
-    .filter((transaction) => transaction.transactionType === 'income')
-    .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
+    const menuId = `transaction-action-menu-${openTransactionMenu.transaction.id}`;
+    const triggerId = `transaction-action-trigger-${openTransactionMenu.transaction.id}`;
+
+    function closeMenuOnOutsidePointer(event: PointerEvent) {
+      const target = event.target;
+      const menu = document.getElementById(menuId);
+      const trigger = document.getElementById(triggerId);
+      if (target instanceof Node && (menu?.contains(target) || trigger?.contains(target))) {
+        return;
+      }
+      setOpenTransactionMenu(null);
+    }
+
+    function closeMenuOnEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape') {
+        return;
+      }
+      event.preventDefault();
+      setOpenTransactionMenu(null);
+      document.getElementById(triggerId)?.focus();
+    }
+
+    function closeMenuOnViewportChange() {
+      setOpenTransactionMenu(null);
+    }
+
+    document.addEventListener('pointerdown', closeMenuOnOutsidePointer);
+    document.addEventListener('keydown', closeMenuOnEscape);
+    window.addEventListener('resize', closeMenuOnViewportChange);
+    window.addEventListener('scroll', closeMenuOnViewportChange, true);
+    return () => {
+      document.removeEventListener('pointerdown', closeMenuOnOutsidePointer);
+      document.removeEventListener('keydown', closeMenuOnEscape);
+      window.removeEventListener('resize', closeMenuOnViewportChange);
+      window.removeEventListener('scroll', closeMenuOnViewportChange, true);
+    };
+  }, [openTransactionMenu]);
+
+  const filteredTransactionRows = useMemo(() => {
+    const rows = transactions
+      .map((transaction) => ({
+        transaction,
+        category: getCategoryById(transaction.category),
+        account: transaction.account ? getAccountById(transaction.account) : undefined,
+      }))
+      .filter((row) => {
+        const { transaction, category, account } = row;
+        const normalizedQuery = searchQuery.toLowerCase();
+        const matchesSearch =
+          !normalizedQuery ||
+          transaction.description.toLowerCase().includes(normalizedQuery) ||
+          category?.name.toLowerCase().includes(normalizedQuery) ||
+          account?.name.toLowerCase().includes(normalizedQuery);
+        const matchesCategory = !selectedCategory || transaction.category === selectedCategory;
+        const matchesAccount = !selectedAccount || transaction.account === selectedAccount;
+        const matchesType = !selectedType || transaction.transactionType === selectedType;
+        const matchesTag = !selectedTag || (transaction.tagIds ?? []).includes(selectedTag);
+        const matchesDate = matchesTransactionDateRange(transaction, selectedMonth, customStartDate, customEndDate);
+
+        return matchesSearch && matchesCategory && matchesAccount && matchesType && matchesTag && matchesDate;
+      });
+
+    return sortTransactionTableRows(rows, sort);
+  }, [customEndDate, customStartDate, getAccountById, getCategoryById, searchQuery, selectedAccount, selectedCategory, selectedMonth, selectedTag, selectedType, sort, transactions]);
+
+  const tagUsageCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    transactions.forEach((transaction) => (transaction.tagIds ?? []).forEach((tagId) => counts.set(tagId, (counts.get(tagId) ?? 0) + 1)));
+    return counts;
+  }, [transactions]);
+
+  const expenseTotal = filteredTransactionRows
+    .filter((row) => row.transaction.transactionType === 'expense')
+    .reduce((total, row) => total + Math.abs(row.transaction.amount), 0);
+  const incomeTotal = filteredTransactionRows
+    .filter((row) => row.transaction.transactionType === 'income')
+    .reduce((total, row) => total + Math.abs(row.transaction.amount), 0);
   const activeEditingTransaction = editingTransaction
     ? transactions.find((transaction) => transaction.id === editingTransaction.id) ?? editingTransaction
     : null;
   const activeDeletingTransaction = deletingTransaction
     ? transactions.find((transaction) => transaction.id === deletingTransaction.id) ?? deletingTransaction
+    : null;
+  const activeViewingTransaction = viewingTransaction
+    ? transactions.find((transaction) => transaction.id === viewingTransaction.id) ?? viewingTransaction
     : null;
 
   async function confirmTransactionDelete() {
@@ -933,7 +1188,116 @@ function Transactions() {
     setSearchQuery('');
     setSelectedCategory(null);
     setSelectedAccount(null);
-    setDateFilter('all');
+    setSelectedType(null);
+    setSelectedTag(null);
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setSelectedMonth(latestMonth);
+    setSort({ key: 'date', direction: 'desc' });
+  }
+
+  /** Export from the server when signed in and use an identical local CSV in demo mode. */
+  async function exportTransactionHistory(scope: TransactionExportScope) {
+    const filteredDates = isCustomRangeMode
+      ? { ...(customStartDate ? { startDate: customStartDate } : {}), ...(customEndDate ? { endDate: customEndDate } : {}) }
+      : {
+          startDate: `${selectedMonth}-01`,
+          endDate: getDeviceDateKey(new Date(Number(selectedMonth.slice(0, 4)), Number(selectedMonth.slice(5, 7)), 0)),
+        };
+    const filters: TransactionExportFilters = scope === 'filtered' ? {
+      ...filteredDates,
+      ...(selectedType ? { transactionType: selectedType } : {}),
+      ...(selectedCategory ? { categoryId: selectedCategory } : {}),
+      ...(selectedAccount ? { accountId: selectedAccount } : {}),
+      ...(selectedTag ? { tagId: selectedTag } : {}),
+      ...(searchQuery.trim() ? { search: searchQuery.trim() } : {}),
+    } : {};
+    if (session) {
+      const result = await exportApiTransactions(session.access_token, filters);
+      downloadCsvBlob(result.blob, result.filename);
+    } else {
+      const selectedTransactions = filterLocalExportTransactions(transactions, categories, accounts, filters);
+      downloadCsvBlob(new Blob([buildTransactionCsv(selectedTransactions, categories, accounts, tags)], { type: 'text/csv;charset=utf-8' }), getTransactionExportFilename(filters));
+    }
+  }
+
+  function changeSort(nextKey: TransactionSortKey) {
+    setSort((current) => ({
+      key: nextKey,
+      direction: current.key === nextKey && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  }
+
+  /** Position the row action menu in the viewport so table overflow cannot clip it. */
+  function toggleTransactionActionMenu(event: ReactMouseEvent<HTMLButtonElement>, transaction: Transaction) {
+    if (openTransactionMenu?.transaction.id === transaction.id) {
+      setOpenTransactionMenu(null);
+      return;
+    }
+
+    const menuWidth = 184;
+    const menuHeight = 132;
+    const viewportGap = 8;
+    const triggerRect = event.currentTarget.getBoundingClientRect();
+    const top = window.innerHeight - triggerRect.bottom >= menuHeight + viewportGap
+      ? triggerRect.bottom + 6
+      : Math.max(viewportGap, triggerRect.top - menuHeight - 6);
+    const left = Math.min(
+      Math.max(viewportGap, triggerRect.right - menuWidth),
+      window.innerWidth - menuWidth - viewportGap,
+    );
+
+    setOpenTransactionMenu({ transaction, top, left });
+    window.setTimeout(() => {
+      document.getElementById(`transaction-action-menu-${transaction.id}`)
+        ?.querySelector<HTMLElement>('[role="menuitem"]')
+        ?.focus();
+    }, 0);
+  }
+
+  /** Keep arrow-key movement contained within the open transaction action menu. */
+  function handleTransactionMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+
+    const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)'));
+    if (!items.length) {
+      return;
+    }
+
+    event.preventDefault();
+    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+    let nextIndex = 0;
+    if (event.key === 'End') nextIndex = items.length - 1;
+    if (event.key === 'ArrowDown') nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+    if (event.key === 'ArrowUp') nextIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+    items[nextIndex]?.focus();
+  }
+
+  /** Create an independent transaction using the selected row's current values. */
+  async function duplicateTransaction(transaction: Transaction) {
+    if (duplicatingTransactionId) {
+      return;
+    }
+
+    setDuplicatingTransactionId(transaction.id);
+    try {
+      await addTransaction({
+        description: transaction.description,
+        amount: transaction.amount,
+        category: transaction.category,
+        date: transaction.date,
+        account: transaction.account,
+        transactionType: transaction.transactionType,
+        tagIds: transaction.tagIds ?? [],
+      });
+      setOpenTransactionMenu(null);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Unable to duplicate transaction.');
+    } finally {
+      setDuplicatingTransactionId(null);
+    }
   }
 
   return (
@@ -942,6 +1306,12 @@ function Transactions() {
         title="Transactions"
         description="Review income and expenses across your accounts."
         actions={<>
+          <button className="secondary-button" type="button" onClick={() => setShowTagManager(true)}>
+            <TagsIcon size={15} /> Manage tags
+          </button>
+          <button className="secondary-button" type="button" onClick={() => setShowExportDialog(true)}>
+            <Download size={15} /> Export CSV
+          </button>
           <button className="secondary-button" type="button" onClick={() => navigate('/accounts')}>
             <Wallet size={15} /> Accounts
           </button>
@@ -956,39 +1326,81 @@ function Transactions() {
       />
 
       <section className="screen-content">
-        <div className="page-filter-toolbar">
-        <label className="search-field">
-          <Search size={18} />
-          <input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search transactions..."
-            type="search"
-          />
-          {searchQuery ? (
-            <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search">
-              <X size={16} />
-            </button>
-          ) : null}
-        </label>
-
-        <div className="filter-row">
-          {(['all', 'month', 'week'] as const).map((filter) => (
+        <div className="transactions-period-panel">
+          <div>
+            <span>Reporting period</span>
+            <strong>{isCustomRangeMode ? 'Custom range' : formatMonthOptionLabel(selectedMonth)}</strong>
+          </div>
+          <div className="dashboard-period transactions-period" role="group" aria-label="Transaction reporting period controls">
             <button
-              className={`filter-chip ${dateFilter === filter ? 'filter-chip-active' : ''}`}
-              key={filter}
               type="button"
-              onClick={() => setDateFilter(filter)}
+              aria-label="Show previous month"
+              disabled={selectedMonthIndex === transactionMonthOptions.length - 1}
+              onClick={() => setSelectedMonth(getAdjacentTransactionMonth(transactionMonthOptions, selectedMonth, 'older'))}
             >
-              {filter}
+              <ChevronLeft size={16} />
             </button>
-          ))}
+            <label className="dashboard-period-picker">
+              <select
+                aria-label="Transaction reporting period"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+              >
+                {transactionMonthOptions.map((month) => (
+                  <option key={month} value={month}>{formatMonthOptionLabel(month)}</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              aria-label="Show next month"
+              disabled={selectedMonthIndex <= 0}
+              onClick={() => setSelectedMonth(getAdjacentTransactionMonth(transactionMonthOptions, selectedMonth, 'newer'))}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
+
+        <div className="page-filter-toolbar">
+          <label className="search-field">
+            <Search size={18} />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search transactions..."
+              type="search"
+            />
+            {searchQuery ? (
+              <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search">
+                <X size={16} />
+              </button>
+            ) : null}
+          </label>
+
+          <div className="transaction-date-range" aria-label="Custom date range">
+            <label>
+              <span>Start date</span>
+              <input type="date" value={customStartDate} onChange={(event) => setCustomStartDate(event.target.value)} />
+            </label>
+            <label>
+              <span>End date</span>
+              <input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} />
+            </label>
+            {isCustomRangeMode ? (
+              <button className="secondary-button" type="button" onClick={() => {
+                setCustomStartDate('');
+                setCustomEndDate('');
+              }}>
+                Clear dates
+              </button>
+            ) : null}
+          </div>
         </div>
         <article className="summary-strip">
           <div className="summary-expense">
             <span>Filtered expenses</span>
-            <strong className="amount-negative">- {formatSGD(monthTotal)}</strong>
+            <strong className="amount-negative">- {formatSGD(expenseTotal)}</strong>
           </div>
           <div className="summary-income">
             <span>Filtered income</span>
@@ -997,6 +1409,14 @@ function Transactions() {
         </article>
 
         <div className="select-filter-grid">
+          <label>
+            <span>Type</span>
+            <select value={selectedType ?? ''} onChange={(event) => setSelectedType((event.target.value || null) as TransactionType | null)}>
+              <option value="">All types</option>
+              <option value="expense">Expenses</option>
+              <option value="income">Income</option>
+            </select>
+          </label>
           <label>
             <span>Category</span>
             <select value={selectedCategory ?? ''} onChange={(event) => setSelectedCategory(event.target.value || null)}>
@@ -1019,34 +1439,137 @@ function Transactions() {
               ))}
             </select>
           </label>
+          <label>
+            <span>Tag</span>
+            <select value={selectedTag ?? ''} onChange={(event) => setSelectedTag(event.target.value || null)}>
+              <option value="">All tags</option>
+              {tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
+            </select>
+          </label>
         </div>
 
-        <div className="grouped-list">
-          {groupedTransactions.length ? groupedTransactions.map(([date, dateTransactions]) => (
-            <section key={date}>
-              <p className="date-label">{formatDateLabel(date)}</p>
-              <div className="transaction-list card-list">
-                {dateTransactions.map((transaction) => {
-                  const category = getCategoryById(transaction.category);
-                  const account = transaction.account ? getAccountById(transaction.account) : undefined;
+        <div className="transactions-table-shell">
+          {filteredTransactionRows.length ? (
+            <table className="transactions-table">
+              <caption>Transactions for {isCustomRangeMode ? 'the selected date range' : formatMonthOptionLabel(selectedMonth)}</caption>
+              <colgroup>
+                <col className="transaction-column-date" />
+                <col className="transaction-column-description" />
+                <col className="transaction-column-category" />
+                <col className="transaction-column-account" />
+                <col className="transaction-column-type" />
+                <col className="transaction-column-amount" />
+                <col className="transaction-column-actions" />
+              </colgroup>
+              <thead>
+                <tr>
+                  {(['date', 'description', 'category', 'account', 'type', 'amount'] as const).map((key) => (
+                    <th key={key} scope="col" aria-sort={sort.key === key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                      <button
+                        className="transaction-sort-button"
+                        type="button"
+                        onClick={() => changeSort(key)}
+                        aria-label={`Sort by ${transactionSortLabels[key].toLowerCase()} ${sort.key === key && sort.direction === 'asc' ? 'descending' : 'ascending'}`}
+                      >
+                        <span className="transaction-sort-label">{transactionSortLabels[key]}</span>
+                        {sort.key === key ? (
+                          <ChevronUp className={sort.direction === 'desc' ? 'sort-icon-desc' : ''} size={14} />
+                        ) : (
+                          <ChevronsUpDown size={14} />
+                        )}
+                      </button>
+                    </th>
+                  ))}
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactionRows.map(({ transaction, category, account }) => {
+                  const isIncome = transaction.transactionType === 'income';
 
                   return (
-                    <TransactionRow
+                    <tr
                       key={transaction.id}
-                      transaction={transaction}
-                      category={category}
-                      account={account}
-                      onEdit={() => setEditingTransaction(transaction)}
-                      onDelete={() => {
-                        setTransactionDeleteError(null);
-                        setDeletingTransaction(transaction);
+                      className="transaction-row-interactive"
+                      tabIndex={0}
+                      aria-label={`View details for ${transaction.description}`}
+                      onClick={(event) => {
+                        event.currentTarget.focus();
+                        setViewingTransaction(transaction);
                       }}
-                    />
+                      onKeyDown={(event) => {
+                        if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) {
+                          return;
+                        }
+                        event.preventDefault();
+                        setViewingTransaction(transaction);
+                      }}
+                    >
+                      <td className="transaction-table-date" data-label="Date">
+                        {formatDateLabel(transaction.date)}
+                      </td>
+                      <td data-label="Description">
+                        <strong className="transaction-table-cell-text" title={transaction.description}>
+                          {transaction.description}
+                        </strong>
+                        {(transaction.tagIds ?? []).length ? <span className="transaction-row-tags">
+                          {(transaction.tagIds ?? []).slice(0, 2).map((tagId) => {
+                            const tag = tags.find((item) => item.id === tagId);
+                            return tag ? <span className="transaction-tag-chip" key={tag.id}>{tag.name}</span> : null;
+                          })}
+                          {(transaction.tagIds ?? []).length > 2 ? <span className="transaction-tag-more">+{(transaction.tagIds ?? []).length - 2}</span> : null}
+                        </span> : null}
+                      </td>
+                      <td data-label="Category">
+                        <span className="transaction-table-category">
+                          <CategoryAvatar category={category} />
+                          <span className="transaction-table-cell-text" title={category?.name ?? 'Category'}>
+                            {category?.name ?? 'Category'}
+                          </span>
+                        </span>
+                      </td>
+                      <td data-label="Account">
+                        <span
+                          className="transaction-table-cell-text"
+                          title={account ? accountTypeLabel(account.type) : 'Account'}
+                        >
+                          {account ? accountTypeLabel(account.type) : 'Account'}
+                        </span>
+                      </td>
+                      <td data-label="Type">
+                        <span className={`transaction-type-badge ${isIncome ? 'transaction-type-income' : 'transaction-type-expense'}`}>
+                          {isIncome ? 'Income' : 'Expense'}
+                        </span>
+                      </td>
+                      <td data-label="Amount">
+                        <strong className={isIncome ? 'amount-positive' : 'amount-negative'}>
+                          {isIncome ? '+' : '-'} {formatSGD(transaction.amount)}
+                        </strong>
+                      </td>
+                      <td data-label="Actions">
+                        <div className="transaction-table-actions" onClick={(event) => event.stopPropagation()}>
+                          <button
+                            id={`transaction-action-trigger-${transaction.id}`}
+                            className="transaction-action-trigger"
+                            type="button"
+                            aria-label={`Actions for ${transaction.description}`}
+                            aria-haspopup="menu"
+                            aria-expanded={openTransactionMenu?.transaction.id === transaction.id}
+                            aria-controls={openTransactionMenu?.transaction.id === transaction.id
+                              ? `transaction-action-menu-${transaction.id}`
+                              : undefined}
+                            onClick={(event) => toggleTransactionActionMenu(event, transaction)}
+                          >
+                            <Ellipsis size={18} strokeWidth={2} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
-              </div>
-            </section>
-          )) : (
+              </tbody>
+            </table>
+          ) : (
             <div className="transactions-empty" role="status">
               <strong>{transactions.length ? 'No transactions match these filters' : 'No transactions yet'}</strong>
               <p>
@@ -1068,15 +1591,147 @@ function Transactions() {
         </div>
       </section>
 
+      {openTransactionMenu ? createPortal(
+        <div
+          id={`transaction-action-menu-${openTransactionMenu.transaction.id}`}
+          className="transaction-action-menu"
+          role="menu"
+          aria-label={`Actions for ${openTransactionMenu.transaction.description}`}
+          style={{ top: openTransactionMenu.top, left: openTransactionMenu.left }}
+          onKeyDown={handleTransactionMenuKeyDown}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpenTransactionMenu(null);
+              setEditingTransaction(openTransactionMenu.transaction);
+            }}
+          >
+            <Pencil size={15} />
+            Edit
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={duplicatingTransactionId === openTransactionMenu.transaction.id}
+            onClick={() => void duplicateTransaction(openTransactionMenu.transaction)}
+          >
+            <Copy size={15} />
+            {duplicatingTransactionId === openTransactionMenu.transaction.id ? 'Duplicating...' : 'Duplicate'}
+          </button>
+          <button
+            className="transaction-action-menu-danger"
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpenTransactionMenu(null);
+              setTransactionDeleteError(null);
+              setDeletingTransaction(openTransactionMenu.transaction);
+            }}
+          >
+            <Trash2 size={15} />
+            Delete
+          </button>
+        </div>,
+        document.body,
+      ) : null}
+
+      {activeViewingTransaction ? (
+        <div className="sheet-backdrop" onClick={closeTransactionDetails}>
+          <aside
+            ref={transactionDetailsDialogRef}
+            className="transaction-details-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="transaction-details-title"
+            tabIndex={-1}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="transaction-details-header">
+              <div>
+                <span>Transaction details</span>
+                <h3 id="transaction-details-title">{activeViewingTransaction.description}</h3>
+              </div>
+              <button
+                data-dialog-initial-focus
+                className="plain-icon-button"
+                type="button"
+                aria-label="Close transaction details"
+                onClick={closeTransactionDetails}
+              >
+                <X size={18} />
+              </button>
+            </header>
+
+            <div className="transaction-details-amount">
+              <span>{activeViewingTransaction.transactionType === 'income' ? 'Income' : 'Expense'}</span>
+              <strong className={activeViewingTransaction.transactionType === 'income' ? 'amount-positive' : 'amount-negative'}>
+                {activeViewingTransaction.transactionType === 'income' ? '+' : '-'} {formatSGD(activeViewingTransaction.amount)}
+              </strong>
+            </div>
+
+            <dl className="transaction-details-list">
+              <div>
+                <dt>Date</dt>
+                <dd>{formatTransactionFullDate(activeViewingTransaction.date)}</dd>
+              </div>
+              <div>
+                <dt>Category</dt>
+                <dd className="transaction-details-category">
+                  <CategoryAvatar category={getCategoryById(activeViewingTransaction.category)} />
+                  <span>{getCategoryById(activeViewingTransaction.category)?.name ?? 'Category'}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Account</dt>
+                <dd>{getAccountMeta(activeViewingTransaction.account ? getAccountById(activeViewingTransaction.account) : undefined)}</dd>
+              </div>
+              <div>
+                <dt>Type</dt>
+                <dd>{activeViewingTransaction.transactionType === 'income' ? 'Income' : 'Expense'}</dd>
+              </div>
+              <div>
+                <dt>Tags</dt>
+                <dd className="transaction-details-tags">
+                  {(activeViewingTransaction.tagIds ?? []).length
+                    ? (activeViewingTransaction.tagIds ?? []).map((tagId) => tags.find((tag) => tag.id === tagId)).filter((tag): tag is Tag => Boolean(tag)).map((tag) => <span className="transaction-tag-chip" key={tag.id}>{tag.name}</span>)
+                    : <span className="field-help">No tags</span>}
+                </dd>
+              </div>
+            </dl>
+
+            <footer className="transaction-details-actions">
+              <button className="secondary-button" type="button" onClick={closeTransactionDetails}>
+                Close
+              </button>
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => {
+                  closeTransactionDetails();
+                  setEditingTransaction(activeViewingTransaction);
+                }}
+              >
+                <Pencil size={15} />
+                Edit transaction
+              </button>
+            </footer>
+          </aside>
+        </div>
+      ) : null}
+
       {activeEditingTransaction ? (
         <TransactionSheet
           key={activeEditingTransaction.id}
           transaction={activeEditingTransaction}
           accounts={accounts}
           categories={categories}
+          tags={tags}
           session={session}
           syncStatus={syncStatus}
           onClose={() => setEditingTransaction(null)}
+          onCreateTag={addTag}
           onSave={async (updates) => {
             await updateTransaction(activeEditingTransaction.id, updates);
             setEditingTransaction(null);
@@ -1131,6 +1786,8 @@ function Transactions() {
           </aside>
         </div>
       ) : null}
+      {showTagManager ? <TagManagerDialog tags={tags} usageCounts={tagUsageCounts} onCreate={addTag} onRename={updateTag} onDelete={deleteTag} onClose={() => setShowTagManager(false)} /> : null}
+      {showExportDialog ? <TransactionExportDialog onExport={exportTransactionHistory} onClose={() => setShowExportDialog(false)} /> : null}
     </main>
   );
 }
@@ -1139,20 +1796,24 @@ function TransactionSheet({
   transaction,
   accounts,
   categories,
+  tags,
   session,
   syncStatus,
   onSave,
   onDelete,
   onClose,
+  onCreateTag,
 }: {
   transaction: Transaction;
   accounts: Account[];
   categories: Category[];
+  tags: Tag[];
   session: Session | null;
   syncStatus: 'idle' | 'loading' | 'ready' | 'error';
   onSave: (updates: Partial<Transaction>) => Promise<void>;
   onDelete: () => Promise<void>;
   onClose: () => void;
+  onCreateTag: (name: string) => Promise<Tag>;
 }) {
   const [description, setDescription] = useState(transaction.description);
   const [amount, setAmount] = useState(String(Math.abs(transaction.amount)));
@@ -1160,6 +1821,7 @@ function TransactionSheet({
   const [category, setCategory] = useState(transaction.category);
   const [account, setAccount] = useState(transaction.account ?? accounts[0]?.id ?? '');
   const [transactionType, setTransactionType] = useState<TransactionType>(transaction.transactionType);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(transaction.tagIds ?? []);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -1217,6 +1879,7 @@ function TransactionSheet({
         date,
         account,
         transactionType,
+        tagIds: selectedTagIds,
       });
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Unable to update transaction.');
@@ -1330,6 +1993,14 @@ function TransactionSheet({
               ))}
             </select>
           </label>
+
+          <TransactionTagSelector
+            tags={tags}
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+            onCreate={onCreateTag}
+            disabled={isBusy}
+          />
 
           {showDeleteConfirm ? (
             <div className="delete-confirm">

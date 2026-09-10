@@ -1,56 +1,247 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-30T16:58:41.7886114+08:00",
+  "generatedAt": "2026-09-05T23:25:30.804814+08:00",
   "title": "Design System: FireBuddy Web",
   "extensions": {
     "colorMeta": {
-      "primary-lime": { "role": "primary", "displayName": "Action Lime", "canonical": "#9FE870", "tonalRamp": ["#17310A", "#234C0E", "#306714", "#478820", "#67AA36", "#8ECB5A", "#B4EA91", "#ECFADF"] },
-      "primary-lime-hover": { "role": "primary", "displayName": "Action Lime Hover", "canonical": "#8FDD61", "tonalRamp": ["#163009", "#214A0D", "#2D6412", "#43841D", "#61A433", "#83C652", "#ADE38B", "#EAF8DE"] },
-      "deep-green": { "role": "primary", "displayName": "Deep Emphasis Green", "canonical": "#163300", "tonalRamp": ["#061000", "#0B1A00", "#102500", "#163300", "#2D5420", "#557B49", "#8FA887", "#E4EBDD"] },
-      "secondary-green": { "role": "secondary", "displayName": "Working Green", "canonical": "#3F7D45", "tonalRamp": ["#0B1D0D", "#143318", "#214B27", "#326638", "#4B8251", "#72A379", "#A8C6AC", "#E8F0E9"] },
-      "canvas-sage": { "role": "neutral", "displayName": "Sage Canvas", "canonical": "#E8EBE6", "tonalRamp": ["#20251F", "#343B33", "#505A4E", "#737E70", "#9DA79A", "#C2C9BF", "#E0E4DE", "#F5F7F4"] },
-      "surface-white": { "role": "neutral", "displayName": "Working White", "canonical": "#FFFFFF", "tonalRamp": ["#161816", "#303330", "#515551", "#777C77", "#A1A6A1", "#C9CDC9", "#E8EAE8", "#FFFFFF"] },
-      "surface-muted": { "role": "neutral", "displayName": "Muted Wash", "canonical": "#F2F5F0", "tonalRamp": ["#1B201A", "#353D34", "#566154", "#7A8777", "#A6B0A3", "#CCD3C9", "#E7EBE5", "#F7F9F6"] },
-      "text-primary": { "role": "neutral", "displayName": "Near Black", "canonical": "#0E0F0C", "tonalRamp": ["#0E0F0C", "#292B27", "#4A4D47", "#70746D", "#999D96", "#C1C5BE", "#E1E4DE", "#F6F7F4"] },
-      "text-muted": { "role": "neutral", "displayName": "Grey Green Copy", "canonical": "#5F665F", "tonalRamp": ["#151A15", "#293029", "#414941", "#5F665F", "#818981", "#A7ADA7", "#CFD3CF", "#F0F2F0"] },
-      "border-muted": { "role": "neutral", "displayName": "Grey Green Border", "canonical": "#CBD2C9", "tonalRamp": ["#1B211A", "#343C33", "#535D51", "#778374", "#9FA99D", "#C3CAC1", "#E0E4DE", "#F5F7F4"] },
-      "income": { "role": "secondary", "displayName": "Income Green", "canonical": "#267A3D", "tonalRamp": ["#061C0C", "#0B3215", "#124A20", "#1C642F", "#31814A", "#5FA06D", "#98C3A0", "#E1EFE3"] },
-      "income-soft": { "role": "secondary", "displayName": "Income Wash", "canonical": "#EDF7EE", "tonalRamp": ["#172119", "#2C3B2F", "#485A4B", "#687A6B", "#93A496", "#BBC9BD", "#DDE7DE", "#F3F9F4"] },
-      "danger": { "role": "secondary", "displayName": "Alert Red", "canonical": "#B42318", "tonalRamp": ["#2A0705", "#480D09", "#68120D", "#8B1A12", "#B42318", "#D45B52", "#E89B95", "#F9E4E2"] },
-      "expense-soft": { "role": "secondary", "displayName": "Expense Wash", "canonical": "#FFF1EF", "tonalRamp": ["#281A18", "#44302D", "#654A46", "#8A6B66", "#B4938E", "#D5BBB7", "#EEDBD8", "#FFF4F2"] },
-      "chart-projection": { "role": "secondary", "displayName": "Projection Green", "canonical": "#4F8F55", "tonalRamp": ["#0E210F", "#183A1B", "#27552B", "#3B713F", "#57905C", "#7FB085", "#B1D0B5", "#E8F2E9"] },
-      "chart-target": { "role": "secondary", "displayName": "Target Green", "canonical": "#8AC95E", "tonalRamp": ["#152A0B", "#244514", "#38611F", "#537E2E", "#72A143", "#97C36A", "#BDE29A", "#EDF7E3"] },
-      "dark-canvas": { "role": "neutral", "displayName": "Night Canvas", "canonical": "#0F150F", "tonalRamp": ["#0F150F", "#242D24", "#3F4A3F", "#626E62", "#899489", "#B0B9B0", "#D4D9D4", "#F1F3F1"] },
-      "dark-surface": { "role": "neutral", "displayName": "Night Surface", "canonical": "#172017", "tonalRamp": ["#101710", "#273127", "#424D42", "#657165", "#8C978C", "#B2BBB2", "#D5DAD5", "#F1F4F1"] },
-      "dark-text": { "role": "neutral", "displayName": "Night Text", "canonical": "#F2F5EF", "tonalRamp": ["#151915", "#303730", "#505950", "#747E74", "#9DA69D", "#C2C9C2", "#E1E5E1", "#F5F7F4"] },
-      "dark-text-muted": { "role": "neutral", "displayName": "Night Muted Copy", "canonical": "#ADB8AC", "tonalRamp": ["#182018", "#303B30", "#4C594C", "#6E7B6E", "#94A094", "#B7C0B7", "#D7DDD7", "#F1F4F1"] },
-      "dark-border": { "role": "neutral", "displayName": "Night Border", "canonical": "#354235", "tonalRamp": ["#111811", "#253025", "#3B493B", "#586758", "#7B897B", "#A2ADA2", "#C9D0C9", "#EBEEEB"] },
-      "dark-deep-green": { "role": "primary", "displayName": "Night Emphasis Green", "canonical": "#C8F4AA", "tonalRamp": ["#1A2E0E", "#2B4C17", "#416C23", "#5E8D35", "#82B250", "#A8D476", "#C9ECA6", "#F0FBE8"] }
+      "primary-forest": {
+        "role": "primary",
+        "displayName": "Primary forest",
+        "canonical": "#25543D"
+      },
+      "primary-forest-hover": {
+        "role": "primary",
+        "displayName": "Primary forest hover",
+        "canonical": "#1B422F"
+      },
+      "on-primary": {
+        "role": "neutral",
+        "displayName": "On primary",
+        "canonical": "#FFFFFF"
+      },
+      "selected": {
+        "role": "primary",
+        "displayName": "Selected",
+        "canonical": "#E7EFE8"
+      },
+      "control-border": {
+        "role": "neutral",
+        "displayName": "Control border",
+        "canonical": "#788579"
+      },
+      "ember": {
+        "role": "secondary",
+        "displayName": "Ember",
+        "canonical": "#B6532B"
+      },
+      "dark-action": {
+        "role": "primary",
+        "displayName": "Dark action",
+        "canonical": "#A4CFB0"
+      },
+      "dark-action-hover": {
+        "role": "primary",
+        "displayName": "Dark action hover",
+        "canonical": "#BBDFC4"
+      },
+      "dark-on-action": {
+        "role": "primary",
+        "displayName": "Dark on action",
+        "canonical": "#162C1E"
+      },
+      "dark-selected": {
+        "role": "primary",
+        "displayName": "Dark selected",
+        "canonical": "#283D2E"
+      },
+      "dark-ember": {
+        "role": "neutral",
+        "displayName": "Dark ember",
+        "canonical": "#EFAB87"
+      },
+      "deep-green": {
+        "role": "primary",
+        "displayName": "Deep green",
+        "canonical": "#25543D"
+      },
+      "secondary-green": {
+        "role": "neutral",
+        "displayName": "Secondary green",
+        "canonical": "#46684F"
+      },
+      "canvas-sage": {
+        "role": "neutral",
+        "displayName": "Canvas sage",
+        "canonical": "#F7F8F5"
+      },
+      "surface-white": {
+        "role": "neutral",
+        "displayName": "Surface white",
+        "canonical": "#FFFFFF"
+      },
+      "surface-muted": {
+        "role": "neutral",
+        "displayName": "Surface muted",
+        "canonical": "#F0F3EE"
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Text primary",
+        "canonical": "#202820"
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text muted",
+        "canonical": "#626B63"
+      },
+      "border-muted": {
+        "role": "neutral",
+        "displayName": "Border muted",
+        "canonical": "#D8DFD7"
+      },
+      "income": {
+        "role": "secondary",
+        "displayName": "Income",
+        "canonical": "#267A3D"
+      },
+      "income-soft": {
+        "role": "neutral",
+        "displayName": "Income soft",
+        "canonical": "#EDF7EE"
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Danger",
+        "canonical": "#B42318"
+      },
+      "expense-soft": {
+        "role": "neutral",
+        "displayName": "Expense soft",
+        "canonical": "#FFF1EF"
+      },
+      "chart-projection": {
+        "role": "secondary",
+        "displayName": "Chart projection",
+        "canonical": "#386D82"
+      },
+      "chart-target": {
+        "role": "secondary",
+        "displayName": "Chart target",
+        "canonical": "#855509"
+      },
+      "dark-canvas": {
+        "role": "neutral",
+        "displayName": "Dark canvas",
+        "canonical": "#101810"
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Dark surface",
+        "canonical": "#19231B"
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Dark text",
+        "canonical": "#F2F5EF"
+      },
+      "dark-text-muted": {
+        "role": "neutral",
+        "displayName": "Dark text muted",
+        "canonical": "#B1BCB2"
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Dark border",
+        "canonical": "#3D4E40"
+      },
+      "dark-deep-green": {
+        "role": "primary",
+        "displayName": "Dark deep green",
+        "canonical": "#B6D9BF"
+      }
     },
     "typographyMeta": {
-      "headline": { "displayName": "Workspace Headline", "purpose": "Desktop route titles and primary workspace headings." },
-      "headline-mobile": { "displayName": "Mobile Headline", "purpose": "Compact route titles below 768px." },
-      "metric": { "displayName": "Financial Metric", "purpose": "High priority financial values with tabular figures." },
-      "title": { "displayName": "Section Title", "purpose": "Card, form, and content section headings." },
-      "body": { "displayName": "Body", "purpose": "Primary explanations and conversation content." },
-      "body-small": { "displayName": "Supporting Body", "purpose": "Toolbar descriptions and supporting explanations." },
-      "label": { "displayName": "Control Label", "purpose": "Navigation, controls, and compact data labels." },
-      "caption": { "displayName": "Caption", "purpose": "Chart labels, timestamps, metadata, and fine print." }
+      "headline": {
+        "displayName": "Workspace Headline",
+        "purpose": "Desktop route titles and primary workspace headings."
+      },
+      "headline-mobile": {
+        "displayName": "Mobile Headline",
+        "purpose": "Compact route titles below 768px."
+      },
+      "metric": {
+        "displayName": "Financial Metric",
+        "purpose": "High priority financial values with tabular figures."
+      },
+      "title": {
+        "displayName": "Section Title",
+        "purpose": "Card, form, and content section headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Primary explanations and conversation content."
+      },
+      "body-small": {
+        "displayName": "Supporting Body",
+        "purpose": "Toolbar descriptions and supporting explanations."
+      },
+      "label": {
+        "displayName": "Control Label",
+        "purpose": "Navigation, controls, and compact data labels."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Chart labels, timestamps, metadata, and fine print."
+      }
     },
     "shadows": [
-      { "name": "overlay-large-light", "value": "0 8px 24px rgba(22, 51, 0, 0.08)", "purpose": "Light theme drawers and temporary menus." },
-      { "name": "overlay-large-dark", "value": "0 8px 24px rgba(0, 0, 0, 0.20)", "purpose": "Dark theme drawers and temporary menus." },
-      { "name": "overlay-medium-light", "value": "0 3px 8px rgba(22, 51, 0, 0.07)", "purpose": "Light theme toasts and compact transient feedback." },
-      { "name": "overlay-medium-dark", "value": "0 3px 8px rgba(0, 0, 0, 0.18)", "purpose": "Dark theme toasts and compact transient feedback." }
+      {
+        "name": "overlay-large-light",
+        "value": "0 8px 24px rgba(22, 51, 0, 0.08)",
+        "purpose": "Light theme drawers and temporary menus."
+      },
+      {
+        "name": "overlay-large-dark",
+        "value": "0 8px 24px rgba(0, 0, 0, 0.20)",
+        "purpose": "Dark theme drawers and temporary menus."
+      },
+      {
+        "name": "overlay-medium-light",
+        "value": "0 3px 8px rgba(22, 51, 0, 0.07)",
+        "purpose": "Light theme toasts and compact transient feedback."
+      },
+      {
+        "name": "overlay-medium-dark",
+        "value": "0 3px 8px rgba(0, 0, 0, 0.18)",
+        "purpose": "Dark theme toasts and compact transient feedback."
+      }
     ],
     "motion": [
-      { "name": "state-transition", "value": "180ms ease", "purpose": "Background, border, color, opacity, and transform state changes." },
-      { "name": "pressed-offset", "value": "translateY(1px)", "purpose": "Tactile pressed feedback for enabled controls." },
-      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Near immediate transitions and one animation iteration when reduced motion is requested." }
+      {
+        "name": "state-transition",
+        "value": "180ms ease",
+        "purpose": "Background, border, color, opacity, and transform state changes."
+      },
+      {
+        "name": "pressed-offset",
+        "value": "translateY(1px)",
+        "purpose": "Tactile pressed feedback for enabled controls."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Near immediate transitions and one animation iteration when reduced motion is requested."
+      }
     ],
     "breakpoints": [
-      { "name": "mobile", "value": "767px" },
-      { "name": "desktop-navigation", "value": "1024px" }
+      {
+        "name": "mobile",
+        "value": "767px"
+      },
+      {
+        "name": "desktop-navigation",
+        "value": "1024px"
+      }
     ]
   },
   "components": [
@@ -58,9 +249,9 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Compact lime action used for the single most important operation in a region.",
+      "description": "Compact forest action used for the single most important operation in a region.",
       "html": "<button class=\"ds-btn-primary\" type=\"button\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>Add transaction</button>",
-      "css": ".ds-btn-primary { min-height: 40px; padding: 0 16px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #9FE870); color: #163300; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 14px 'DM Sans', 'Segoe UI', sans-serif; cursor: pointer; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease; } .ds-btn-primary svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; } .ds-btn-primary:hover { background: #8FDD61; border-color: #75c349; } .ds-btn-primary:focus-visible { outline: 3px solid var(--focus-ring, #163300); outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
+      "css": ".ds-btn-primary { min-height: 40px; padding: 0 16px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #25543D); color: var(--on-primary, #ffffff); display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 14px 'DM Sans', 'Segoe UI', sans-serif; cursor: pointer; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease; } .ds-btn-primary svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; } .ds-btn-primary:hover { background: #1B422F; border-color: #75c349; } .ds-btn-primary:focus-visible { outline: 3px solid var(--focus-ring, #25543D); outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
     },
     {
       "name": "Secondary Button",
@@ -68,7 +259,7 @@
       "refersTo": "button-secondary",
       "description": "Bordered white action for alternatives and supporting commands.",
       "html": "<button class=\"ds-btn-secondary\" type=\"button\">Export CSV</button>",
-      "css": ".ds-btn-secondary { min-height: 40px; padding: 0 16px; border: 1px solid var(--border, #CBD2C9); border-radius: 8px; background: var(--card, #FFFFFF); color: var(--text, #0E0F0C); font: 600 14px 'DM Sans', 'Segoe UI', sans-serif; cursor: pointer; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease; } .ds-btn-secondary:hover { border-color: var(--text-muted, #5F665F); background: var(--muted, #F2F5F0); } .ds-btn-secondary:focus-visible { outline: 3px solid var(--focus-ring, #163300); outline-offset: 2px; } .ds-btn-secondary:active { transform: translateY(1px); }"
+      "css": ".ds-btn-secondary { min-height: 40px; padding: 0 16px; border: 1px solid var(--border, #D8DFD7); border-radius: 8px; background: var(--card, #FFFFFF); color: var(--text, #202820); font: 600 14px 'DM Sans', 'Segoe UI', sans-serif; cursor: pointer; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease; } .ds-btn-secondary:hover { border-color: var(--text-muted, #626B63); background: var(--muted, #F0F3EE); } .ds-btn-secondary:focus-visible { outline: 3px solid var(--focus-ring, #25543D); outline-offset: 2px; } .ds-btn-secondary:active { transform: translateY(1px); }"
     },
     {
       "name": "Search Field",
@@ -76,7 +267,7 @@
       "refersTo": "input-standard",
       "description": "Compact search control used above ledgers and in page toolbars.",
       "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input type=\"search\" placeholder=\"Search transactions\" aria-label=\"Search transactions\"></label>",
-      "css": ".ds-search { min-height: 42px; padding: 0 14px; border: 1px solid var(--border, #CBD2C9); border-radius: 8px; background: var(--card, #FFFFFF); color: var(--text-muted, #5F665F); display: flex; align-items: center; gap: 10px; transition: border-color 180ms ease, box-shadow 180ms ease; } .ds-search svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; } .ds-search input { min-width: 220px; border: 0; outline: 0; background: transparent; color: var(--text, #0E0F0C); font: 400 14px 'DM Sans', 'Segoe UI', sans-serif; } .ds-search input::placeholder { color: var(--text-muted, #5F665F); } .ds-search:focus-within { border-color: var(--primary-dark, #163300); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #9FE870) 28%, transparent); }"
+      "css": ".ds-search { min-height: 42px; padding: 0 14px; border: 1px solid var(--border, #D8DFD7); border-radius: 8px; background: var(--card, #FFFFFF); color: var(--text-muted, #626B63); display: flex; align-items: center; gap: 10px; transition: border-color 180ms ease, box-shadow 180ms ease; } .ds-search svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; } .ds-search input { min-width: 220px; border: 0; outline: 0; background: transparent; color: var(--text, #202820); font: 400 14px 'DM Sans', 'Segoe UI', sans-serif; } .ds-search input::placeholder { color: var(--text-muted, #626B63); } .ds-search:focus-within { border-color: var(--primary-dark, #25543D); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #25543D) 28%, transparent); }"
     },
     {
       "name": "Active Sidebar Row",
@@ -84,7 +275,7 @@
       "refersTo": "nav-row-active",
       "description": "The selected destination in the 248px desktop navigation rail.",
       "html": "<a class=\"ds-nav-row\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 11.5 12 4l9 7.5V21h-6v-6H9v6H3z\"/></svg><span>Home</span></a>",
-      "css": ".ds-nav-row { min-height: 44px; padding: 0 14px; border-radius: 8px; background: var(--primary-soft, #EDF7EE); color: var(--primary-dark, #163300); display: flex; align-items: center; gap: 10px; text-decoration: none; font: 600 14px 'DM Sans', 'Segoe UI', sans-serif; transition: background-color 180ms ease, color 180ms ease; } .ds-nav-row svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; } .ds-nav-row:hover { background: color-mix(in srgb, var(--primary-soft, #EDF7EE) 78%, var(--primary, #9FE870)); } .ds-nav-row:focus-visible { outline: 3px solid var(--focus-ring, #163300); outline-offset: 2px; }"
+      "css": ".ds-nav-row { min-height: 44px; padding: 0 14px; border-radius: 8px; background: var(--primary-soft, #EDF7EE); color: var(--primary-dark, #25543D); display: flex; align-items: center; gap: 10px; text-decoration: none; font: 600 14px 'DM Sans', 'Segoe UI', sans-serif; transition: background-color 180ms ease, color 180ms ease; } .ds-nav-row svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; } .ds-nav-row:hover { background: color-mix(in srgb, var(--primary-soft, #EDF7EE) 78%, var(--primary, #25543D)); } .ds-nav-row:focus-visible { outline: 3px solid var(--focus-ring, #25543D); outline-offset: 2px; }"
     },
     {
       "name": "Financial Summary Card",
@@ -92,21 +283,21 @@
       "refersTo": "surface-card",
       "description": "Flat bordered surface for a high priority financial metric.",
       "html": "<article class=\"ds-summary-card\"><span class=\"ds-summary-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 18 9 12l4 3 7-9\"/></svg></span><div><small>Net worth</small><strong>S$312,890</strong><em>+S$5,420 since prior month</em></div></article>",
-      "css": ".ds-summary-card { min-height: 132px; padding: 20px; border: 1px solid var(--border, #CBD2C9); border-radius: 12px; background: var(--card, #FFFFFF); color: var(--text, #0E0F0C); display: flex; align-items: center; gap: 16px; font-family: 'DM Sans', 'Segoe UI', sans-serif; transition: border-color 180ms ease, transform 180ms ease; } .ds-summary-card:hover { border-color: #97a494; transform: translateY(-1px); } .ds-summary-card:focus-within { outline: 3px solid var(--focus-ring, #163300); outline-offset: 2px; } .ds-summary-card div { display: grid; gap: 5px; } .ds-summary-card small, .ds-summary-card em { color: var(--text-muted, #5F665F); font-size: 13px; font-style: normal; } .ds-summary-card strong { font-size: 28px; font-weight: 650; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; } .ds-summary-icon { width: 44px; height: 44px; border-radius: 8px; background: var(--primary-soft, #EDF7EE); color: var(--primary-dark, #163300); display: grid; place-items: center; } .ds-summary-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }"
+      "css": ".ds-summary-card { min-height: 132px; padding: 20px; border: 1px solid var(--border, #D8DFD7); border-radius: 12px; background: var(--card, #FFFFFF); color: var(--text, #202820); display: flex; align-items: center; gap: 16px; font-family: 'DM Sans', 'Segoe UI', sans-serif; transition: border-color 180ms ease, transform 180ms ease; } .ds-summary-card:hover { border-color: #97a494; transform: translateY(-1px); } .ds-summary-card:focus-within { outline: 3px solid var(--focus-ring, #25543D); outline-offset: 2px; } .ds-summary-card div { display: grid; gap: 5px; } .ds-summary-card small, .ds-summary-card em { color: var(--text-muted, #626B63); font-size: 13px; font-style: normal; } .ds-summary-card strong { font-size: 28px; font-weight: 650; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; } .ds-summary-icon { width: 44px; height: 44px; border-radius: 8px; background: var(--primary-soft, #EDF7EE); color: var(--primary-dark, #25543D); display: grid; place-items: center; } .ds-summary-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }"
     },
     {
       "name": "Financial Ledger",
       "kind": "custom",
       "description": "One bordered container with aligned rows and internal dividers for dense financial records.",
       "html": "<div class=\"ds-ledger\" role=\"table\" aria-label=\"Recent transactions\"><div class=\"ds-ledger-row ds-ledger-head\" role=\"row\"><span>Date</span><span>Description</span><span>Amount</span></div><div class=\"ds-ledger-row\" role=\"row\"><span>27 Aug 2025</span><strong>Grab Ride</strong><b>-S$14.20</b></div><div class=\"ds-ledger-row\" role=\"row\"><span>26 Aug 2025</span><strong>OCBC Salary</strong><b class=\"ds-income\">+S$5,800.00</b></div></div>",
-      "css": ".ds-ledger { overflow: hidden; border: 1px solid var(--border, #CBD2C9); border-radius: 12px; background: var(--card, #FFFFFF); color: var(--text, #0E0F0C); font: 400 14px 'DM Sans', 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; } .ds-ledger-row { min-height: 48px; padding: 0 14px; border-bottom: 1px solid var(--border, #CBD2C9); display: grid; grid-template-columns: 130px minmax(150px, 1fr) 120px; align-items: center; gap: 14px; } .ds-ledger-row:last-child { border-bottom: 0; } .ds-ledger-row > :last-child { text-align: right; } .ds-ledger-row strong, .ds-ledger-row b { font-weight: 600; } .ds-ledger-head { min-height: 40px; color: var(--text-muted, #5F665F); font-size: 12px; } .ds-income { color: var(--income, #267A3D); } .ds-ledger-row:focus-within { outline: 3px solid var(--focus-ring, #163300); outline-offset: -3px; }"
+      "css": ".ds-ledger { overflow: hidden; border: 1px solid var(--border, #D8DFD7); border-radius: 12px; background: var(--card, #FFFFFF); color: var(--text, #202820); font: 400 14px 'DM Sans', 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; } .ds-ledger-row { min-height: 48px; padding: 0 14px; border-bottom: 1px solid var(--border, #D8DFD7); display: grid; grid-template-columns: 130px minmax(150px, 1fr) 120px; align-items: center; gap: 14px; } .ds-ledger-row:last-child { border-bottom: 0; } .ds-ledger-row > :last-child { text-align: right; } .ds-ledger-row strong, .ds-ledger-row b { font-weight: 600; } .ds-ledger-head { min-height: 40px; color: var(--text-muted, #626B63); font-size: 12px; } .ds-income { color: var(--income, #267A3D); } .ds-ledger-row:focus-within { outline: 3px solid var(--focus-ring, #25543D); outline-offset: -3px; }"
     },
     {
       "name": "Page Toolbar",
       "kind": "custom",
       "description": "Borderless route heading pattern with an aligned action region.",
       "html": "<header class=\"ds-toolbar\"><div><h2>Transactions</h2><p>Review income and expenses across your accounts.</p></div><button type=\"button\">Add transaction</button></header>",
-      "css": ".ds-toolbar { min-height: 104px; padding: 28px 40px 20px; background: transparent; color: var(--text, #0E0F0C); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px; font-family: 'DM Sans', 'Segoe UI', sans-serif; } .ds-toolbar h2 { margin: 0; font-size: 28px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; } .ds-toolbar p { max-width: 65ch; margin: 6px 0 0; color: var(--text-muted, #5F665F); font-size: 15px; line-height: 1.45; } .ds-toolbar button { min-height: 40px; padding: 0 16px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #9FE870); color: #163300; font-weight: 600; cursor: pointer; } .ds-toolbar button:hover { background: #8FDD61; border-color: #75c349; } .ds-toolbar button:focus-visible { outline: 3px solid var(--focus-ring, #163300); outline-offset: 2px; }"
+      "css": ".ds-toolbar { min-height: 104px; padding: 28px 40px 20px; background: transparent; color: var(--text, #202820); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px; font-family: 'DM Sans', 'Segoe UI', sans-serif; } .ds-toolbar h2 { margin: 0; font-size: 28px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; } .ds-toolbar p { max-width: 65ch; margin: 6px 0 0; color: var(--text-muted, #626B63); font-size: 15px; line-height: 1.45; } .ds-toolbar button { min-height: 40px; padding: 0 16px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #25543D); color: #25543D; font-weight: 600; cursor: pointer; } .ds-toolbar button:hover { background: #1B422F; border-color: #75c349; } .ds-toolbar button:focus-visible { outline: 3px solid var(--focus-ring, #25543D); outline-offset: 2px; }"
     },
     {
       "name": "Mobile Bottom Navigation",
@@ -114,14 +305,14 @@
       "refersTo": "mobile-add-action",
       "description": "Four stable tabs with a labeled central Add action and safe area aware footing.",
       "html": "<nav class=\"ds-mobile-nav\" aria-label=\"Primary mobile\"><a class=\"ds-mobile-tab ds-active\" href=\"#\">Home</a><a class=\"ds-mobile-tab\" href=\"#\">Transactions</a><span class=\"ds-mobile-gap\"></span><a class=\"ds-mobile-tab\" href=\"#\">Categories</a><a class=\"ds-mobile-tab\" href=\"#\">Profile</a><button class=\"ds-mobile-add\" type=\"button\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg><span>Add</span></button></nav>",
-      "css": ".ds-mobile-nav { min-height: 68px; border-top: 1px solid var(--border, #CBD2C9); background: var(--card, #FFFFFF); display: flex; align-items: stretch; position: relative; font-family: 'DM Sans', 'Segoe UI', sans-serif; } .ds-mobile-tab { flex: 1; margin: 6px 2px; border-radius: 8px; color: var(--text-muted, #5F665F); display: grid; place-items: center; text-decoration: none; font-size: 11px; font-weight: 600; } .ds-mobile-tab:hover, .ds-mobile-tab.ds-active { color: var(--primary-dark, #163300); background: var(--primary-soft, #EDF7EE); } .ds-mobile-gap { width: 72px; flex: 0 0 auto; } .ds-mobile-add { width: 62px; height: 58px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #9FE870); color: #163300; position: absolute; top: -29px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 10px; font-weight: 700; cursor: pointer; box-shadow: 0 0 0 7px var(--background, #E8EBE6); } .ds-mobile-add svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; } .ds-mobile-add:hover { background: #8FDD61; } .ds-mobile-add:focus-visible, .ds-mobile-tab:focus-visible { outline: 3px solid var(--focus-ring, #163300); outline-offset: 2px; }"
+      "css": ".ds-mobile-nav { min-height: 68px; border-top: 1px solid var(--border, #D8DFD7); background: var(--card, #FFFFFF); display: flex; align-items: stretch; position: relative; font-family: 'DM Sans', 'Segoe UI', sans-serif; } .ds-mobile-tab { flex: 1; margin: 6px 2px; border-radius: 8px; color: var(--on-primary, #ffffff); display: grid; place-items: center; text-decoration: none; font-size: 11px; font-weight: 600; } .ds-mobile-tab:hover, .ds-mobile-tab.ds-active { color: var(--on-primary, #ffffff); background: var(--primary-soft, #EDF7EE); } .ds-mobile-gap { width: 72px; flex: 0 0 auto; } .ds-mobile-add { width: 62px; height: 58px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #25543D); color: var(--on-primary, #ffffff); position: absolute; top: -29px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 10px; font-weight: 700; cursor: pointer; box-shadow: 0 0 0 7px var(--background, #F7F8F5); } .ds-mobile-add svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; } .ds-mobile-add:hover { background: #1B422F; } .ds-mobile-add:focus-visible, .ds-mobile-tab:focus-visible { outline: 3px solid var(--focus-ring, #25543D); outline-offset: 2px; }"
     },
     {
       "name": "Add Transaction Sheet",
       "kind": "custom",
       "description": "Right side desktop editor that becomes a bottom sheet on mobile.",
-      "html": "<aside class=\"ds-sheet\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"ds-sheet-title\"><header><h3 id=\"ds-sheet-title\">Add a transaction</h3><button type=\"button\" aria-label=\"Close\">×</button></header><label>Description<input type=\"text\" placeholder=\"e.g. Grab Ride\"></label><label>Amount (SGD)<input type=\"text\" placeholder=\"e.g. 25.00\"></label><button class=\"ds-sheet-save\" type=\"button\">Save transaction</button></aside>",
-      "css": ".ds-sheet { width: 360px; padding: 20px 22px 22px; border: 1px solid var(--border, #CBD2C9); border-radius: 12px 0 0 12px; background: var(--card, #FFFFFF); color: var(--text, #0E0F0C); display: grid; gap: 18px; box-shadow: var(--shadow-lg, 0 8px 24px rgba(22, 51, 0, 0.08)); font-family: 'DM Sans', 'Segoe UI', sans-serif; } .ds-sheet header { padding-bottom: 12px; border-bottom: 1px solid var(--border, #CBD2C9); display: flex; align-items: center; justify-content: space-between; } .ds-sheet h3 { margin: 0; font-size: 18px; font-weight: 650; } .ds-sheet header button { width: 38px; height: 38px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text, #0E0F0C); font-size: 22px; cursor: pointer; } .ds-sheet label { display: grid; gap: 7px; font-size: 13px; font-weight: 600; } .ds-sheet input { height: 42px; padding: 0 14px; border: 1px solid var(--border, #CBD2C9); border-radius: 8px; background: var(--card, #FFFFFF); color: var(--text, #0E0F0C); font: 400 14px 'DM Sans', 'Segoe UI', sans-serif; } .ds-sheet input:focus { outline: 3px solid color-mix(in srgb, var(--primary, #9FE870) 25%, transparent); border-color: var(--primary-dark, #163300); } .ds-sheet-save { min-height: 40px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #9FE870); color: #163300; font-weight: 600; cursor: pointer; } .ds-sheet button:focus-visible { outline: 3px solid var(--focus-ring, #163300); outline-offset: 2px; }"
+      "html": "<aside class=\"ds-sheet\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"ds-sheet-title\"><header><h3 id=\"ds-sheet-title\">Add a transaction</h3><button type=\"button\" aria-label=\"Close\">\u00d7</button></header><label>Description<input type=\"text\" placeholder=\"e.g. Grab Ride\"></label><label>Amount (SGD)<input type=\"text\" placeholder=\"e.g. 25.00\"></label><button class=\"ds-sheet-save\" type=\"button\">Save transaction</button></aside>",
+      "css": ".ds-sheet { width: 360px; padding: 20px 22px 22px; border: 1px solid var(--border, #D8DFD7); border-radius: 12px 0 0 12px; background: var(--card, #FFFFFF); color: var(--text, #202820); display: grid; gap: 18px; box-shadow: var(--shadow-lg, 0 8px 24px rgba(22, 51, 0, 0.08)); font-family: 'DM Sans', 'Segoe UI', sans-serif; } .ds-sheet header { padding-bottom: 12px; border-bottom: 1px solid var(--border, #D8DFD7); display: flex; align-items: center; justify-content: space-between; } .ds-sheet h3 { margin: 0; font-size: 18px; font-weight: 650; } .ds-sheet header button { width: 38px; height: 38px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text, #202820); font-size: 22px; cursor: pointer; } .ds-sheet label { display: grid; gap: 7px; font-size: 13px; font-weight: 600; } .ds-sheet input { height: 42px; padding: 0 14px; border: 1px solid var(--border, #D8DFD7); border-radius: 8px; background: var(--card, #FFFFFF); color: var(--text, #202820); font: 400 14px 'DM Sans', 'Segoe UI', sans-serif; } .ds-sheet input:focus { outline: 3px solid color-mix(in srgb, var(--primary, #25543D) 25%, transparent); border-color: var(--primary-dark, #25543D); } .ds-sheet-save { min-height: 40px; border: 1px solid #8bd45c; border-radius: 8px; background: var(--primary, #25543D); color: #25543D; font-weight: 600; cursor: pointer; } .ds-sheet button:focus-visible { outline: 3px solid var(--focus-ring, #25543D); outline-offset: 2px; }"
     }
   ],
   "narrative": {
@@ -130,27 +321,71 @@
     "keyCharacteristics": [
       "Soft sage canvas with white primary work surfaces in light mode.",
       "Near black text, muted grey green supporting copy, and restrained borders.",
-      "Bright lime reserved for primary actions and selected states.",
+      "Forest green reserved for primary actions and selected states.",
       "Compact borderless page toolbars and flat, structured financial ledgers.",
       "A fixed 248px desktop sidebar that becomes a mobile topbar and four tabs with a labeled central Add action.",
       "Dark mode built from a deep green black canvas and slightly lighter green surfaces.",
       "Modest 12px card corners, 8px controls, minimal shadow, and reduced motion support."
     ],
     "rules": [
-      { "name": "The Lime Signal Rule", "body": "Lime marks an action or selection. Do not use it as a decorative background field or a general success color.", "section": "colors" },
-      { "name": "The Semantic Truth Rule", "body": "Income, expense, historical, projected, and target data keep distinct semantic colors and labels. Color never collapses facts and estimates into one visual category.", "section": "colors" },
-      { "name": "The Theme Pairing Rule", "body": "Light mode pairs sage with white. Dark mode pairs the night canvas with the night surface. Preserve the same hierarchy in both themes.", "section": "colors" },
-      { "name": "The Operational Scale Rule", "body": "Route headings stop at 1.75rem on desktop. FireBuddy does not use oversized marketing type inside the authenticated workspace.", "section": "typography" },
-      { "name": "The Numerical Rhythm Rule", "body": "Keep amounts, rates, dates, and projection values tabular and aligned so comparisons can be made by position as well as wording.", "section": "typography" },
-      { "name": "The One Container Rule", "body": "A ledger has one outer surface and internal dividers. Do not wrap each row in another card.", "section": "layout" },
-      { "name": "The Responsive Navigation Rule", "body": "Desktop ownership lives in the sidebar. Mobile ownership lives in the topbar and five action bottom pattern. Do not squeeze the desktop rail into tablet or phone layouts.", "section": "layout" },
-      { "name": "The Flat by Default Rule", "body": "A persistent surface earns separation through tone, border, spacing, and typography. Shadow is not a substitute for hierarchy.", "section": "elevation" },
-      { "name": "The Transient Lift Rule", "body": "Use shadow only when a surface temporarily sits above the workspace or must preserve clear stacking context.", "section": "elevation" },
-      { "name": "The Quiet Corner Rule", "body": "Use 12px for surfaces and 8px for controls. Do not round ordinary cards or buttons into pills.", "section": "shapes" },
-      { "name": "The Ledger Edge Rule", "body": "The container owns the corner radius. Rows inside it stay flat so scanning is uninterrupted.", "section": "shapes" }
+      {
+        "name": "The Action Color Rule",
+        "body": "Forest green marks an action or selection. Do not use it as a decorative background field or a general success color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Truth Rule",
+        "body": "Income, expense, historical, projected, and target data keep distinct semantic colors and labels. Color never collapses facts and estimates into one visual category.",
+        "section": "colors"
+      },
+      {
+        "name": "The Theme Pairing Rule",
+        "body": "Light mode pairs sage with white. Dark mode pairs the night canvas with the night surface. Preserve the same hierarchy in both themes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Operational Scale Rule",
+        "body": "Route headings stop at 1.75rem on desktop. FireBuddy does not use oversized marketing type inside the authenticated workspace.",
+        "section": "typography"
+      },
+      {
+        "name": "The Numerical Rhythm Rule",
+        "body": "Keep amounts, rates, dates, and projection values tabular and aligned so comparisons can be made by position as well as wording.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Container Rule",
+        "body": "A ledger has one outer surface and internal dividers. Do not wrap each row in another card.",
+        "section": "layout"
+      },
+      {
+        "name": "The Responsive Navigation Rule",
+        "body": "Desktop ownership lives in the sidebar. Mobile ownership lives in the topbar and five action bottom pattern. Do not squeeze the desktop rail into tablet or phone layouts.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat by Default Rule",
+        "body": "A persistent surface earns separation through tone, border, spacing, and typography. Shadow is not a substitute for hierarchy.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Transient Lift Rule",
+        "body": "Use shadow only when a surface temporarily sits above the workspace or must preserve clear stacking context.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Quiet Corner Rule",
+        "body": "Use 12px for surfaces and 8px for controls. Do not round ordinary cards or buttons into pills.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Ledger Edge Rule",
+        "body": "The container owns the corner radius. Rows inside it stay flat so scanning is uninterrupted.",
+        "section": "shapes"
+      }
     ],
     "dos": [
-      "Do use Action Lime for primary actions, selected filters, and active mobile Add affordance.",
+      "Do use Forest Action for primary actions, selected filters, and active mobile Add affordance.",
       "Do keep white work surfaces on the sage canvas and use fine borders as the main structural cue.",
       "Do use 12px card corners, 8px control corners, and compact 16px to 20px card padding.",
       "Do keep route toolbars borderless and aligned to the content grid.",

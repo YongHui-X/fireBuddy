@@ -1,0 +1,18 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path = extensions, public;
+select plan(12);
+select has_column('public', 'fire_profiles', 'draft_plan', 'separate draft column');
+select has_column('public', 'fire_profiles', 'active_plan', 'active plan column');
+select has_column('public', 'fire_profiles', 'withdrawal_rate', 'legacy values retained');
+select ok((select relrowsecurity from pg_class where oid = 'public.fire_profiles'::regclass), 'RLS retained');
+select ok(not has_table_privilege('anon', 'public.fire_profiles', 'select'), 'anonymous reads denied');
+select ok(not has_table_privilege('authenticated', 'public.fire_profiles', 'select'), 'browser reads denied');
+select ok(not has_table_privilege('authenticated', 'public.fire_profiles', 'insert'), 'browser inserts denied');
+select ok(not has_table_privilege('authenticated', 'public.fire_profiles', 'update'), 'browser updates denied');
+select ok(not has_table_privilege('authenticated', 'public.fire_profiles', 'delete'), 'browser deletes denied');
+select ok(has_table_privilege('service_role', 'public.fire_profiles', 'update'), 'backend can save plans');
+select is((select count(*)::integer from pg_policies where tablename = 'fire_profiles' and coalesce(qual, with_check) like '%auth.uid()%'), 4, 'all four owner policies retained');
+select ok((select with_check like '%user_id%' from pg_policies where tablename = 'fire_profiles' and cmd = 'UPDATE'), 'updates retain ownership check');
+select * from finish();
+rollback;
