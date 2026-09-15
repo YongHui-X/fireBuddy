@@ -1,8 +1,10 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -36,7 +38,7 @@ import {
   getFireProfile,
   getWealthContributions,
   getWealthPositions,
-  getWealthSnapshots,
+  getWealthSnapshotHistory,
   saveEssentialCategories,
   saveFireProfile,
   updateWealthPosition,
@@ -64,6 +66,7 @@ interface FinancialFoundationContextValue {
   error: string | null;
   demoMode: boolean;
   refresh: () => Promise<void>;
+  loadSnapshotHistory: () => void;
   addPosition: (input: CreateWealthPositionInput, snapshot?: CreateWealthSnapshotInput) => Promise<void>;
   editPosition: (id: string, input: UpdateWealthPositionInput) => Promise<void>;
   removePosition: (id: string) => Promise<void>;
@@ -248,7 +251,13 @@ function action(actionType: string, title: string, rationale: string, destinatio
   return { actionType, title, rationale, destination, ruleId, evidence: localDate(), limitations: null };
 }
 
+/** Discard all financial state and pending callbacks when the authenticated owner changes. */
 export function FinancialFoundationProvider({ children }: { children: ReactNode }) {
+  const { session, demoMode } = useFireBuddy();
+  return <FinancialFoundationSessionProvider key={demoMode ? 'demo' : session?.user.id ?? 'anonymous'}>{children}</FinancialFoundationSessionProvider>;
+}
+
+function FinancialFoundationSessionProvider({ children }: { children: ReactNode }) {
   const { session, demoMode, transactions, categories } = useFireBuddy();
   const [positions, setPositions] = useState<WealthPosition[]>(() => demoMode ? loadStored(WEALTH_POSITIONS_STORAGE_KEY, defaultPositions) : []);
   const [snapshots, setSnapshots] = useState<WealthPositionSnapshot[]>(() => demoMode ? loadStored(WEALTH_SNAPSHOTS_STORAGE_KEY, defaultSnapshots) : []);
@@ -257,34 +266,78 @@ export function FinancialFoundationProvider({ children }: { children: ReactNode 
   const [essentialCategoryIds, setEssentialCategoryIds] = useState<string[]>(() => demoMode
     ? loadStored(ESSENTIAL_CATEGORIES_STORAGE_KEY, categories.filter((item) => ['Food & Drink', 'Bills & Utilities', 'Healthcare'].includes(item.name)).map((item) => item.id)) : []);
   const [remoteSummary, setRemoteSummary] = useState<FinancialSummary | null>(null);
-  const [status, setStatus] = useState<FoundationStatus>(demoMode ? 'ready' : 'loading');
-  const [error, setError] = useState<string | null>(null);
+  const [recordsStatus, setRecordsStatus] = useState<FoundationStatus>(demoMode ? 'ready' : 'loading');
+  const [recordsError, setRecordsError] = useState<string | null>(null);
+  const [summaryStatus, setSummaryStatus] = useState<FoundationStatus>(demoMode ? 'ready' : 'loading');
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [historyRequested, setHistoryRequested] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const recordsRequest = useRef<AbortController | null>(null);
+  const mounted = useRef(false);
+  const token = session?.access_token;
+  const status = recordsStatus === 'error' || summaryStatus === 'error' ? 'error'
+    : recordsStatus === 'loading' || summaryStatus === 'loading' ? 'loading' : 'ready';
+  const error = recordsError ?? summaryError ?? historyError;
 
   const summary = useMemo(() => demoMode
     ? buildDemoFinancialSummary(positions, snapshots, contributions, profile, transactions, essentialCategoryIds)
     : remoteSummary, [contributions, demoMode, essentialCategoryIds, positions, profile, remoteSummary, snapshots, transactions]);
 
-  async function refresh() {
-    if (!session) return;
-    setStatus('loading'); setError(null);
+  /** Refresh source records once; transaction changes only reload the derived summary. */
+  const refresh = useCallback(async () => {
+    if (!token || !mounted.current || demoMode) return;
+    recordsRequest.current?.abort();
+    const controller = new AbortController();
+    recordsRequest.current = controller;
+    setRecordsStatus('loading'); setRecordsError(null);
     try {
-      const [nextPositions, nextContributions, profileEnvelope, essentials, nextSummary] = await Promise.all([
-        getWealthPositions(session.access_token), getWealthContributions(session.access_token), getFireProfile(session.access_token),
-        getEssentialCategories(session.access_token), getFinancialSummary(session.access_token),
+      const [nextPositions, nextContributions, profileEnvelope, essentials] = await Promise.all([
+        getWealthPositions(token, controller.signal), getWealthContributions(token, controller.signal), getFireProfile(token, controller.signal),
+        getEssentialCategories(token, controller.signal),
       ]);
-      const histories = await Promise.all(nextPositions.map((item) => getWealthSnapshots(session.access_token, item.id)));
-      setPositions(nextPositions); setSnapshots(histories.flat()); setContributions(nextContributions);
-      setProfile(profileEnvelope.profile); setEssentialCategoryIds(essentials.categoryIds); setRemoteSummary(nextSummary); setStatus('ready');
+      if (controller.signal.aborted) return;
+      setPositions(nextPositions); setSnapshots(nextPositions.flatMap(item => item.latestSnapshot ? [item.latestSnapshot] : [])); setContributions(nextContributions);
+      setProfile(profileEnvelope.profile); setEssentialCategoryIds(essentials.categoryIds); setRecordsStatus('ready');
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load financial foundation data.'); setStatus('error');
+      if (controller.signal.aborted) return;
+      setRecordsError(caught instanceof Error ? caught.message : 'Unable to load financial foundation data.'); setRecordsStatus('error');
     }
-  }
+  }, [demoMode, token]);
 
   useEffect(() => {
-    if (demoMode) return;
-    setPositions([]); setSnapshots([]); setContributions([]); setProfile(null); setEssentialCategoryIds([]); setRemoteSummary(null);
-    if (session) void refresh();
-  }, [session?.user.id]);
+    mounted.current = true;
+    void refresh();
+    return () => { mounted.current = false; recordsRequest.current?.abort(); };
+  }, [refresh]);
+
+  // Cleanup also guards against mocks or transports that resolve after cancellation.
+  useEffect(() => {
+    if (demoMode || !token || recordsStatus !== 'ready') return;
+    const controller = new AbortController();
+    setRemoteSummary(null); setSummaryStatus('loading'); setSummaryError(null);
+    void getFinancialSummary(token, undefined, controller.signal).then(nextSummary => {
+      if (controller.signal.aborted) return;
+      setRemoteSummary(nextSummary); setSummaryStatus('ready');
+    }).catch((caught: unknown) => {
+      if (controller.signal.aborted) return;
+      setSummaryError(caught instanceof Error ? caught.message : 'Unable to load financial summary.'); setSummaryStatus('error');
+    });
+    return () => controller.abort();
+  }, [demoMode, token, recordsStatus, positions, contributions, profile, essentialCategoryIds, transactions, categories]);
+
+  /** Request full history only for the wealth management screen. */
+  const loadSnapshotHistory = useCallback(() => setHistoryRequested(true), []);
+  useEffect(() => {
+    if (demoMode || !token || !historyRequested || recordsStatus !== 'ready') return;
+    const controller = new AbortController();
+    setHistoryError(null);
+    void getWealthSnapshotHistory(token, controller.signal).then(history => {
+      if (!controller.signal.aborted) setSnapshots(history);
+    }).catch((caught: unknown) => {
+      if (!controller.signal.aborted) setHistoryError(caught instanceof Error ? caught.message : 'Unable to load wealth history.');
+    });
+    return () => controller.abort();
+  }, [demoMode, token, historyRequested, recordsStatus, positions]);
 
   useEffect(() => { if (demoMode) window.localStorage.setItem(WEALTH_POSITIONS_STORAGE_KEY, JSON.stringify(positions)); }, [demoMode, positions]);
   useEffect(() => { if (demoMode) window.localStorage.setItem(WEALTH_SNAPSHOTS_STORAGE_KEY, JSON.stringify(snapshots)); }, [demoMode, snapshots]);
@@ -362,7 +415,7 @@ export function FinancialFoundationProvider({ children }: { children: ReactNode 
     return result;
   }
 
-  return <FinancialFoundationContext.Provider value={{ positions, snapshots, contributions, profile, essentialCategoryIds, summary, status, error, demoMode, refresh, addPosition, editPosition, removePosition, addSnapshot, removeSnapshot, addContribution, removeContribution, updateProfile, updateEssentialCategories, runScenario }}>{children}</FinancialFoundationContext.Provider>;
+  return <FinancialFoundationContext.Provider value={{ positions, snapshots, contributions, profile, essentialCategoryIds, summary, status, error, demoMode, refresh, loadSnapshotHistory, addPosition, editPosition, removePosition, addSnapshot, removeSnapshot, addContribution, removeContribution, updateProfile, updateEssentialCategories, runScenario }}>{children}</FinancialFoundationContext.Provider>;
 }
 
 export function useFinancialFoundation() {

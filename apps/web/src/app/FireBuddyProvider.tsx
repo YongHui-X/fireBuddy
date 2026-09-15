@@ -301,16 +301,26 @@ const initialAccounts: Account[] = [
   { id: 'cash_wallet', name: 'Cash', type: 'cash', color: '#E5B24A' },
 ];
 
+/** Date the demo records relative to today so the local demo always shows a populated current month. */
+function demoDate(daysAgo: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return getDeviceDateKey(date);
+}
+
 const initialTransactions: Transaction[] = [
-  { id: '00000000-0000-4000-9000-000000001000', description: 'Monthly salary', amount: 5200, category: demoCategoryIds.salary, date: '2026-04-15', account: 'dbs_savings', transactionType: 'income' },
-  { id: '00000000-0000-4000-9000-000000001001', description: 'Hawker Centre lunch', amount: -8.5, category: demoCategoryIds.food, date: '2026-04-14', account: 'grabpay', transactionType: 'expense' },
-  { id: '00000000-0000-4000-9000-000000001002', description: 'MRT Bishan to City Hall', amount: -1.82, category: demoCategoryIds.transport, date: '2026-04-14', account: 'dbs_savings', transactionType: 'expense' },
-  { id: '00000000-0000-4000-9000-000000001004', description: 'Cold Storage groceries', amount: -67.4, category: demoCategoryIds.food, date: '2026-04-13', account: 'dbs_altitude', transactionType: 'expense' },
-  { id: '00000000-0000-4000-9000-000000001005', description: 'Grab ride home', amount: -12.5, category: demoCategoryIds.transport, date: '2026-04-13', account: 'grabpay', transactionType: 'expense' },
-  { id: '00000000-0000-4000-9000-000000001006', description: 'Netflix subscription', amount: -10.98, category: demoCategoryIds.entertainment, date: '2026-04-13', account: 'dbs_altitude', transactionType: 'expense' },
-  { id: '00000000-0000-4000-9000-000000001007', description: 'Watsons pharmacy', amount: -22.9, category: demoCategoryIds.health, date: '2026-04-12', account: 'dbs_altitude', transactionType: 'expense' },
-  { id: '00000000-0000-4000-9000-000000001008', description: 'Uniqlo Orchard', amount: -79, category: demoCategoryIds.shopping, date: '2026-04-12', account: 'dbs_altitude', transactionType: 'expense' },
-  { id: '00000000-0000-4000-9000-000000001009', description: 'SP utilities bill', amount: -98.4, category: demoCategoryIds.utilities, date: '2026-04-11', account: 'ocbc_360', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001000', description: 'Monthly salary', amount: 5200, category: demoCategoryIds.salary, date: demoDate(1), account: 'dbs_savings', transactionType: 'income' },
+  { id: '00000000-0000-4000-9000-000000001001', description: 'Hawker Centre lunch', amount: -8.5, category: demoCategoryIds.food, date: demoDate(2), account: 'grabpay', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001002', description: 'MRT Bishan to City Hall', amount: -1.82, category: demoCategoryIds.transport, date: demoDate(2), account: 'dbs_savings', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001004', description: 'Cold Storage groceries', amount: -67.4, category: demoCategoryIds.food, date: demoDate(3), account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001005', description: 'Grab ride home', amount: -12.5, category: demoCategoryIds.transport, date: demoDate(3), account: 'grabpay', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001006', description: 'Netflix subscription', amount: -10.98, category: demoCategoryIds.entertainment, date: demoDate(4), account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001007', description: 'Watsons pharmacy', amount: -22.9, category: demoCategoryIds.health, date: demoDate(5), account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001008', description: 'Uniqlo Orchard', amount: -79, category: demoCategoryIds.shopping, date: demoDate(6), account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001009', description: 'SP utilities bill', amount: -98.4, category: demoCategoryIds.utilities, date: demoDate(7), account: 'ocbc_360', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001010', description: 'Scoot to Bangkok', amount: -186, category: demoCategoryIds.travel, date: demoDate(9), account: 'dbs_altitude', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001011', description: 'Ya Kun kaya toast', amount: -6.2, category: demoCategoryIds.food, date: demoDate(11), account: 'cash_wallet', transactionType: 'expense' },
+  { id: '00000000-0000-4000-9000-000000001012', description: 'Quarterly dividends', amount: 148.3, category: demoCategoryIds.dividends, date: demoDate(13), account: 'dbs_savings', transactionType: 'income' },
 ];
 
 function mapApiCategory(category: ApiCategory): Category {

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
+from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.category import (
     CategoryResponse,
@@ -36,25 +37,26 @@ def get_categories(
     current_user: CurrentUser,
     category_type: str | None = Query(default=None, alias="categoryType", pattern="^(expense|income)$"),
 ):
-    default_response = (
-        supabase.table("categories")
-        .select(CATEGORY_COLUMNS)
-        .eq("is_default", True)
-        .order("name")
-        .execute()
-    )
-    user_response = (
-        supabase.table("categories")
-        .select(CATEGORY_COLUMNS)
-        .eq("user_id", current_user.id)
-        .order("name")
-        .execute()
-    )
+    """List every visible category without being truncated by Data API limits."""
 
-    rows = [*(default_response.data or []), *(user_response.data or [])]
-    if category_type is not None:
-        rows = [row for row in rows if row.get("category_type", "expense") == category_type]
-    return [serialize_category(row) for row in sorted(rows, key=lambda row: row["name"].lower())]
+    def default_query():
+        query = supabase.table("categories").select(CATEGORY_COLUMNS).eq("is_default", True)
+        if category_type is not None:
+            query = query.eq("category_type", category_type)
+        return query.order("name").order("id")
+
+    def owned_query():
+        query = supabase.table("categories").select(CATEGORY_COLUMNS).eq("user_id", current_user.id)
+        if category_type is not None:
+            query = query.eq("category_type", category_type)
+        return query.order("name").order("id")
+
+    rows = [*fetch_all(default_query), *fetch_all(owned_query)]
+    ordered_rows = sorted(
+        rows,
+        key=lambda row: (str(row["name"]).casefold(), str(row["id"])),
+    )
+    return [serialize_category(row) for row in ordered_rows]
 
 
 @router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)

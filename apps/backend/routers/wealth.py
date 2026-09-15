@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from postgrest.exceptions import APIError
+from pydantic import ValidationError
 
 from lib.auth import AuthenticatedUser, get_current_user
 from lib.repository import fetch_all
@@ -73,8 +74,14 @@ def raise_financial_conflict(error: APIError) -> None:
 def attach_latest_snapshot(rows: list[dict], user_id: str) -> list[WealthPositionResponse]:
     """Attach the newest snapshot to each position without changing history."""
 
-    snapshots = fetch_all(lambda: supabase.table("wealth_position_snapshots").select(SNAPSHOT_COLUMNS)
-                          .eq("user_id", user_id).order("value_date", desc=True))
+    if not rows:
+        return []
+    snapshots = fetch_all(
+        lambda: supabase.rpc("get_latest_wealth_snapshots", {
+            "p_user_id": user_id,
+            "p_position_ids": [str(row["id"]) for row in rows],
+        }).order("wealth_position_id")
+    )
     latest: dict[str, dict] = {}
     for snapshot in snapshots:
         latest.setdefault(str(snapshot["wealth_position_id"]), snapshot)
@@ -87,7 +94,9 @@ def get_positions(current_user: CurrentUser, include_archived: bool = Query(Fals
 
     def query():
         value = supabase.table("wealth_positions").select(POSITION_COLUMNS).eq("user_id", current_user.id)
-        return value if include_archived else value.eq("is_archived", False)
+        if not include_archived:
+            value = value.eq("is_archived", False)
+        return value.order("name").order("id")
     return attach_latest_snapshot(fetch_all(query), current_user.id)
 
 
@@ -120,7 +129,11 @@ def update_position(position_id: UUID, payload: UpdateWealthPositionRequest, cur
     }
     merged = {field: existing[field] for field in editable_fields}
     merged.update(payload.model_dump(exclude_unset=True))
-    validated = CreateWealthPositionRequest.model_validate(merged)
+    try:
+        validated = CreateWealthPositionRequest.model_validate(merged)
+    except ValidationError as error:
+        messages = [entry["msg"].removeprefix("Value error, ") for entry in error.errors()]
+        raise HTTPException(status_code=422, detail="; ".join(messages)) from error
     try:
         response = (supabase.table("wealth_positions").update(validated.model_dump(mode="json"))
                     .eq("id", str(position_id)).eq("user_id", current_user.id).execute())
@@ -146,13 +159,33 @@ def delete_position(position_id: UUID, current_user: CurrentUser):
     return None
 
 
+@router.get("/snapshots", response_model=list[WealthSnapshotResponse])
+def get_snapshot_history(current_user: CurrentUser):
+    """Load owned history in one paged database read, including archived positions."""
+
+    rows = fetch_all(
+        lambda: supabase.table("wealth_position_snapshots")
+        .select(SNAPSHOT_COLUMNS)
+        .eq("user_id", current_user.id)
+        .order("value_date", desc=True).order("created_at", desc=True).order("id", desc=True)
+    )
+    return [serialize_row(WealthSnapshotResponse, row) for row in rows]
+
+
 @router.get("/positions/{position_id}/snapshots", response_model=list[WealthSnapshotResponse])
 def get_snapshots(position_id: UUID, current_user: CurrentUser):
     """List all dated snapshots for an owned position, newest first."""
 
     owned_position(position_id, current_user.id)
-    rows = fetch_all(lambda: supabase.table("wealth_position_snapshots").select(SNAPSHOT_COLUMNS)
-                     .eq("wealth_position_id", str(position_id)).eq("user_id", current_user.id).order("value_date", desc=True))
+    rows = fetch_all(
+        lambda: supabase.table("wealth_position_snapshots")
+        .select(SNAPSHOT_COLUMNS)
+        .eq("wealth_position_id", str(position_id))
+        .eq("user_id", current_user.id)
+        .order("value_date", desc=True)
+        .order("created_at", desc=True)
+        .order("id", desc=True)
+    )
     return [serialize_row(WealthSnapshotResponse, row) for row in rows]
 
 
@@ -202,7 +235,7 @@ def get_contributions(current_user: CurrentUser, start: date | None = None, end:
         if start: value = value.gte("contribution_date", start.isoformat())
         if end: value = value.lte("contribution_date", end.isoformat())
         if position_id: value = value.eq("wealth_position_id", str(position_id))
-        return value.order("contribution_date", desc=True)
+        return value.order("contribution_date", desc=True).order("id", desc=True)
     return [serialize_row(WealthContributionResponse, row) for row in fetch_all(query)]
 
 

@@ -10,6 +10,7 @@ export const apiRoutes = {
   financialAdvisorChat: '/api/chat/financial-advisor',
   financialAdvisorChatStream: '/api/chat/financial-advisor/stream',
   wealthPositions: '/wealth/positions',
+  wealthSnapshots: '/wealth/snapshots',
   wealthContributions: '/wealth/contributions',
   financialSummary: '/analytics/financial-summary',
   fireEssentialCategories: '/fire/essential-categories',

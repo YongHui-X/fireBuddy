@@ -85,6 +85,17 @@ def financial_advisor(body: AdvisorRequest, current_user: CurrentUser):
         )
 
     try:
+        #current_user.id
+        # → Who is asking?
+
+        # body.question
+        # → What did they ask?
+
+        # body.history
+        # → What was previously said in the conversation?
+
+        # body.app_context
+        # → Relevant context from your application
         return answer_ember_question(
             current_user.id,
             body.question,
@@ -102,7 +113,9 @@ def financial_advisor(body: AdvisorRequest, current_user: CurrentUser):
 
 @router.post("/api/chat/financial-advisor/stream")
 def financial_advisor_stream(body: AdvisorRequest, current_user: StreamUser):
-    """Stream authenticated Ember search status, answer deltas, and citations."""
+    """Stream authenticated Ember search status, answer deltas, and citations.
+    If authentication failed, convert that failure into our standardized SSE error.
+    """
 
     if isinstance(current_user, HTTPException):
         return error_stream(
@@ -129,7 +142,8 @@ def financial_advisor_stream(body: AdvisorRequest, current_user: StreamUser):
                 body.question,
                 body.history,
                 body.app_context,
-            ):
+            ): 
+            #yield means: streaming. Here's one result now. I might give you another one later.
                 yield encode_sse(event["event"], event["data"])
         except Exception:
             logger.exception(

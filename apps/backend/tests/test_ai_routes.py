@@ -22,6 +22,7 @@ from services.rate_limiter import RateLimitDecision
 
 USER_ID = "10000000-0000-4000-8000-000000000001"
 CATEGORY_ID = "20000000-0000-4000-8000-000000000001"
+INCOME_CATEGORY_ID = "20000000-0000-4000-8000-000000000002"
 
 
 def model_response(content: str):
@@ -42,7 +43,15 @@ class AiRouteTests(unittest.TestCase):
                         "user_id": None,
                         "name": "Food & Drink",
                         "is_default": True,
-                    }
+                        "category_type": "expense",
+                    },
+                    {
+                        "id": INCOME_CATEGORY_ID,
+                        "user_id": None,
+                        "name": "Salary",
+                        "is_default": True,
+                        "category_type": "income",
+                    },
                 ]
             }
         )
@@ -118,6 +127,29 @@ class AiRouteTests(unittest.TestCase):
             response = self.client.post(
                 "/ai/parse-input",
                 json={"description": "Mystery purchase"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()["categoryId"])
+        self.assertEqual(response.json()["confidence"], "low")
+
+    def test_excludes_income_categories_from_expense_suggestions(self):
+        """Never allow the model to select a typed income category for an expense."""
+
+        client = SimpleNamespace(
+            chat=SimpleNamespace(
+                completions=SimpleNamespace(
+                    create=lambda **_kwargs: model_response(
+                        '{"categoryId":"%s","confidence":"high","reason":"Pay"}'
+                        % INCOME_CATEGORY_ID
+                    )
+                )
+            )
+        )
+        with patch.object(ai_router, "OpenAI", return_value=client):
+            response = self.client.post(
+                "/ai/parse-input",
+                json={"description": "Monthly salary"},
             )
 
         self.assertEqual(response.status_code, 200)

@@ -1,0 +1,1077 @@
+/* Ember: the assistant workspace with a conversation canvas, a history rail, and the floating quick chat. */
+
+.ember-page {
+  padding-bottom: 0;
+}
+
+.ember-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: calc(100vh - var(--topbar-h));
+  min-height: calc(100dvh - var(--topbar-h));
+}
+
+@media (min-width: 1024px) {
+  .ember-layout {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+@media (min-width: 1180px) {
+  .ember-layout-history-open {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+.ember-conversation-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ember-conversation-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 66px;
+  padding: 10px var(--gutter);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.ember-conversation-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ember-conversation-title h2 {
+  font-size: 1.1rem;
+}
+
+.ember-conversation-title p {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+}
+
+.ember-header-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-tile);
+  background: color-mix(in srgb, var(--ember-mark-symbol) 14%, var(--surface));
+}
+
+.ember-conversation-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 1023px) {
+  .ember-main-sidebar-toggle {
+    display: none;
+  }
+}
+
+.ember-header-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.ember-header-icon-button:hover:not(:disabled) {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.ember-header-new-chat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ember-header-new-chat:hover {
+  background: var(--surface-2);
+}
+
+.ember-request-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: 6px;
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ember-request-status span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--income);
+}
+
+.ember-request-status-searching span,
+.ember-request-status-preparing span {
+  background: var(--warning);
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+.ember-request-status-error span {
+  background: var(--danger);
+}
+
+/* Conversation canvas */
+
+.ember-messages {
+  flex: 1 1 auto;
+  display: grid;
+  align-content: start;
+  gap: 22px;
+  width: min(100%, 860px);
+  margin: 0 auto;
+  padding: 28px var(--gutter) 24px;
+}
+
+.ember-starters {
+  display: grid;
+  gap: 22px;
+}
+
+.ember-empty-introduction {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.ember-empty-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ember-mark-symbol) 14%, var(--surface));
+}
+
+.ember-empty-introduction h3 {
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+}
+
+.ember-empty-introduction p {
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.ember-empty-introduction p + p {
+  margin-top: 6px;
+}
+
+.ember-starter-heading span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+
+.ember-starter-heading h3 {
+  font-size: 1.1rem;
+}
+
+.ember-starter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.ember-starter-grid button {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.ember-starter-grid button:hover {
+  border-color: var(--forest-600);
+  background: var(--accent-soft);
+}
+
+.ember-starter-grid strong {
+  font-size: 0.925rem;
+}
+
+.ember-starter-grid span {
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.ember-message {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ember-message-user {
+  justify-self: end;
+  width: min(100%, 560px);
+}
+
+.ember-message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.ember-message-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ember-copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0;
+}
+
+.ember-message:hover .ember-copy-button,
+.ember-copy-button:focus-visible,
+.ember-copy-button-copied,
+.ember-copy-button-error {
+  opacity: 1;
+}
+
+.ember-copy-button:hover:not(:disabled) {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.ember-copy-button-copied {
+  color: var(--income);
+}
+
+.ember-message-bubble {
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  line-height: 1.6;
+}
+
+.ember-message-user .ember-message-bubble {
+  border: 0;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--forest-800);
+  color: #fff;
+  box-shadow: none;
+}
+
+.ember-rich-text {
+  display: grid;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.ember-rich-text h3,
+.ember-rich-text h4,
+.ember-rich-text h5 {
+  margin-top: 6px;
+  font-size: 1rem;
+}
+
+.ember-rich-text ul,
+.ember-rich-text ol {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.ember-rich-text li + li {
+  margin-top: 4px;
+}
+
+.ember-stream-placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+}
+
+.ember-stream-placeholder svg {
+  color: var(--ember-mark-symbol);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.ember-data-evidence {
+  display: grid;
+  gap: 2px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--r-tile);
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.ember-data-evidence span {
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ember-data-evidence small {
+  color: var(--ink-2);
+}
+
+.ember-message-sources {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.ember-message-sources > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ember-message-sources ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ember-message-sources li {
+  display: grid;
+  gap: 2px;
+  font-size: 0.875rem;
+}
+
+.ember-message-sources a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.ember-message-sources small {
+  color: var(--ink-2);
+}
+
+.ember-source-toggle {
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--link);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ember-follow-ups {
+  display: grid;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.ember-follow-ups > span {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ember-follow-ups > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ember-follow-ups button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.ember-follow-ups button:hover {
+  border-color: var(--forest-600);
+  background: var(--accent-soft);
+}
+
+.ember-inline-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--r-tile);
+  background: var(--expense-soft);
+  color: var(--expense);
+}
+
+.ember-inline-error p {
+  margin-top: 2px;
+  font-size: 0.875rem;
+}
+
+.ember-inline-error button {
+  margin-top: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+}
+
+/* Composer */
+
+.ember-composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+  width: min(100%, 860px);
+  margin: 0 auto;
+  padding: 10px var(--gutter) 18px;
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+}
+
+.ember-education-note {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.ember-composer-field {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 18px;
+  background: var(--forest-800);
+  box-shadow: var(--shadow-md);
+}
+
+.ember-composer-field textarea {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 11px 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 0.95rem;
+  resize: none;
+}
+
+.ember-composer-field textarea::placeholder {
+  color: var(--rail-ink-muted);
+}
+
+.ember-composer-field textarea:focus {
+  box-shadow: none;
+}
+
+.ember-composer-field textarea:focus-visible {
+  outline: none;
+}
+
+.ember-composer-field:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lime-500) 40%, transparent), var(--shadow-md);
+}
+
+.ember-composer-field button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 12px;
+  background: var(--lime-500);
+  color: var(--forest-900);
+}
+
+.ember-composer-field button:hover:not(:disabled) {
+  background: var(--lime-600);
+}
+
+.ember-composer-field button:disabled {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--rail-ink-muted);
+  opacity: 1;
+}
+
+.ember-composer-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 6px;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+}
+
+/* History rail */
+
+.ember-history-panel {
+  display: none;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.ember-history-panel-open {
+  display: flex;
+}
+
+@media (max-width: 1179px) {
+  .ember-history-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 65;
+    width: min(100%, 360px);
+    border-radius: 16px 0 0 16px;
+    box-shadow: var(--shadow-lg);
+    animation: slide-in-right 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .ember-history-toggle {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1180px) {
+  .ember-history-panel {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+.ember-history-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  border: 0;
+  background: rgba(15, 37, 28, 0.4);
+  backdrop-filter: blur(3px);
+}
+
+.ember-history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 18px 18px 12px;
+}
+
+.ember-history-header h2 {
+  font-size: 1.05rem;
+}
+
+.ember-history-header p {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+}
+
+.ember-history-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 18px;
+  color: var(--ink-3);
+}
+
+.ember-history-search svg {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
+}
+
+.ember-history-search input {
+  min-height: 38px;
+  padding-left: 36px;
+  font-size: 0.875rem;
+}
+
+.ember-history-results {
+  padding: 10px 18px 6px;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ember-topic-list {
+  flex: 1 1 auto;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-height: 0;
+  padding: 0 10px 18px;
+  overflow: auto;
+}
+
+.ember-topic-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--r-control);
+}
+
+.ember-topic-row:hover {
+  background: var(--surface-2);
+}
+
+.ember-topic-active,
+.ember-topic-active:hover {
+  background: var(--accent-soft);
+}
+
+.ember-topic-select {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 10px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.ember-topic-select strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.ember-topic-select small {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+}
+
+.ember-topic-active .ember-topic-select strong {
+  color: var(--accent-text);
+}
+
+.ember-topic-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-3);
+  opacity: 0;
+}
+
+.ember-topic-row:hover .ember-topic-delete,
+.ember-topic-delete:focus-visible {
+  opacity: 1;
+}
+
+.ember-topic-delete:hover:not(:disabled) {
+  background: var(--expense-soft);
+  color: var(--danger);
+}
+
+.ember-history-empty {
+  display: grid;
+  gap: 4px;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.ember-history-empty p {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+
+/* Floating quick chat */
+
+.ember-floating-root {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 50;
+  display: grid;
+  justify-items: end;
+  gap: 12px;
+}
+
+.ember-floating-launcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 52px;
+  height: 52px;
+  padding: 0 18px 0 14px;
+  border: 1px solid var(--rail-line);
+  border-radius: var(--r-pill);
+  background: var(--forest-800);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+}
+
+.ember-floating-launcher:hover {
+  background: var(--forest-700);
+}
+
+.ember-floating-launcher-icon {
+  display: inline-flex;
+}
+
+.ember-floating-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(600px, calc(100vh - 110px));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: rise-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ember-floating-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 14px 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ember-floating-panel > header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ember-floating-panel > header span {
+  display: grid;
+}
+
+.ember-floating-panel > header small {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+}
+
+.ember-floating-panel > header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.ember-floating-panel > header button:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.ember-floating-context {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+.ember-floating-context summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ember-floating-context p,
+.ember-floating-context ul {
+  margin: 8px 0 0;
+}
+
+.ember-floating-context ul {
+  padding-left: 18px;
+}
+
+.ember-floating-messages {
+  flex: 1 1 auto;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 180px;
+  padding: 16px;
+  overflow: auto;
+}
+
+.ember-floating-empty {
+  display: grid;
+  gap: 10px;
+}
+
+.ember-floating-empty p {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ember-floating-empty button {
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.ember-floating-empty button:hover {
+  border-color: var(--forest-600);
+  background: var(--accent-soft);
+}
+
+.ember-float-message {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ember-float-message-user {
+  justify-self: end;
+  max-width: 85%;
+  background: var(--forest-800);
+  color: #fff;
+}
+
+.ember-float-message strong {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.ember-float-message p {
+  white-space: pre-wrap;
+}
+
+.ember-float-message ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 0.8rem;
+}
+
+.ember-float-message a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ember-float-evidence {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ember-float-error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--expense-soft);
+  color: var(--expense);
+  font-size: 0.85rem;
+}
+
+.ember-floating-composer {
+  display: grid;
+  gap: 6px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.ember-floating-composer label {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ember-floating-composer > div {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.ember-floating-composer textarea {
+  min-height: 44px;
+  font-size: 0.9rem;
+}
+
+.ember-floating-composer button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 11px;
+  background: var(--lime-500);
+  color: var(--forest-900);
+}
+
+.ember-floating-composer button:hover:not(:disabled) {
+  background: var(--lime-600);
+}
+
+.ember-floating-panel > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px 12px;
+  color: var(--ink-3);
+  font-size: 0.75rem;
+}
+
+.ember-floating-panel > footer button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--link);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (max-width: 1023px) {
+  .ember-floating-root {
+    right: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .ember-floating-launcher-label {
+    display: none;
+  }
+
+  .ember-floating-launcher {
+    width: 52px;
+    padding: 0;
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

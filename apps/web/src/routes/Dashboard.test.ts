@@ -1,3 +1,4 @@
+import type { FinancialSummary } from '@firebuddy/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { Category, Transaction } from '../app/FireBuddyProvider';
@@ -9,6 +10,7 @@ import {
 } from '../components/SpendingPieChart';
 import {
   buildCategoryBudgetData,
+  buildFireProgressSummary,
   buildMonthlySpendingData,
   getAdjacentSpendingMonth,
   getFireStatusLabel,
@@ -125,5 +127,62 @@ describe('Dashboard monthly spending breakdown', () => {
     expect(getFireStatusLabel('already_reached', null)).toBe('FI target reached');
     expect(getFireStatusLabel('unreachable', null)).toBe('Target not reached with current assumptions');
     expect(getFireStatusLabel('insufficient_data', null)).toBe('Complete your setup to estimate an FI year');
+  });
+});
+
+const baseSummary: FinancialSummary = {
+  effectiveDate: '2026-09-14', dataMode: 'demo', netWorth: '120000', assetTotal: '130000', liabilityTotal: '10000',
+  priorMonthNetWorth: '118000', monthlyNetWorthChange: '2000', investableAssets: '90000', emergencyEligibleAssets: '20000',
+  averageMonthlyEssentialSpending: '2500', emergencyRunwayMonths: '8.000000', latestSnapshotDate: '2026-09-01', snapshotStatus: 'current',
+  pulse: {
+    month: '2026-09', income: '6200', spending: '3011', savingsAmount: '3189', savingsRate: '0.514',
+    savingsRateStatus: 'available', investedAmount: '1000', completeness: 'complete',
+  },
+  fire: {
+    status: 'projected', effectiveDate: '2026-09-14', currentInvestableAssets: '90000', fiTarget: '1500000',
+    progressRate: '0.06', progressRateCapped: '0.06', estimatedMonths: 240, estimatedFiYear: 2046,
+    requiredMonthlyInvestment: '2400', assumptions: null,
+    spendingBaseline: { status: 'available', source: 'transactions', startDate: '2026-03-01', endDate: '2026-08-31', completedMonths: 6, expenseTotal: '18000', annualisedSpending: '36000' },
+    actualPath: [], projectedPath: [], warnings: [],
+  },
+  recommendedAction: null, transactionAnomalies: [], warnings: [],
+};
+
+describe('Dashboard FI progress card', () => {
+  it('returns nothing until the projection has a target and a progress rate', () => {
+    expect(buildFireProgressSummary(null)).toBeNull();
+    expect(buildFireProgressSummary({
+      ...baseSummary,
+      fire: { ...baseSummary.fire, status: 'insufficient_data', fiTarget: null, progressRate: null, progressRateCapped: null, estimatedFiYear: null },
+    })).toBeNull();
+  });
+
+  it('shapes the headline figure, capped track, status line, and facts', () => {
+    const progress = buildFireProgressSummary({
+      ...baseSummary,
+      fire: { ...baseSummary.fire, progressRate: '1.25', progressRateCapped: '1', status: 'already_reached' },
+    });
+
+    expect(progress?.percentLabel).toBe('125.0% funded');
+    expect(progress?.progress).toBe(1);
+    expect(progress?.statusLabel).toBe('FI target reached');
+    expect(progress?.facts).toEqual([
+      { label: 'Investable assets', value: 'S$90,000' },
+      { label: 'FI target', value: 'S$1,500,000' },
+      { label: 'Required monthly', value: 'S$2,400' },
+      { label: 'Emergency runway', value: '8.0 months', detail: 'of essentials' },
+    ]);
+  });
+
+  it('drops the optional facts when the runway or required contribution is unknown', () => {
+    const progress = buildFireProgressSummary({
+      ...baseSummary,
+      emergencyRunwayMonths: null,
+      fire: { ...baseSummary.fire, requiredMonthlyInvestment: null },
+    });
+
+    expect(progress?.percentLabel).toBe('6.0% funded');
+    expect(progress?.statusLabel).toBe('Estimated FI year 2046');
+    expect(progress?.facts.map((fact) => fact.label)).toEqual(['Investable assets', 'FI target']);
   });
 });

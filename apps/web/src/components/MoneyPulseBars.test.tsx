@@ -3,10 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { MoneyPulseBars } from './MoneyPulseBars';
 
 describe('Money Pulse bars', () => {
-  it('uses the same scale for all three amounts', () => {
+  it('scales expenses and savings against the income headline', () => {
     render(<MoneyPulseBars income={5000} expenses={3000} savings={2000} savingsRate={0.4} />);
     const bars = screen.getAllByRole('img');
-    expect(bars.map(bar => (bar.firstElementChild as HTMLElement).style.width)).toEqual(['100%', '60%', '40%']);
+    expect(bars.map(bar => (bar.firstElementChild as HTMLElement).style.width)).toEqual(['60%', '40%']);
+    expect(screen.getByText('S$5,000')).toBeTruthy();
     expect(screen.getByText('40.0%')).toBeTruthy();
   });
 

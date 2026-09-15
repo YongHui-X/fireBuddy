@@ -1,13 +1,13 @@
 """Translate natural-language Ember questions into one validated read-only plan."""
 
 import os
-from datetime import date, datetime
+from datetime import date
 from typing import Literal
-from zoneinfo import ZoneInfo
 
 from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from lib.clock import singapore_today
 from schemas.rag import ChatMessage
 
 
@@ -59,10 +59,60 @@ class EmberPlan(BaseModel):
         return self
 
 
-def singapore_today() -> date:
-    """Return the product's calendar date for resolving relative user periods."""
+class _PlannerOutputBase(BaseModel):
+    """Define fields shared by every structured planner response variant."""
 
-    return datetime.now(ZoneInfo("Asia/Singapore")).date()
+    model_config = ConfigDict(extra="forbid")
+
+    start_date: date | None
+    end_date: date | None
+    comparison_start_date: date | None
+    comparison_end_date: date | None
+    category_name: str | None = Field(max_length=80)
+    requires_explanation: bool
+    clarification_question: str | None = Field(max_length=240)
+
+
+class _KnowledgePlannerOutput(_PlannerOutputBase):
+    """Represent a curated-knowledge plan that cannot select a data tool."""
+
+    mode: Literal["knowledge"]
+    tool: None
+
+
+class _DataPlannerOutput(_PlannerOutputBase):
+    """Represent a personal-data plan that must select an allowlisted tool."""
+
+    mode: Literal["data", "hybrid"]
+    tool: EmberToolName
+
+
+class _ClarificationPlannerOutput(_PlannerOutputBase):
+    """Represent a clarification plan with no access to personal-data tools."""
+
+    mode: Literal["clarification"]
+    tool: None
+    clarification_question: str = Field(max_length=240)
+
+
+class _UnsupportedPlannerOutput(_PlannerOutputBase):
+    """Represent an unsupported request with no access to personal-data tools."""
+
+    mode: Literal["unsupported"]
+    tool: None
+
+
+class EmberPlannerResponse(BaseModel):
+    """Wrap mutually exclusive plan variants in an OpenAI-compatible root object."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    plan: (
+        _KnowledgePlannerOutput
+        | _DataPlannerOutput
+        | _ClarificationPlannerOutput
+        | _UnsupportedPlannerOutput
+    )
 
 
 def _format_recent_history(history: list[ChatMessage]) -> str:
@@ -85,14 +135,14 @@ def plan_ember_question(
         model=PLANNER_MODEL,
         temperature=0,
         store=False,
-        response_format=EmberPlan,
+        response_format=EmberPlannerResponse,
         messages=[
             {
                 "role": "system",
                 "content": (
                     "You route questions for FireBuddy, a Singapore personal-finance app. "
-                    "Return exactly one validated plan. Never invent values and never request, "
-                    "include, or infer a user identifier. Choose knowledge for general CPF, SRS, "
+                    "Return exactly one validated plan in the plan field. Never invent values and "
+                    "never request, include, or infer a user identifier. Choose knowledge for general CPF, SRS, "
                     "SSB, IRAS, investing, or FIRE education. Choose data for questions answered "
                     "only from the user's records. Choose hybrid when personal results need general "
                     "educational context. expense_summary totals expenses and category breakdowns "
@@ -117,7 +167,7 @@ def plan_ember_question(
             },
         ],
     )
-    parsed = completion.choices[0].message.parsed
-    if parsed is None:
+    response = completion.choices[0].message.parsed
+    if response is None:
         raise RuntimeError("Ember planner returned no validated plan")
-    return parsed
+    return EmberPlan.model_validate(response.plan.model_dump())

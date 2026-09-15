@@ -78,6 +78,8 @@ class FakeQuery:
         matches = [row for row in rows if self._matches(row)]
         if self.range_start is not None and self.range_end is not None:
             matches = matches[self.range_start:self.range_end + 1]
+        if self.client.max_rows is not None:
+            matches = matches[: self.client.max_rows]
         if self.limit_count is not None:
             matches = matches[: self.limit_count]
 
@@ -126,8 +128,13 @@ class FakeQuery:
 class FakeSupabase:
     """Keep deterministic in-memory rows while matching Supabase's route API."""
 
-    def __init__(self, rows: dict[str, list[dict]] | None = None):
+    def __init__(
+        self,
+        rows: dict[str, list[dict]] | None = None,
+        max_rows: int | None = None,
+    ):
         self.rows = deepcopy(rows or {})
+        self.max_rows = max_rows
         self.next_id = 1
 
     def table(self, table_name: str) -> FakeQuery:
@@ -199,14 +206,47 @@ class FakeSupabase:
 
 
 class FakeRpcQuery:
-    """Emulate the two atomic transaction functions used by route tests."""
+    """Emulate the bounded database functions used by route tests."""
 
     def __init__(self, client: FakeSupabase, function_name: str, params: dict):
         self.client = client
         self.function_name = function_name
         self.params = deepcopy(params)
+        self.range_start = 0
+        self.range_end = None
+
+    def order(self, _column: str):
+        return self
+
+    def range(self, start: int, end: int):
+        self.range_start = start
+        self.range_end = end
+        return self
 
     def execute(self) -> FakeResponse:
+        user_id = str(self.params["p_user_id"])
+        if self.function_name == "get_latest_wealth_snapshots":
+            position_ids = set(self.params["p_position_ids"])
+            latest = {}
+            for row in sorted(self.client.rows.get("wealth_position_snapshots", []), key=lambda item: str(item["value_date"]), reverse=True):
+                if str(row["user_id"]) == user_id and str(row["wealth_position_id"]) in position_ids:
+                    latest.setdefault(str(row["wealth_position_id"]), row)
+            rows = [latest[key] for key in sorted(latest)]
+            rows = rows[self.range_start:None if self.range_end is None else self.range_end + 1]
+            if self.client.max_rows is not None:
+                rows = rows[:self.client.max_rows]
+            return FakeResponse(deepcopy(rows))
+        if self.function_name == "replace_essential_categories":
+            from postgrest.exceptions import APIError
+            category_ids = list(dict.fromkeys(self.params["p_category_ids"]))
+            available = {str(row["id"]) for row in self.client.rows.get("categories", [])
+                         if row.get("category_type") == "expense" and (row.get("is_default") or str(row.get("user_id")) == user_id)}
+            if not set(category_ids).issubset(available):
+                raise APIError({"code": "22023", "message": "Invalid essential categories", "details": None, "hint": None})
+            rows = [row for row in self.client.rows.get("essential_expense_categories", []) if str(row["user_id"]) != user_id]
+            rows.extend({"user_id": user_id, "category_id": category_id} for category_id in category_ids)
+            self.client.rows["essential_expense_categories"] = rows
+            return FakeResponse([])
         tag_ids = [str(value) for value in self.params.get("p_tag_ids", [])]
         user_id = str(self.params["p_user_id"])
         owned_tag_ids = {

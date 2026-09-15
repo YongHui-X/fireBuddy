@@ -13,7 +13,7 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from services import ember_planner
-from services.ember_planner import EmberPlan
+from services.ember_planner import EmberPlan, EmberPlannerResponse
 
 
 class EmberPlannerTests(unittest.TestCase):
@@ -26,12 +26,37 @@ class EmberPlannerTests(unittest.TestCase):
                 "user_id": "user-b", "sql": "select * from expenses",
             })
 
+    def test_structured_response_rejects_knowledge_plan_with_data_tool(self):
+        with self.assertRaises(ValidationError):
+            EmberPlannerResponse.model_validate({
+                "plan": {
+                    "mode": "knowledge", "tool": "financial_summary", "start_date": None,
+                    "end_date": None, "comparison_start_date": None, "comparison_end_date": None,
+                    "category_name": None, "requires_explanation": True,
+                    "clarification_question": None,
+                },
+            })
+
+    def test_structured_response_requires_tool_for_data_plan(self):
+        with self.assertRaises(ValidationError):
+            EmberPlannerResponse.model_validate({
+                "plan": {
+                    "mode": "data", "tool": None, "start_date": "2026-08-01",
+                    "end_date": "2026-08-31", "comparison_start_date": None,
+                    "comparison_end_date": None, "category_name": None,
+                    "requires_explanation": False, "clarification_question": None,
+                },
+            })
+
     def test_planner_prompt_contains_tools_and_date_but_no_user_identity(self):
-        parsed = EmberPlan(
-            mode="data", tool="fire_projection", start_date=None, end_date=date(2026, 9, 4),
-            comparison_start_date=None, comparison_end_date=None, category_name=None,
-            requires_explanation=True, clarification_question=None,
-        )
+        parsed = EmberPlannerResponse.model_validate({
+            "plan": {
+                "mode": "data", "tool": "fire_projection", "start_date": None,
+                "end_date": date(2026, 9, 4), "comparison_start_date": None,
+                "comparison_end_date": None, "category_name": None,
+                "requires_explanation": True, "clarification_question": None,
+            },
+        })
         parse = unittest.mock.Mock(return_value=SimpleNamespace(
             choices=[SimpleNamespace(message=SimpleNamespace(parsed=parsed))],
         ))
@@ -49,6 +74,7 @@ class EmberPlannerTests(unittest.TestCase):
         self.assertIn("fire_projection", prompt)
         self.assertNotIn("user-a", prompt)
         self.assertNotIn("user-b", prompt)
+        self.assertIs(payload["response_format"], EmberPlannerResponse)
 
 
 if __name__ == "__main__":

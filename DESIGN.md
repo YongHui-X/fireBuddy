@@ -1,162 +1,193 @@
 ---
 name: FireBuddy Web
-description: A calm, capable Singapore finance workspace for everyday money tracking and explainable FIRE planning.
+description: A forest-and-lime money workbench for Singapore savers, where the figures lead and the chrome stays quiet.
 colors:
-  primary-forest: "#25543D"
-  primary-forest-hover: "#1B422F"
-  on-primary: "#FFFFFF"
-  selected: "#E7EFE8"
-  control-border: "#788579"
-  ember: "#B6532B"
-  dark-action: "#A4CFB0"
-  dark-action-hover: "#BBDFC4"
-  dark-on-action: "#162C1E"
-  dark-selected: "#283D2E"
-  dark-ember: "#EFAB87"
-  deep-green: "#25543D"
-  secondary-green: "#46684F"
-  canvas-sage: "#F7F8F5"
-  surface-white: "#FFFFFF"
-  surface-muted: "#F0F3EE"
-  text-primary: "#202820"
-  text-muted: "#626B63"
-  border-muted: "#D8DFD7"
-  income: "#267A3D"
-  income-soft: "#EDF7EE"
-  danger: "#B42318"
-  expense-soft: "#FFF1EF"
-  chart-projection: "#386D82"
-  chart-target: "#855509"
-  dark-canvas: "#101810"
-  dark-surface: "#19231B"
-  dark-text: "#F2F5EF"
-  dark-text-muted: "#B1BCB2"
-  dark-border: "#3D4E40"
-  dark-deep-green: "#B6D9BF"
+  forest-900: "#0F251C"
+  forest-800: "#163A2C"
+  forest-700: "#1F4D3A"
+  forest-600: "#2B6A4F"
+  forest-500: "#3A8362"
+  forest-100: "#DCEBE0"
+  forest-50: "#EEF4EE"
+  lime-500: "#CBEA63"
+  lime-600: "#B9DC47"
+  lime-700: "#5F7D12"
+  canvas: "#F2F4EC"
+  surface: "#FFFFFF"
+  surface-muted: "#E9EDE2"
+  ink: "#14231C"
+  ink-secondary: "#56655C"
+  ink-tertiary: "#6B7A71"
+  line: "#DDE2D6"
+  line-strong: "#C3CCBD"
+  income: "#1E7A45"
+  income-soft: "#E4F3E8"
+  expense: "#C23A2B"
+  expense-soft: "#FBEAE7"
+  warning: "#9A6700"
+  warning-soft: "#FFF3D4"
+  projection: "#35678A"
+  ember: "#D9782D"
+  canvas-top: "#E9EEE3"
+  dark-canvas: "#0C1712"
+  dark-canvas-top: "#0F1D16"
+  dark-surface: "#132119"
+  dark-surface-muted: "#1B2C22"
+  dark-ink: "#EDF2EA"
+  dark-ink-secondary: "#A9B7AD"
+  dark-line: "#26392E"
+  dark-rail: "#0F1E17"
+  dark-hero: "#1D3B2D"
+  dark-accent: "#8FD1A8"
+  dark-income: "#6FD193"
+  dark-expense: "#F08D7D"
 typography:
-  headline:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
-    fontSize: "1.75rem"
-    fontWeight: 700
+  page-title:
+    fontFamily: "Bricolage Grotesque, Segoe UI, system-ui, sans-serif"
+    fontSize: "1.65rem"
+    fontWeight: 600
     lineHeight: 1.15
     letterSpacing: "-0.025em"
-  headline-mobile:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
-    fontSize: "1.45rem"
-    fontWeight: 700
+  greeting:
+    fontFamily: "Bricolage Grotesque, Segoe UI, system-ui, sans-serif"
+    fontSize: "1.85rem"
+    fontWeight: 600
     lineHeight: 1.15
     letterSpacing: "-0.025em"
+  hero-figure:
+    fontFamily: "Bricolage Grotesque, Segoe UI, system-ui, sans-serif"
+    fontSize: "clamp(1.9rem, 2.3vw, 2.5rem)"
+    fontWeight: 600
+    lineHeight: 1.05
+    letterSpacing: "-0.03em"
   metric:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
-    fontSize: "1.75rem"
-    fontWeight: 650
-    lineHeight: 1.15
-    letterSpacing: "-0.025em"
-  title:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
+    fontFamily: "Bricolage Grotesque, Segoe UI, system-ui, sans-serif"
+    fontSize: "1.35rem"
+    fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: "-0.02em"
+  card-title:
+    fontFamily: "Bricolage Grotesque, Segoe UI, system-ui, sans-serif"
     fontSize: "1.05rem"
-    fontWeight: 650
-    lineHeight: 1.35
+    fontWeight: 600
+    lineHeight: 1.2
   body:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
-    fontSize: "1rem"
+    fontFamily: "Schibsted Grotesk, Segoe UI, system-ui, sans-serif"
+    fontSize: "0.9375rem"
     fontWeight: 400
     lineHeight: 1.5
   body-small:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
-    fontSize: "0.925rem"
+    fontFamily: "Schibsted Grotesk, Segoe UI, system-ui, sans-serif"
+    fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.45
   label:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
-    fontSize: "0.875rem"
+    fontFamily: "Schibsted Grotesk, Segoe UI, system-ui, sans-serif"
+    fontSize: "0.8125rem"
     fontWeight: 600
     lineHeight: 1.4
-  caption:
-    fontFamily: "DM Sans, Segoe UI, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 400
+  overline:
+    fontFamily: "Schibsted Grotesk, Segoe UI, system-ui, sans-serif"
+    fontSize: "0.72rem"
+    fontWeight: 600
     lineHeight: 1.4
+    letterSpacing: "0.05em"
+    textTransform: uppercase
+  caption:
+    fontFamily: "Schibsted Grotesk, Segoe UI, system-ui, sans-serif"
+    fontSize: "0.78rem"
+    fontWeight: 400
+    lineHeight: 1.45
 rounded:
-  progress: "2px"
-  selected: "6px"
-  control: "8px"
-  mobile-card: "10px"
-  card: "12px"
-  round: "999px"
+  chip: "6px"
+  control: "10px"
+  tile: "12px"
+  card: "16px"
+  drawer: "18px"
+  pill: "999px"
 spacing:
   xs: "4px"
   sm: "8px"
-  sm-plus: "10px"
   md: "12px"
-  md-plus: "14px"
   lg: "16px"
-  lg-plus: "18px"
   xl: "20px"
   2xl: "24px"
   3xl: "28px"
-  4xl: "32px"
-  5xl: "40px"
+  4xl: "36px"
 components:
   button-primary:
-    backgroundColor: "{colors.primary-forest}"
-    textColor: "{colors.on-primary}"
+    backgroundColor: "{colors.lime-500}"
+    textColor: "{colors.ink}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0 {spacing.lg}"
     height: "40px"
   button-primary-hover:
-    backgroundColor: "{colors.primary-forest-hover}"
-    textColor: "{colors.on-primary}"
+    backgroundColor: "{colors.lime-600}"
+    textColor: "{colors.ink}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0 {spacing.lg}"
     height: "40px"
   button-secondary:
-    backgroundColor: "{colors.surface-white}"
-    textColor: "{colors.text-primary}"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0 {spacing.lg}"
     height: "40px"
-  input-standard:
-    backgroundColor: "{colors.surface-white}"
-    textColor: "{colors.text-primary}"
-    typography: "{typography.body-small}"
+  button-danger:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.expense}"
+    typography: "{typography.label}"
     rounded: "{rounded.control}"
-    padding: "0 {spacing.md-plus}"
+    padding: "0 {spacing.lg}"
+    height: "40px"
+  input:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.control}"
+    padding: "0 13px"
     height: "42px"
-  surface-card:
-    backgroundColor: "{colors.surface-white}"
-    textColor: "{colors.text-primary}"
+  card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
     typography: "{typography.body}"
     rounded: "{rounded.card}"
-    padding: "{spacing.xl}"
-  nav-row-default:
+    padding: "22px {spacing.2xl}"
+  hero-card:
+    backgroundColor: "{colors.forest-800}"
+    textColor: "#FFFFFF"
+    typography: "{typography.hero-figure}"
+    rounded: "{rounded.card}"
+    padding: "22px {spacing.2xl}"
+  sidebar-nav-item:
     backgroundColor: "transparent"
-    textColor: "{colors.text-muted}"
+    textColor: "#A9C3B3"
+    typography: "{typography.body-small}"
+    rounded: "{rounded.control}"
+    padding: "0 {spacing.md}"
+    height: "42px"
+  sidebar-nav-item-active:
+    backgroundColor: "rgba(203, 234, 99, 0.14)"
+    textColor: "{colors.lime-500}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
-    padding: "0 {spacing.md-plus}"
-    height: "44px"
-  nav-row-active:
-    backgroundColor: "{colors.income-soft}"
-    textColor: "{colors.deep-green}"
+    padding: "0 {spacing.md}"
+    height: "42px"
+  segmented-option-selected:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
     typography: "{typography.label}"
-    rounded: "{rounded.control}"
-    padding: "0 {spacing.md-plus}"
-    height: "44px"
-  filter-selected:
-    backgroundColor: "{colors.income-soft}"
-    textColor: "{colors.deep-green}"
-    typography: "{typography.label}"
-    rounded: "{rounded.selected}"
-    padding: "{spacing.sm} {spacing.md-plus}"
+    rounded: "7px"
+    padding: "0 18px"
+    height: "34px"
   mobile-add-action:
-    backgroundColor: "{colors.primary-forest}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.caption}"
-    rounded: "{rounded.control}"
+    backgroundColor: "{colors.lime-500}"
+    textColor: "{colors.forest-900}"
+    typography: "{typography.overline}"
+    rounded: "14px"
     width: "62px"
     height: "58px"
 ---
@@ -165,199 +196,158 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Calm Financial Workbench"**
+**Creative North Star: "The Forest Ledger"**
 
-FireBuddy is a capable operational workspace for Singapore personal finance and FIRE planning. Its sage canvas lowers visual pressure while white work surfaces, fine grey green borders, and compact controls make dense financial information easy to scan. Forest green is the precise signal for a primary action or selected state, while deep green carries confident emphasis without making the product feel promotional.
+FireBuddy is a money workbench for Singapore savers working toward financial independence. A deep forest rail and a forest hero card own the left and the top-left of every signed-in view; the rest of the canvas is a pale green-white ground carrying white paper cards with one soft shadow, with a soft forest tint behind the toolbar and first row that settles into the plain canvas by the second row (dark mode adds a faint forest glow top-left). Lime is spent on exactly one thing at a time: the primary action (Add Transaction, Save, the mobile Add tile) and the sun in the mark. Figures are set in Bricolage Grotesque so the numbers read as the headline of every card; everything around them is Schibsted Grotesk at a working size.
 
-The interface is restrained, practical, and quietly warm. It favors ledgers, open sections, clear labels, tabular figures, and visible data provenance over decorative hero treatments. FireBuddy remains the visible identity, while `@myfirequest` stays out of the foreground unless explicitly requested.
+FIRE means financial independence, retire early. The identity refuses the literal flame: the mark is an early sun resting on a horizon line, drawn in lime and white on forest. The Ascent mark (rising steps with a lime landing) is the reserve secondary mark and currently serves as the FIRE Planner navigation icon. Ember, the assistant, keeps a small warm spark in `#D9782D`.
 
 **Key Characteristics:**
 
-- Soft sage canvas with white primary work surfaces in light mode.
-- Near black text, muted grey green supporting copy, and restrained borders.
-- Forest green reserved for primary actions and selected states.
-- Compact borderless page toolbars and flat, structured financial ledgers.
-- A fixed 248px desktop sidebar that becomes a mobile topbar and four tabs with a labeled central Add action.
-- Dark mode built from a deep green black canvas and slightly lighter green surfaces.
-- Modest 12px card corners, 8px controls, minimal shadow, and reduced motion support.
+- Fixed 264px forest sidebar with lime active states and a lime Add Transaction button anchored at the bottom.
+- Pale green-white canvas (`#F2F4EC`) under white cards with 16px corners, a 1px line, and one soft offset shadow.
+- One forest card anchors Home: the net worth hero top-left, with a lime glow, a white display figure, and assets and liabilities beneath. Every other card, FI progress included, is white.
+- Lime is the only action color. Forest greens carry structure, emphasis, and links. Semantic income, expense, warning, and projection colors stay separate.
+- Bricolage Grotesque for headings and figures, Schibsted Grotesk for body and controls, tabular numerals only where digits align.
+- Dark mode is a night version of the same world: deeper canvas, forest surfaces, lime unchanged.
 
 ## Colors
 
-The palette combines fresh action color with quiet natural neutrals, keeping semantic and chart colors distinct from the product accent.
-
 ### Primary
 
-- **Forest Action** (`{colors.primary-forest}`, `#25543D`): Primary buttons, the central mobile Add action, selections, and active controls. Its scarcity preserves meaning.
-- **Forest Hover** (`{colors.primary-forest-hover}`, `#1B422F`): The deliberate hover fill for primary actions.
-- **Deep Emphasis Green** (`{colors.deep-green}`, `#25543D`): Emphasized text, emphasized links, focus in light mode, and selected navigation content.
-- **Working Green** (`{colors.secondary-green}`, `#46684F`): Supporting data visualization and subdued positive emphasis.
+- **Lime Action** (`{colors.lime-500}`, `#CBEA63`): Primary buttons, the mobile Add tile, the sidebar active tint, the sun in the mark, the send button in Ember. Text on lime is always ink.
+- **Lime Hover** (`{colors.lime-600}`, `#B9DC47`): Hover fill for lime actions.
+- **Lime Text** (`{colors.lime-700}`, `#5F7D12`): The only lime allowed as text on light surfaces (the recommended action label).
+- **Forest Rail** (`{colors.forest-800}`, `#163A2C`): Sidebar, mobile topbar, net worth hero, Ember composer, user chat bubbles, the toast, the floating Ember launcher.
+- **Forest Emphasis** (`{colors.forest-700}`, `#1F4D3A`): Links, the active FIRE setup step, mark fill in dark mode.
+- **Forest Accent** (`{colors.forest-600}`, `#2B6A4F`): Focus rings, selected chip borders, the historical chart line, icon tints.
 
 ### Secondary
 
-- **Income Green** (`{colors.income}`, `#267A3D`): Recorded income and positive financial values.
-- **Projection Blue** (`{colors.chart-projection}`, `#386D82`): Estimated FIRE paths, visually distinct from historical facts.
-- **Target Ochre** (`{colors.chart-target}`, `#855509`): Targets and thresholds in charts.
-- **Alert Red** (`{colors.danger}`, `#B42318`): Destructive actions, errors, liabilities, and expenses that require semantic emphasis.
+- **Income Green** (`{colors.income}`, `#1E7A45`) on **Income Wash** (`{colors.income-soft}`): Positive amounts and Income badges.
+- **Expense Red** (`{colors.expense}`, `#C23A2B`) on **Expense Wash** (`{colors.expense-soft}`): Negative amounts, Expense badges, destructive actions, errors.
+- **Warning Ochre** (`{colors.warning}`, `#9A6700`) on **Warning Wash**: Limited data, anomalies, draft labels, the sync banner.
+- **Projection Blue** (`{colors.projection}`, `#35678A`): Savings bar, projected FIRE paths, the expense trend line, informational notes.
+- **Ember Spark** (`{colors.ember}`, `#D9782D`): The assistant's mark and its tinted tile.
 
 ### Neutral
 
-- **Sage Canvas** (`{colors.canvas-sage}`, `#F7F8F5`): The light theme page canvas.
-- **Working White** (`{colors.surface-white}`, `#FFFFFF`): Cards, tool controls, sidebars, topbars, drawers, and list containers.
-- **Muted Wash** (`{colors.surface-muted}`, `#F0F3EE`): Quiet hover states, progress tracks, and secondary grouped controls.
-- **Near Black** (`{colors.text-primary}`, `#202820`): Primary text and financial figures.
-- **Grey Green Copy** (`{colors.text-muted}`, `#626B63`): Descriptions, labels, metadata, placeholders, and secondary navigation.
-- **Grey Green Border** (`{colors.border-muted}`, `#D8DFD7`): Card edges, dividers, field strokes, and navigation separation.
-- **Income Wash** (`{colors.income-soft}`, `#EDF7EE`): Selected controls and income rows where a quiet semantic surface helps.
-- **Expense Wash** (`{colors.expense-soft}`, `#FFF1EF`): Expense rows and light negative context.
-- **Night Canvas** (`{colors.dark-canvas}`, `#101810`): Dark theme page canvas.
-- **Night Surface** (`{colors.dark-surface}`, `#19231B`): Dark theme cards and navigation surfaces.
-- **Night Text** (`{colors.dark-text}`, `#F2F5EF`): Primary dark theme text.
-- **Night Muted Copy** (`{colors.dark-text-muted}`, `#B1BCB2`): Secondary dark theme text.
-- **Night Border** (`{colors.dark-border}`, `#3D4E40`): Dark theme dividers and field strokes.
-- **Night Emphasis Green** (`{colors.dark-deep-green}`, `#B6D9BF`): Dark theme active content and chart targets.
+- **Canvas** (`{colors.canvas}`, `#F2F4EC`): Page ground in light mode.
+- **Surface** (`{colors.surface}`, `#FFFFFF`): Cards, tables, drawers, dialogs, inputs.
+- **Muted Surface** (`{colors.surface-muted}`, `#E9EDE2`): Segmented control tracks, table headers, progress tracks, hover rows, quiet callouts.
+- **Ink** (`{colors.ink}`, `#14231C`), **Secondary Ink** (`{colors.ink-secondary}`, `#56655C`), **Tertiary Ink** (`{colors.ink-tertiary}`, `#6B7A71`): Text hierarchy. Tertiary is the floor for placeholders.
+- **Line** (`{colors.line}`, `#DDE2D6`) and **Strong Line** (`{colors.line-strong}`, `#C3CCBD`): Card edges and dividers versus control borders.
 
-**The Action Color Rule.** Forest green marks an action or selection. Do not use it as a decorative background field or a general success color.
+**The One Lime Rule.** Lime marks the primary action or the selected navigation item. It never fills a card, a chart, or a decorative band. The rail's Add Transaction is global; a page's content area then carries at most one lime action of its own, and it never repeats Add Transaction in lime. Secondary forms on the same page submit with secondary buttons.
 
-**The Semantic Truth Rule.** Income, expense, historical, projected, and target data keep distinct semantic colors and labels. Color never collapses facts and estimates into one visual category.
+**The Forest Owns Regions Rule.** Forest is committed at page scale: the rail, the hero, the composer. It is not sprinkled as icon backgrounds or borders on white cards; those use forest tints and semantic colors.
 
-**The Theme Pairing Rule.** Light mode pairs sage with white. Dark mode pairs the night canvas with the night surface. Preserve the same hierarchy in both themes.
+**The Semantic Truth Rule.** Income, expense, warning, projected, and target data keep their own colors and labels in both themes. Category colors belong to the user and appear at low alpha behind their icons.
 
 ## Typography
 
-**Display Font:** DM Sans with Segoe UI and sans serif fallbacks  
-**Body Font:** DM Sans with Segoe UI and sans serif fallbacks
+**Display Font:** Bricolage Grotesque (optical size axis, weights 500 to 700)  
+**Body Font:** Schibsted Grotesk (weights 400 to 700)
 
-**Character:** DM Sans gives FireBuddy an approachable but numerical voice. Tight heading tracking and tabular figures make financial data feel exact, while weights from 400 through 700 keep hierarchy clear without visual heaviness.
+**Character:** Bricolage brings a slightly editorial, warm grotesk voice to headings and figures without turning a workbench into a magazine. Schibsted Grotesk is clean at 15px and comfortable in tables and forms.
 
 ### Hierarchy
 
-- **Headline** (`{typography.headline}`): Route titles and primary workspace headings. Mobile reduces to `{typography.headline-mobile}`.
-- **Metric** (`{typography.metric}`): High priority financial values inside summary cards.
-- **Title** (`{typography.title}`): Card, form, and section headings.
-- **Body** (`{typography.body}`): Main explanatory content and readable conversation text.
-- **Body Small** (`{typography.body-small}`): Page descriptions and supporting explanations, usually limited to 65 characters per line through the toolbar measure.
-- **Label** (`{typography.label}`): Navigation, controls, compact buttons, and data labels.
-- **Caption** (`{typography.caption}`): Timestamps, chart labels, fine print, and secondary metadata.
+- **Greeting** (`{typography.greeting}`): The Home greeting only.
+- **Page Title** (`{typography.page-title}`): Every route toolbar. Mobile reduces to 1.4rem.
+- **Hero Figure** (`{typography.hero-figure}`): Net worth in the forest hero.
+- **Metric** (`{typography.metric}`): Money Pulse values, filtered totals, FIRE headline figures.
+- **Card Title** (`{typography.card-title}`): Card and dialog headings, with an optional one-line subtitle in secondary ink beneath (never a kicker above).
+- **Body** and **Body Small**: Explanations, descriptions, table cells.
+- **Label**: Field labels, buttons, navigation.
+- **Overline** (`{typography.overline}`): Table headers, filter labels, hero labels, small status words. Always secondary ink or hero muted ink.
+- **Caption**: Timestamps, metadata, helper text.
 
-Financial values use tabular numerals. Headings and important values use 650 or 700, body text uses 400 or 500, and control labels use 550 through 650. Weight 800 and 900 are outside the system.
+**The Tabular Rule.** Tabular numerals apply only to amounts, tables, metrics, and dates. Schibsted Grotesk widens punctuation under `tnum`, so prose never carries it.
 
-**The Operational Scale Rule.** Route headings stop at 1.75rem on desktop. FireBuddy does not use oversized marketing type inside the authenticated workspace.
-
-**The Numerical Rhythm Rule.** Keep amounts, rates, dates, and projection values tabular and aligned so comparisons can be made by position as well as wording.
+**The No-Kicker Rule.** Headings speak for themselves. Context goes in a subtitle below the heading, in secondary ink.
 
 ## Layout
 
-Desktop uses a fixed 248px sidebar and a flexible application canvas. Page toolbars and route content share a maximum width of 1540px, center within the available canvas, and use responsive horizontal padding from 18px to 40px. Toolbars are borderless, compact, and aligned to the work below them rather than presented as cards.
+Desktop (1024px and up) uses a fixed 264px forest sidebar and a fluid canvas with a 1400px content maximum and a `clamp(18px, 3vw, 40px)` gutter. The page toolbar sits directly on the canvas with the title left and actions right; theme and notification controls trail the actions behind a hairline.
 
-Primary screen content uses a practical 16px to 20px internal rhythm and 14px to 16px gaps between peer cards. Dense financial records appear in full width ledgers with one outer border and row dividers. Dashboard data uses a three metric summary followed by balanced chart and ledger regions. Ember uses a flexible conversation canvas and a 300px searchable history rail from 1180px; below that width, history becomes a right drawer.
+Home is a 12-column grid at 1280px and up: the net worth hero spans 4, Money Pulse 5, category budgets 3; category budgets and the spending breakdown share row two evenly; the recent transactions ledger spans 7 beside FI progress at 5 beneath. Between 760px and 1279px the paired cards flow in two columns and the ledger and FI progress stack full width. Transactions stacks a compact period bar, search with a custom date range, a two-cell totals strip, a four-select filter row, and the ledger table. Planning pages (Wealth, FIRE Planner, FIRE setup, Spending Plan) place cards and forms directly under the toolbar; the page owns the gutter.
 
-At widths below 1024px, the sidebar gives way to a 56px topbar and a safe area aware bottom navigation. The bottom navigation keeps Home, Transactions, Categories, and Profile as the four stable tabs, with a labeled central Add action. Below 768px, toolbars stack their actions, filters become one column, cards use 10px corners where space is tight, drawers become bottom sheets, and Ember hides its supporting side columns.
+Below 1024px the sidebar becomes a forest topbar with the brand, theme, notifications, and a More menu, plus a fixed white bottom bar with Home, Transactions, Categories, Profile, and a lime Add tile in the centre. Below 768px toolbar actions stack under the title, the ledger table becomes stacked rows, drawers become bottom sheets, and cards tighten to 18px padding.
 
-The spacing scale is compact by design. Controls start around 38px to 42px high, navigation rows are 44px high, cards typically use 16px to 20px padding, and page gutters reduce to 14px on small screens.
+**The Page Owns the Gutter Rule.** Content wrappers and planning pages apply the gutter once. Cards never add horizontal margin of their own.
 
-**The One Container Rule.** A ledger has one outer surface and internal dividers. Do not wrap each row in another card.
-
-**The Responsive Navigation Rule.** Desktop ownership lives in the sidebar. Mobile ownership lives in the topbar and five action bottom pattern. Do not squeeze the desktop rail into tablet or phone layouts.
+**The Launcher Clearance Rule.** Every page reserves 96px at the bottom on desktop so the floating Ember launcher never covers the last row.
 
 ## Elevation & Depth
 
-FireBuddy is flat by default. Surface contrast and one pixel borders establish structure, while shadows are reserved for transient overlays such as the add transaction drawer, the mobile More menu, and toasts. Resting cards, summary metrics, chart regions, authentication panels, and navigation rows do not use decorative elevation.
+Cards carry one soft shadow (`0 1px 2px rgba(20,35,28,.05), 0 8px 24px -12px rgba(20,35,28,.18)`) plus a 1px line, enough to lift paper from the canvas without a halo. Transient surfaces (drawers, dialogs, menus, the toast, the floating panel) use the large shadow (`0 18px 48px -16px rgba(15,37,28,.38), 0 2px 6px rgba(15,37,28,.08)`) over a forest-tinted, blurred backdrop. Dark mode deepens both shadows.
 
-### Shadow Vocabulary
-
-- **Overlay Large** (`0 8px 24px rgba(22, 51, 0, 0.08)` in light mode; `0 8px 24px rgba(0, 0, 0, 0.20)` in dark mode): Drawers and temporary menus.
-- **Overlay Medium** (`0 3px 8px rgba(22, 51, 0, 0.07)` in light mode; `0 3px 8px rgba(0, 0, 0, 0.18)` in dark mode): Toasts and compact transient feedback.
-
-**The Flat by Default Rule.** A persistent surface earns separation through tone, border, spacing, and typography. Shadow is not a substitute for hierarchy.
-
-**The Transient Lift Rule.** Use shadow only when a surface temporarily sits above the workspace or must preserve clear stacking context.
+**The One Shadow Rule.** A resting surface uses the card shadow or none. Nested cards are never lifted.
 
 ## Shapes
 
-The form language is gently squared rather than pill shaped. Cards and major panels use 12px corners, standard controls use 8px corners, and selected segments use 6px corners inside their 8px container. Mobile cards may tighten to 10px. Progress bars use a restrained 2px corner. Fully round geometry is limited to avatars, chart marks, and the central mobile Add action.
-
-Borders are fine, consistent, and usually one pixel. Rows inside ledgers remain square and borderless on their own, with only a bottom divider. Desktop right side drawers use 12px corners on the exposed left edge. On mobile, the same drawer becomes a bottom sheet with 12px top corners.
-
-**The Quiet Corner Rule.** Use 12px for surfaces and 8px for controls. Do not round ordinary cards or buttons into pills.
-
-**The Ledger Edge Rule.** The container owns the corner radius. Rows inside it stay flat so scanning is uninterrupted.
+Cards and dialogs use 16px corners, controls and inputs 10px, icon tiles 12px, chips 6px, badges and filter pills fully round. The mark tile is 13/48 of its size. The mobile Add tile is a 14px rounded square, not a circle, so it reads as a button rather than a badge.
 
 ## Components
 
 ### Buttons
 
-- **Shape:** Compact rectangular controls with gently curved corners (`{rounded.control}`) and a minimum height of 40px.
-- **Primary:** Forest Action background, white text, a subtle matching forest border, and 16px horizontal padding.
-- **Hover and Focus:** Hover moves to Forest Hover with a darker border. Keyboard focus uses a 3px Deep Emphasis Green ring in light mode and Forest Action in dark mode, offset by 2px.
-- **Secondary:** Working White with a Grey Green Border and primary text. Hover strengthens the border and moves to Muted Wash.
-- **Icon:** Quiet 38px square controls are borderless at rest, then gain a border and muted background on hover.
-- **Pressed and Disabled:** Pressed controls move down by 1px. Disabled controls remain recognizable at 55 percent opacity and use a not allowed cursor.
+- **Primary:** Lime fill, ink text, 40px, 10px corners, 16px side padding. Hover moves to lime hover. Used once per view.
+- **Secondary:** White fill, strong line border, ink text. Hover strengthens the border and tints the fill.
+- **Danger:** White fill with a red-tinted border and red text; confirmation buttons inside delete banners fill red.
+- **Text:** Forest link color, underline on hover. Used for View More, Manage, View all.
+- **Icon:** 38px quiet squares that gain a border and muted fill on hover.
+- **Sidebar Add / Mobile Add:** Lime fill, forest ink, a soft lime glow.
 
-### Chips
+### Fields
 
-- **Style:** Filter groups use a white 8px container with 3px inset padding. Individual choices use 6px corners and ordinary label case.
-- **State:** Selected choices use Income Wash and Deep Emphasis Green. Avoid standalone decorative pills.
+42px inputs with strong-line borders and 10px corners; focus turns the border forest and adds a 3px forest ring at 18 percent. Selects use a custom chevron. Search fields carry an inline icon at 13px. The amount field in the add drawer is a 62px well with the currency prefix and a Bricolage figure.
 
-### Cards / Containers
+### Segmented Controls
 
-- **Corner Style:** Standard 12px corners, tightening to 10px on small screens.
-- **Background:** Working White in light mode and Night Surface in dark mode.
-- **Shadow Strategy:** None at rest. Refer to Elevation & Depth for overlays.
-- **Border:** One pixel Grey Green Border, with the theme equivalent in dark mode.
-- **Internal Padding:** Usually 20px on desktop and 16px on mobile.
+An inline pill track in muted surface with 4px padding; the selected option is a white tab with a 1px shadow. They size to content and never stretch full width.
 
-Summary cards may rise by only 1px on hover while strengthening their border. This is interaction feedback, not ambient elevation.
+### Cards
 
-### Inputs / Fields
+White, 16px corners, 22px by 24px padding, a title row with the heading and an optional text action, an optional subtitle. One forest card anchors Home: the net worth hero, with a lime radial glow in its corner and assets and liabilities under a hairline. Inside a forest card the text action is white with a translucent underline and the secondary button is a translucent white outline.
 
-- **Style:** White or Night Surface fill, one pixel border, 8px corners, and compact 42px to 48px height depending on form context.
-- **Focus:** The border becomes Deep Emphasis Green and receives a soft 3px forest derived ring. A global 3px accessible focus outline remains available for keyboard navigation.
-- **Error / Disabled:** Errors use Alert Red with a soft negative context. Disabled fields lower opacity without changing their fundamental structure.
+### Ledgers and Tables
+
+The transactions table lives in one bordered container. Header cells are overline text on muted surface; rows are 12px by 14px cells with a hover fill; amounts are right-aligned Bricolage figures; the actions column holds one quiet ellipsis. Below 768px each row becomes a stacked card with the description first and the amount top-right. The Home ledger inside the Recent transactions card follows the same header and right-aligned amounts but takes no border or shadow of its own, and its header folds away below 760px.
+
+### Chips and Badges
+
+Income and Expense badges are small pills on their semantic washes. Tags are 6px muted chips. The demo-data label and Limited data status are pills in muted or warning wash.
+
+### Dialogs and Drawers
+
+Centered sheets are 520px, with a header divider and a 24px body. The add transaction editor is a 500px right drawer on desktop and a bottom sheet on phones. Menus are 184px popovers with 8px items.
 
 ### Navigation
 
-The desktop sidebar is 248px wide with a white or Night Surface background and a single right divider. Navigation rows are 44px high, use 8px corners, and carry muted text at rest. Hover uses Muted Wash. Active rows use Income Wash with Deep Emphasis Green text. FireBuddy and `SG FIRE Tracker` anchor the rail without competing with task content.
+Desktop rail items are 42px rows with muted ink; the active row has a lime-tinted fill and lime text. Ask Ember sits in its own section with an AI indicator. Mobile uses a 60px forest topbar and a 64px bottom bar.
 
-Mobile uses a compact topbar and fixed bottom navigation. The four stable destinations sit around a circular forest Add action with a visible `Add` label. Secondary destinations live in the More menu, which is a temporary bordered surface with modest overlay shadow.
+### Ember
 
-### Page Toolbar
-
-The Page Toolbar is the shared route heading and action pattern. It has no enclosing border or fill, uses the page canvas directly, and aligns title, optional description, metadata, back control, and actions to the content grid. Desktop toolbars are at least 104px high. Mobile toolbars stack their action region beneath the heading.
-
-### Financial Ledger
-
-Transactions, accounts, wealth positions, settings, history, and category breakdowns use one bordered container with full width rows. Rows are separated by a single divider and keep amounts aligned at the trailing edge. Income and expenses rely on explicit signs, labels, and restrained semantic color. Historical facts, projections, and targets remain visually distinct in charts and supporting copy.
-
-### Add Transaction Sheet
-
-The transaction editor is a right side drawer on desktop and a bottom sheet on mobile. Its header and form remain white or Night Surface with one divider, 8px fields, 12px exposed panel corners, and primary actions anchored to the form flow. Expense category suggestions remain an explicit secondary action and never look like automatic save behavior.
-
-### Ember Conversation
-
-Ember is a reading workspace with restrained chat cues. User messages use compact right aligned forest bubbles, while assistant answers use one generous white or Night Surface reading panel with citations inside the same surface. A subtle sage grid gives the conversation canvas structure, the deep green composer remains grounded at the bottom, and searchable history uses flat rows in the right rail or responsive drawer. Essential educational boundaries stay in the empty state and composer note rather than a separate guide panel.
+Assistant answers are white reading panels with sources beneath a divider; user messages are forest bubbles on the right. The composer is a forest field with a lime send button. History is a 300px rail at 1180px and up, a right drawer below.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** use Forest Action for primary actions, selected filters, and active mobile Add affordance.
-- **Do** keep white work surfaces on the sage canvas and use fine borders as the main structural cue.
-- **Do** use 12px card corners, 8px control corners, and compact 16px to 20px card padding.
-- **Do** keep route toolbars borderless and aligned to the content grid.
-- **Do** use flat ledgers with full width rows, clear dividers, aligned amounts, and tabular numerals.
-- **Do** preserve explicit labels for income, expense, historical facts, projections, targets, unavailable states, and demo data.
-- **Do** provide 3px visible focus treatment and respect reduced motion preferences.
-- **Do** keep FireBuddy visible while leaving `@myfirequest` in the background unless explicitly requested.
+- **Do** keep forest for regions (rail, hero, composer) and lime for the single primary action.
+- **Do** set figures in Bricolage Grotesque with tabular numerals and keep prose in Schibsted Grotesk without them.
+- **Do** put context in a subtitle under a heading, in secondary ink.
+- **Do** use one bordered container for ledgers with full-width rows.
+- **Do** keep the demo-data label, Limited data status, and semantic badges visible.
+- **Do** give every control a hover, focus, and disabled state from the token set.
 
 ### Don't:
 
-- **Don't** use decorative gradients, background circles, glass effects, or ornamental hero bands.
-- **Don't** turn ordinary buttons, cards, filters, or navigation into excessive pills.
-- **Don't** add heavy ambient shadows or nested cards to create hierarchy.
-- **Don't** use weights 800 or 900, oversized workspace headings, or marketing scale typography.
-- **Don't** use brand color as a decorative wash or as a replacement for semantic success, income, or projection colors.
-- **Don't** add decorative eyebrows, notification bells, glossy device framing, or watermark treatments.
-- **Don't** collapse mobile navigation into a floating pill or omit the visible Add label.
-- **Don't** present Ember as decorative chat bubbles or blur educational guidance with authoritative personal calculations.
-
-Ember uses a simple ember symbol in `#B6532B` (light) and `#EFAB87` (dark). FireBuddy retains its original flame and growth mark. The warm forest palette is retained without the proposed layout, typography, or interaction changes.
+- **Don't** add a second lime button to a view or use lime as a fill for cards or charts.
+- **Don't** draw flames. The sun-on-horizon mark is the identity; the Ascent mark is the reserve.
+- **Don't** use kickers or eyebrows above headings, decorative gradients, glass, or hard offset shadows.
+- **Don't** stretch segmented controls or save buttons to full width on desktop.
+- **Don't** apply tabular numerals to body copy.
+- **Don't** show theme and notification controls in both the topbar and the toolbar on small screens.

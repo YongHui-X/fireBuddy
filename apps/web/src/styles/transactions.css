@@ -1,0 +1,651 @@
+/* Transactions: filter bar, totals, ledger table, row actions, details dialog, editor sheet. */
+
+.transactions-toolbar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.transactions-period-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 42px;
+  padding: 0 4px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface);
+}
+
+.transactions-period-panel > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.transactions-period-panel > div:first-child span {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.transactions-period-panel > div:first-child strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.dashboard-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.dashboard-period > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.dashboard-period > button:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.dashboard-period-picker select {
+  min-height: 32px;
+  padding: 0 30px 0 10px;
+  border-color: transparent;
+  background-color: transparent;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.dashboard-period-picker select:hover {
+  background-color: var(--surface-2);
+}
+
+.page-filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.transaction-date-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.transaction-date-range label {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 140px;
+}
+
+.transaction-date-range label span {
+  color: var(--ink-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.transaction-date-range .secondary-button {
+  min-height: 42px;
+}
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 14px 0;
+  overflow: hidden;
+}
+
+.summary-strip > div {
+  display: grid;
+  gap: 4px;
+  padding: 14px 18px;
+}
+
+.summary-strip > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.summary-strip span {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.summary-strip strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.select-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.select-filter-grid label {
+  display: grid;
+  gap: 4px;
+}
+
+.select-filter-grid label span {
+  color: var(--ink-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 900px) {
+  .page-filter-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .transaction-date-range label {
+    flex: 0 0 150px;
+  }
+}
+
+@media (max-width: 600px) {
+  .transactions-period-panel {
+    flex-wrap: wrap;
+    padding: 8px 4px 8px 14px;
+  }
+
+  .transactions-period-panel > div:first-child strong {
+    display: none;
+  }
+}
+
+/* Ledger table ------------------------------------------------------------------ */
+
+.transactions-table-shell {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.transactions-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.transaction-column-date {
+  width: 12%;
+}
+
+.transaction-column-description {
+  width: 26%;
+}
+
+.transaction-column-category {
+  width: 20%;
+}
+
+.transaction-column-account {
+  width: 12%;
+}
+
+.transaction-column-type {
+  width: 10%;
+}
+
+.transaction-column-amount {
+  width: 12%;
+}
+
+.transaction-column-actions {
+  width: 60px;
+}
+
+.transactions-table th,
+.transactions-table td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.transactions-table thead th {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The actions column keeps its accessible header name but shows no visible label. */
+.transactions-table thead th:last-child {
+  padding-right: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  color: transparent;
+  user-select: none;
+}
+
+.transactions-table td[data-label='Amount'],
+.transactions-table th:nth-child(6) {
+  text-align: right;
+}
+
+.transactions-table th:nth-child(6) .transaction-sort-button {
+  margin-left: auto;
+}
+
+.transaction-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.transaction-sort-button:hover {
+  color: var(--ink);
+}
+
+.sort-icon-desc {
+  transform: rotate(180deg);
+}
+
+.transactions-table tbody tr {
+  border-top: 1px solid var(--line);
+}
+
+.transactions-table tbody tr:first-child {
+  border-top: 0;
+}
+
+.transaction-row-interactive {
+  cursor: pointer;
+}
+
+.transaction-row-interactive:hover {
+  background: var(--surface-2);
+}
+
+.transaction-row-interactive:focus-visible {
+  outline-offset: -3px;
+}
+
+.transaction-table-date {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.transaction-table-cell-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+td[data-label='Description'] .transaction-table-cell-text {
+  font-weight: 600;
+}
+
+.transaction-row-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.transaction-table-category {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.transaction-table-category .category-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+.transaction-table-category .category-avatar svg {
+  width: 17px;
+  height: 17px;
+}
+
+td[data-label='Amount'] strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.transaction-table-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.transaction-action-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.transaction-action-trigger:hover,
+.transaction-action-trigger[aria-expanded='true'] {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.transaction-action-menu {
+  position: fixed;
+  z-index: 90;
+  display: grid;
+  gap: 2px;
+  width: 184px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: rise-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.transaction-action-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.transaction-action-menu button:hover:not(:disabled),
+.transaction-action-menu button:focus-visible {
+  background: var(--surface-2);
+}
+
+.transaction-action-menu-danger {
+  color: var(--danger) !important;
+}
+
+/* Responsive ledger: rows become stacked cards below tablet width. */
+@media (max-width: 767px) {
+  .transactions-table,
+  .transactions-table tbody,
+  .transactions-table tr,
+  .transactions-table td {
+    display: block;
+  }
+
+  .transactions-table thead,
+  .transactions-table colgroup {
+    display: none;
+  }
+
+  .transactions-table tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding: 12px 14px 12px 16px;
+  }
+
+  .transactions-table td {
+    padding: 0;
+  }
+
+  .transactions-table td[data-label='Date'] {
+    order: 2;
+    font-size: 0.78rem;
+  }
+
+  .transactions-table td[data-label='Description'] {
+    order: 1;
+    grid-column: 1;
+  }
+
+  .transactions-table td[data-label='Category'] {
+    order: 3;
+    grid-column: 1;
+    margin-top: 6px;
+  }
+
+  .transaction-table-category .category-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+  }
+
+  .transaction-table-category .category-avatar svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .transactions-table td[data-label='Account'] {
+    order: 4;
+    grid-column: 1;
+    color: var(--ink-2);
+    font-size: 0.78rem;
+  }
+
+  .transactions-table td[data-label='Type'] {
+    order: 5;
+    grid-column: 1;
+    margin-top: 4px;
+  }
+
+  .transactions-table td[data-label='Amount'] {
+    order: 1;
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .transactions-table td[data-label='Actions'] {
+    order: 6;
+    grid-column: 2;
+    grid-row: 2 / span 4;
+    align-self: end;
+  }
+}
+
+/* Details dialog ------------------------------------------------------------------ */
+
+.transaction-details-dialog {
+  width: min(100%, 460px);
+  padding: 22px 24px 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.transaction-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.transaction-details-header > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.transaction-details-header span {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.transaction-details-header h3 {
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.transaction-details-amount {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: var(--r-tile);
+  background: var(--surface-2);
+}
+
+.transaction-details-amount span {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.transaction-details-amount strong {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  letter-spacing: -0.03em;
+}
+
+.transaction-details-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.transaction-details-list > div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.transaction-details-list dt {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.transaction-details-list dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.transaction-details-category {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.transaction-details-category .category-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.transaction-details-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.transaction-details-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Legacy compact rows still used by Insights top spending ------------------------------ */
+
+.transaction-list {
+  display: grid;
+}
+
+.transaction-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.transaction-card:last-child {
+  border-bottom: 0;
+}
+
+.transaction-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.transaction-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.transaction-copy span {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+}
+
+.transaction-card > strong:last-child {
+  font-family: var(--font-display);
+  white-space: nowrap;
+}

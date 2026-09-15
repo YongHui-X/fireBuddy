@@ -5,9 +5,10 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 
+from lib.clock import singapore_today
 from lib.repository import fetch_all
 from lib.supabase import supabase
-from services.ember_planner import EmberPlan, EmberToolName, singapore_today
+from services.ember_planner import EmberPlan, EmberToolName
 from services.financial_repository import load_financial_records
 from services.financial_summary import build_financial_summary
 
@@ -69,6 +70,7 @@ def _load_expenses(user_id: str, start: date, end: date) -> list[dict]:
             .eq("transaction_type", "expense")
             .gte("date", start.isoformat())
             .lte("date", end.isoformat())
+            .order("id")
         )
     )
 
@@ -82,6 +84,7 @@ def _load_visible_expense_categories(user_id: str) -> dict[str, str]:
             .select(CATEGORY_COLUMNS)
             .eq("is_default", True)
             .eq("category_type", "expense")
+            .order("id")
         )
     )
     user_rows = fetch_all(
@@ -90,6 +93,7 @@ def _load_visible_expense_categories(user_id: str) -> dict[str, str]:
             .select(CATEGORY_COLUMNS)
             .eq("user_id", user_id)
             .eq("category_type", "expense")
+            .order("id")
         )
     )
     safe_defaults = [row for row in default_rows if row.get("user_id") is None]

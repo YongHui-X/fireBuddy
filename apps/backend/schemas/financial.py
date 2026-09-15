@@ -2,23 +2,17 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID
-from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
+
+from lib.clock import singapore_today
 from schemas.retirement import RetirementDraft, RetirementPlan, RetirementOverrides
 
 
 Money = Annotated[Decimal, Field(max_digits=10, decimal_places=2)]
 PositiveMoney = Annotated[Decimal, Field(gt=0, max_digits=10, decimal_places=2)]
 Rate = Annotated[Decimal, Field(max_digits=8, decimal_places=6)]
-
-
-def singapore_today() -> date:
-    """Apply Singapore calendar boundaries to user-entered financial facts."""
-
-    return datetime.now(ZoneInfo("Asia/Singapore")).date()
-
 
 class FinancialModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)

@@ -1,0 +1,590 @@
+/* App shell: forest sidebar, page canvas, toolbar, mobile topbar, and mobile tab bar. */
+
+.figma-app-root {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* Sidebar ----------------------------------------------------------------- */
+
+.desktop-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  width: var(--sidebar-w);
+  height: 100vh;
+  height: 100dvh;
+  padding: 22px 16px 20px;
+  background: var(--rail-bg);
+  color: var(--rail-ink);
+  border-right: 1px solid var(--rail-line);
+}
+
+.desktop-sidebar[hidden] {
+  display: none;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 8px 22px;
+  border-bottom: 1px solid var(--rail-line);
+}
+
+.sidebar-logo h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.sidebar-logo p {
+  margin-top: 2px;
+  color: var(--rail-ink-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.desktop-nav {
+  display: grid;
+  gap: 2px;
+  padding-top: 16px;
+}
+
+.desktop-secondary-nav {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rail-line);
+}
+
+.desktop-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: var(--r-control);
+  color: var(--rail-ink-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.desktop-nav-link:hover {
+  background: var(--rail-hover-bg);
+  color: #fff;
+}
+
+.desktop-nav-link-active,
+.desktop-nav-link-active:hover {
+  background: var(--rail-active-bg);
+  color: var(--rail-active-ink);
+  font-weight: 600;
+}
+
+.desktop-nav-link:focus-visible {
+  outline-color: var(--lime-500);
+}
+
+.ember-nav-mark {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.nav-ai-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 26px;
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--rail-ink-muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+}
+
+.nav-ai-indicator::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--lime-500);
+  content: '';
+}
+
+.sidebar-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.sidebar-logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid var(--rail-line);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--rail-ink-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sidebar-logout-button:hover:not(:disabled) {
+  background: var(--rail-hover-bg);
+  color: #fff;
+}
+
+.sidebar-logout-button:focus-visible {
+  outline-color: var(--lime-500);
+}
+
+.sidebar-add-button,
+.mobile-fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--lime-500);
+  color: var(--forest-900);
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 6px 18px -8px rgba(203, 234, 99, 0.9);
+}
+
+.sidebar-add-button:hover:not(:disabled),
+.mobile-fab:hover:not(:disabled) {
+  background: var(--lime-600);
+}
+
+.sidebar-add-button:focus-visible,
+.mobile-fab:focus-visible {
+  outline-color: #fff;
+}
+
+/* Canvas ------------------------------------------------------------------ */
+
+/* A soft forest tint behind the toolbar and the first card row, settling into the plain canvas by row two,
+   plus a faint forest glow top-left in dark mode. Scrolls with the document. */
+.app-container {
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 520px at 0 0, var(--bg-glow), transparent 70%),
+    linear-gradient(180deg, var(--bg-top) 0, var(--bg) 440px),
+    var(--bg);
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.scroll-area {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.page {
+  min-height: 100%;
+  padding-bottom: 48px;
+}
+
+.page-toolbar {
+  width: min(100%, var(--content-max));
+  margin: 0 auto;
+  padding: 26px var(--gutter) 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 24px;
+}
+
+.page-toolbar-leading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.page-toolbar-leading .icon-button {
+  margin-top: 1px;
+  margin-left: -8px;
+}
+
+.page-toolbar-copy {
+  min-width: 0;
+}
+
+.page-toolbar-copy h2 {
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.page-toolbar-copy p {
+  max-width: 62ch;
+  margin-top: 5px;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.page-toolbar-metadata {
+  grid-column: 1;
+  width: fit-content;
+}
+
+.page-toolbar-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Every toolbar control shares one 40px row so buttons, fields, and icon buttons align. */
+.page-toolbar-actions > .primary-button,
+.page-toolbar-actions > .secondary-button {
+  min-height: 40px;
+}
+
+.page-toolbar-actions .icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+.app-utility-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-utility-actions-toolbar {
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+}
+
+.page-toolbar-actions-utilities-only .app-utility-actions-toolbar {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.app-utility-button {
+  color: var(--ink-2);
+}
+
+.app-utility-button:hover {
+  color: var(--ink);
+}
+
+.screen-content,
+.analytics-content,
+.profile-content,
+.dashboard-content {
+  width: min(100%, var(--content-max));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* Planning pages place cards and forms directly under the toolbar, so the page owns the gutter. */
+.foundation-management-page {
+  padding-inline: var(--gutter);
+}
+
+.foundation-management-page > .page-toolbar {
+  padding-inline: 0;
+}
+
+.foundation-management-page > :not(.page-toolbar) {
+  width: min(100%, var(--content-max));
+  margin-inline: auto;
+}
+
+.foundation-management-page > p:not([class]) {
+  max-width: 70ch;
+  margin-inline: 0;
+  margin-bottom: 18px;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.foundation-management-page > .white-card,
+.foundation-management-page > .management-grid,
+.foundation-management-page > .retirement-headlines,
+.foundation-management-page > .retirement-steps,
+.foundation-management-page > form {
+  margin-bottom: 18px;
+}
+
+.foundation-management-page > .retirement-setup-form {
+  margin-inline: 0;
+}
+
+/* Mobile topbar and tab bar ------------------------------------------------ */
+
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--topbar-h);
+  padding: 0 16px;
+  background: var(--rail-bg);
+  color: var(--rail-ink);
+  border-bottom: 1px solid var(--rail-line);
+}
+
+.mobile-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.mobile-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-topbar .app-utility-button {
+  color: var(--rail-ink-muted);
+}
+
+.mobile-topbar .app-utility-button:hover {
+  color: #fff;
+  background: var(--rail-hover-bg);
+  border-color: transparent;
+}
+
+.mobile-more-menu {
+  position: relative;
+}
+
+.mobile-more-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--rail-line);
+  border-radius: var(--r-control);
+  color: var(--rail-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mobile-more-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.mobile-more-menu[open] summary {
+  background: var(--rail-hover-bg);
+}
+
+.mobile-more-menu nav {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: 2px;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  animation: rise-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mobile-more-menu nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.mobile-more-menu nav a:hover,
+.mobile-more-menu nav a.active {
+  background: var(--surface-2);
+}
+
+.mobile-more-menu nav .nav-ai-indicator {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.mobile-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: none;
+  align-items: stretch;
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding: 0 8px env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -8px 24px -16px rgba(20, 35, 28, 0.35);
+}
+
+.mobile-nav-group {
+  display: flex;
+  flex: 1 1 0;
+}
+
+.mobile-fab-spacer {
+  flex: 0 0 76px;
+}
+
+.mobile-tab {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mobile-tab-active {
+  color: var(--accent-text);
+}
+
+.mobile-fab {
+  position: absolute;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  flex-direction: column;
+  gap: 1px;
+  width: 62px;
+  height: 58px;
+  padding: 0;
+  border-radius: 14px;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mobile-fab:active:not(:disabled) {
+  transform: translateX(-50%) translateY(1px);
+}
+
+/* Breakpoints -------------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    display: flex;
+  }
+
+  /* Leave room for the floating Ember launcher at the end of every page. */
+  .page {
+    padding-bottom: 96px;
+  }
+
+  .app-container {
+    margin-left: var(--sidebar-w);
+  }
+
+  .app-container.sidebar-collapsed {
+    margin-left: 0;
+  }
+
+  .mobile-topbar,
+  .mobile-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .mobile-nav {
+    display: flex;
+  }
+
+  .page {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  /* The topbar already carries theme and notification controls on small screens. */
+  .app-utility-actions-toolbar {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .page-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 20px;
+    padding-bottom: 14px;
+  }
+
+  .page-toolbar-copy h2 {
+    font-size: 1.4rem;
+  }
+
+  .page-toolbar-metadata {
+    grid-column: 1;
+  }
+
+  .page-toolbar-actions {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .app-utility-actions-toolbar {
+    margin-left: auto;
+  }
+
+  .white-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+}

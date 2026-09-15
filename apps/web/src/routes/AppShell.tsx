@@ -16,52 +16,38 @@ import type { Session } from '@supabase/supabase-js';
 import { type TransactionExportFilters, type TransactionType } from '@firebuddy/shared';
 import {
   ArrowLeftRight,
-  ArrowUpRight,
-  Banknote,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   ChevronsUpDown,
-  CircleHelp,
   ClipboardList,
   Copy,
   Download,
   Ellipsis,
-  Filter,
   Flag,
   Grid2X2,
   Home,
   LogOut,
   Menu,
-  Moon,
   Pencil,
   Plus,
   Search,
-  Sun,
   Trash2,
   Tags as TagsIcon,
-  TrendingUp,
   User,
   Wallet,
-  WalletCards,
   X,
 } from 'lucide-react';
 import {
   accountTypeLabel,
   categoryColors,
   colors,
-  describeDonutSegment,
-  fireData,
   formatDateLabel,
   formatSGD,
-  getAccountMeta,
   getCategoryIcon,
   getDeviceMonthKey,
   getDeviceDateKey,
-  polarPoint,
-  sortTransactionsNewestFirst,
   useFireBuddy,
   type Account,
   type Category,
@@ -70,14 +56,15 @@ import {
 } from '../app/FireBuddyProvider';
 import { exportTransactions as exportApiTransactions } from '../api';
 import { buildTransactionCsv, downloadCsvBlob, filterLocalExportTransactions, getTransactionExportFilename } from '../app/transactionExport';
-import { EmberMark, FireBuddyMark } from '../app/BrandMarks';
-import { getDisplayName } from '../app/displayName';
+import { AscentMark, EmberMark, FireBuddyMark } from '../app/BrandMarks';
+
 import { AppUtilityActions } from '../components/AppUtilityActions';
 import { CategorySheet } from '../components/CategorySheet';
 import { EmberFloatingAssistant } from '../components/EmberFloatingAssistant';
 import { PageToolbar } from '../components/PageToolbar';
 import { TagManagerDialog } from '../components/TagManagerDialog';
 import { TransactionExportDialog, type TransactionExportScope } from '../components/TransactionExportDialog';
+import { TransactionDetailsDialog } from '../components/TransactionDetailsDialog';
 import { TransactionTagSelector } from '../components/TransactionTagSelector';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';
 import Accounts from './Accounts';
@@ -97,7 +84,7 @@ const desktopNavItems = [
   { path: '/categories', icon: Grid2X2, label: 'Categories' },
   { path: '/plan', icon: ClipboardList, label: 'Plan' },
   { path: '/goals', icon: Flag, label: 'Goals' },
-  { path: '/fire', icon: TrendingUp, label: 'FIRE Planner' },
+  { path: '/fire', icon: AscentMark, label: 'FIRE Planner' },
   { path: '/profile', icon: User, label: 'Profile' },
 ] as const;
 const mobileNavItems = desktopNavItems.filter((item) => ['/', '/transactions', '/categories', '/profile'].includes(item.path));
@@ -218,7 +205,7 @@ function Layout() {
           <MobileTopbar />
           <div className="scroll-area">
             <Routes>
-              <Route index element={<Dashboard />} />
+              <Route index element={<DashboardRoute />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="categories" element={<Categories />} />
               <Route path="profile" element={<Profile onRequestLogout={() => setShowLogoutDialog(true)} />} />
@@ -253,6 +240,73 @@ function Layout() {
         onConfirm={() => void handleSignOut()}
       />
     </div>
+  );
+}
+
+/** Keep Home transaction details and edits transient so the dashboard route never changes. */
+function DashboardRoute() {
+  const {
+    transactions,
+    accounts,
+    categories,
+    tags,
+    session,
+    syncStatus,
+    updateTransaction,
+    deleteTransaction,
+    addTag,
+    getCategoryById,
+    getAccountById,
+  } = useFireBuddy();
+  const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const activeViewingTransaction = viewingTransaction
+    ? transactions.find((transaction) => transaction.id === viewingTransaction.id) ?? viewingTransaction
+    : null;
+  const activeEditingTransaction = editingTransaction
+    ? transactions.find((transaction) => transaction.id === editingTransaction.id) ?? editingTransaction
+    : null;
+
+  return (
+    <>
+      <Dashboard onSelectTransaction={setViewingTransaction} />
+
+      {activeViewingTransaction ? (
+        <TransactionDetailsDialog
+          transaction={activeViewingTransaction}
+          category={getCategoryById(activeViewingTransaction.category)}
+          account={activeViewingTransaction.account ? getAccountById(activeViewingTransaction.account) : undefined}
+          tags={tags}
+          onClose={() => setViewingTransaction(null)}
+          onEdit={(transaction) => {
+            setViewingTransaction(null);
+            setEditingTransaction(transaction);
+          }}
+        />
+      ) : null}
+
+      {activeEditingTransaction ? (
+        <TransactionSheet
+          key={activeEditingTransaction.id}
+          transaction={activeEditingTransaction}
+          accounts={accounts}
+          categories={categories}
+          tags={tags}
+          session={session}
+          syncStatus={syncStatus}
+          onClose={() => setEditingTransaction(null)}
+          onCreateTag={addTag}
+          onSave={async (updates) => {
+            await updateTransaction(activeEditingTransaction.id, updates);
+            setEditingTransaction(null);
+          }}
+          onDelete={async () => {
+            await deleteTransaction(activeEditingTransaction.id);
+            setEditingTransaction(null);
+          }}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -433,242 +487,6 @@ function MobileTabItem({
   );
 }
 
-function LegacyDashboardReference() {
-  const navigate = useNavigate();
-  const {
-    transactions,
-    accounts,
-    categories,
-    tags,
-    session,
-    syncStatus,
-    updateTransaction,
-    deleteTransaction,
-    addTag,
-    getCategoryById,
-    getAccountById,
-    themeMode,
-    toggleTheme,
-  } = useFireBuddy();
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const currentMonthKey = getDeviceMonthKey();
-  const sortedTransactions = sortTransactionsNewestFirst(transactions);
-  const monthTransactions = sortedTransactions.filter((transaction) => transaction.date.startsWith(currentMonthKey));
-  const totalExpenses = monthTransactions
-    .filter((transaction) => transaction.transactionType === 'expense')
-    .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
-  const totalIncome = monthTransactions
-    .filter((transaction) => transaction.transactionType === 'income')
-    .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
-  const displayName = getDisplayName(session?.user);
-  const firePercent = (fireData.currentNetWorth / fireData.targetNetWorth) * 100;
-  const recent = sortedTransactions.slice(0, 5);
-  const activeEditingTransaction = editingTransaction
-    ? transactions.find((transaction) => transaction.id === editingTransaction.id) ?? editingTransaction
-    : null;
-
-  return (
-    <main className="page page-dashboard">
-      <section className="curved-header dashboard-header">
-        <div className="header-row">
-          <div>
-            <p className="header-greeting">Good afternoon,</p>
-            <h2>{displayName}</h2>
-          </div>
-          <div className="header-actions">
-            <button
-              className="icon-button translucent"
-              type="button"
-              aria-label={themeMode === 'dark' ? 'Disable dark mode' : 'Enable dark mode'}
-              aria-pressed={themeMode === 'dark'}
-              onClick={toggleTheme}
-              title={themeMode === 'dark' ? 'Light mode' : 'Dark mode'}
-            >
-              {themeMode === 'dark' ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
-            </button>
-            <button className="icon-button translucent" type="button" aria-label="Profile" onClick={() => navigate('/profile')}>
-              <User size={21} strokeWidth={1.7} />
-            </button>
-          </div>
-        </div>
-        <HeaderCurve />
-      </section>
-
-      <section className="dashboard-content">
-        <article className="balance-card card-hover-subtle">
-          <div className="balance-top">
-            <div>
-              <p className="card-label">This month's tracked spending</p>
-              <h1>{formatSGD(totalExpenses, 0)}</h1>
-            </div>
-            <button className="text-button" type="button" onClick={() => navigate('/insights')}>
-              View insights
-            </button>
-          </div>
-
-          <div className="balance-stats">
-            <div className="balance-stat">
-              <span className="round-icon income-icon">
-                <Banknote size={18} />
-              </span>
-              <div>
-                <p>Income</p>
-                <strong className="amount-positive">+ {formatSGD(totalIncome)}</strong>
-              </div>
-            </div>
-            <div className="balance-stat">
-              <span className="round-icon">
-                <ArrowUpRight size={18} />
-              </span>
-              <div className="balance-expenses">
-                <p>Expenses</p>
-                <strong>- {formatSGD(totalExpenses)}</strong>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <div className="dashboard-top-grid dashboard-widget-grid">
-          <article className="white-card spending-breakdown-card">
-            <div className="section-title-row">
-              <h3>Spending breakdown</h3>
-              <button className="text-button" type="button" onClick={() => navigate('/categories')}>
-                Open
-              </button>
-            </div>
-            <MiniCategoryChart />
-          </article>
-
-          <article className="white-card fire-card">
-            <div className="section-title-row">
-              <div>
-                <p className="eyebrow">Illustrative FIRE progress</p>
-                <h3>Illustrative snapshot</h3>
-              </div>
-              <strong>{firePercent.toFixed(1)}%</strong>
-            </div>
-            <div className="progress-bar">
-              <span style={{ width: `${firePercent}%` }} />
-            </div>
-            <div className="stat-grid compact">
-              <StatPill label="Invested" value={formatSGD(fireData.invested, 0)} />
-              <StatPill label="Cash" value={formatSGD(fireData.cash, 0)} />
-              <StatPill label="Emergency" value={`${fireData.emergencyMonths} mo`} />
-              <StatPill label="FIRE year" value={String(fireData.projectedFireYear)} />
-            </div>
-          </article>
-
-          <article className="white-card account-summary-card">
-            <div className="section-title-row">
-              <div>
-                <p className="eyebrow">Accounts</p>
-                <h3>Your payment accounts</h3>
-              </div>
-              <button className="text-button" type="button" onClick={() => navigate('/accounts')}>
-                Manage
-              </button>
-            </div>
-            {accounts.length > 0 ? (
-              <ul className="dashboard-account-list">
-                {accounts.slice(0, 3).map((account) => (
-                  <li key={account.id}>
-                    <span className="dashboard-account-icon" style={{ backgroundColor: account.color }}>
-                      <WalletCards size={16} aria-hidden="true" />
-                    </span>
-                    <span>
-                      <strong>{account.name}</strong>
-                      <small>{accountTypeLabel(account.type)}{account.lastFour ? ` · ${account.lastFour}` : ''}</small>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="dashboard-empty-copy">Add an account to organise where transactions are paid from.</p>
-            )}
-          </article>
-
-          <article className="ember-home-card">
-            <span className="ember-home-icon"><EmberMark size={28} /></span>
-            <div>
-              <p className="eyebrow">Meet Ember</p>
-              <h3>Ask about CPF, CPFIS, Singapore Savings Bonds, IRAS reliefs, and FIRE planning</h3>
-            </div>
-            <button className="secondary-button" type="button" onClick={() => navigate('/ember')}>
-              Open Ember
-              <ChevronRight size={16} aria-hidden="true" />
-            </button>
-          </article>
-        </div>
-
-        <section className="content-section transactions-history-section">
-          <div className="section-title-row">
-            <h3>Recent transactions</h3>
-            <button className="text-button" type="button" onClick={() => navigate('/transactions')}>
-              See all
-            </button>
-          </div>
-          <div className="transaction-list">
-            {recent.map((transaction) => {
-              const category = getCategoryById(transaction.category);
-              const account = transaction.account ? getAccountById(transaction.account) : undefined;
-              return (
-                <TransactionRow
-                  key={transaction.id}
-                  transaction={transaction}
-                  category={category}
-                  account={account}
-                  variant="compact"
-                  onClick={() => navigate('/transactions')}
-                  onEdit={() => setEditingTransaction(transaction)}
-                />
-              );
-            })}
-          </div>
-        </section>
-      </section>
-
-      {activeEditingTransaction ? (
-        <TransactionSheet
-          key={activeEditingTransaction.id}
-          transaction={activeEditingTransaction}
-          accounts={accounts}
-          categories={categories}
-          tags={tags}
-          session={session}
-          syncStatus={syncStatus}
-          onClose={() => setEditingTransaction(null)}
-          onCreateTag={addTag}
-          onSave={async (updates) => {
-            await updateTransaction(activeEditingTransaction.id, updates);
-            setEditingTransaction(null);
-          }}
-          onDelete={async () => {
-            await deleteTransaction(activeEditingTransaction.id);
-            setEditingTransaction(null);
-          }}
-        />
-      ) : null}
-    </main>
-  );
-}
-
-function HeaderCurve() {
-  return (
-    <svg className="header-curve" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0,0 Q600,120 1200,0 L1200,120 L0,120 Z" style={{ fill: 'var(--background)' }} />
-    </svg>
-  );
-}
-
-function StatPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="stat-pill">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
 type CategoryAvatarVariant = 'default' | 'category-card';
 
 function CategoryAvatar({
@@ -694,99 +512,6 @@ function CategoryAvatar({
       <Icon size={iconSize} strokeWidth={1.9} />
     </span>
   );
-}
-
-function TransactionRow({
-  transaction,
-  category,
-  account,
-  variant = 'card',
-  onClick,
-  onEdit,
-  onDelete,
-}: {
-  transaction: Transaction;
-  category?: Category;
-  account?: Account;
-  variant?: 'compact' | 'card';
-  onClick?: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
-}) {
-  const isIncome = transaction.transactionType === 'income';
-  const amountClass = isIncome ? 'amount-positive' : 'amount-negative';
-  const className = [
-    variant === 'compact' ? 'transaction-item' : 'transaction-card',
-    isIncome ? 'transaction-income' : 'transaction-expense',
-  ].join(' ');
-  const content = (
-    <>
-      <CategoryAvatar category={category} />
-      <div className="transaction-copy">
-        <strong>{transaction.description}</strong>
-        <div className="transaction-meta-row">
-          <span className={`transaction-type-badge ${isIncome ? 'transaction-type-income' : 'transaction-type-expense'}`}>
-            {isIncome ? 'Income' : 'Expense'}
-          </span>
-          <span>
-            {formatDateLabel(transaction.date)} {'\u00B7'} {category?.name ?? 'Category'} {'\u00B7'} {getAccountMeta(account)}
-          </span>
-        </div>
-      </div>
-      <div className="transaction-amount-actions">
-        <strong className={amountClass}>
-          {isIncome ? '+' : '-'} {formatSGD(transaction.amount)}
-        </strong>
-        {onEdit ? (
-          <button
-            className="transaction-edit-button"
-            type="button"
-            aria-label={`Edit ${transaction.description}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit();
-            }}
-          >
-            <Pencil size={15} strokeWidth={1.9} />
-          </button>
-        ) : null}
-        {onDelete ? (
-          <button
-            className="transaction-delete-button"
-            type="button"
-            aria-label={`Delete ${transaction.description}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              onDelete();
-            }}
-          >
-            <Trash2 size={15} strokeWidth={1.9} />
-          </button>
-        ) : null}
-      </div>
-    </>
-  );
-
-  if (onClick) {
-    return (
-      <article
-        className={className}
-        role="button"
-        tabIndex={0}
-        onClick={onClick}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onClick();
-          }
-        }}
-      >
-        {content}
-      </article>
-    );
-  }
-
-  return <article className={className}>{content}</article>;
 }
 
 type TransactionSortKey = 'date' | 'description' | 'category' | 'account' | 'type' | 'amount';
@@ -891,93 +616,6 @@ function formatMonthOptionLabel(month: string) {
   return new Date(`${month}-01T00:00:00`).toLocaleDateString('en-SG', { month: 'long', year: 'numeric' });
 }
 
-/** Format a transaction date without relative labels for the details dialog. */
-function formatTransactionFullDate(date: string) {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('en-SG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-function MiniCategoryChart() {
-  const { transactions, categories } = useFireBuddy();
-  const chartData = categories
-    .filter((category) => category.categoryType === 'expense')
-    .map((category) => ({
-      name: category.name,
-      value: transactions
-        .filter((transaction) => transaction.category === category.id && transaction.transactionType === 'expense')
-        .reduce((total, transaction) => total + Math.abs(transaction.amount), 0),
-      color: category.color,
-    }));
-  const activeChartData = chartData.filter((entry) => entry.value > 0);
-  const centerX = 220;
-  const centerY = 150;
-  const innerRadius = 42;
-  const outerRadius = 78;
-  const sliceAngle = 360 / Math.max(activeChartData.length, 1);
-  const gapAngle = activeChartData.length > 1 ? 3 : 0;
-
-  return (
-    <div className="spending-breakdown">
-      <div className="mini-chart">
-        {activeChartData.length > 0 ? (
-          <svg className="labeled-donut-chart" viewBox="0 0 440 300" role="img" aria-label="Equal category spending breakdown">
-            {activeChartData.map((entry, index) => {
-              const startAngle = index * sliceAngle + gapAngle / 2;
-              const endAngle = (index + 1) * sliceAngle - gapAngle / 2;
-              const midAngle = startAngle + (endAngle - startAngle) / 2;
-              const lineStart = polarPoint(centerX, centerY, outerRadius + 5, midAngle);
-              const lineBend = polarPoint(centerX, centerY, 106, midAngle);
-              const isRightSide = lineBend.x >= centerX;
-              const lineEnd = {
-                x: isRightSide ? Math.min(lineBend.x + 34, 320) : Math.max(lineBend.x - 34, 120),
-                y: lineBend.y,
-              };
-              const labelX = isRightSide ? lineEnd.x + 7 : lineEnd.x - 7;
-
-              return (
-                <g className="donut-category" key={entry.name}>
-                  <path
-                    className="donut-segment"
-                    d={describeDonutSegment(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle)}
-                    fill={entry.color}
-                  />
-                  <polyline
-                    className="donut-label-line"
-                    points={`${lineStart.x},${lineStart.y} ${lineBend.x},${lineBend.y} ${lineEnd.x},${lineEnd.y}`}
-                  />
-                  <circle className="donut-label-dot" cx={lineStart.x} cy={lineStart.y} r="2.7" />
-                  <text
-                    className="donut-label"
-                    x={labelX}
-                    y={lineEnd.y - 4}
-                    textAnchor={isRightSide ? 'start' : 'end'}
-                  >
-                    {entry.name}
-                  </text>
-                  <text
-                    className="donut-label-detail"
-                    x={labelX}
-                    y={lineEnd.y + 12}
-                    textAnchor={isRightSide ? 'start' : 'end'}
-                  >
-                    {formatSGD(entry.value, 0)}
-                  </text>
-                </g>
-              );
-            })}
-            <circle className="donut-hole" cx={centerX} cy={centerY} r={innerRadius - 1} />
-          </svg>
-        ) : (
-          <div className="empty-chart">No spending yet</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function Transactions() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1025,10 +663,6 @@ function Transactions() {
     isOpen: Boolean(deletingTransaction),
     canClose: !isDeletingTransaction,
     onClose: () => setDeletingTransaction(null),
-  });
-  const transactionDetailsDialogRef = useAccessibleDialog<HTMLElement>({
-    isOpen: Boolean(viewingTransaction),
-    onClose: closeTransactionDetails,
   });
   const transactionMonthOptions = useMemo(
     () => getTransactionMonthOptions(transactions, latestMonth),
@@ -1316,7 +950,7 @@ function Transactions() {
             <Wallet size={15} /> Accounts
           </button>
           <button
-            className="primary-button"
+            className="secondary-button"
             type="button"
             onClick={() => navigate('/add', { state: { backgroundPath: `${location.pathname}${location.search}${location.hash}` } })}
           >
@@ -1638,87 +1272,17 @@ function Transactions() {
       ) : null}
 
       {activeViewingTransaction ? (
-        <div className="sheet-backdrop" onClick={closeTransactionDetails}>
-          <aside
-            ref={transactionDetailsDialogRef}
-            className="transaction-details-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="transaction-details-title"
-            tabIndex={-1}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header className="transaction-details-header">
-              <div>
-                <span>Transaction details</span>
-                <h3 id="transaction-details-title">{activeViewingTransaction.description}</h3>
-              </div>
-              <button
-                data-dialog-initial-focus
-                className="plain-icon-button"
-                type="button"
-                aria-label="Close transaction details"
-                onClick={closeTransactionDetails}
-              >
-                <X size={18} />
-              </button>
-            </header>
-
-            <div className="transaction-details-amount">
-              <span>{activeViewingTransaction.transactionType === 'income' ? 'Income' : 'Expense'}</span>
-              <strong className={activeViewingTransaction.transactionType === 'income' ? 'amount-positive' : 'amount-negative'}>
-                {activeViewingTransaction.transactionType === 'income' ? '+' : '-'} {formatSGD(activeViewingTransaction.amount)}
-              </strong>
-            </div>
-
-            <dl className="transaction-details-list">
-              <div>
-                <dt>Date</dt>
-                <dd>{formatTransactionFullDate(activeViewingTransaction.date)}</dd>
-              </div>
-              <div>
-                <dt>Category</dt>
-                <dd className="transaction-details-category">
-                  <CategoryAvatar category={getCategoryById(activeViewingTransaction.category)} />
-                  <span>{getCategoryById(activeViewingTransaction.category)?.name ?? 'Category'}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Account</dt>
-                <dd>{getAccountMeta(activeViewingTransaction.account ? getAccountById(activeViewingTransaction.account) : undefined)}</dd>
-              </div>
-              <div>
-                <dt>Type</dt>
-                <dd>{activeViewingTransaction.transactionType === 'income' ? 'Income' : 'Expense'}</dd>
-              </div>
-              <div>
-                <dt>Tags</dt>
-                <dd className="transaction-details-tags">
-                  {(activeViewingTransaction.tagIds ?? []).length
-                    ? (activeViewingTransaction.tagIds ?? []).map((tagId) => tags.find((tag) => tag.id === tagId)).filter((tag): tag is Tag => Boolean(tag)).map((tag) => <span className="transaction-tag-chip" key={tag.id}>{tag.name}</span>)
-                    : <span className="field-help">No tags</span>}
-                </dd>
-              </div>
-            </dl>
-
-            <footer className="transaction-details-actions">
-              <button className="secondary-button" type="button" onClick={closeTransactionDetails}>
-                Close
-              </button>
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => {
-                  closeTransactionDetails();
-                  setEditingTransaction(activeViewingTransaction);
-                }}
-              >
-                <Pencil size={15} />
-                Edit transaction
-              </button>
-            </footer>
-          </aside>
-        </div>
+        <TransactionDetailsDialog
+          transaction={activeViewingTransaction}
+          category={getCategoryById(activeViewingTransaction.category)}
+          account={activeViewingTransaction.account ? getAccountById(activeViewingTransaction.account) : undefined}
+          tags={tags}
+          onClose={closeTransactionDetails}
+          onEdit={(transaction) => {
+            closeTransactionDetails();
+            setEditingTransaction(transaction);
+          }}
+        />
       ) : null}
 
       {activeEditingTransaction ? (
@@ -2113,7 +1677,7 @@ function Categories() {
         {categoryType === 'expense' ? <section className="content-section">
           <div className="section-title-row">
             <h3>Full breakdown</h3>
-            <Filter size={18} color={colors.textMuted} />
+            <span>{visibleCategories.length} categories</span>
           </div>
           <div className="category-breakdown">
             {visibleCategories.map((category) => {

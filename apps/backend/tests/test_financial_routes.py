@@ -1,9 +1,11 @@
 import sys
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from postgrest.exceptions import APIError
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -100,6 +102,61 @@ class FinancialRouteTests(unittest.TestCase):
     def test_rejects_future_actual_records(self):
         response = self.client.post(f"/wealth/positions/{POSITION_ID}/snapshots", json={"valueDate": "2200-01-01", "amount": "1"})
         self.assertEqual(response.status_code, 422)
+
+    def test_invalid_partial_position_edits_return_validation_errors_without_writing(self):
+        before = deepcopy(self.supabase.rows)
+        for payload in ({"isEmergencyFund": True}, {"liquidityClass": "restricted"}, {"name": None}):
+            with self.subTest(payload=payload):
+                response = self.client.put(f"/wealth/positions/{POSITION_ID}", json=payload)
+                self.assertEqual(response.status_code, 422, response.text)
+                self.assertIsInstance(response.json()["detail"], str)
+                self.assertEqual(self.supabase.rows, before)
+        response = self.client.put(f"/wealth/positions/{POSITION_ID}", json={"name": "Renamed"})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["name"], "Renamed")
+
+    def test_essential_categories_replace_clear_and_reject_foreign_or_income_selections(self):
+        category_id = "20000000-0000-4000-8000-000000000001"
+        foreign_id = "20000000-0000-4000-8000-000000000002"
+        income_id = "20000000-0000-4000-8000-000000000003"
+        self.supabase.rows["categories"] = [
+            {"id": category_id, "user_id": None, "is_default": True, "category_type": "expense"},
+            {"id": foreign_id, "user_id": OTHER_USER_ID, "is_default": False, "category_type": "expense"},
+            {"id": income_id, "user_id": USER_ID, "is_default": False, "category_type": "income"},
+        ]
+        other_selection = {"user_id": OTHER_USER_ID, "category_id": foreign_id}
+        self.supabase.rows["essential_expense_categories"] = [other_selection]
+        response = self.client.put("/fire/essential-categories", json={"categoryIds": [category_id, category_id]})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["categoryIds"], [category_id])
+        before = deepcopy(self.supabase.rows)
+        for invalid_id in (foreign_id, income_id):
+            response = self.client.put("/fire/essential-categories", json={"categoryIds": [invalid_id]})
+            self.assertEqual(response.status_code, 422)
+            self.assertEqual(self.supabase.rows, before)
+        with patch.object(self.supabase, "rpc", side_effect=APIError({"code": "08006", "message": "Internal database detail"})):
+            response = self.client.put("/fire/essential-categories", json={"categoryIds": []})
+        self.assertEqual(response.status_code, 503)
+        self.assertNotIn("Internal database detail", response.text)
+        self.assertEqual(self.supabase.rows, before)
+        self.assertEqual(self.client.put("/fire/essential-categories", json={"categoryIds": []}).status_code, 200)
+        self.assertEqual(self.supabase.rows["essential_expense_categories"], [other_selection])
+
+    def test_latest_values_and_bulk_history_are_owned_and_not_truncated(self):
+        def snapshot(index, position_id=POSITION_ID, user_id=USER_ID):
+            return self.supabase.complete_row("wealth_position_snapshots", {
+                "wealth_position_id": position_id, "user_id": user_id,
+                "value_date": "2026-08-20" if index == 500 else "2026-08-01", "amount": str(index),
+            })
+        self.supabase.rows["wealth_position_snapshots"] = [snapshot(i) for i in range(501)] + [snapshot(999, OTHER_POSITION_ID, OTHER_USER_ID)]
+        self.supabase.max_rows = 500
+        positions = self.client.get("/wealth/positions").json()
+        self.assertEqual(len(positions), 1)
+        self.assertEqual(positions[0]["latestSnapshot"]["amount"], "500")
+        response = self.client.get("/wealth/snapshots")
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(len(response.json()), 501)
+        self.assertTrue(all(row["userId"] == USER_ID for row in response.json()))
 
     def test_retirement_draft_active_scenario_and_owner_isolation(self):
         from test_retirement_calculator import FIXTURES

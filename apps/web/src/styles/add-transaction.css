@@ -1,0 +1,172 @@
+/* Add transaction: a right-side drawer on desktop, a bottom sheet on phones. */
+
+.add-route {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(15, 37, 28, 0.45);
+  backdrop-filter: blur(4px);
+  animation: fade-in 160ms ease-out;
+}
+
+.add-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 500px);
+  height: 100%;
+  margin: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  overflow: auto;
+  animation: slide-in-right 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.add-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  align-items: center;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.add-header h2 {
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.add-header .plain-icon-button {
+  justify-self: end;
+}
+
+.add-card {
+  display: grid;
+  gap: 18px;
+  padding: 22px 24px 28px;
+}
+
+.add-type-toggle {
+  justify-self: start;
+}
+
+.amount-field {
+  display: grid;
+  gap: 6px;
+}
+
+.amount-field > span {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.amount-field > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  padding: 0 10px 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+}
+
+.amount-field > div:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.amount-field > div strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--ink-2);
+}
+
+.amount-field > div input {
+  min-height: 60px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  -moz-appearance: textfield;
+}
+
+.amount-field > div input::-webkit-outer-spin-button,
+.amount-field > div input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.amount-field > div input:focus {
+  box-shadow: none;
+}
+
+.amount-field > div button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.amount-field > div button:hover {
+  color: var(--ink);
+}
+
+.add-paired-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.add-suggestion-status {
+  margin-top: -8px;
+}
+
+.add-save-button {
+  width: auto;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 24px;
+  justify-self: end;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 767px) {
+  .add-save-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .add-route {
+    align-items: flex-end;
+    justify-content: stretch;
+  }
+
+  .add-panel {
+    width: 100%;
+    height: auto;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 18px 18px 0 0;
+    animation: rise-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .add-card {
+    padding: 18px 18px calc(24px + env(safe-area-inset-bottom));
+  }
+}

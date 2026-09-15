@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
+from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.expense import (
     CreateExpenseRequest,
@@ -120,26 +121,24 @@ def get_expenses(
     end_date: date | None = Query(default=None, alias="endDate"),
     category_id: UUID | None = Query(default=None, alias="categoryId"),
 ):
-    query = (
-        supabase.table("expenses")
-        .select(EXPENSE_COLUMNS)
-        .eq("user_id", current_user.id)
-        .eq("transaction_type", "expense")
-        .order("date", desc=True)
-        .order("created_at", desc=True)
-    )
+    """List every matching owned expense across all Data API pages."""
 
-    if start_date is not None:
-        query = query.gte("date", start_date.isoformat())
+    def query():
+        value = (
+            supabase.table("expenses")
+            .select(EXPENSE_COLUMNS)
+            .eq("user_id", current_user.id)
+            .eq("transaction_type", "expense")
+        )
+        if start_date is not None:
+            value = value.gte("date", start_date.isoformat())
+        if end_date is not None:
+            value = value.lte("date", end_date.isoformat())
+        if category_id is not None:
+            value = value.eq("category_id", str(category_id))
+        return value.order("date", desc=True).order("created_at", desc=True).order("id")
 
-    if end_date is not None:
-        query = query.lte("date", end_date.isoformat())
-
-    if category_id is not None:
-        query = query.eq("category_id", str(category_id))
-
-    response = query.execute()
-    return [serialize_expense(row) for row in response.data or []]
+    return [serialize_expense(row) for row in fetch_all(query)]
 
 
 @router.post("", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)

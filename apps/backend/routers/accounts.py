@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
+from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.account import (
     AccountResponse,
@@ -55,15 +56,15 @@ def raise_account_conflict(error: APIError) -> None:
 def get_accounts(current_user: CurrentUser):
     """List the authenticated user's persisted accounts."""
 
-    response = (
-        supabase.table("accounts")
+    rows = fetch_all(
+        lambda: supabase.table("accounts")
         .select(ACCOUNT_COLUMNS)
         .eq("user_id", current_user.id)
         .order("is_default", desc=True)
         .order("name")
-        .execute()
+        .order("id")
     )
-    return [serialize_account(row) for row in response.data or []]
+    return [serialize_account(row) for row in rows]
 
 
 @router.post("", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)

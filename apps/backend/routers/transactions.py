@@ -1,15 +1,16 @@
 import csv
-from datetime import date, datetime
+from datetime import date
 from io import StringIO
 from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
+from lib.clock import singapore_today
+from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.transaction import (
     CreateTransactionRequest,
@@ -106,22 +107,25 @@ def ensure_tags_are_owned(tag_ids: list[UUID], user_id: str) -> list[str]:
     return normalized
 
 
-def get_transaction_tag_ids(user_id: str) -> dict[str, list[str]]:
+def get_transaction_tag_ids(
+    user_id: str,
+    transaction_id: UUID | None = None,
+) -> dict[str, list[str]]:
     """Group owned tag assignments by transaction for response serialization."""
 
     grouped: dict[str, list[str]] = {}
-    offset = 0
-    while True:
-        page = (
-            supabase.table("transaction_tags").select("transaction_id,tag_id")
-            .eq("user_id", user_id).order("transaction_id").order("tag_id")
-            .range(offset, offset + EXPORT_PAGE_SIZE - 1).execute().data or []
+    def query():
+        value = (
+            supabase.table("transaction_tags")
+            .select("transaction_id,tag_id")
+            .eq("user_id", user_id)
         )
-        for row in page:
-            grouped.setdefault(str(row["transaction_id"]), []).append(str(row["tag_id"]))
-        if len(page) < EXPORT_PAGE_SIZE:
-            break
-        offset += EXPORT_PAGE_SIZE
+        if transaction_id is not None:
+            value = value.eq("transaction_id", str(transaction_id))
+        return value.order("transaction_id").order("tag_id")
+
+    for row in fetch_all(query, page_size=EXPORT_PAGE_SIZE):
+        grouped.setdefault(str(row["transaction_id"]), []).append(str(row["tag_id"]))
     return grouped
 
 
@@ -154,25 +158,21 @@ def get_transactions(
 ):
     """List owned transactions with optional date, category, and type filters."""
 
-    query = (
-        supabase.table("expenses")
-        .select(TRANSACTION_COLUMNS)
-        .eq("user_id", current_user.id)
-        .order("date", desc=True)
-        .order("created_at", desc=True)
-    )
-    if start_date is not None:
-        query = query.gte("date", start_date.isoformat())
-    if end_date is not None:
-        query = query.lte("date", end_date.isoformat())
-    if category_id is not None:
-        query = query.eq("category_id", str(category_id))
-    if transaction_type is not None:
-        query = query.eq("transaction_type", transaction_type)
+    def query():
+        value = supabase.table("expenses").select(TRANSACTION_COLUMNS).eq("user_id", current_user.id)
+        if start_date is not None:
+            value = value.gte("date", start_date.isoformat())
+        if end_date is not None:
+            value = value.lte("date", end_date.isoformat())
+        if category_id is not None:
+            value = value.eq("category_id", str(category_id))
+        if transaction_type is not None:
+            value = value.eq("transaction_type", transaction_type)
+        return value.order("date", desc=True).order("created_at", desc=True).order("id")
 
-    response = query.execute()
+    rows = fetch_all(query)
     tag_ids = get_transaction_tag_ids(current_user.id)
-    return [serialize_transaction(row, tag_ids.get(str(row["id"]), [])) for row in response.data or []]
+    return [serialize_transaction(row, tag_ids.get(str(row["id"]), [])) for row in rows]
 
 
 def _fetch_export_transactions(
@@ -185,26 +185,21 @@ def _fetch_export_transactions(
 ) -> list[dict]:
     """Read every matching transaction page so API row limits cannot truncate exports."""
 
-    rows: list[dict] = []
-    offset = 0
-    while True:
-        query = supabase.table("expenses").select(TRANSACTION_COLUMNS).eq("user_id", user_id)
+    def query():
+        value = supabase.table("expenses").select(TRANSACTION_COLUMNS).eq("user_id", user_id)
         if start_date is not None:
-            query = query.gte("date", start_date.isoformat())
+            value = value.gte("date", start_date.isoformat())
         if end_date is not None:
-            query = query.lte("date", end_date.isoformat())
+            value = value.lte("date", end_date.isoformat())
         if transaction_type is not None:
-            query = query.eq("transaction_type", transaction_type)
+            value = value.eq("transaction_type", transaction_type)
         if category_id is not None:
-            query = query.eq("category_id", str(category_id))
+            value = value.eq("category_id", str(category_id))
         if account_id is not None:
-            query = query.eq("account_id", str(account_id))
-        page = query.order("date").order("created_at").order("id").range(offset, offset + EXPORT_PAGE_SIZE - 1).execute().data or []
-        rows.extend(page)
-        if len(page) < EXPORT_PAGE_SIZE:
-            break
-        offset += EXPORT_PAGE_SIZE
-    return rows
+            value = value.eq("account_id", str(account_id))
+        return value.order("date").order("created_at").order("id")
+
+    return fetch_all(query, page_size=EXPORT_PAGE_SIZE)
 
 
 def _fetch_owned_rows(
@@ -215,17 +210,13 @@ def _fetch_owned_rows(
 ) -> list[dict]:
     """Read every page of one user-owned lookup table for a complete export."""
 
-    rows: list[dict] = []
-    offset = 0
-    while True:
-        query = supabase.table(table).select(columns).eq("user_id", user_id)
+    def query():
+        value = supabase.table(table).select(columns).eq("user_id", user_id)
         for column in order_columns:
-            query = query.order(column)
-        page = query.range(offset, offset + EXPORT_PAGE_SIZE - 1).execute().data or []
-        rows.extend(page)
-        if len(page) < EXPORT_PAGE_SIZE:
-            return rows
-        offset += EXPORT_PAGE_SIZE
+            value = value.order(column)
+        return value
+
+    return fetch_all(query, page_size=EXPORT_PAGE_SIZE)
 
 
 def _protect_spreadsheet_text(value: object) -> str:
@@ -305,7 +296,13 @@ def export_transactions(
     rows = _fetch_export_transactions(
         current_user.id, start_date, end_date, transaction_type, category_id, account_id,
     )
-    default_categories = supabase.table("categories").select("id,name").eq("is_default", True).execute().data or []
+    default_categories = fetch_all(
+        lambda: supabase.table("categories")
+        .select("id,name")
+        .eq("is_default", True)
+        .order("id"),
+        page_size=EXPORT_PAGE_SIZE,
+    )
     owned_categories = _fetch_owned_rows("categories", "id,name", current_user.id)
     accounts = _fetch_owned_rows("accounts", "id,name", current_user.id)
     tags = _fetch_owned_rows("tags", "id,name", current_user.id)
@@ -327,7 +324,7 @@ def export_transactions(
     range_suffix = ""
     if start_date or end_date:
         range_suffix = f"-{start_date.isoformat() if start_date else 'start'}-to-{end_date.isoformat() if end_date else 'present'}"
-    exported_date = datetime.now(ZoneInfo("Asia/Singapore")).date().isoformat()
+    exported_date = singapore_today().isoformat()
     filename = f"firebuddy-transactions{range_suffix}-{exported_date}.csv"
     return Response(
         content=content,
@@ -376,7 +373,7 @@ def update_transaction(
     ensure_category_matches_type(next_category_id, next_type, current_user.id)
     if "account_id" in payload.model_fields_set and payload.account_id is not None:
         ensure_account_is_owned(payload.account_id, current_user.id)
-    existing_tag_ids = get_transaction_tag_ids(current_user.id).get(str(transaction_id), [])
+    existing_tag_ids = get_transaction_tag_ids(current_user.id, transaction_id).get(str(transaction_id), [])
     requested_tag_ids = payload.tag_ids if "tag_ids" in payload.model_fields_set else [UUID(value) for value in existing_tag_ids]
     tag_ids = ensure_tags_are_owned(requested_tag_ids or [], current_user.id)
     response = _execute_transaction_rpc("update_transaction_with_tags", {

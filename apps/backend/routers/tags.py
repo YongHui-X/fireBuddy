@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
+from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.tag import TagNameRequest, TagResponse, serialize_tag
 
@@ -50,40 +51,35 @@ def _ensure_unique_name(name: str, user_id: str, excluded_id: str | None = None)
 def _count_tag_usage(tag_id: str, user_id: str) -> int:
     """Count every owned assignment page without relying on the Data API row cap."""
 
-    total = 0
-    offset = 0
-    while True:
-        page = (
-            supabase.table("transaction_tags").select("tag_id")
-            .eq("user_id", user_id).eq("tag_id", tag_id)
-            .range(offset, offset + PAGE_SIZE - 1).execute().data or []
-        )
-        total += len(page)
-        if len(page) < PAGE_SIZE:
-            return total
-        offset += PAGE_SIZE
+    rows = fetch_all(
+        lambda: supabase.table("transaction_tags")
+        .select("tag_id")
+        .eq("user_id", user_id)
+        .eq("tag_id", tag_id),
+        page_size=PAGE_SIZE,
+    )
+    return len(rows)
 
 
 @router.get("", response_model=list[TagResponse])
 def get_tags(current_user: CurrentUser):
     """List the user's reusable tags with transaction usage counts."""
 
-    tag_rows: list[dict] = []
-    link_rows: list[dict] = []
-    offset = 0
-    while True:
-        page = supabase.table("tags").select(TAG_COLUMNS).eq("user_id", current_user.id).order("name").order("id").range(offset, offset + PAGE_SIZE - 1).execute().data or []
-        tag_rows.extend(page)
-        if len(page) < PAGE_SIZE:
-            break
-        offset += PAGE_SIZE
-    offset = 0
-    while True:
-        page = supabase.table("transaction_tags").select("tag_id").eq("user_id", current_user.id).order("tag_id").range(offset, offset + PAGE_SIZE - 1).execute().data or []
-        link_rows.extend(page)
-        if len(page) < PAGE_SIZE:
-            break
-        offset += PAGE_SIZE
+    tag_rows = fetch_all(
+        lambda: supabase.table("tags")
+        .select(TAG_COLUMNS)
+        .eq("user_id", current_user.id)
+        .order("name")
+        .order("id"),
+        page_size=PAGE_SIZE,
+    )
+    link_rows = fetch_all(
+        lambda: supabase.table("transaction_tags")
+        .select("tag_id")
+        .eq("user_id", current_user.id)
+        .order("tag_id"),
+        page_size=PAGE_SIZE,
+    )
     counts: dict[str, int] = {}
     for link in link_rows:
         tag_id = str(link["tag_id"])

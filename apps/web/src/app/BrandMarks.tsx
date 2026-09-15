@@ -3,30 +3,49 @@ interface MarkProps {
   size?: number;
 }
 
-/** Render FireBuddy's flame and upward-growth mark using the active brand palette. */
+/**
+ * FireBuddy's primary mark: an early sun resting on the horizon.
+ * FIRE stands for financial independence, retire early, so the mark shows a morning you own instead of a flame.
+ * Colors come from CSS custom properties so the mark adapts to the forest sidebar, the light canvas, and dark mode.
+ */
 export function FireBuddyMark({ className = '', size = 36 }: MarkProps) {
   return (
     <svg
       className={className}
       width={size}
       height={size}
-      viewBox="0 0 40 40"
+      viewBox="0 0 48 48"
       fill="none"
       aria-hidden="true"
       focusable="false"
     >
-      <rect width="40" height="40" rx="12" fill="var(--brand-mark-fill, #163300)" />
-      <path
-        d="M20.2 7.8c1.2 5.2-3.2 7.1-3.2 11.2 0 1.3.6 2.5 1.7 3.2-.1-2.8 1.7-4.5 3.6-6.4.2 3.2 3.8 5 3.8 9.2 0 4.2-2.9 7.2-7.1 7.2-4.4 0-7.5-3.2-7.5-7.6 0-6.2 5.2-9.8 8.7-16.8Z"
-        fill="var(--brand-mark-flame, #9fe870)"
-      />
-      <path d="m17.2 27.2 3-3 2.1 2.1 4.2-5" stroke="var(--brand-mark-detail, #ffffff)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M23.8 21.3h2.7V24" stroke="var(--brand-mark-detail, #ffffff)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="48" height="48" rx="13" fill="var(--brand-mark-fill, #163a2c)" />
+      <path d="M13 28a11 11 0 0 1 22 0Z" fill="var(--brand-mark-sun, #cbea63)" />
+      <path d="M24 9v4M11 14l3 3M37 14l-3 3" stroke="var(--brand-mark-line, #ffffff)" strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M9 33h30" stroke="var(--brand-mark-line, #ffffff)" strokeWidth="5" strokeLinecap="round" />
     </svg>
   );
 }
 
-/** Keep Ember's small glowing coal subordinate to the FireBuddy identity. */
+/** Secondary "Ascent" mark kept in reserve: rising steps toward a lime landing. Uses currentColor for the steps. */
+export function AscentMark({ className = '', size = 24 }: MarkProps) {
+  return (
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M9 38h10V28h10V18h9" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx="39" cy="11" r="6" fill="var(--brand-mark-sun, #cbea63)" />
+    </svg>
+  );
+}
+
+/** Ember, the assistant, keeps a small warm spark that stays subordinate to the FireBuddy mark. */
 export function EmberMark({ className = '', size = 24 }: MarkProps) {
   return (
     <svg
@@ -39,8 +58,8 @@ export function EmberMark({ className = '', size = 24 }: MarkProps) {
       focusable="false"
     >
       <path
-        d="M15 4c1 5-5 6-5 10 0 1 .4 2 1.2 2.7C11 13 15 12 17 9c.2 3.6 5 6.2 5 10a8 8 0 0 1-16 0C6 12 12 10 15 4Z"
-        fill="var(--ember-mark-symbol, #b6532b)"
+        d="M14 3c.9 5.6 5.4 10.1 11 11-5.6.9-10.1 5.4-11 11-.9-5.6-5.4-10.1-11-11 5.6-.9 10.1-5.4 11-11Z"
+        fill="var(--ember-mark-symbol, #d9782d)"
       />
     </svg>
   );

@@ -1,8 +1,17 @@
-from typing import Callable
+from typing import Any, Callable
 
 
-def fetch_all(query_factory: Callable[[], object], page_size: int = 1000) -> list[dict]:
-    """Read every PostgREST page so financial totals never stop at the API row limit."""
+DEFAULT_PAGE_SIZE = 500
+
+
+def fetch_all(
+    query_factory: Callable[[], Any],
+    page_size: int = DEFAULT_PAGE_SIZE,
+) -> list[dict]:
+    """Read every PostgREST page so API results never stop at the row limit."""
+
+    if page_size <= 0:
+        raise ValueError("page_size must be a positive integer")
 
     rows: list[dict] = []
     offset = 0

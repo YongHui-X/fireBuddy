@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Download, Filter } from 'lucide-react';
+import { Download } from 'lucide-react';
 import type { TransactionExportFilters } from '@firebuddy/shared';
 
 import {
@@ -229,8 +229,8 @@ function Insights() {
         <article className="white-card insights-spending-breakdown" id="spending-breakdown">
           <div className="insights-spending-heading">
             <div>
-              <p className="eyebrow">{selectedMonthLabel ?? `${range} view`}</p>
               <h3>Spending breakdown</h3>
+              <p className="card-subtitle">{selectedMonthLabel ?? `${range} view`}</p>
             </div>
             <div className="insights-spending-actions">
               <label className="insights-month-picker">
@@ -263,6 +263,12 @@ function Insights() {
         </article>
 
         <article className="chart-card transparent">
+          <div className="section-title-row">
+            <div>
+              <h3>Expense trend</h3>
+              <p className="card-subtitle">{range === 'Year' ? 'Monthly totals' : 'Daily totals'} for the selected {range.toLowerCase()} range</p>
+            </div>
+          </div>
           {expenseSeries.length > 0 ? (
             <ResponsiveContainer width="100%" height={230}>
               <AreaChart data={expenseSeries}>
@@ -280,7 +286,7 @@ function Insights() {
         <article className="white-card">
           <div className="section-title-row">
             <h3>Top spending</h3>
-            <Filter size={18} />
+            <span>Largest {topSpending.length === 1 ? 'expense' : `${topSpending.length} expenses`}</span>
           </div>
           <div className="transaction-list card-list">
             {topSpending.map((transaction) => {

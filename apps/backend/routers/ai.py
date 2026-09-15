@@ -9,6 +9,7 @@ from pydantic.alias_generators import to_camel
 
 from config import settings
 from lib.auth import AuthenticatedUser, get_current_user
+from lib.repository import fetch_all
 from lib.supabase import supabase
 from services.rate_limiter import SlidingWindowRateLimiter
 
@@ -53,31 +54,32 @@ class CategoryOption(AiModel):
 
 
 def fetch_available_categories(user_id: str) -> list[CategoryOption]:
-    """Return system and user-owned categories allowed for a suggestion."""
+    """Return visible expense categories allowed for an AI suggestion."""
 
-    default_response = (
-        supabase.table("categories")
+    default_rows = fetch_all(
+        lambda: supabase.table("categories")
         .select("id,name")
         .eq("is_default", True)
+        .eq("category_type", "expense")
         .order("name")
-        .execute()
+        .order("id")
     )
-    user_response = (
-        supabase.table("categories")
+    owned_rows = fetch_all(
+        lambda: supabase.table("categories")
         .select("id,name")
         .eq("user_id", user_id)
+        .eq("category_type", "expense")
         .order("name")
-        .execute()
+        .order("id")
     )
 
-    rows = [
-        row
-        for row in [*(default_response.data or []), *(user_response.data or [])]
-        if str(row["name"]).strip().lower() != "income"
-    ]
+    rows = [*default_rows, *owned_rows]
     return [
         CategoryOption(id=str(row["id"]), name=str(row["name"]))
-        for row in sorted(rows, key=lambda row: str(row["name"]).lower())
+        for row in sorted(
+            rows,
+            key=lambda row: (str(row["name"]).casefold(), str(row["id"])),
+        )
     ]
 
 

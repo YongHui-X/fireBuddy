@@ -1,0 +1,145 @@
+/* Insights: range tabs, spending breakdown with detail list, expense trend, top spending. */
+
+.analytics-content {
+  display: grid;
+  gap: 18px;
+}
+
+.analytics-content .range-tabs {
+  justify-self: start;
+}
+
+.insights-spending-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-bottom: 12px;
+}
+
+.insights-spending-heading h3 {
+  font-size: 1.05rem;
+}
+
+.insights-spending-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.insights-month-picker {
+  display: grid;
+  gap: 4px;
+}
+
+.insights-month-picker span,
+.insights-spending-total span {
+  color: var(--ink-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.insights-month-picker select {
+  min-height: 36px;
+  min-width: 170px;
+  font-size: 0.85rem;
+}
+
+.insights-spending-total {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.insights-spending-total strong {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+}
+
+.insights-spending-breakdown {
+  container-type: inline-size;
+}
+
+.insights-spending-chart {
+  min-width: 0;
+}
+
+.spending-detail-list {
+  display: grid;
+  margin-top: 6px;
+}
+
+.spending-detail-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.spending-percentage-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--spending-color, var(--accent)) 16%, var(--surface));
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.spending-detail-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spending-detail-category i {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+}
+
+.spending-detail-row > strong {
+  font-family: var(--font-display);
+  white-space: nowrap;
+}
+
+@container (min-width: 720px) {
+  .insights-spending-breakdown .insights-spending-chart {
+    float: left;
+    width: 52%;
+  }
+
+  .insights-spending-breakdown .spending-detail-list {
+    width: 44%;
+    margin-left: auto;
+  }
+
+  .insights-spending-breakdown::after {
+    display: block;
+    clear: both;
+    content: '';
+  }
+}
+
+.chart-card .section-title-row {
+  margin-bottom: 8px;
+}
+
+.card-list .transaction-card {
+  padding: 10px 0;
+}

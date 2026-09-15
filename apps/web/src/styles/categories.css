@@ -1,0 +1,122 @@
+/* Categories, accounts, and their editor sheets. */
+
+.category-type-tabs {
+  margin-bottom: 18px;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.category-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.category-card:hover {
+  border-color: var(--line-strong);
+}
+
+.category-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.category-card h3 {
+  font-size: 1rem;
+}
+
+.category-card p {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+
+.category-card .progress-bar {
+  margin: 8px 0 4px;
+}
+
+.category-budget {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.category-breakdown {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+}
+
+.breakdown-row + .breakdown-row {
+  border-top: 1px solid var(--line);
+}
+
+.breakdown-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.breakdown-copy span {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+}
+
+.breakdown-row > strong:last-child {
+  font-family: var(--font-display);
+  white-space: nowrap;
+}
+
+/* Accounts */
+
+.account-list {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.account-card-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+}
+
+.account-card-row + .account-card-row {
+  border-top: 1px solid var(--line);
+}
+
+.account-card-row > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-card-row > div span {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+}
+
+.account-sheet .swatch-grid {
+  grid-template-columns: repeat(8, 1fr);
+}

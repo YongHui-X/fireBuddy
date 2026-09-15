@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AppShell from './AppShell';
@@ -7,6 +7,7 @@ import AppShell from './AppShell';
 
 const mocks = vi.hoisted(() => ({
   addTransaction: vi.fn(),
+  deleteTransaction: vi.fn(),
   accounts: [] as Array<Record<string, unknown>>,
   categories: [] as Array<Record<string, unknown>>,
   tags: [] as Array<Record<string, unknown>>,
@@ -21,7 +22,14 @@ const mocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   toggleTheme: vi.fn(),
   transactions: [] as Array<Record<string, unknown>>,
+  updateTransaction: vi.fn(),
 }));
+
+/** Expose the current in-memory route so interaction tests can assert navigation. */
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
+}
 
 vi.mock('../app/FinancialFoundationProvider', () => ({
   useFinancialFoundation: () => ({
@@ -60,7 +68,7 @@ vi.mock('../app/FireBuddyProvider', async () => {
       addTag: vi.fn(),
       updateTag: vi.fn(),
       deleteTag: vi.fn(),
-      deleteTransaction: vi.fn(),
+      deleteTransaction: mocks.deleteTransaction,
       dismissNotification: vi.fn(),
       getAccountById: (id: string) => mocks.accounts.find((account) => account.id === id),
       getCategoryById: (id: string) => mocks.categories.find((category) => category.id === id),
@@ -75,7 +83,7 @@ vi.mock('../app/FireBuddyProvider', async () => {
       themeMode: 'light',
       toggleTheme: mocks.toggleTheme,
       transactions: mocks.transactions,
-      updateTransaction: vi.fn(),
+      updateTransaction: mocks.updateTransaction,
     }),
   };
 });
@@ -84,6 +92,7 @@ describe('App shell UX', () => {
   beforeEach(() => {
     window.localStorage.clear();
     mocks.addTransaction.mockReset().mockResolvedValue({ id: 'duplicated-transaction' });
+    mocks.deleteTransaction.mockReset().mockResolvedValue(undefined);
     mocks.foundationError = null;
     mocks.foundationStatus = 'ready';
     mocks.hideFoundationSummary = false;
@@ -93,6 +102,7 @@ describe('App shell UX', () => {
     mocks.refreshFoundation.mockReset().mockResolvedValue(undefined);
     mocks.signOut.mockReset().mockResolvedValue(undefined);
     mocks.toggleTheme.mockReset();
+    mocks.updateTransaction.mockReset().mockResolvedValue(undefined);
     mocks.transactions.length = 0;
     mocks.accounts.length = 0;
     mocks.categories.length = 0;
@@ -198,8 +208,8 @@ describe('App shell UX', () => {
     expect(document.querySelector('.foundation-summary-grid')).not.toBeNull();
     expect(screen.getByText('Net worth')).toBeTruthy();
     expect(screen.queryByText('Savings rate')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'FI progress' })).toBeTruthy();
     expect(screen.queryByText('Emergency runway')).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'FIRE Progress' })).toBeNull();
     expect(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'FIRE Planner' }).getAttribute('href')).toBe('/fire');
     expect(within(screen.getByRole('navigation', { name: 'Primary mobile' })).queryByRole('link', { name: 'FIRE Planner' })).toBeNull();
     expect(screen.getByRole('button', { name: /View More, .* spending details/ })).toBeTruthy();
@@ -310,7 +320,7 @@ describe('App shell UX', () => {
     expect(screen.queryByText('S$25.00')).toBeNull();
   });
 
-  it('shows income, expenses, and savings with three separate Money Pulse bars', () => {
+  it('shows income as a headline with expenses and savings on one split bar', () => {
     render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
 
     const pulseCard = screen.getByRole('heading', { name: /Money Pulse$/ }).closest('article');
@@ -323,7 +333,7 @@ describe('App shell UX', () => {
     expect(pulse.getByText('S$121')).toBeTruthy();
     expect(pulse.getByText('S$5,080')).toBeTruthy();
     expect(pulse.getByText('97.7%')).toBeTruthy();
-    expect(pulse.getAllByRole('img')).toHaveLength(3);
+    expect(pulse.getAllByRole('img')).toHaveLength(2);
     expect(pulse.queryByText('Recorded month')).toBeNull();
     expect(pulse.getByText('How savings is calculated')).toBeTruthy();
     expect(pulse.queryByText('Invested')).toBeNull();
@@ -457,32 +467,161 @@ describe('App shell UX', () => {
     expect(screen.queryByText('Archive flight')).toBeNull();
   });
 
-  it('keeps payment accounts off Home and opens recent transaction details in its recorded month', async () => {
+  it('keeps Home in place while recent transaction details open and close accessibly', async () => {
+    mocks.categories.push({
+      id: 'food', name: 'Food & Drink', color: '#3C8A61', categoryType: 'expense', isDefault: true,
+    });
     mocks.accounts.push({
       id: 'cash-account',
-      name: 'Cash',
+      name: 'Everyday cash',
       type: 'cash',
       color: '#E5B24A',
       isDefault: true,
     });
+    mocks.tags.push({
+      id: 'household-tag', userId: 'user', name: 'Household', usageCount: 1, createdAt: '', updatedAt: '',
+    });
     mocks.transactions.push({
       id: 'dashboard-history-row', description: 'Archive grocery', amount: -52, category: 'food', account: 'cash-account',
-      date: '2025-02-11', transactionType: 'expense',
+      date: '2025-02-11', transactionType: 'expense', tagIds: ['household-tag'],
     });
 
-    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
+    const { container } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <LocationProbe />
+        <AppShell />
+      </MemoryRouter>,
+    );
 
     expect(screen.queryByText('Your payment accounts')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Recent transactions' })).toBeTruthy();
+    expect(container.querySelector('.foundation-ledger-header')?.textContent).toBe('DescriptionCategoryDateAmount');
+    expect(screen.getByRole('heading', { name: 'FI progress' })).toBeTruthy();
+    expect(screen.getByText('Set your FI target')).toBeTruthy();
     const transactionButton = screen.getByText('Archive grocery').closest('button');
     expect(transactionButton).not.toBeNull();
+    expect(transactionButton?.querySelector('.foundation-transaction-amount')?.textContent).toBe('- S$52.00');
     fireEvent.click(transactionButton!);
+
+    const dialog = screen.getByRole('dialog', { name: 'Archive grocery' });
+    expect(screen.getByTestId('location').textContent).toBe('/');
+    expect(screen.queryByRole('heading', { name: 'Transactions' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Recent transactions' })).toBeTruthy();
+    expect(within(dialog).getByText('- S$52.00')).toBeTruthy();
+    expect(within(dialog).getByText('11 February 2025')).toBeTruthy();
+    expect(within(dialog).getByText('Food & Drink')).toBeTruthy();
+    expect(within(dialog).getByText('Everyday cash · Cash')).toBeTruthy();
+    expect(within(dialog).getAllByText('Expense')).toHaveLength(2);
+    expect(within(dialog).getByText('Household')).toBeTruthy();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog', { name: 'Archive grocery' })).toBeNull();
+    expect(screen.getByTestId('location').textContent).toBe('/');
+
+    fireEvent.click(transactionButton!);
+    const backdrop = screen.getByRole('dialog', { name: 'Archive grocery' }).closest('.sheet-backdrop');
+    expect(backdrop).not.toBeNull();
+    fireEvent.click(backdrop!);
+    expect(screen.queryByRole('dialog', { name: 'Archive grocery' })).toBeNull();
+
+    transactionButton!.focus();
+    fireEvent.click(transactionButton!);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Archive grocery' })).toBeNull();
+    expect(screen.getByTestId('location').textContent).toBe('/');
+    expect(document.activeElement).toBe(transactionButton);
+  });
+
+  it('edits and deletes a recent transaction over Home without navigating', async () => {
+    mocks.categories.push({
+      id: 'food', name: 'Food & Drink', color: '#3C8A61', categoryType: 'expense', isDefault: true,
+    });
+    mocks.accounts.push({ id: 'cash-account', name: 'Cash', type: 'cash', color: '#E5B24A', isDefault: true });
+    mocks.transactions.push({
+      id: 'dashboard-edit-row', description: 'Weekly grocery', amount: -52, category: 'food', account: 'cash-account',
+      date: '2025-02-11', transactionType: 'expense', tagIds: [],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <LocationProbe />
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    const transactionButton = screen.getByText('Weekly grocery').closest('button');
+    fireEvent.click(transactionButton!);
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Weekly grocery' }))
+      .getByRole('button', { name: 'Edit transaction' }));
+
+    const editor = screen.getByRole('dialog', { name: 'Edit transaction' });
+    expect(screen.getByTestId('location').textContent).toBe('/');
+    expect(screen.getByRole('heading', { name: 'Recent transactions' })).toBeTruthy();
+    fireEvent.change(within(editor).getByLabelText('Description'), { target: { value: 'Weekly market shop' } });
+    fireEvent.change(within(editor).getByLabelText('Amount'), { target: { value: '60' } });
+    fireEvent.click(within(editor).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(mocks.updateTransaction).toHaveBeenCalledWith(
+      'dashboard-edit-row',
+      expect.objectContaining({ description: 'Weekly market shop', amount: -60 }),
+    ));
+    expect(screen.queryByRole('dialog', { name: 'Edit transaction' })).toBeNull();
+    expect(screen.getByTestId('location').textContent).toBe('/');
+
+    fireEvent.click(transactionButton!);
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Weekly grocery' }))
+      .getByRole('button', { name: 'Edit transaction' }));
+    const deleteEditor = screen.getByRole('dialog', { name: 'Edit transaction' });
+    fireEvent.click(within(deleteEditor).getByRole('button', { name: 'Delete' }));
+    const deleteConfirmation = within(deleteEditor).getByText('Delete this transaction?').closest('.delete-confirm');
+    expect(deleteConfirmation).not.toBeNull();
+    fireEvent.click(within(deleteConfirmation as HTMLElement).getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(mocks.deleteTransaction).toHaveBeenCalledWith('dashboard-edit-row'));
+    expect(screen.queryByRole('dialog', { name: 'Edit transaction' })).toBeNull();
+    expect(screen.getByTestId('location').textContent).toBe('/');
+  });
+
+  it('keeps View all transactions as the Home navigation path', async () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <LocationProbe />
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'View all transactions' }));
+
     expect(await screen.findByRole('heading', { name: 'Transactions' })).toBeTruthy();
-    expect(screen.getByRole('dialog', { name: 'Archive grocery' })).toBeTruthy();
-    expect(screen.getAllByText('Archive grocery')).toHaveLength(2);
+    expect(screen.getByTestId('location').textContent).toBe('/transactions');
+  });
+
+  it('opens a URL requested transaction in its recorded month and preserves other filters on close', async () => {
+    mocks.transactions.push({
+      id: 'requested-history-row', description: 'Requested archive item', amount: -41, category: 'food', account: 'cash',
+      date: '2025-02-08', transactionType: 'expense',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/transactions?search=archive&transactionId=requested-history-row']}>
+        <LocationProbe />
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('dialog', { name: 'Requested archive item' })).toBeTruthy();
     expect((screen.getByLabelText('Transaction reporting period') as HTMLSelectElement).value).toBe('2025-02');
     fireEvent.click(screen.getByRole('button', { name: 'Close transaction details' }));
-    expect(screen.queryByRole('dialog', { name: 'Archive grocery' })).toBeNull();
+
+    expect(screen.queryByRole('dialog', { name: 'Requested archive item' })).toBeNull();
+    expect(screen.getByTestId('location').textContent).toBe('/transactions?search=archive');
+  });
+
+  it('sends the FI progress empty state to the planner setup', async () => {
+    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete setup' }));
+    expect(await screen.findByRole('heading', { name: 'FIRE Planner' })).toBeTruthy();
   });
 
   it('toggles date, description, and amount table sorting', () => {

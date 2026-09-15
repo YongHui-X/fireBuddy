@@ -1,0 +1,173 @@
+/* FireBuddy design tokens. Forest and lime editorial: a deep forest rail and hero, a pale green-white canvas,
+   white paper cards, and lime kept for the single primary action. Light is the working theme; dark is a night mode. */
+
+:root {
+  color-scheme: light;
+
+  /* Brand scales */
+  --forest-900: #0f251c;
+  --forest-800: #163a2c;
+  --forest-700: #1f4d3a;
+  --forest-600: #2b6a4f;
+  --forest-500: #3a8362;
+  --forest-300: #9fc4ad;
+  --forest-100: #dcebe0;
+  --forest-50: #eef4ee;
+  --lime-500: #cbea63;
+  --lime-600: #b9dc47;
+  --lime-700: #5f7d12;
+
+  /* Canvas and ink. The canvas carries a soft forest tint at the top (bg-top) that settles into bg;
+     bg-glow is a faint forest radial top-left, only visible in dark mode. */
+  --bg: #f2f4ec;
+  --bg-top: #e9eee3;
+  --bg-glow: transparent;
+  --surface: #ffffff;
+  --surface-2: #e9ede2;
+  --surface-3: #dfe5d7;
+  --ink: #14231c;
+  --ink-2: #56655c;
+  --ink-3: #6b7a71;
+  --line: #dde2d6;
+  --line-strong: #c3ccbd;
+
+  /* Actions */
+  --primary: var(--lime-500);
+  --primary-hover: var(--lime-600);
+  --on-primary: #14231c;
+  --accent: var(--forest-600);
+  --accent-hover: var(--forest-700);
+  --accent-soft: var(--forest-50);
+  --accent-text: var(--forest-700);
+  --link: var(--forest-700);
+  --focus-ring: var(--forest-600);
+
+  /* Semantic */
+  --income: #1e7a45;
+  --income-soft: #e4f3e8;
+  --expense: #c23a2b;
+  --expense-soft: #fbeae7;
+  --danger: #c23a2b;
+  --danger-fill: #c23a2b;
+  --danger-fill-hover: #a52f22;
+  --on-danger: #ffffff;
+  --warning: #9a6700;
+  --warning-soft: #fff3d4;
+  --info: #35678a;
+  --info-soft: #e5eef5;
+  --chart-actual: var(--forest-600);
+  --chart-projection: #35678a;
+  --chart-target: #9a6700;
+
+  /* Forest rail and hero */
+  --rail-bg: var(--forest-800);
+  --rail-ink: #eef4ee;
+  --rail-ink-muted: #a9c3b3;
+  --rail-line: rgba(255, 255, 255, 0.1);
+  --rail-hover-bg: rgba(255, 255, 255, 0.06);
+  --rail-active-bg: rgba(203, 234, 99, 0.14);
+  --rail-active-ink: var(--lime-500);
+  --hero-bg: var(--forest-800);
+  --hero-ink: #ffffff;
+  --hero-ink-muted: #b7cfc0;
+  --hero-line: rgba(255, 255, 255, 0.14);
+
+  /* Shape and depth */
+  --r-card: 16px;
+  --r-control: 10px;
+  --r-tile: 12px;
+  --r-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(20, 35, 28, 0.05), 0 8px 24px -12px rgba(20, 35, 28, 0.18);
+  --shadow-md: 0 4px 14px -6px rgba(15, 37, 28, 0.25);
+  --shadow-lg: 0 18px 48px -16px rgba(15, 37, 28, 0.38), 0 2px 6px rgba(15, 37, 28, 0.08);
+
+  /* Type */
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Schibsted Grotesk', 'Segoe UI', system-ui, sans-serif;
+
+  /* Layout */
+  --sidebar-w: 264px;
+  --topbar-h: 60px;
+  --content-max: 1400px;
+  --gutter: clamp(18px, 3vw, 40px);
+
+  /* Brand marks */
+  --brand-mark-fill: var(--forest-800);
+  --brand-mark-sun: var(--lime-500);
+  --brand-mark-line: #ffffff;
+  --ember-mark-symbol: #d9782d;
+
+  /* Aliases still referenced by component code */
+  --background: var(--bg);
+  --card: var(--surface);
+  --muted: var(--surface-2);
+  --text: var(--ink);
+  --text-muted: var(--ink-2);
+  --border: var(--line);
+  --control-border: var(--line-strong);
+  --primary-dark: var(--forest-700);
+  --primary-soft: var(--forest-100);
+  --secondary: var(--forest-500);
+  --spending-label-line: #8b9a90;
+  --accent-blue: #35678a;
+  --accent-gold: #9a6700;
+  --accent-violet: #6d647d;
+  --accent-coral: #a95f52;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0c1712;
+  --bg-top: #0f1d16;
+  --bg-glow: rgba(43, 106, 79, 0.22);
+  --surface: #132119;
+  --surface-2: #1b2c22;
+  --surface-3: #24382c;
+  --ink: #edf2ea;
+  --ink-2: #a9b7ad;
+  --ink-3: #8a988f;
+  --line: #26392e;
+  --line-strong: #375043;
+
+  --accent: #8fd1a8;
+  --accent-hover: #a9e0bc;
+  --accent-soft: #1c3226;
+  --accent-text: #a9e0bc;
+  --link: #a9e0bc;
+  --focus-ring: var(--lime-500);
+
+  --income: #6fd193;
+  --income-soft: #173225;
+  --expense: #f08d7d;
+  --expense-soft: #3c221f;
+  --danger: #f08d7d;
+  --danger-fill: #d9534a;
+  --danger-fill-hover: #e46a61;
+  --warning: #e6bd5f;
+  --warning-soft: #332a14;
+  --info: #86b9da;
+  --info-soft: #17293a;
+  --chart-actual: #8fd1a8;
+  --chart-projection: #86b9da;
+  --chart-target: #e6bd5f;
+
+  --rail-bg: #0f1e17;
+  --rail-line: rgba(255, 255, 255, 0.08);
+  --hero-bg: #1d3b2d;
+  --hero-line: rgba(255, 255, 255, 0.12);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 14px -6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 48px -16px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.3);
+
+  --brand-mark-fill: #1f4d3a;
+  --ember-mark-symbol: #f0a068;
+  --primary-dark: #a9e0bc;
+  --primary-soft: #1c3226;
+  --secondary: #8fd1a8;
+  --spending-label-line: #7f918a;
+  --accent-blue: #86b9da;
+  --accent-gold: #e6bd5f;
+  --accent-violet: #c1b3d4;
+  --accent-coral: #e2a08f;
+}

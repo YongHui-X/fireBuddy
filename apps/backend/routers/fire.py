@@ -1,11 +1,13 @@
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from typing import Annotated
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
+from postgrest.exceptions import APIError
 
 from lib.auth import AuthenticatedUser, get_current_user
+from lib.clock import singapore_today
+from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.financial import (
     EssentialCategoriesRequest,
@@ -26,13 +28,6 @@ from services.retirement_calculator import validate_timeline
 router = APIRouter(prefix="/fire", tags=["fire"])
 CurrentUser = Annotated[AuthenticatedUser, Depends(get_current_user)]
 
-
-def singapore_today() -> date:
-    """Use the product's Singapore calendar boundary for dashboard periods."""
-
-    return datetime.now(ZoneInfo("Asia/Singapore")).date()
-
-
 def validated_as_of(value: date | None) -> date:
     """Prevent future dates from turning projections into historical facts."""
 
@@ -46,24 +41,28 @@ def validated_as_of(value: date | None) -> date:
 def get_essential_categories(current_user: CurrentUser):
     """Return the user's confirmed essential expense category identifiers."""
 
-    response = supabase.table("essential_expense_categories").select("category_id").eq("user_id", current_user.id).execute()
-    return {"categoryIds": [row["category_id"] for row in response.data or []]}
+    rows = fetch_all(
+        lambda: supabase.table("essential_expense_categories")
+        .select("category_id")
+        .eq("user_id", current_user.id)
+        .order("category_id")
+    )
+    return {"categoryIds": [row["category_id"] for row in rows]}
 
 
 @router.put("/essential-categories", response_model=EssentialCategoriesResponse)
 def replace_essential_categories(payload: EssentialCategoriesRequest, current_user: CurrentUser):
-    """Replace the small per-user essential-category selection atomically at API level."""
+    """Replace selections atomically after validating them inside the database."""
 
     category_ids = [str(value) for value in payload.category_ids]
-    if category_ids:
-        visible = (supabase.table("categories").select("id,user_id,is_default,category_type")
-                   .eq("category_type", "expense").execute()).data or []
-        visible_ids = {str(row["id"]) for row in visible if row.get("is_default") or str(row.get("user_id")) == current_user.id}
-        if not set(category_ids).issubset(visible_ids):
-            raise HTTPException(status_code=422, detail="Essential categories must be visible expense categories")
-    supabase.table("essential_expense_categories").delete().eq("user_id", current_user.id).execute()
-    for category_id in category_ids:
-        supabase.table("essential_expense_categories").insert({"user_id": current_user.id, "category_id": category_id}).execute()
+    try:
+        supabase.rpc("replace_essential_categories", {
+            "p_user_id": current_user.id, "p_category_ids": category_ids,
+        }).execute()
+    except APIError as error:
+        if error.code in {"22023", "23503", "23514", "P0001"}:
+            raise HTTPException(status_code=422, detail="Essential categories must be visible expense categories") from error
+        raise HTTPException(status_code=503, detail="Unable to save essential categories. Please retry.") from error
     return {"categoryIds": category_ids}
 
 

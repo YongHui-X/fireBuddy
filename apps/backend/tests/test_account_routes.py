@@ -2,6 +2,7 @@ import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from uuid import UUID, uuid5
 
 from fastapi.testclient import TestClient
 
@@ -113,6 +114,21 @@ class AccountRouteTests(unittest.TestCase):
 
         self.assertEqual(default_response.status_code, 409)
         self.assertEqual(referenced_response.status_code, 409)
+
+    def test_list_reads_past_the_data_api_row_limit(self):
+        """Keep the complete account list when PostgREST returns multiple pages."""
+
+        namespace = UUID("90000000-0000-4000-8000-000000000001")
+        self.supabase.rows["accounts"] = [
+            account_row(str(uuid5(namespace, str(index))), USER_ID, f"Account {index}", False)
+            for index in range(501)
+        ]
+        self.supabase.max_rows = 500
+
+        response = self.client.get("/accounts")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 501)
 
 
 if __name__ == "__main__":

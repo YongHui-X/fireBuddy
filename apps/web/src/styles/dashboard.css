@@ -1,0 +1,966 @@
+/* Home dashboard: forest net worth hero, Money Pulse bars, budgets, spending breakdown, recent transactions. */
+
+.dashboard-toolbar .page-toolbar-copy h2 {
+  font-size: 1.85rem;
+}
+
+.dashboard-search-context {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.dashboard-search {
+  position: relative;
+  display: flex;
+  width: min(100%, 360px);
+}
+
+.dashboard-search input {
+  min-height: 40px;
+}
+
+.dashboard-search input {
+  padding-right: 42px;
+  background: var(--surface);
+}
+
+.dashboard-search button {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  transform: translateY(-50%);
+}
+
+.dashboard-search button:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.dashboard-search button:active:not(:disabled) {
+  transform: translateY(calc(-50% + 1px));
+}
+
+/* Workspace grid ------------------------------------------------------------ */
+
+/* Row 1: net worth hero beside Money Pulse. Row 2: category budgets beside the spending breakdown.
+   Row 3: the recent transactions ledger beside FI progress (stacked below 1280px). Cards in a row share
+   a height, so partners are chosen to have similar natural heights and the hero never carries a large
+   dead field. */
+.dashboard-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 6px;
+}
+
+.dashboard-workspace-grid > .white-card,
+.dashboard-workspace-grid > .foundation-summary-card {
+  min-width: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+@media (min-width: 760px) {
+  .dashboard-workspace-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .dashboard-workspace-grid > .dashboard-net-worth-card,
+  .dashboard-workspace-grid > .dashboard-budget-card {
+    grid-column: 1 / span 5;
+  }
+
+  .dashboard-workspace-grid > .money-pulse-card,
+  .dashboard-workspace-grid > .foundation-spending-card {
+    grid-column: 6 / -1;
+  }
+
+  .dashboard-workspace-grid > .recent-foundation-card,
+  .dashboard-workspace-grid > .fire-progress-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1280px) {
+  .dashboard-workspace-grid > .dashboard-net-worth-card {
+    grid-column: 1 / span 4;
+  }
+
+  .dashboard-workspace-grid > .money-pulse-card {
+    grid-column: 5 / -1;
+  }
+
+  /* Budgets and the breakdown share row two evenly so the budget rows get real width. */
+  .dashboard-workspace-grid > .dashboard-budget-card {
+    grid-column: 1 / span 6;
+  }
+
+  .dashboard-workspace-grid > .foundation-spending-card {
+    grid-column: 7 / -1;
+  }
+
+  /* The ledger needs width for four labelled columns; FI progress is a compact stat card. */
+  .dashboard-workspace-grid > .recent-foundation-card {
+    grid-column: 1 / span 7;
+  }
+
+  .dashboard-workspace-grid > .fire-progress-card {
+    grid-column: 8 / -1;
+  }
+}
+
+/* Net worth hero ------------------------------------------------------------ */
+
+.foundation-summary-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  gap: 18px;
+  width: 100%;
+  min-height: 280px;
+  padding: 22px 24px;
+  border: 0;
+  border-radius: var(--r-card);
+  background: var(--hero-bg);
+  color: var(--hero-ink);
+  text-align: left;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.foundation-summary-card::after {
+  position: absolute;
+  right: -40px;
+  bottom: -70px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(203, 234, 99, 0.22), transparent 68%);
+  content: '';
+  pointer-events: none;
+}
+
+.foundation-summary-card:hover {
+  background: color-mix(in srgb, var(--hero-bg) 92%, #fff);
+}
+
+.foundation-summary-card:focus-visible {
+  outline-color: var(--lime-500);
+}
+
+.foundation-summary-icon {
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--lime-500);
+}
+
+.foundation-summary-card > span:nth-child(2) {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.foundation-summary-card small {
+  color: var(--hero-ink-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.foundation-summary-card > span:nth-child(2) > strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 2.3vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.foundation-summary-incomplete > span:nth-child(2) > strong {
+  font-size: 1.35rem;
+  color: var(--lime-500);
+}
+
+.foundation-summary-card em {
+  display: block;
+  color: var(--hero-ink-muted);
+  font-size: 0.85rem;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.foundation-summary-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 6px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.foundation-summary-change-positive {
+  color: var(--lime-500);
+}
+
+.foundation-summary-change-negative {
+  color: #ffb0a3;
+}
+
+.foundation-summary-meta {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--hero-line);
+}
+
+.foundation-summary-meta > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.foundation-summary-meta small {
+  font-size: 0.7rem;
+}
+
+.foundation-summary-meta strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.foundation-summary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  align-self: end;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 4px;
+}
+
+.foundation-summary-card:hover .foundation-summary-link {
+  text-decoration-color: currentColor;
+}
+
+.dashboard-loading-card {
+  gap: 14px;
+}
+
+.dashboard-loading-card > span {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.dashboard-loading-card > span:nth-child(1) {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-tile);
+}
+
+.dashboard-loading-card > span:nth-child(2) {
+  width: 70%;
+  height: 40px;
+}
+
+.dashboard-loading-card > span:nth-child(3) {
+  width: 45%;
+}
+
+/* Money Pulse ---------------------------------------------------------------- */
+
+.money-pulse-card {
+  container-type: inline-size;
+}
+
+.pulse-completeness-copy {
+  margin: -6px 0 14px;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Income is one full bar; beneath it a single split bar shows how that income divided into spending and saving. */
+.money-pulse-bars {
+  display: grid;
+  gap: 20px;
+}
+
+.money-pulse-row {
+  display: grid;
+  gap: 8px;
+}
+
+.money-pulse-income {
+  display: grid;
+  gap: 2px;
+}
+
+.money-pulse-income span {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.money-pulse-income strong {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-pulse-split-track {
+  position: relative;
+  height: 12px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+
+.money-pulse-segment {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.money-pulse-segment > span {
+  display: block;
+  height: 100%;
+}
+
+.money-pulse-segment-end {
+  justify-content: flex-end;
+}
+
+.money-pulse-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin-top: 4px;
+}
+
+.money-pulse-legend > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.money-pulse-legend i {
+  width: 10px;
+  height: 10px;
+  align-self: center;
+  border-radius: 3px;
+}
+
+.money-pulse-legend span {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+
+.money-pulse-legend strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-pulse-legend small {
+  margin-left: 5px;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.money-pulse-bar-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.money-pulse-bar-heading span {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.money-pulse-bar-heading strong {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.money-pulse-bar-heading small {
+  margin-left: 6px;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.money-pulse-bar-track {
+  height: 9px;
+}
+
+.money-pulse-calculation {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.money-pulse-calculation summary {
+  width: fit-content;
+  color: var(--link);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.money-pulse-calculation p {
+  margin: 8px 0 0;
+}
+
+
+.recommended-action {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--lime-600) 55%, var(--line));
+  border-radius: var(--r-tile);
+  background: color-mix(in srgb, var(--lime-500) 22%, var(--surface));
+  color: var(--ink);
+  text-align: left;
+}
+
+/* The type label trails the message as a footer note rather than sitting above the heading. */
+.recommended-action > span {
+  order: 3;
+  margin-top: 4px;
+  color: var(--lime-700);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+button.recommended-action > span::after {
+  content: ' \2192';
+}
+
+.recommended-action strong {
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.recommended-action small {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+button.recommended-action:hover {
+  border-color: var(--lime-600);
+  background: color-mix(in srgb, var(--lime-500) 34%, var(--surface));
+}
+
+.monthly-observation {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.monthly-observation > span {
+  color: var(--ink-2);
+}
+
+:root[data-theme='dark'] .recommended-action {
+  background: color-mix(in srgb, var(--lime-500) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--lime-500) 30%, var(--line));
+}
+
+:root[data-theme='dark'] .recommended-action > span {
+  color: var(--lime-500);
+}
+
+:root[data-theme='dark'] .monthly-observation {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+/* Category budgets ------------------------------------------------------------ */
+
+.dashboard-budget-list {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-budget-row {
+  display: grid;
+  gap: 7px;
+}
+
+.dashboard-budget-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.dashboard-budget-heading > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.dashboard-budget-heading i {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+}
+
+.dashboard-budget-heading strong {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+}
+
+.dashboard-budget-heading small {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.dashboard-budget-summary {
+  display: grid;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-budget-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-budget-summary .dashboard-budget-heading > span {
+  font-weight: 600;
+}
+
+.dashboard-budget-summary p {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.dashboard-budget-empty {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+/* Spending breakdown --------------------------------------------------------- */
+
+.foundation-spending-card {
+  container-type: inline-size;
+}
+
+.spending-chart-layout {
+  display: grid;
+  gap: 8px 24px;
+  align-items: center;
+}
+
+@container (min-width: 430px) {
+  .spending-chart-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 0.7fr);
+  }
+}
+
+.spending-legend li {
+  padding: 9px 0;
+}
+
+.spending-legend small {
+  display: none;
+}
+
+@container (min-width: 620px) {
+  .spending-legend small {
+    display: inline;
+  }
+}
+
+.spending-pie-panel {
+  min-width: 0;
+  padding-right: 12px;
+}
+
+/* Stacked under the pie the legend runs in two columns; beside the pie it is a single column. */
+.spending-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@container (min-width: 430px) {
+  .spending-legend {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+
+.spending-legend li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+}
+
+.spending-legend li:first-child {
+  border-top: 0;
+}
+
+.spending-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.spending-legend span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spending-legend small {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.spending-legend strong {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.recharts-text,
+.spending-callout-label {
+  font-family: var(--font-body);
+}
+
+.spending-pie {
+  width: 100%;
+}
+
+.spending-pie .recharts-wrapper {
+  font-family: var(--font-body);
+}
+
+.spending-pie-label-line {
+  stroke: var(--spending-label-line);
+  stroke-width: 1;
+  transition: transform 200ms ease;
+}
+
+.spending-pie-label-line-active {
+  stroke: var(--ink);
+}
+
+.spending-pie-sector {
+  transition: transform 200ms ease;
+  cursor: pointer;
+}
+
+.spending-callout {
+  transition: transform 200ms ease;
+}
+
+.spending-callout-label {
+  fill: var(--ink-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.spending-callout-active .spending-callout-label {
+  fill: var(--ink);
+  font-weight: 600;
+}
+
+.spending-callout-value {
+  fill: var(--ink);
+  font-weight: 600;
+}
+
+.recharts-default-tooltip {
+  border-radius: 10px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-md);
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.recharts-tooltip-label {
+  color: var(--ink-2);
+}
+
+.recharts-cartesian-axis-tick text,
+.recharts-legend-item-text {
+  fill: var(--ink-2);
+  font-size: 0.75rem;
+}
+
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--line);
+}
+
+/* Recent transactions ---------------------------------------------------------- */
+
+/* One column template shared by the header row and every transaction row, so labels and cells
+   can never drift apart: icon, description, category, date, amount. */
+.foundation-ledger {
+  --ledger-columns: 40px minmax(0, 1.6fr) minmax(0, 1fr) 7rem 7.5rem;
+  display: grid;
+}
+
+.foundation-ledger-header {
+  display: none;
+}
+
+.foundation-transaction {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.foundation-transaction:last-child {
+  border-bottom: 0;
+}
+
+.foundation-transaction:hover {
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+
+.foundation-transaction-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.foundation-transaction-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.foundation-transaction-meta,
+.foundation-transaction-category,
+.foundation-transaction-date {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+}
+
+/* Narrow cards: category and date fold into the description line. */
+.foundation-transaction-category,
+.foundation-transaction-date {
+  display: none;
+}
+
+/* Wide cards: a labelled header row appears and category and date become their own columns. */
+@media (min-width: 760px) {
+  .foundation-ledger-header {
+    display: grid;
+    grid-template-columns: var(--ledger-columns);
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 4px;
+    padding: 8px;
+    border-radius: var(--r-chip);
+    background: var(--surface-2);
+    color: var(--ink-2);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .foundation-ledger-description {
+    grid-column: 1 / span 2;
+  }
+
+  .foundation-ledger-amount {
+    text-align: right;
+  }
+
+  .foundation-transaction {
+    grid-template-columns: var(--ledger-columns);
+  }
+
+  .foundation-transaction-meta {
+    display: none;
+  }
+
+  .foundation-transaction-category,
+  .foundation-transaction-date {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+  }
+
+  .foundation-transaction-category {
+    color: var(--ink);
+  }
+}
+
+.foundation-transaction-copy em {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.foundation-transaction-amount {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* FI progress ------------------------------------------------------------------ */
+
+/* A plain white card like its neighbours; the only extras are the display figure, the progress
+   track, and the fact grid. */
+
+.fire-progress-figure {
+  margin: 0 0 10px;
+}
+
+.fire-progress-figure strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.fire-progress-track {
+  margin-bottom: 18px;
+}
+
+.fire-progress-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.fire-progress-facts div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.fire-progress-facts dt {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+}
+
+.fire-progress-facts dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.fire-progress-facts dd small {
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}

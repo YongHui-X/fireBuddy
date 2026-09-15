@@ -1,0 +1,311 @@
+/* Base: reset, typography, browser surfaces, and small shared utilities. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+}
+
+html {
+  scrollbar-color: var(--line-strong) transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures only where digits line up; applying them to prose also widens commas and periods. */
+.amount-positive,
+.amount-negative,
+.transactions-table td,
+.transaction-table-date,
+.retirement-table td,
+.retirement-table th,
+.summary-strip strong,
+.money-pulse-bar-heading strong,
+.money-pulse-bar-heading small,
+.foundation-summary-card > span > strong,
+.foundation-summary-change,
+.dashboard-budget-heading strong,
+.category-budget,
+.category-card p,
+.foundation-transaction-date,
+.foundation-transaction-amount,
+.fire-progress-figure strong,
+.fire-progress-facts dd,
+.transaction-card > strong:last-child,
+.breakdown-row > strong,
+.breakdown-copy span,
+.spending-detail-row,
+.insights-spending-total strong,
+.history-row > strong,
+.position-row > strong,
+.retirement-headlines strong,
+.retirement-facts dd,
+.transaction-details-amount strong,
+.transaction-details-list dd,
+.account-card-row span,
+.ember-composer-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--lime-500);
+  color: var(--forest-900);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+strong,
+figure {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+strong {
+  font-weight: 600;
+}
+
+small {
+  font-size: 0.8125rem;
+}
+
+a {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  appearance: none;
+  cursor: pointer;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+button:active:not(:disabled),
+.button-press:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea {
+  caret-color: var(--accent);
+}
+
+svg {
+  flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utilities */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.amount-positive {
+  color: var(--income);
+}
+
+.amount-negative {
+  color: var(--expense);
+}
+
+.text-link,
+.foundation-form a:not([class]),
+.foundation-form p a,
+.white-card > a:not([class]),
+.retirement-page a:not([class]) {
+  color: var(--link);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--link) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.text-link:hover,
+.foundation-form a:not([class]):hover,
+.white-card > a:not([class]):hover {
+  text-decoration-color: currentColor;
+}
+
+.eyebrow,
+.card-subtitle {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.demo-data-label,
+.data-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.data-status-limited {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.field-help,
+.form-help {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.form-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
+  background: var(--expense-soft);
+  color: var(--expense);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.form-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
+  background: var(--income-soft);
+  color: var(--income);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.foundation-error,
+.dashboard-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--expense) 30%, transparent);
+  border-radius: var(--r-tile);
+  background: var(--expense-soft);
+  color: var(--expense);
+  font-size: 0.9rem;
+}
+
+.foundation-error button:not([class]) {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+}

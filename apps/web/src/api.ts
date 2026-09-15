@@ -158,8 +158,8 @@ export function getAccounts(token: string) {
   return request<Account[]>(apiRoutes.accounts, token);
 }
 
-export function getWealthPositions(token: string) {
-  return request<WealthPosition[]>(apiRoutes.wealthPositions, token);
+export function getWealthPositions(token: string, signal?: AbortSignal) {
+  return request<WealthPosition[]>(apiRoutes.wealthPositions, token, { signal });
 }
 
 export function createWealthPosition(token: string, input: CreateWealthPositionInput) {
@@ -178,6 +178,11 @@ export function getWealthSnapshots(token: string, positionId: string) {
   return request<WealthPositionSnapshot[]>(`${apiRoutes.wealthPositions}/${positionId}/snapshots`, token);
 }
 
+/** Load owned snapshot history in one request when the wealth screen needs it. */
+export function getWealthSnapshotHistory(token: string, signal?: AbortSignal) {
+  return request<WealthPositionSnapshot[]>(apiRoutes.wealthSnapshots, token, { signal });
+}
+
 export function createWealthSnapshot(token: string, positionId: string, input: CreateWealthSnapshotInput) {
   return request<WealthPositionSnapshot>(`${apiRoutes.wealthPositions}/${positionId}/snapshots`, token, { method: 'POST', body: JSON.stringify(input) });
 }
@@ -190,8 +195,8 @@ export function deleteWealthSnapshot(token: string, positionId: string, snapshot
   return request<void>(`${apiRoutes.wealthPositions}/${positionId}/snapshots/${snapshotId}`, token, { method: 'DELETE' });
 }
 
-export function getWealthContributions(token: string) {
-  return request<WealthContribution[]>(apiRoutes.wealthContributions, token);
+export function getWealthContributions(token: string, signal?: AbortSignal) {
+  return request<WealthContribution[]>(apiRoutes.wealthContributions, token, { signal });
 }
 
 export function createWealthContribution(token: string, input: CreateWealthContributionInput) {
@@ -206,21 +211,21 @@ export function deleteWealthContribution(token: string, id: string) {
   return request<void>(`${apiRoutes.wealthContributions}/${id}`, token, { method: 'DELETE' });
 }
 
-export function getFinancialSummary(token: string, asOf?: string) {
+export function getFinancialSummary(token: string, asOf?: string, signal?: AbortSignal) {
   const query = asOf ? `?asOf=${encodeURIComponent(asOf)}` : '';
-  return request<FinancialSummary>(`${apiRoutes.financialSummary}${query}`, token);
+  return request<FinancialSummary>(`${apiRoutes.financialSummary}${query}`, token, { signal });
 }
 
-export function getFireProfile(token: string) {
-  return request<{ configured: boolean; profile: FireProfile | null }>(apiRoutes.fireProfile, token);
+export function getFireProfile(token: string, signal?: AbortSignal) {
+  return request<{ configured: boolean; profile: FireProfile | null }>(apiRoutes.fireProfile, token, { signal });
 }
 
 export function saveFireProfile(token: string, input: UpdateFireProfileInput) {
   return request<FireProfile>(apiRoutes.fireProfile, token, { method: 'PUT', body: JSON.stringify(input) });
 }
 
-export function getEssentialCategories(token: string) {
-  return request<{ categoryIds: string[] }>(apiRoutes.fireEssentialCategories, token);
+export function getEssentialCategories(token: string, signal?: AbortSignal) {
+  return request<{ categoryIds: string[] }>(apiRoutes.fireEssentialCategories, token, { signal });
 }
 
 export function saveEssentialCategories(token: string, categoryIds: string[]) {
