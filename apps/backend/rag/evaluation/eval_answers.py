@@ -20,13 +20,6 @@ DEFAULT_CASES_PATH = EVALUATION_DIR / "answer_eval_cases.json"
 DEFAULT_RESULTS_DIR = EVALUATION_DIR / "results"
 DEFAULT_JSON_OUTPUT = DEFAULT_RESULTS_DIR / "answer_latest.json"
 DEFAULT_MARKDOWN_OUTPUT = DEFAULT_RESULTS_DIR / "answer_latest.md"
-REFUSAL_PHRASES = (
-    "i can only help with",
-    "i do not have enough reliable context",
-    "i could not find relevant information",
-    "outside the firebuddy knowledge base",
-)
-
 if str(BACKEND_DIR) not in sys.path:
     sys.path.append(str(BACKEND_DIR))
 
@@ -34,10 +27,28 @@ from rag.evaluation.report_history import (
     VersionedReportPaths,
     save_versioned_report,
 )
-from rag.retrieval import retrieve_chunks
+from rag.retrieval import RagStoreUnavailableError, retrieve_chunks
 from services.rag_service import (
+    LOW_CONFIDENCE_ANSWER,
+    OUT_OF_SCOPE_ANSWER,
     answer_financial_advisor_question,
     format_retrieved_context,
+    is_clearly_out_of_scope,
+)
+
+# The planner path never reads user records for knowledge, figure, or refusal
+# cases, so a fixed placeholder id is enough to exercise it.
+EVAL_USER_ID = "rag-eval-user"
+
+# Refusal detection reuses the service's own refusal texts so the eval cannot
+# silently drift from the production wording again.
+REFUSAL_PHRASES = (
+    OUT_OF_SCOPE_ANSWER.lower(),
+    LOW_CONFIDENCE_ANSWER.lower(),
+    "can only help with",
+    "i do not have enough reliable context",
+    "i could not find relevant information",
+    "outside the firebuddy knowledge base",
 )
 
 
@@ -177,14 +188,38 @@ def judge_answer(
     }
 
 
-def evaluate_case(case: AnswerEvalCase, *, use_judge: bool = True) -> dict:
-    """Run the actual advisor flow and score one answer-quality case."""
+def evaluate_case(
+    case: AnswerEvalCase,
+    *,
+    use_judge: bool = True,
+    via_planner: bool = False,
+) -> dict:
+    """
+    Run the actual advisor flow and score one answer-quality case.
 
-    matches = [] if case.expected_refusal else retrieve_chunks(case.question)
-    response = answer_financial_advisor_question(
-        case.question,
-        retrieved_matches=matches,
-    )
+    With `via_planner` the question goes through `answer_ember_question`, so
+    the planner may route exact-figure questions to the figure_lookup tool and
+    unsupported questions to the refusal path, exactly as production does.
+    """
+
+    # In-scope questions with no supporting document must still go through
+    # retrieval so the confidence gate, not the keyword screen, is what refuses.
+    matches: list[dict] = []
+    if not is_clearly_out_of_scope(case.question):
+        try:
+            matches = retrieve_chunks(case.question)
+        except RagStoreUnavailableError:
+            matches = []
+
+    if via_planner:
+        from services.ember_service import answer_ember_question
+
+        response = answer_ember_question(EVAL_USER_ID, case.question)
+    else:
+        response = answer_financial_advisor_question(
+            case.question,
+            retrieved_matches=matches,
+        )
     source_paths = tuple(
         source.path for source in response.source_details if source.path
     )
@@ -220,6 +255,7 @@ def evaluate_case(case: AnswerEvalCase, *, use_judge: bool = True) -> dict:
         "question": case.question,
         "expected_refusal": case.expected_refusal,
         "answer": response.answer,
+        "mode": getattr(response, "mode", "knowledge"),
         "refused": refused,
         "passed": passed,
         "concept_coverage": concepts,
@@ -259,7 +295,7 @@ def summarize_results(results: list[dict]) -> dict:
     return summary
 
 
-def build_report(results: list[dict], use_judge: bool) -> dict:
+def build_report(results: list[dict], use_judge: bool, *, via_planner: bool = False) -> dict:
     """Create the persisted answer-quality report."""
 
     return {
@@ -267,6 +303,7 @@ def build_report(results: list[dict], use_judge: bool) -> dict:
         "case_count": len(results),
         "judge_enabled": use_judge,
         "judge_model": get_judge_model() if use_judge else None,
+        "via_planner": via_planner,
         "summary": summarize_results(results),
         "cases": results,
     }
@@ -281,6 +318,7 @@ def report_as_markdown(report: dict) -> str:
         f"Generated: `{report['generated_at']}`",
         f"Cases: **{report['case_count']}**",
         f"LLM judge: **{'enabled' if report['judge_enabled'] else 'disabled'}**",
+        f"Routed through planner: **{'yes' if report.get('via_planner') else 'no'}**",
         "",
         "## Summary",
         "",
@@ -296,15 +334,15 @@ def report_as_markdown(report: dict) -> str:
             "",
             "## Cases",
             "",
-            "| Case | Expected behavior | Result | Concepts | Numbers | Citations |",
-            "|---|---|---|---:|---:|---:|",
+            "| Case | Expected behavior | Mode | Result | Concepts | Numbers | Citations |",
+            "|---|---|---|---|---:|---:|---:|",
         ]
     )
     for case in report["cases"]:
         expected = "refuse" if case["expected_refusal"] else "answer"
         result = "pass" if case["passed"] else "fail"
         lines.append(
-            f"| {case['id']} | {expected} | {result} | "
+            f"| {case['id']} | {expected} | {case.get('mode', 'knowledge')} | {result} | "
             f"{case['concept_coverage']:.2f} | {case['numeric_accuracy']:.2f} | "
             f"{case['citation_recall']:.2f} |"
         )
@@ -349,6 +387,11 @@ def main() -> int:
         action="append",
         help="Run only the named case; repeat this option for multiple cases",
     )
+    parser.add_argument(
+        "--via-planner",
+        action="store_true",
+        help="Route each question through the Ember planner so figure lookups and routing are exercised",
+    )
     args = parser.parse_args()
 
     use_judge = not args.no_judge
@@ -361,10 +404,10 @@ def main() -> int:
             parser.error(f"Unknown case id(s): {', '.join(sorted(missing_ids))}")
 
     results = [
-        evaluate_case(case, use_judge=use_judge)
+        evaluate_case(case, use_judge=use_judge, via_planner=args.via_planner)
         for case in cases
     ]
-    report = build_report(results, use_judge)
+    report = build_report(results, use_judge, via_planner=args.via_planner)
 
     for name, value in report["summary"].items():
         print(f"{name}: {value:.4f}")

@@ -21,6 +21,18 @@ HYBRID_MIGRATION_PATH = (
     / "migrations"
     / "20260814052904_add_private_hybrid_rag_retrieval.sql"
 )
+ENGLISH_MIGRATION_PATH = (
+    REPO_ROOT
+    / "supabase"
+    / "migrations"
+    / "20260915090000_rag_english_search_and_fusion_diagnostics.sql"
+)
+WHOLE_SIBLING_MIGRATION_PATH = (
+    REPO_ROOT
+    / "supabase"
+    / "migrations"
+    / "20260916110000_rag_whole_sibling_chunk_context.sql"
+)
 
 
 class RagSecurityMigrationTests(unittest.TestCase):
@@ -76,6 +88,30 @@ class RagSecurityMigrationTests(unittest.TestCase):
             sql,
         )
         self.assertNotIn("security definer", sql)
+
+    def test_english_migration_stems_content_and_exposes_fusion_diagnostics(self):
+        sql = ENGLISH_MIGRATION_PATH.read_text(encoding="utf-8").lower()
+
+        self.assertIn("drop column if exists search_vector", sql)
+        self.assertIn("'pg_catalog.english'::pg_catalog.regconfig,\n        content", sql)
+        self.assertIn("'pg_catalog.simple'::pg_catalog.regconfig,\n        coalesce(source_title, '')", sql)
+        self.assertIn("candidate_count integer default 20", sql)
+        self.assertIn("fused_score double precision", sql)
+        self.assertIn("signal_count integer", sql)
+        self.assertIn("deduplicated.fused_score,\n    deduplicated.signal_count", sql)
+        self.assertIn("set search_path = ''", sql)
+        self.assertIn(") from public, anon, authenticated, service_role", sql)
+        self.assertIn(") to service_role", sql)
+        self.assertNotIn("security definer", sql)
+
+    def test_latest_rpc_returns_primary_and_sibling_chunks_whole(self):
+        sql = WHOLE_SIBLING_MIGRATION_PATH.read_text(encoding="utf-8").lower()
+
+        self.assertIn("pg_catalog.left(deduplicated.content, 2200)", sql)
+        self.assertIn("deduplicated.source_rank <= 2", sql)
+        self.assertIn("set search_path = ''", sql)
+        self.assertNotIn("security definer", sql)
+        self.assertNotIn("grant execute", sql)
 
 
 if __name__ == "__main__":

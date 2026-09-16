@@ -38,11 +38,12 @@ class RagRetrievalTests(unittest.TestCase):
                 ) as embed:
                     matches = retrieval.retrieve_chunks("What is CPF?", match_count=5)
 
-        embed.assert_called_once_with(openai.return_value, "What is CPF?")
+        expanded = "What is CPF (Central Provident Fund)?"
+        embed.assert_called_once_with(openai.return_value, expanded)
         supabase_client.rpc.assert_called_once_with(
             retrieval.HYBRID_RETRIEVAL_RPC,
             {
-                "query_text": "What is CPF?",
+                "query_text": expanded,
                 "query_embedding": [0.1, 0.2],
                 "match_count": 5,
                 "candidate_count": retrieval.INTERNAL_CANDIDATE_COUNT,
@@ -52,6 +53,7 @@ class RagRetrievalTests(unittest.TestCase):
             },
         )
         self.assertEqual(matches[0]["source_path"], "markdown-cache/cpf/example.md")
+        self.assertEqual(retrieval.INTERNAL_CANDIDATE_COUNT, 20)
 
     def test_empty_store_fails_before_embedding_or_rpc(self):
         supabase_client = MagicMock()

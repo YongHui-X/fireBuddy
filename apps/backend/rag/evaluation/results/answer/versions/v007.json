@@ -1,0 +1,534 @@
+{
+  "generated_at": "2026-09-16T02:43:55.687950+00:00",
+  "case_count": 23,
+  "judge_enabled": true,
+  "judge_model": "gpt-4o-mini",
+  "via_planner": true,
+  "summary": {
+    "overall_pass_rate": 0.9565217391304348,
+    "positive_pass_rate": 0.9166666666666666,
+    "refusal_accuracy": 1.0,
+    "concept_coverage": 1.0,
+    "numeric_accuracy": 0.9333333333333332,
+    "citation_recall": 0.9722222222222222,
+    "judge_groundedness": 0.9666666666666667,
+    "judge_factual_correctness": 0.9833333333333334,
+    "judge_citation_support": 0.9833333333333334,
+    "judge_numerical_accuracy": 1.0
+  },
+  "cases": [
+    {
+      "id": "cpf_2026_contribution_rate",
+      "question": "For an employee aged 55 or below earning above $750, what are the total and employee CPF contribution rates from January 2026, and what is the Ordinary Wage ceiling?",
+      "expected_refusal": false,
+      "answer": "For an employee aged 55 or below earning above $750 from January 2026, the total CPF contribution rate is 37% of wages, with the employee's share being 20% and the employer's share being 17%. The Ordinary Wage ceiling is set at $8,000 per month.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects the CPF contribution rates and Ordinary Wage ceiling for employees aged 55 or below earning above $750 from January 2026, as stated in the retrieved context. It correctly identifies the total CPF contribution rate as 37%, the employee share as 20%, and the Ordinary Wage ceiling as $8,000, all of which are fully supported by the provided source."
+      }
+    },
+    {
+      "id": "moneysense_emergency_fund",
+      "question": "How many months of expenses does MoneySense suggest for an emergency fund, and should that money be placed in the stock market?",
+      "expected_refusal": false,
+      "answer": "MoneySense suggests setting aside at least 3 to 6 months\u2019 worth of expenses for an emergency fund. It is not recommended to place this money in the stock market, as emergency funds should be readily accessible in times of need.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/fire-path-lion.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects MoneySense's recommendation of setting aside at least 3 to 6 months' worth of expenses for an emergency fund and correctly states that this money should not be placed in the stock market, as it needs to be readily accessible. The information is well-supported by the retrieved context."
+      }
+    },
+    {
+      "id": "iras_relief_cap",
+      "question": "What overall cap applies to personal income tax reliefs per Year of Assessment according to the IRAS material?",
+      "expected_refusal": false,
+      "answer": "The overall cap on personal income tax reliefs per Year of Assessment is $80,000.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/iras/tax-relief-individuals.md"
+      ],
+      "source_paths": [
+        "markdown-cache/iras/tax-relief-individuals.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/sg-fire-planner.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer correctly states that the overall cap on personal income tax reliefs per Year of Assessment is $80,000, which is explicitly supported by the retrieved context from the IRAS material. All aspects of the answer are accurate and well-cited."
+      }
+    },
+    {
+      "id": "cpfis_protected_balances",
+      "question": "How much of my CPF Ordinary Account and Special Account cannot be used for CPFIS investments?",
+      "expected_refusal": false,
+      "answer": "The amount of your CPF Ordinary Account (OA) and Special Account (SA) that cannot be used for CPFIS investments is as follows:\n\n- For the Ordinary Account (OA), the first $20,000 is protected from investment use.\n- For the Special Account (SA), the first $40,000 is also protected from investment use.\n\nTherefore, a total of $60,000 ($20,000 from OA and $40,000 from SA) cannot be used for CPFIS investments.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-allocation-rates-2026.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately states that the first $20,000 in the CPF Ordinary Account and the first $40,000 in the Special Account are protected from CPFIS investments, totaling $60,000. This is fully supported by the retrieved context, which confirms these figures and their implications for CPFIS investment use."
+      }
+    },
+    {
+      "id": "srs_contribution_caps",
+      "question": "What are the annual SRS contribution caps for Singapore Citizens or PRs and for foreigners?",
+      "expected_refusal": false,
+      "answer": "The annual SRS contribution caps are as follows:\n\n- **Singapore Citizens & PRs:** $15,300/year\n- **Foreigners:** $35,700/year",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately states the annual SRS contribution caps for Singapore Citizens and PRs as $15,300 and for foreigners as $35,700. This information is fully supported by the retrieved context, which confirms these figures and explains the rationale behind the different caps. The answer is clear, concise, and directly addresses the question asked."
+      }
+    },
+    {
+      "id": "ssb_holding_and_liquidity",
+      "question": "What is the individual Singapore Savings Bond holding limit, and can the bonds generally be redeemed early?",
+      "expected_refusal": false,
+      "answer": "The individual holding limit for Singapore Savings Bonds is $200,000. Bonds can generally be redeemed early without any penalty, allowing for high liquidity.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 0.6666666666666666,
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      ],
+      "source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+        "manual/fire/FIRE.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately states that the individual holding limit for Singapore Savings Bonds is $200,000 and confirms that they can be redeemed early without penalty. This information is fully supported by the retrieved context, which explicitly mentions both the holding limit and the early redemption policy."
+      }
+    },
+    {
+      "id": "out_of_scope_weather",
+      "question": "What will the weather be in Singapore tomorrow?",
+      "expected_refusal": true,
+      "answer": "Ember can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "mode": "unsupported",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_recipe",
+      "question": "Give me a chicken rice recipe.",
+      "expected_refusal": true,
+      "answer": "Ember can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "mode": "unsupported",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_medical",
+      "question": "Can you diagnose my persistent chest pain and recommend medicine?",
+      "expected_refusal": true,
+      "answer": "Ember can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "mode": "unsupported",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_legal",
+      "question": "Give me legal advice for contesting a criminal charge.",
+      "expected_refusal": true,
+      "answer": "Ember can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "mode": "unsupported",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "out_of_scope_coding",
+      "question": "Write Python code for a multiplayer game server.",
+      "expected_refusal": true,
+      "answer": "Ember can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "mode": "unsupported",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "unsupported_live_crypto_price",
+      "question": "What is the live Bitcoin price right now?",
+      "expected_refusal": true,
+      "answer": "Ember can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "mode": "unsupported",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "ember_starter_cpf_rates_by_age",
+      "question": "What are the CPF contribution rates for 2026, and how do they vary by age?",
+      "expected_refusal": false,
+      "answer": "From 1 January 2026, the CPF contribution rates for employees vary by age as follows:\n\n- **Employees Aged 55 and Below**: Total CPF contribution rate is 37% (Employee share: 20%, Employer share: 17%).\n\nThe rates step down for older age bands, but specific rates for those above 55 are not provided in the evidence context.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": false,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 0.2,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "judge": {
+        "groundedness": 3,
+        "factual_correctness": 4,
+        "citation_support": 4,
+        "numerical_accuracy": 5,
+        "rationale": "The answer correctly states the CPF contribution rate for employees aged 55 and below as 37%, with the breakdown of employee and employer shares. However, it fails to provide the specific rates for employees above 55, which are mentioned in the retrieved context. The numerical accuracy is high as the rates are correctly quoted, and the answer is supported by the provided source, but it lacks completeness regarding the full range of age bands."
+      }
+    },
+    {
+      "id": "ember_starter_retirement_sums",
+      "question": "How do the Basic, Full, and Enhanced Retirement Sums differ?",
+      "expected_refusal": false,
+      "answer": "The Basic Retirement Sum (BRS), Full Retirement Sum (FRS), and Enhanced Retirement Sum (ERS) differ in their amounts and purpose for CPF members turning 55 in 2026:\n\n- **Basic Retirement Sum (BRS)**: $110,200\n- **Full Retirement Sum (FRS)**: $220,400\n- **Enhanced Retirement Sum (ERS)**: $440,800\n\nThe BRS is the minimum amount required to receive monthly payouts from CPF LIFE, while the FRS allows for higher monthly payouts. The ERS provides the highest monthly payouts and is intended for those who wish to have a larger retirement income.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately describes the Basic, Full, and Enhanced Retirement Sums for CPF members turning 55 in 2026, providing the correct amounts and their purposes. It is fully supported by the retrieved context, which confirms the figures and definitions provided in the answer."
+      }
+    },
+    {
+      "id": "ember_starter_savings_bonds",
+      "question": "How do Singapore Savings Bonds work, and what should I understand before applying?",
+      "expected_refusal": false,
+      "answer": "Singapore Savings Bonds (SSBs) are a type of investment product issued by the Singapore government, designed for individual investors. Here are the key features and considerations:\n\n1. **Safety**: SSBs are fully backed by the Singapore government, ensuring zero credit risk. You can redeem your bonds at any time without incurring capital losses.\n\n2. **Long-term Investment**: You can invest for up to 10 years, with interest that increases over time. The longer you hold the bond, the higher your returns.\n\n3. **Flexibility**: You can redeem your bonds monthly without penalties, making them highly liquid compared to traditional bonds.\n\n4. **Application Process**: To apply, you need a Central Depository (CDP) account. Applications can be made via ATMs or internet banking of DBS/POSB, OCBC, and UOB. If using SRS funds, applications are made through the SRS Operator's internet banking portal.\n\n5. **Transaction Fees**: A non-refundable transaction fee of S$2 applies for each application and redemption request.\n\n6. **Eligibility**: SSBs are available only to Singapore Citizens and Permanent Residents, with a maximum holding limit of S$200,000 per individual.\n\nBefore applying, ensure you understand these features and have the necessary accounts set up.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      ],
+      "source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately describes the features and application process of Singapore Savings Bonds (SSBs), including their safety, flexibility, and eligibility criteria. It is well-supported by the retrieved context, which confirms the details about the bonds being government-backed, the application process through specific banks, and the transaction fees involved. All numerical values mentioned, such as the maximum holding limit of S$200,000 and the S$2 transaction fee, are correct and consistent with the provided sources."
+      }
+    },
+    {
+      "id": "ember_starter_fire_before_55",
+      "question": "What should a Singapore FIRE plan consider before age 55?",
+      "expected_refusal": false,
+      "answer": "A Singapore FIRE plan before age 55 should consider the following:\n\n1. **Cash Flow Sources**: Since CPF is mostly locked, lifestyle spending must come from cash, taxable investments, business income, rental income, part-time work, or other liquid sources.\n\n2. **Withdrawal Rates**: It's important to use a conservative withdrawal rate for planning. Common multipliers for calculating the FIRE number include:\n   - 4% withdrawal rate: 25 times annual spending (not recommended for early retirement).\n   - 3.5% withdrawal rate: about 28.6 times annual spending.\n   - 3.33% withdrawal rate: about 30 times annual spending.\n   - 3% withdrawal rate: about 33.3 times annual spending (suitable for very early retirees).\n\n3. **Retirement Horizon**: Early retirees may have a retirement horizon of 40 to 60 years, necessitating a lower withdrawal rate than the traditional 4%.\n\n4. **Savings Rate**: Aiming for a total savings rate of 50\u201370% of gross income is common among FIRE-oriented individuals in Singapore.\n\n5. **Planning for CPF LIFE**: Understanding that CPF LIFE will provide lifetime monthly payouts starting from age 65, which can reduce the required drawdown from the investment portfolio.\n\n6. **Comprehensive Planning**: The FIRE plan should not simply rely on a rough estimate like \"annual expenses times 25\" but should be a detailed cash-flow plan reflecting individual circumstances and local factors.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer is well-grounded in the context provided, accurately reflecting the need for non-CPF liquid assets before age 55 in a Singapore FIRE plan. It correctly outlines cash flow sources, withdrawal rates, retirement horizons, savings rates, and the importance of comprehensive planning, all of which are supported by the retrieved context. The numerical examples for withdrawal rates are also consistent with the information provided, ensuring factual correctness and numerical accuracy."
+      }
+    },
+    {
+      "id": "cpf_frs_2026_exact_figure",
+      "question": "What is the CPF Full Retirement Sum for 2026?",
+      "expected_refusal": false,
+      "answer": "The CPF Full Retirement Sum (FRS) for 2026 is S$220,400. This applies to the year the member turns 55. Source: CPF Retirement Sums (BRS, FRS and ERS) by Year.",
+      "mode": "data",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer correctly states that the CPF Full Retirement Sum (FRS) for 2026 is S$220,400, which is explicitly supported by the retrieved context. The source is credible and directly addresses the question, confirming the accuracy of the information provided."
+      }
+    },
+    {
+      "id": "cpf_ers_2027_exact_figure",
+      "question": "How much is the Enhanced Retirement Sum in 2027?",
+      "expected_refusal": false,
+      "answer": "The Enhanced Retirement Sum (ERS) in 2027 is $456,400.",
+      "mode": "knowledge",
+      "refused": false,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/fire-path-lion.md"
+      ],
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer correctly states that the Enhanced Retirement Sum (ERS) in 2027 is $456,400, which is directly supported by the retrieved context. The information is accurate and well-cited from the official CPF document, confirming the figure for members turning 55 in that year."
+      }
+    },
+    {
+      "id": "in_scope_no_corpus_hdb_grant",
+      "question": "How much is the Enhanced CPF Housing Grant for a first-timer couple earning $6,000 a month?",
+      "expected_refusal": true,
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "mode": "knowledge",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "in_scope_no_corpus_medisave_withdrawal_limit",
+      "question": "What is the MediSave withdrawal limit for an outpatient chronic disease visit?",
+      "expected_refusal": true,
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "mode": "knowledge",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "in_scope_no_corpus_property_tax_rate",
+      "question": "What is the property tax rate for a non-owner-occupied condo in Singapore?",
+      "expected_refusal": true,
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "mode": "knowledge",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "in_scope_no_corpus_gst_rate",
+      "question": "What is the current GST rate in Singapore?",
+      "expected_refusal": true,
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "mode": "knowledge",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    },
+    {
+      "id": "in_scope_no_corpus_car_loan_rules",
+      "question": "What is the maximum car loan tenure and loan-to-value limit in Singapore?",
+      "expected_refusal": true,
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "mode": "knowledge",
+      "refused": true,
+      "passed": true,
+      "concept_coverage": 1.0,
+      "numeric_accuracy": 1.0,
+      "citation_recall": 1.0,
+      "expected_source_paths": [],
+      "source_paths": [],
+      "judge": null
+    }
+  ],
+  "report_version": 7,
+  "report_label": "23 cases via planner on the final corpus"
+}

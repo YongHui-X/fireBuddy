@@ -167,27 +167,86 @@ forward slashes.
 - Added backend and RAG tests to CI and repaired the scheduled knowledge-base
   refresh paths for the current monorepo.
 
+## September 2026 improvement pass
+
+Implemented on 2026-09-16 following `docs/RAG_EVALUATION_BASELINE.md`:
+
+- Hand-authored CPF tables under `knowledge-base/manual/cpf/` (contribution
+  rates, allocation rates, retirement sums 2017 to 2027, CPF LIFE payout
+  examples). The matching PDFs stay in the registry with `superseded_by` so a
+  change still alerts, but their garbled caches are no longer ingested. The
+  table-defence prose was removed from the Ember system prompt.
+- `pdf_to_md.py` rejects conversions under 800 bytes or that lose more than
+  half the previous cache, drops registry `skip_pages` (the SSB FAQ table of
+  contents), and appends Markdown tables for registry entries with
+  `extract_tables`.
+- Ingestion chunks at 1,500 characters with 300-character overlap and writes a
+  cached, generated headline and summary per chunk
+  (`knowledge-base/.chunk-context-cache.json`, keyed by chunk text hash).
+- Retrieval expands Singapore finance acronyms (`rag/query_terms.py`), asks
+  the RPC for 20 candidates per signal, and the RPC now uses the `english`
+  text search configuration and returns `fused_score` and `signal_count`.
+- The refusal gate accepts a chunk found by both keyword and vector search at
+  `RAG_MIN_SIMILARITY_WITH_KEYWORD` (0.35) as well as any chunk at
+  `RAG_MIN_SIMILARITY` (0.45).
+- The planner writes a standalone `retrieval_query` for knowledge questions
+  and can route exact-figure questions to the new `figure_lookup` tool over
+  `rag/annual-figures.json`.
+- Page hints are appended to retrieval only for questions of six words or
+  fewer.
+- `pdf_to_md.py` rejoins wrapped PDF lines into real paragraphs (a line with
+  no sentence-ending punctuation is merged with the next when that line starts
+  in lower case or the previous line is eight words or longer). Before this,
+  every printed line was its own paragraph, so chunk boundaries and the
+  one-paragraph overlap could cut a sentence such as "at least 3 - 6 months'
+  worth ... rule of | thumb" in half.
+- The hybrid RPC now returns the best chunk and one stitched sibling whole
+  (up to 2,200 characters each) instead of cutting them to 1,150 and 550. The
+  intermediate 900-character sibling cap still split a table section when the
+  best-ranked chunk of a source was its introduction.
+- The hand-authored CPF documents lead with the answer (the age-band rate
+  table, the 2026 retirement sums) and carry provenance in a trailing "Source
+  and review notes" section, because a provenance paragraph that names the
+  document's topics otherwise outranks the section that holds the figures.
+- The answer model must reply with a fixed sentinel sentence when the
+  evidence does not answer the question. Cosine similarity cannot separate an
+  in-scope topic that is absent from the corpus (GST rate, HDB grants) from
+  one that is present, so the sentinel is the last line of the refusal path;
+  the service converts it to the standard low-confidence refusal with no
+  citations, and the evals detect it.
+- `ember_service` runs the deterministic out-of-scope screen before the
+  planner, so a coding or recipe request can no longer be turned into a
+  clarification question by the planner.
+- Evaluation: `required_substrings` and `history` per retrieval case,
+  `substring_hit_rate`, in-scope-but-absent refusal cases, `--via-planner`
+  answer runs, and `check_regression.py` with `baseline_thresholds.json` in CI.
+
 ## Latest Live Results
 
-The latest HNSW and hybrid RRF retrieval results across 30 representative questions are:
+Retrieval version 9 (2026-09-16) across 45 questions, including 3 multi-turn
+and 3 exact-figure cases:
 
-- Hit@1: `0.7667`
-- Hit@3: `0.9667`
+- Hit@1: `0.8000`
+- Hit@3: `0.9556`
 - Hit@5: `1.0000`
-- Recall@5: `0.9167`
-- MAP@5: `0.7750`
-- nDCG@5: `0.8353`
-- MRR: `0.8622`
+- Recall@5: `0.9481`
+- MAP@5: `0.8276`
+- nDCG@5: `0.8756`
+- MRR: `0.8841`
+- Substring hit rate: `1.0000`
 
-Answer results across six supported questions and six out-of-scope questions:
+Answer version 8 (2026-09-16) across 12 supported questions and 11 refusal
+questions, routed through the planner:
 
 - Overall pass rate: `1.0000`
 - Refusal accuracy: `1.0000`
 - Required concept coverage: `1.0000`
 - Exact numeric accuracy: `1.0000`
-- Citation recall: `0.9444`
+- Citation recall: `0.9722`
 - Judge factual correctness: `1.0000`
-- Judge groundedness: `0.9667`
+- Judge groundedness: `1.0000`
+
+Full history and metric definitions: `docs/RAG_EVALUATION_BASELINE.md`.
 
 ## RAG V1 Checks
 
@@ -212,17 +271,22 @@ python apps/backend/rag/Implementation/ingest.py --verify-store
 Add `--run-label "Description"` when recording a named major run. The shared
 history index is written to `apps/backend/rag/evaluation/results/README.md`.
 
-## V1 Non-Goals
+## Non-Goals
 
-This hardening pass intentionally does not add hybrid search, reranking, RAGAS,
-Langfuse, guardrail frameworks, or vector database migration. Those should be
-considered only after the initial retrieval eval results show where V1 fails.
+Reranking, RAGAS, Langfuse, guardrail frameworks, GraphRAG, and a vector
+database migration remain out of scope. A cross-encoder reranker is the one
+candidate worth testing next, measured on nDCG@3.
 
 ## Follow-Up Work
 
-- Decide whether deterministic empty summaries are sufficient after retrieval
-  tests, or whether guarded LLM-generated summaries improve recall.
-- Improve first-rank source authority before adding hybrid search or reranking.
+- The hosted Supabase project ("finance app") received the HNSW and three
+  September 2026 RAG migrations plus a full re-ingest on 2026-09-16, and the
+  retrieval eval matches the local numbers there. It is still missing the
+  eight application migrations from August and September (accounts, income
+  transactions, tags, dashboard foundation, retirement plans); decide
+  separately whether to `db push` those.
+- Label more than one acceptable document for the FIRE source-note cases, or
+  merge those notes, to find out whether Hit@1 is a ranking or a labelling
+  problem.
 - Replace the in-memory rate limiter with shared storage before running multiple
   backend workers or instances.
-- Add regression thresholds and alerts around the persisted evaluation reports.

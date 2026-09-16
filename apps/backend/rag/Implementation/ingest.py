@@ -28,6 +28,7 @@ Full pipeline (recommended):
     python backend/rag/scripts/update_kb.py
 """
 
+import hashlib
 import json
 import logging
 import os
@@ -57,9 +58,15 @@ FETCH_AND_CONVERT_DIR = RAG_DIR / "fetchAndConvert"
 wait = wait_exponential(multiplier=1, min=10, max=240)
 
 WORKERS = 3
-MAX_SECTION_SIZE = 4000
+# Smaller embedded units keep one vector close to one fact. The hybrid RPC
+# stitches neighbouring chunks from the same source back together at answer
+# time, so the model still sees surrounding context.
+MAX_SECTION_SIZE = 1500
 CHUNK_OVERLAP_PARAGRAPHS = 1
-CHUNK_OVERLAP_MAX_CHARS = 600
+CHUNK_OVERLAP_MAX_CHARS = 300
+CHUNK_CONTEXT_MODEL = os.getenv("RAG_CHUNK_CONTEXT_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
+CHUNK_CONTEXT_CACHE_PATH = RAG_DIR / "knowledge-base" / ".chunk-context-cache.json"
+CHUNK_CONTEXT_DOCUMENT_PREVIEW_CHARS = 1500
 SUPABASE_SELECT_PAGE_SIZE = 1000
 STALE_DELETE_BATCH_SIZE = 100
 MANUAL_FRONT_MATTER_FIELDS = {
@@ -73,7 +80,7 @@ MANUAL_FRONT_MATTER_FIELDS = {
 if str(FETCH_AND_CONVERT_DIR) not in sys.path:
     sys.path.append(str(FETCH_AND_CONVERT_DIR))
 
-from check_pdfs import PDFS
+from check_pdfs import PDFS, registry_by_cache_path
 
 class Ingestable_Chunk(BaseModel):
     """
@@ -256,12 +263,14 @@ def md_to_doc_obj(file_path: Path) -> dict:
     source_url = None
     front_matter: dict[str, str | bool] = {}
 
+    superseded_by = None
     if source_group == "markdown-cache":
         doc_type = "pdf_cache"
         agency = relative_path.parts[1]
         topic = file_path.stem
         cache_path = str(Path(*relative_path.parts[1:])).replace("\\", "/")
         source_url = SOURCE_URL_MAP.get(cache_path)
+        superseded_by = registry_by_cache_path().get(cache_path, {}).get("superseded_by")
     elif source_group == "manual":
         doc_type = "manual"
         agency = None
@@ -287,11 +296,14 @@ def md_to_doc_obj(file_path: Path) -> dict:
         "topic": topic,
         "source_url": source_url,
         "text": text,
+        # A PDF cache file whose registry entry names a hand-authored
+        # replacement is kept on disk for change detection but not ingested.
         "ingest": (
             front_matter.get("ingest", True)
             if source_group == "manual"
-            else True
+            else superseded_by is None
         ),
+        "superseded_by": superseded_by,
     }
 
 
@@ -427,39 +439,200 @@ def split_document(text: str) -> list[dict]:
     return chunks
 
 
-def create_chunks(document: dict) -> list[Chunk]:
+class ChunkContext(BaseModel):
+    """Structured output for one chunk's descriptive headline and summary."""
+
+    model_config = {"extra": "forbid"}
+
+    headline: str = Field(max_length=120)
+    summary: str = Field(max_length=400)
+
+
+def is_generic_heading(heading: str) -> bool:
+    """Detect converter-generated headings such as `Source: file.pdf`."""
+
+    return heading.strip().lower().startswith(("source:", "introduction"))
+
+
+def chunk_context_key(document: dict, chunk_text: str) -> str:
+    """Hash the chunk text with its source title so cache hits are exact."""
+
+    digest = hashlib.sha256()
+    digest.update((document.get("title") or "").encode("utf-8"))
+    digest.update(b"\0")
+    digest.update(chunk_text.encode("utf-8"))
+    return digest.hexdigest()
+
+
+def using_limit_for_cache(limit: int | None) -> bool:
+    """A partial `--limit` run must never prune contexts for chunks it skipped."""
+
+    return limit is not None
+
+
+def load_chunk_context_cache() -> dict[str, dict]:
+    """Read the committed cache of generated chunk contexts."""
+
+    if not CHUNK_CONTEXT_CACHE_PATH.exists():
+        return {}
+    try:
+        return json.loads(CHUNK_CONTEXT_CACHE_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def prune_chunk_context_cache(cache: dict[str, dict], documents: list[dict]) -> int:
+    """
+    Drop cache entries for chunk texts that no longer exist in the corpus.
+
+    Returns the number of removed entries. Keeping the cache limited to the
+    current chunk set stops it growing with every reconversion.
+    """
+
+    live_keys = {
+        chunk_context_key(document, section["text"])
+        for document in documents
+        for section in split_document(document["text"])
+    }
+    stale_keys = [key for key in cache if key not in live_keys]
+    for key in stale_keys:
+        del cache[key]
+    return len(stale_keys)
+
+
+def save_chunk_context_cache(cache: dict[str, dict]) -> None:
+    """Persist generated chunk contexts so re-ingestion is free unless text changed."""
+
+    CHUNK_CONTEXT_CACHE_PATH.write_text(
+        json.dumps(cache, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+@retry(wait=wait, stop=stop_after_attempt(5))
+def generate_chunk_context(
+    client: OpenAI,
+    document: dict,
+    heading: str,
+    chunk_text: str,
+) -> ChunkContext:
+    """
+    Ask the model for a short descriptive headline and a one to two sentence
+    summary that situates the chunk within its document.
+
+    This is the contextual retrieval step: the headline feeds the weight-A
+    keyword field and the summary is prepended to the embedded text.
+    """
+
+    preview = (document.get("text") or "")[:CHUNK_CONTEXT_DOCUMENT_PREVIEW_CHARS]
+    completion = client.chat.completions.parse(
+        model=CHUNK_CONTEXT_MODEL,
+        temperature=0,
+        store=False,
+        response_format=ChunkContext,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You write retrieval metadata for chunks of Singapore personal-finance "
+                    "documents. Given the document title, its opening text, the section "
+                    "heading, and one chunk, return a headline of at most twelve words that "
+                    "names the specific topic of the chunk, and a summary of one or two "
+                    "sentences stating which document and section the chunk comes from and "
+                    "what questions it answers. Use the exact terms, figures, and acronyms "
+                    "that appear in the chunk. Do not add facts that are not in the chunk."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Document title: {document.get('title')}\n"
+                    f"Publisher: {document.get('agency') or 'unknown'}\n"
+                    f"Document opening:\n{preview}\n\n"
+                    f"Section heading: {heading}\n\n"
+                    f"Chunk:\n{chunk_text}"
+                ),
+            },
+        ],
+    )
+    parsed = completion.choices[0].message.parsed
+    if parsed is None:
+        raise RuntimeError("Chunk context generation returned no structured output")
+    return parsed
+
+
+def create_chunks(
+    document: dict,
+    *,
+    context_cache: dict[str, dict] | None = None,
+    openai_client: OpenAI | None = None,
+) -> list[Chunk]:
     """
     Convert split document sections into `Chunk` models.
 
-    The current baseline is deterministic: the section heading becomes the
-    headline, summary stays empty, and original text is preserved exactly.
+    Without a context cache the result is deterministic: the section heading
+    becomes the headline and the summary stays empty. With a cache, each chunk
+    gets a descriptive headline and summary, generated once per chunk text and
+    reused from the cache on later runs. A missing cache entry is generated
+    only when an OpenAI client is supplied; otherwise the deterministic
+    fallback is used for that chunk.
     """
 
-    return [
-        Chunk(
-            headline=chunk["heading"],
-            summary="",
-            original_text=chunk["text"],
+    chunks = []
+    for section in split_document(document["text"]):
+        headline = section["heading"]
+        summary = ""
+
+        if context_cache is not None:
+            key = chunk_context_key(document, section["text"])
+            entry = context_cache.get(key)
+            if entry is None and openai_client is not None:
+                generated = generate_chunk_context(
+                    openai_client, document, section["heading"], section["text"]
+                )
+                entry = generated.model_dump()
+                context_cache[key] = entry
+            if entry:
+                headline = entry.get("headline") or headline
+                summary = entry.get("summary") or ""
+
+        chunks.append(
+            Chunk(headline=headline, summary=summary, original_text=section["text"])
         )
-        for chunk in split_document(document["text"])
-    ]
+    return chunks
 
 
-def create_ingestable_chunks(document: dict) -> list[Ingestable_Chunk]:
+def create_ingestable_chunks(
+    document: dict,
+    *,
+    context_cache: dict[str, dict] | None = None,
+    openai_client: OpenAI | None = None,
+) -> list[Ingestable_Chunk]:
     """
     Create storage-ready chunks for one source document.
 
-    It creates deterministic `Chunk` objects first, then attaches source
-    metadata and chunk indexes through `Chunk.as_result()`.
+    It creates `Chunk` objects first, then attaches source metadata and chunk
+    indexes through `Chunk.as_result()`.
     """
 
     return [
         chunk.as_result(document, chunk_index)
-        for chunk_index, chunk in enumerate(create_chunks(document))
+        for chunk_index, chunk in enumerate(
+            create_chunks(
+                document,
+                context_cache=context_cache,
+                openai_client=openai_client,
+            )
+        )
     ]
 
 
-def create_all_ingestable_chunks(documents: list[dict]) -> list[Ingestable_Chunk]:
+def create_all_ingestable_chunks(
+    documents: list[dict],
+    *,
+    context_cache: dict[str, dict] | None = None,
+    openai_client: OpenAI | None = None,
+) -> list[Ingestable_Chunk]:
     """
     Create one flat list of storage-ready chunks for the whole corpus.
 
@@ -470,7 +643,13 @@ def create_all_ingestable_chunks(documents: list[dict]) -> list[Ingestable_Chunk
     chunks = []
 
     for document in documents:
-        chunks.extend(create_ingestable_chunks(document))
+        chunks.extend(
+            create_ingestable_chunks(
+                document,
+                context_cache=context_cache,
+                openai_client=openai_client,
+            )
+        )
 
     return chunks
 
@@ -834,12 +1013,16 @@ def main(
     dry_run: bool = False,
     skip_cleanup: bool = False,
     verify_store: bool = False,
+    llm_context: bool = True,
 ):
     """
     Run the full ingestion workflow.
 
     The workflow loads Markdown documents, chunks them, optionally limits the
     batch for testing, and either dry-runs or embeds/upserts into Supabase.
+    With `llm_context` (the default) each chunk receives a generated headline
+    and summary, cached in the knowledge-base directory. Dry runs and store
+    verification reuse the cache but never call the model.
     """
 
     if verify_store and (limit is not None or dry_run or skip_cleanup):
@@ -856,7 +1039,26 @@ def main(
 
     print_chunk_size_summary(documents)
 
-    ingestable_chunks = create_all_ingestable_chunks(documents)
+    context_cache = load_chunk_context_cache() if llm_context else None
+    generate_missing = llm_context and not dry_run and not verify_store
+    context_client = OpenAI() if generate_missing else None
+    cache_size_before = len(context_cache or {})
+    ingestable_chunks = create_all_ingestable_chunks(
+        documents,
+        context_cache=context_cache,
+        openai_client=context_client,
+    )
+    if context_cache is not None:
+        generated_count = len(context_cache) - cache_size_before
+        pruned_count = 0 if using_limit_for_cache(limit) else prune_chunk_context_cache(
+            context_cache, documents
+        )
+        if generated_count or pruned_count:
+            save_chunk_context_cache(context_cache)
+            print(
+                f"Chunk context cache: {generated_count} generated, {pruned_count} "
+                f"pruned, {len(context_cache)} entries kept."
+            )
     using_limit = limit is not None
     if using_limit:
         ingestable_chunks = ingestable_chunks[:limit]
@@ -934,6 +1136,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Verify Supabase exactly matches the local knowledge base",
     )
+    parser.add_argument(
+        "--no-llm-context",
+        action="store_true",
+        help="Use section headings only; skip generated chunk headlines and summaries",
+    )
     args = parser.parse_args()
 
     main(
@@ -941,4 +1148,5 @@ if __name__ == "__main__":
         dry_run=args.dry_run,
         skip_cleanup=args.skip_cleanup,
         verify_store=args.verify_store,
+        llm_context=not args.no_llm_context,
     )

@@ -1,13 +1,15 @@
 """Read-only, owner-scoped tools that calculate authoritative FireBuddy facts."""
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
 
 from lib.clock import singapore_today
 from lib.repository import fetch_all
 from lib.supabase import supabase
+from schemas.rag import AdvisorSource
+from services.ember_figure_tools import lookup_figure
 from services.ember_planner import EmberPlan, EmberToolName
 from services.financial_repository import load_financial_records
 from services.financial_summary import build_financial_summary
@@ -28,12 +30,19 @@ class EmberDataResult:
     destination: str
     facts: dict
     exact_answer: str
+    # Citations for reference figures; empty for tools over the user's own data.
+    sources: list[AdvisorSource] = field(default_factory=list)
 
     def context(self) -> str:
         """Serialize only aggregate facts, never raw records or identity fields."""
 
+        label = (
+            "Trusted official reference figure supplied by the backend"
+            if self.tool == "figure_lookup"
+            else "Trusted FireBuddy data calculated by the backend"
+        )
         return (
-            "Trusted FireBuddy data calculated by the backend. Treat these values as "
+            f"{label}. Treat these values as "
             "authoritative and do not recalculate or alter them:\n"
             + json.dumps(self.facts, indent=2, sort_keys=True)
         )
@@ -287,6 +296,32 @@ def _financial_health_review(user_id: str, plan: EmberPlan, today: date) -> Embe
     return EmberDataResult("financial_health_review", "Financial health review", str(as_of), None, action["destination"] if action else "/", facts, answer)
 
 
+def _figure_lookup(user_id: str, plan: EmberPlan, today: date) -> EmberDataResult:
+    """Return one curated official figure; it reads no user data at all."""
+
+    if plan.figure_key is None:
+        raise ValueError("Figure lookup requires a figure key")
+    figure = lookup_figure(plan.figure_key, plan.figure_year, today=today)
+    facts = {
+        "figure": figure["label"],
+        "year": figure["year"],
+        "value": figure["value"],
+        "unit": figure["unit"],
+        "availableYears": figure["available_years"],
+        "sourceTitle": figure["source"].title,
+    }
+    return EmberDataResult(
+        tool="figure_lookup",
+        label="Official figure",
+        period=str(figure["year"]),
+        record_count=None,
+        destination="/ember",
+        facts=facts,
+        exact_answer=figure["exact_answer"],
+        sources=[figure["source"]],
+    )
+
+
 def run_ember_data_tool(user_id: str, plan: EmberPlan, *, today: date | None = None) -> EmberDataResult:
     """Execute exactly one allowlisted read-only tool with server-injected ownership."""
 
@@ -299,6 +334,7 @@ def run_ember_data_tool(user_id: str, plan: EmberPlan, *, today: date | None = N
         "financial_summary": _financial_summary,
         "fire_projection": _fire_projection,
         "financial_health_review": _financial_health_review,
+        "figure_lookup": _figure_lookup,
     }
     if plan.tool is None or plan.tool not in tools:
         raise ValueError("Ember selected an unsupported data tool")

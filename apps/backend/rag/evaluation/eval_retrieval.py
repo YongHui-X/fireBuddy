@@ -38,6 +38,12 @@ class EvalCase:
     expected_source_paths: tuple[str, ...]
     expected_topics: tuple[str, ...]
     tags: tuple[str, ...]
+    # Literal strings that must appear in at least one returned chunk. This
+    # catches chunk-level problems (garbled tables, truncated files) that a
+    # document-level hit hides.
+    required_substrings: tuple[str, ...] = ()
+    # Prior turns as (role, content) pairs for multi-turn follow-up cases.
+    history: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -52,6 +58,8 @@ class CaseResult:
     retrieved_topics: tuple[str, ...]
     similarities: tuple[float, ...]
     first_relevant_rank: int | None
+    substring_hits: tuple[bool, ...] = ()
+    retrieval_query: str | None = None
 
 
 def load_eval_cases(path: Path = DEFAULT_QUESTIONS_PATH) -> list[EvalCase]:
@@ -65,9 +73,32 @@ def load_eval_cases(path: Path = DEFAULT_QUESTIONS_PATH) -> list[EvalCase]:
             expected_source_paths=tuple(raw_case["expected_source_paths"]),
             expected_topics=tuple(raw_case.get("expected_topics", [])),
             tags=tuple(raw_case.get("tags", [])),
+            required_substrings=tuple(raw_case.get("required_substrings", [])),
+            history=tuple(
+                (turn["role"], turn["content"]) for turn in raw_case.get("history", [])
+            ),
         )
         for raw_case in raw_cases
     ]
+
+
+def _normalize_for_substring(value: str) -> str:
+    """Lower-case and collapse whitespace so table formatting cannot cause misses."""
+
+    return " ".join(value.lower().split())
+
+
+def substring_hits(case: EvalCase, matches: list[dict]) -> tuple[bool, ...]:
+    """Check each required substring against the text of every returned chunk."""
+
+    if not case.required_substrings:
+        return ()
+    corpus = _normalize_for_substring(
+        "\n".join(str(match.get("content") or "") for match in matches)
+    )
+    return tuple(
+        _normalize_for_substring(needle) in corpus for needle in case.required_substrings
+    )
 
 
 def _safe_similarity(value) -> float:
@@ -85,7 +116,12 @@ def deduplicate_paths(paths: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(paths))
 
 
-def score_case(case: EvalCase, matches: list[dict]) -> CaseResult:
+def score_case(
+    case: EvalCase,
+    matches: list[dict],
+    *,
+    retrieval_query: str | None = None,
+) -> CaseResult:
     """Score one case using unique document paths instead of duplicate chunks."""
 
     expected_paths = set(case.expected_source_paths)
@@ -112,7 +148,18 @@ def score_case(case: EvalCase, matches: list[dict]) -> CaseResult:
             _safe_similarity(match.get("similarity")) for match in matches
         ),
         first_relevant_rank=first_relevant_rank,
+        substring_hits=substring_hits(case, matches),
+        retrieval_query=retrieval_query,
     )
+
+
+def substring_hit_rate(results: list[CaseResult]) -> float:
+    """Return the fraction of substring-labelled cases whose substrings all appeared."""
+
+    labelled = [result for result in results if result.case.required_substrings]
+    if not labelled:
+        return 1.0
+    return sum(all(result.substring_hits) for result in labelled) / len(labelled)
 
 
 def relevant_count_at_k(result: CaseResult, k: int) -> int:
@@ -237,7 +284,34 @@ def calculate_metrics(
         metrics[f"recall@{k}"] = recall_at_k(results, k)
         metrics[f"map@{k}"] = mean_average_precision_at_k(results, k)
         metrics[f"ndcg@{k}"] = ndcg_at_k(results, k)
+    metrics["substring_hit_rate"] = substring_hit_rate(results)
     return metrics
+
+
+def default_query_builder(case: EvalCase) -> str:
+    """Use the raw question; single-turn cases need no rewrite."""
+
+    return case.question
+
+
+def planner_query_builder(case: EvalCase) -> str:
+    """
+    Resolve multi-turn cases through the production planner.
+
+    Only cases with history pay for a planner call. The planner's
+    `retrieval_query` is what production retrieval would embed, so the eval
+    measures the real follow-up path rather than the bare question.
+    """
+
+    if not case.history:
+        return case.question
+
+    from schemas.rag import ChatMessage
+    from services.ember_planner import plan_ember_question
+
+    history = [ChatMessage(role=role, content=content) for role, content in case.history]
+    plan = plan_ember_question(case.question, history)
+    return plan.retrieval_query or case.question
 
 
 def run_evaluation(
@@ -245,13 +319,21 @@ def run_evaluation(
     retrieve: Callable[[str, int], list[dict]],
     *,
     match_count: int = 5,
+    query_builder: Callable[[EvalCase], str] = default_query_builder,
 ) -> list[CaseResult]:
     """Run retrieval for every case and return structured results."""
 
-    return [
-        score_case(case, retrieve(case.question, match_count))
-        for case in cases
-    ]
+    results = []
+    for case in cases:
+        query = query_builder(case)
+        results.append(
+            score_case(
+                case,
+                retrieve(query, match_count),
+                retrieval_query=query if query != case.question else None,
+            )
+        )
+    return results
 
 
 def build_report(results: list[CaseResult], match_count: int) -> dict:
@@ -274,6 +356,9 @@ def build_report(results: list[CaseResult], match_count: int) -> dict:
                 "retrieved_source_paths": list(result.retrieved_source_paths),
                 "unique_retrieved_source_paths": list(result.unique_retrieved_source_paths),
                 "similarities": list(result.similarities),
+                "required_substrings": list(result.case.required_substrings),
+                "substring_hits": list(result.substring_hits),
+                "retrieval_query": result.retrieval_query,
             }
             for result in results
         ],
@@ -304,14 +389,16 @@ def report_as_markdown(report: dict) -> str:
             "",
             "## Cases",
             "",
-            "| Case | First relevant rank | Relevant paths found |",
-            "|---|---:|---|",
+            "| Case | First relevant rank | Substrings | Relevant paths found |",
+            "|---|---:|---|---|",
         ]
     )
     for case in report["cases"]:
         rank = case["first_relevant_rank"] or "miss"
         matches = "<br>".join(case["matched_source_paths"]) or "None"
-        lines.append(f"| {case['id']} | {rank} | {matches} |")
+        hits = case.get("substring_hits") or []
+        substrings = f"{sum(hits)}/{len(hits)}" if hits else "n/a"
+        lines.append(f"| {case['id']} | {rank} | {substrings} | {matches} |")
     return "\n".join(lines) + "\n"
 
 
@@ -348,6 +435,16 @@ def print_report(report: dict) -> None:
         print(f"Expected paths: {case['expected_source_paths']}")
         print(f"Retrieved paths: {case['unique_retrieved_source_paths']}")
 
+    for case in report["cases"]:
+        hits = case.get("substring_hits") or []
+        if hits and not all(hits):
+            missing = [
+                needle
+                for needle, hit in zip(case["required_substrings"], hits)
+                if not hit
+            ]
+            print(f"\n[SUBSTRING MISS] {case['id']}: {missing}")
+
 
 def main() -> int:
     """Run live retrieval evaluation and persist a numbered report version."""
@@ -365,12 +462,22 @@ def main() -> int:
         help="Short description shown beside this immutable report version",
     )
     parser.add_argument("--no-save", action="store_true")
+    parser.add_argument(
+        "--no-planner",
+        action="store_true",
+        help="Embed multi-turn questions as written instead of the planner rewrite",
+    )
     args = parser.parse_args()
 
     from rag.retrieval import retrieve_chunks
 
     cases = load_eval_cases(args.questions)
-    results = run_evaluation(cases, retrieve_chunks, match_count=args.match_count)
+    results = run_evaluation(
+        cases,
+        retrieve_chunks,
+        match_count=args.match_count,
+        query_builder=default_query_builder if args.no_planner else planner_query_builder,
+    )
     report = build_report(results, args.match_count)
     print_report(report)
 

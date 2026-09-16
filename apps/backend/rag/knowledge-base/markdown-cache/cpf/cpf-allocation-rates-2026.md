@@ -28,26 +28,12 @@ Above 65 – 70 0.0607 0.303 0.6363
 
 Above 70 0.08 0.08 0.84
 
-1 Upon the closure of Special Account, the contributions for members aged 55 and above will be fully allocated to the Retirement Account
-
-(RA), up to the Full Retirement Sum (FRS). If members have set aside the FRS in their RA, these contributions will be channelled to their
-
-The CPF allocation is first computed for the MediSave Account, followed by the Special/Retirement Account. The remainder will be
-
-allocated to the Ordinary Account.
+1 Upon the closure of Special Account, the contributions for members aged 55 and above will be fully allocated to the Retirement Account (RA), up to the Full Retirement Sum (FRS). If members have set aside the FRS in their RA, these contributions will be channelled to their The CPF allocation is first computed for the MediSave Account, followed by the Special/Retirement Account. The remainder will be allocated to the Ordinary Account.
 
 If the CPF contribution of an employee (30 years old) is $100, the allocation of his CPF contribution will be computed as:
 
-CPF Contribution Ordinary Account Special Account MediSave Account
-
-35 & below $100 $62.17 $16.21 $21.62
-
-($100 – $21.62 – $16.21) ($100 x 0.1621) ($100 x 0.2162)
+CPF Contribution Ordinary Account Special Account MediSave Account 35 & below $100 $62.17 $16.21 $21.62 ($100 – $21.62 – $16.21) ($100 x 0.1621) ($100 x 0.2162)
 
 If the CPF contribution of an employee (57 years old) is $100, the allocation of his CPF contribution will be computed as:
 
-CPF Contribution Ordinary Account Retirement Account MediSave Account
-
-Above 55 – 60 $100 $35.30 $33.82 $30.88
-
-($100 – $33.82 – $30.88) ($100 x 0.3382) ($100 x 0.3088)
+CPF Contribution Ordinary Account Retirement Account MediSave Account Above 55 – 60 $100 $35.30 $33.82 $30.88 ($100 – $33.82 – $30.88) ($100 x 0.3382) ($100 x 0.3088)

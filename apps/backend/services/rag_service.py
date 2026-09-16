@@ -22,11 +22,30 @@ from schemas.rag import AdvisorAppContext, AdvisorResponse, AdvisorSource, ChatM
 
 ANSWER_MODEL = os.getenv("RAG_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
 DEFAULT_RAG_MIN_SIMILARITY = 0.45
-MAX_CONTEXT_CHARS_PER_CHUNK = 1800
+# A chunk that ranked in both the keyword and the vector candidate lists is
+# accepted at a lower cosine floor, because two independent signals agreeing
+# is stronger evidence than one cosine value from a compressed-range embedding.
+DEFAULT_RAG_MIN_SIMILARITY_WITH_KEYWORD = 0.35
+# The RPC returns the best chunk and one stitched sibling whole (up to 2,200
+# characters each), so the service cap must not cut either.
+MAX_CONTEXT_CHARS_PER_CHUNK = 4500
 MAX_HISTORY_MESSAGES = 6
-LOW_CONFIDENCE_ANSWER = (
+# Only short, deictic questions ("What should I review here?") get page hints
+# appended for retrieval. Longer questions carry their own topic and the hint
+# would only skew them toward the FIRE documents.
+MAX_WORDS_FOR_PAGE_HINTS = 6
+# Sentinel the answer model must emit, verbatim and alone, when the retrieved
+# evidence does not answer the question. Cosine similarity cannot tell an
+# in-scope topic that is absent from the corpus (GST rate, HDB grants) from
+# one that is present, so the model is the last line of the refusal path and
+# a fixed sentence keeps that refusal detectable by the API and the evals.
+INSUFFICIENT_EVIDENCE_SENTINEL = (
     "I do not have enough reliable context in the FireBuddy knowledge base "
-    "to answer that. Try asking about CPF, Singapore Savings Bonds, "
+    "to answer that."
+)
+LOW_CONFIDENCE_ANSWER = (
+    INSUFFICIENT_EVIDENCE_SENTINEL
+    + " Try asking about CPF, Singapore Savings Bonds, "
     "MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore "
     "investing basics."
 )
@@ -91,20 +110,15 @@ def build_answer_messages(
                 "You are Ember, FireBuddy's educational Singapore finance guide. "
                 "Answer only using the supplied evidence context. It may contain "
                 "trusted FireBuddy aggregates calculated by the backend, curated "
-                "educational sources, or both. If the context "
-                "does not contain enough evidence, say that clearly. Do "
+                "educational sources, or both. If the evidence context does "
+                "not contain the information needed to answer the question, "
+                "reply with exactly this sentence and nothing else: "
+                f'"{INSUFFICIENT_EVIDENCE_SENTINEL}" Do '
                 "not invent facts, URLs, rates, dates, or source names. "
                 "Preserve numeric values and formulas exactly as they "
-                "appear in the context. "
-                "For tables, associate each value only with its explicit "
-                "row and column. Do not invent a breakdown or reuse a "
-                "number from a different row or column. Omit any table "
-                "value whose label is ambiguous in the retrieved text. "
-                "When one percentage applies separately to Ordinary Wages "
-                "and Additional Wages, state it once as the applicable "
-                "rate. Never join repeated OW and AW rates with a plus "
-                "sign because that falsely implies they should be added. "
-                "Answer only the breakdowns the question asks for. "
+                "appear in the context, and read each table value from its "
+                "own row and column. Answer only the breakdowns the question "
+                "asks for. "
                 "You may explain the user's supplied FireBuddy aggregates, but do "
                 "not recommend specific financial products or present projections "
                 "as guarantees. Do not include "
@@ -168,6 +182,57 @@ def get_rag_min_similarity() -> float:
             },
         )
         return DEFAULT_RAG_MIN_SIMILARITY
+
+
+def get_rag_min_similarity_with_keyword() -> float:
+    """Read the lower cosine floor applied when keyword search also matched."""
+
+    raw_value = os.getenv("RAG_MIN_SIMILARITY_WITH_KEYWORD", "").strip()
+    if not raw_value:
+        return DEFAULT_RAG_MIN_SIMILARITY_WITH_KEYWORD
+    try:
+        return float(raw_value)
+    except ValueError:
+        return DEFAULT_RAG_MIN_SIMILARITY_WITH_KEYWORD
+
+
+def is_insufficient_evidence_answer(answer: str) -> bool:
+    """Detect the model's verbatim refusal sentinel (allowing trailing whitespace or quotes)."""
+
+    normalized = " ".join(answer.strip().strip('"').split()).lower()
+    return normalized.startswith(INSUFFICIENT_EVIDENCE_SENTINEL.lower())
+
+
+def match_signal_count(match: dict) -> int:
+    """Return how many retrieval signals (keyword, vector) ranked this chunk."""
+
+    try:
+        return int(match.get("signal_count") or 1)
+    except (TypeError, ValueError):
+        return 1
+
+
+def retrieval_is_confident(matches: list[dict]) -> bool:
+    """
+    Decide whether retrieved evidence is strong enough to answer from.
+
+    The hybrid RPC orders rows by fused rank, so the top row can be a keyword
+    winner with a modest cosine. Evidence is accepted when any match clears the
+    cosine threshold, or when a match found by both signals clears the lower
+    keyword-backed floor. Rows without `signal_count` fall back to cosine only.
+    """
+
+    if not matches:
+        return False
+    min_similarity = get_rag_min_similarity()
+    keyword_floor = get_rag_min_similarity_with_keyword()
+    for match in matches:
+        similarity = match_similarity(match)
+        if similarity >= min_similarity:
+            return True
+        if match_signal_count(match) >= 2 and similarity >= keyword_floor:
+            return True
+    return False
 
 
 def question_hash(question: str) -> str:
@@ -326,7 +391,7 @@ def build_contextual_retrieval_question(
 ) -> str:
     """Add bounded page and action hints so short contextual questions retrieve relevant guidance."""
 
-    if app_context is None:
+    if app_context is None or len(question.split()) > MAX_WORDS_FOR_PAGE_HINTS:
         return question
 
     page_hint = PAGE_RETRIEVAL_HINTS.get(app_context.current_page, "")
@@ -444,11 +509,19 @@ def stream_financial_advisor_question(
     app_context: AdvisorAppContext | None = None,
     *,
     retrieved_matches: list[dict] | None = None,
+    retrieval_query: str | None = None,
 ) -> Iterator[dict]:
-    """Stream ordered status, answer, source, completion, and error events."""
+    """
+    Stream ordered status, answer, source, completion, and error events.
+
+    `retrieval_query` is the planner's standalone rewrite of the question with
+    conversation references resolved. When supplied it drives retrieval while
+    the original question still drives the answer.
+    """
 
     started_at = time.perf_counter()
     cleaned_question = question.strip()
+    search_question = (retrieval_query or "").strip() or cleaned_question
     yield {
         "event": "status",
         "data": {"status": "searching", "message": "Searching curated sources"},
@@ -481,7 +554,7 @@ def stream_financial_advisor_question(
             retrieved_matches
             if retrieved_matches is not None
             else retrieve_chunks(
-                build_contextual_retrieval_question(cleaned_question, app_context)
+                build_contextual_retrieval_question(search_question, app_context)
             )
         )
         if not matches:
@@ -524,8 +597,7 @@ def stream_financial_advisor_question(
         "data": {"status": "preparing", "message": "Preparing a grounded answer"},
     }
 
-    strongest_similarity = max(match_similarity(match) for match in matches)
-    if strongest_similarity < get_rag_min_similarity():
+    if not retrieval_is_confident(matches):
         log_rag_event(
             question=cleaned_question,
             matches=matches,
@@ -560,7 +632,8 @@ def stream_financial_advisor_question(
         answer_parts.append(text)
         yield {"event": "delta", "data": {"text": text}}
 
-    if not "".join(answer_parts).strip():
+    full_answer = "".join(answer_parts)
+    if not full_answer.strip():
         yield {
             "event": "error",
             "data": {
@@ -572,14 +645,17 @@ def stream_financial_advisor_question(
         }
         return
 
+    # The sentinel has already been streamed as the visible answer; a refusal
+    # must not carry citations, so the sources event is emptied.
+    refused = is_insufficient_evidence_answer(full_answer)
     log_rag_event(
         question=cleaned_question,
         matches=matches,
-        source_count=len(source_details),
-        outcome="answered",
+        source_count=0 if refused else len(source_details),
+        outcome="model_insufficient_evidence" if refused else "answered",
         started_at=started_at,
     )
-    yield {"event": "sources", "data": {"sources": source_payload}}
+    yield {"event": "sources", "data": {"sources": [] if refused else source_payload}}
     yield {"event": "done", "data": {}}
 
 
@@ -589,16 +665,19 @@ def answer_financial_advisor_question(
     app_context: AdvisorAppContext | None = None,
     *,
     retrieved_matches: list[dict] | None = None,
+    retrieval_query: str | None = None,
 ):
     """
     Handle the financial advisor request for the FastAPI route.
 
     This orchestrates the API-facing RAG flow: validate the question, retrieve
     evidence, generate the answer, and package citations for the frontend.
+    `retrieval_query` optionally replaces the raw question for retrieval only.
     """
 
     started_at = time.perf_counter()
     cleaned_question = question.strip()
+    search_question = (retrieval_query or "").strip() or cleaned_question
 
     if not cleaned_question:
         log_rag_event(
@@ -632,7 +711,7 @@ def answer_financial_advisor_question(
         retrieved_matches
         if retrieved_matches is not None
         else retrieve_chunks(
-            build_contextual_retrieval_question(cleaned_question, app_context)
+            build_contextual_retrieval_question(search_question, app_context)
         )
     )
 
@@ -641,10 +720,9 @@ def answer_financial_advisor_question(
             "The RAG service received no retrieved matches."
         )
 
-    strongest_similarity = max(match_similarity(match) for match in matches)
     source_details = build_unique_sources(matches)
 
-    if strongest_similarity < get_rag_min_similarity():
+    if not retrieval_is_confident(matches):
         log_rag_event(
             question=cleaned_question,
             matches=matches,
@@ -685,6 +763,20 @@ def answer_financial_advisor_question(
         bounded_history,
         app_context,
     )
+
+    if is_insufficient_evidence_answer(answer):
+        log_rag_event(
+            question=cleaned_question,
+            matches=matches,
+            source_count=0,
+            outcome="model_insufficient_evidence",
+            started_at=started_at,
+        )
+        return AdvisorResponse(
+            answer=LOW_CONFIDENCE_ANSWER,
+            sources=[],
+            source_details=[],
+        )
 
     log_rag_event(
         question=cleaned_question,

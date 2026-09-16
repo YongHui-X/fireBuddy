@@ -20,6 +20,15 @@ Use these files when setting up FireBuddy in Supabase.
 - `migrations/20260814032352_persist_accounts_and_expense_accounts.sql`
   Creates persisted accounts, provisions one default Cash account per profile,
   backfills expense account ownership, and requires account IDs on expenses.
+- `migrations/20260915090000_rag_english_search_and_fusion_diagnostics.sql`
+  Rebuilds `rag_chunks.search_vector` with English stemming and makes
+  `hybrid_match_rag_chunks` return `fused_score` and `signal_count`.
+- `migrations/20260916100000_rag_widen_stitched_chunk_context.sql`
+  Returns the best chunk whole instead of cutting stitched content.
+- `migrations/20260916110000_rag_whole_sibling_chunk_context.sql`
+  Returns the stitched sibling chunk whole as well.
+  After these three, re-run `apps/backend/rag/Implementation/ingest.py`
+  against the same project so the store matches the 2026-09-16 corpus.
 - `seed.sql`
   Inserts the default system categories.
 

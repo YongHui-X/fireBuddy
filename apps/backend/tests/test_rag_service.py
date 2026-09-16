@@ -75,6 +75,88 @@ class RagServiceTests(unittest.TestCase):
         self.assertIn("Singapore FIRE assumptions", query)
         self.assertIn("Updated FIRE assumptions", query)
 
+    def test_page_hints_are_not_added_to_questions_that_carry_their_own_topic(self):
+        app_context = AdvisorAppContext.model_validate({
+            "currentPage": "Wealth",
+            "currentPath": "/wealth",
+            "recentActions": [],
+        })
+        question = "How does redeeming a Singapore Savings Bond work?"
+
+        query = rag_service.build_contextual_retrieval_question(question, app_context)
+
+        self.assertEqual(query, question)
+
+    def test_planner_retrieval_query_drives_retrieval_but_not_the_answer(self):
+        matches = [{
+            "source_title": "CPF Guide", "source_url": None, "source_path": "cpf.md",
+            "headline": "CPF", "content": "Relevant context", "similarity": 0.9,
+        }]
+        with patch.object(rag_service, "retrieve_chunks", return_value=matches) as retrieve:
+            with patch.object(rag_service, "generate_grounded_answer", return_value="Answer") as chat:
+                rag_service.answer_financial_advisor_question(
+                    "And for someone over 60?",
+                    retrieval_query="What are the CPF contribution rates for employees above 60?",
+                )
+
+        retrieve.assert_called_once_with(
+            "What are the CPF contribution rates for employees above 60?"
+        )
+        self.assertEqual(chat.call_args.args[0], "And for someone over 60?")
+
+    def test_confidence_gate_accepts_keyword_backed_match_at_lower_cosine(self):
+        with patch.dict(os.environ, {"RAG_MIN_SIMILARITY": "0.45", "RAG_MIN_SIMILARITY_WITH_KEYWORD": "0.35"}):
+            self.assertTrue(rag_service.retrieval_is_confident([
+                {"similarity": 0.38, "signal_count": 2},
+                {"similarity": 0.30, "signal_count": 1},
+            ]))
+            self.assertFalse(rag_service.retrieval_is_confident([
+                {"similarity": 0.38, "signal_count": 1},
+                {"similarity": 0.30, "signal_count": 2},
+            ]))
+            self.assertTrue(rag_service.retrieval_is_confident([
+                {"similarity": 0.31},
+                {"similarity": 0.82},
+            ]))
+            self.assertFalse(rag_service.retrieval_is_confident([]))
+
+    def test_model_insufficient_evidence_sentinel_becomes_a_refusal_without_sources(self):
+        matches = [{
+            "source_title": "CPF Guide", "source_url": None, "source_path": "cpf.md",
+            "headline": "CPF", "content": "Relevant context", "similarity": 0.9,
+        }]
+        sentinel = f'"{rag_service.INSUFFICIENT_EVIDENCE_SENTINEL}"\n'
+
+        with patch.object(rag_service, "generate_grounded_answer", return_value=sentinel):
+            response = rag_service.answer_financial_advisor_question(
+                "What is the GST rate?", retrieved_matches=matches,
+            )
+        self.assertEqual(response.answer, rag_service.LOW_CONFIDENCE_ANSWER)
+        self.assertEqual(response.sources, [])
+        self.assertEqual(response.source_details, [])
+
+        with patch.object(
+            rag_service, "stream_grounded_answer", return_value=iter([sentinel[:20], sentinel[20:]]),
+        ):
+            events = list(rag_service.stream_financial_advisor_question(
+                "What is the GST rate?", retrieved_matches=matches,
+            ))
+        sources_event = next(event for event in events if event["event"] == "sources")
+        self.assertEqual(sources_event["data"]["sources"], [])
+        self.assertEqual(events[-1]["event"], "done")
+
+    def test_answer_prompt_instructs_the_sentinel_refusal(self):
+        messages = rag_service.build_answer_messages("What is CPF?", "context", [])
+
+        self.assertIn(rag_service.INSUFFICIENT_EVIDENCE_SENTINEL, messages[0]["content"])
+
+    def test_answer_prompt_no_longer_carries_table_defence_rules(self):
+        messages = rag_service.build_answer_messages("What is CPF?", "context", [])
+
+        self.assertNotIn("plus sign", messages[0]["content"])
+        self.assertNotIn("Ordinary Wages", messages[0]["content"])
+        self.assertIn("own row and column", messages[0]["content"])
+
     def test_build_unique_sources_deduplicates_by_url_then_path(self):
         matches = [
             {

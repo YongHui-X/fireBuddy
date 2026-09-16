@@ -65,6 +65,9 @@ jobs:
           SUPABASE_JWT_SECRET: ci-placeholder-jwt-secret
           OPENAI_API_KEY: ci-placeholder-openai-key
 
+      - name: Check committed RAG evaluation reports against thresholds
+        run: python apps/backend/rag/evaluation/check_regression.py
+
       - name: Compile backend modules
         run: >-
           python -m py_compile
@@ -75,13 +78,17 @@ jobs:
           apps/backend/routers/expenses.py
           apps/backend/routers/rag.py
           apps/backend/services/rag_service.py
+          apps/backend/services/ember_figure_tools.py
           apps/backend/services/rate_limiter.py
           apps/backend/rag/retrieval.py
+          apps/backend/rag/query_terms.py
           apps/backend/rag/Implementation/ingest.py
           apps/backend/rag/Implementation/answer.py
+          apps/backend/rag/fetchAndConvert/pdf_to_md.py
           apps/backend/rag/evaluation/report_history.py
           apps/backend/rag/evaluation/eval_retrieval.py
           apps/backend/rag/evaluation/eval_answers.py
+          apps/backend/rag/evaluation/check_regression.py
         env:
           SUPABASE_URL: https://example.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-key

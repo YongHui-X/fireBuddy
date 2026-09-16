@@ -49,6 +49,49 @@ class EmberServiceTests(unittest.TestCase):
 
         generate.assert_not_called()
 
+    def test_clearly_out_of_scope_question_is_refused_before_the_planner_runs(self):
+        with patch.object(ember_service, "plan_ember_question") as planner:
+            response = ember_service.answer_ember_question(
+                "user-a", "Write Python code for a multiplayer game server."
+            )
+            events = list(ember_service.stream_ember_question(
+                "user-a", "Give me a chicken rice recipe."
+            ))
+
+        planner.assert_not_called()
+        self.assertEqual(response.mode, "unsupported")
+        self.assertIn("only help with", response.answer)
+        self.assertEqual(events[-1]["event"], "done")
+
+    def test_knowledge_plan_passes_retrieval_query_through(self):
+        planned = EmberPlan(
+            mode="knowledge", tool=None, start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=True, clarification_question=None,
+            retrieval_query="What are the CPF contribution rates for employees above 60 in 2026?",
+        )
+        with patch.object(ember_service, "plan_ember_question", return_value=planned), patch.object(
+            ember_service, "answer_financial_advisor_question",
+        ) as answer:
+            ember_service.answer_ember_question("user-a", "And above 60?")
+
+        self.assertEqual(answer.call_args.kwargs["retrieval_query"], planned.retrieval_query)
+
+    def test_figure_lookup_answer_carries_the_figure_citation(self):
+        planned = EmberPlan(
+            mode="data", tool="figure_lookup", start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=False, clarification_question=None,
+            figure_key="cpf_full_retirement_sum", figure_year=2026,
+        )
+        with patch.object(ember_service, "plan_ember_question", return_value=planned):
+            response = ember_service.answer_ember_question("user-a", "What is the FRS for 2026?")
+
+        self.assertEqual(response.mode, "data")
+        self.assertIn("S$220,400", response.answer)
+        self.assertEqual(response.source_details[0].path, "manual/cpf/cpf-retirement-sums.md")
+        self.assertEqual(response.data_evidence.tool, "figure_lookup")
+
     def test_stream_includes_aggregate_evidence_without_identity(self):
         planned = EmberPlan(
             mode="data", tool="expense_summary", start_date=date(2026, 8, 1), end_date=date(2026, 8, 31),

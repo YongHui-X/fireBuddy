@@ -21,11 +21,34 @@ from services.rag_service import (
     format_retrieved_context,
     format_source_label,
     generate_grounded_answer,
-    get_rag_min_similarity,
-    match_similarity,
+    is_clearly_out_of_scope,
+    retrieval_is_confident,
     select_recent_chat_history,
     stream_financial_advisor_question,
 )
+
+
+def _unsupported_plan() -> EmberPlan:
+    """Build the fixed refusal plan used when the keyword screen rejects a question."""
+
+    return EmberPlan(
+        mode="unsupported", tool=None, start_date=None, end_date=None,
+        comparison_start_date=None, comparison_end_date=None, category_name=None,
+        requires_explanation=False, clarification_question=None,
+    )
+
+
+def _plan(question: str, history: list[ChatMessage]) -> EmberPlan:
+    """
+    Screen obvious non-finance and live-price questions before the planner.
+
+    The deterministic screen is free and cannot be talked into a clarification
+    or a tool call, so it runs first. Everything else goes to the planner.
+    """
+
+    if is_clearly_out_of_scope(question):
+        return _unsupported_plan()
+    return plan_ember_question(question, history)
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +76,7 @@ def _retrieve_hybrid_context(question: str, app_context: AdvisorAppContext | Non
     except Exception:
         logger.exception("ember_hybrid_retrieval_failed")
         return "", []
-    if not matches or max(match_similarity(match) for match in matches) < get_rag_min_similarity():
+    if not retrieval_is_confident(matches):
         return "", []
     return format_retrieved_context(matches), build_unique_sources(matches)
 
@@ -69,9 +92,12 @@ def _execute_data_plan(
 
     result = run_ember_data_tool(user_id, plan)
     source_context = ""
-    source_details = []
+    source_details = list(result.sources)
     if plan.mode == "hybrid":
-        source_context, source_details = _retrieve_hybrid_context(question, app_context)
+        source_context, hybrid_sources = _retrieve_hybrid_context(
+            plan.retrieval_query or question, app_context
+        )
+        source_details.extend(hybrid_sources)
 
     answer = result.exact_answer
     if plan.requires_explanation:
@@ -106,7 +132,9 @@ def _execute_plan(
     """Execute one branch only. There is no iterative or autonomous tool loop."""
 
     if plan.mode == "knowledge":
-        return answer_financial_advisor_question(question, history, app_context)
+        return answer_financial_advisor_question(
+            question, history, app_context, retrieval_query=plan.retrieval_query
+        )
     if plan.mode == "clarification":
         return AdvisorResponse(
             answer=plan.clarification_question or "Which period would you like me to review?",
@@ -126,7 +154,7 @@ def answer_ember_question(
     """Plan once, then execute one bounded knowledge or data path."""
 
     bounded_history = history or []
-    plan = plan_ember_question(question, bounded_history)
+    plan = _plan(question, bounded_history)
     return _execute_plan(user_id, question.strip(), plan, bounded_history, app_context)
 
 
@@ -143,9 +171,11 @@ def stream_ember_question(
         "event": "status",
         "data": {"status": "searching", "message": "Understanding your question"},
     }
-    plan = plan_ember_question(question, bounded_history)
+    plan = _plan(question, bounded_history)
     if plan.mode == "knowledge":
-        yield from stream_financial_advisor_question(question, bounded_history, app_context)
+        yield from stream_financial_advisor_question(
+            question, bounded_history, app_context, retrieval_query=plan.retrieval_query
+        )
         return
 
     yield {

@@ -125,6 +125,73 @@ Annual spending / withdrawal rate.
             self.assertTrue(document["ingest"])
             self.assertEqual(document["text"], original_text)
 
+    def test_pdf_cache_superseded_by_manual_document_is_not_ingested(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            knowledge_base = Path(temp_dir)
+            source_path = knowledge_base / "markdown-cache" / "cpf" / "rates.md"
+            source_path.parent.mkdir(parents=True)
+            source_path.write_text("# Source: rates.pdf\n\nGarbled table.\n", encoding="utf-8")
+
+            with (
+                patch.object(ingest, "KNOWLEDGE_BASE_PATH", knowledge_base),
+                patch.object(
+                    ingest,
+                    "registry_by_cache_path",
+                    return_value={"cpf/rates.md": {"superseded_by": "manual/cpf/rates.md"}},
+                ),
+            ):
+                document = ingest.md_to_doc_obj(source_path)
+                documents = ingest.load_ingestable_documents([source_path])
+
+            self.assertFalse(document["ingest"])
+            self.assertEqual(document["superseded_by"], "manual/cpf/rates.md")
+            self.assertEqual(documents, [])
+
+    def test_default_chunk_limits_are_retrieval_sized(self):
+        self.assertEqual(ingest.MAX_SECTION_SIZE, 1500)
+        self.assertLessEqual(ingest.CHUNK_OVERLAP_MAX_CHARS, 300)
+
+    def test_chunk_context_cache_supplies_headline_and_summary_without_model_calls(self):
+        document = {
+            "source": "markdown-cache/mas/ssb.md", "type": "pdf_cache", "title": "SSB FAQ",
+            "agency": "mas", "topic": "ssb", "source_url": None,
+            "text": "# Source: ssb.pdf\n\nYou can redeem in any month.\n",
+        }
+        key = ingest.chunk_context_key(document, "You can redeem in any month.")
+        cache = {key: {"headline": "SSB redemption timing", "summary": "From the MAS SSB FAQ."}}
+
+        chunks = ingest.create_ingestable_chunks(document, context_cache=cache, openai_client=None)
+
+        self.assertEqual(chunks[0].metadata["headline"], "SSB redemption timing")
+        self.assertTrue(chunks[0].page_content.startswith("SSB redemption timing\n\nFrom the MAS SSB FAQ."))
+        self.assertTrue(chunks[0].page_content.endswith("You can redeem in any month."))
+
+    def test_prune_removes_cache_entries_for_chunks_that_no_longer_exist(self):
+        document = {
+            "source": "manual/fire/x.md", "type": "manual", "title": "X",
+            "agency": None, "topic": "fire", "source_url": None,
+            "text": "# Withdrawal rate\n\nUse 3.5 percent.\n",
+        }
+        live_key = ingest.chunk_context_key(document, "Use 3.5 percent.")
+        cache = {live_key: {"headline": "h", "summary": "s"}, "stale": {"headline": "old", "summary": ""}}
+
+        removed = ingest.prune_chunk_context_cache(cache, [document])
+
+        self.assertEqual(removed, 1)
+        self.assertEqual(set(cache), {live_key})
+
+    def test_missing_cache_entry_falls_back_to_heading_when_no_client(self):
+        document = {
+            "source": "manual/fire/x.md", "type": "manual", "title": "X",
+            "agency": None, "topic": "fire", "source_url": None,
+            "text": "# Withdrawal rate\n\nUse 3.5 percent.\n",
+        }
+
+        chunks = ingest.create_ingestable_chunks(document, context_cache={}, openai_client=None)
+
+        self.assertEqual(chunks[0].metadata["headline"], "Withdrawal rate")
+        self.assertEqual(chunks[0].page_content, "Withdrawal rate\n\nUse 3.5 percent.")
+
     def test_oversized_section_uses_previous_tail_as_overlap(self):
         section = {
             "heading": "CPF rules",

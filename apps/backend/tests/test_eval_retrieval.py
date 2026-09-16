@@ -116,6 +116,42 @@ class RetrievalEvalTests(unittest.TestCase):
         self.assertIn("# FireBuddy retrieval evaluation", markdown)
         self.assertIn("one.md", markdown)
 
+    def test_required_substrings_are_checked_against_chunk_text(self):
+        case = EvalCase(
+            "frs", "What is the FRS in 2026?", ("sums.md",), (), (),
+            required_substrings=("$220,400", "2026"),
+        )
+        hit = score_case(case, [{"source_path": "sums.md", "content": "| 2026 | $110,200 | $220,400 |"}])
+        miss = score_case(case, [{"source_path": "sums.md", "content": "2026 sums: see the table"}])
+
+        self.assertEqual(hit.substring_hits, (True, True))
+        self.assertEqual(miss.substring_hits, (False, True))
+        self.assertEqual(calculate_metrics([hit])["substring_hit_rate"], 1.0)
+        self.assertEqual(calculate_metrics([hit, miss])["substring_hit_rate"], 0.5)
+        unlabelled = score_case(EvalCase("x", "Q", ("a.md",), (), ()), [{"source_path": "a.md"}])
+        self.assertEqual(calculate_metrics([unlabelled])["substring_hit_rate"], 1.0)
+
+    def test_run_evaluation_uses_query_builder_for_multi_turn_cases(self):
+        case = EvalCase(
+            "follow_up", "And for someone over 60?", ("rates.md",), (), (),
+            history=(("user", "What are the CPF contribution rates?"),),
+        )
+        seen = []
+
+        def fake_retrieve(question: str, match_count: int):
+            seen.append(question)
+            return [{"source_path": "rates.md"}]
+
+        results = run_evaluation(
+            [case],
+            fake_retrieve,
+            query_builder=lambda item: "CPF contribution rates above 60" if item.history else item.question,
+        )
+
+        self.assertEqual(seen, ["CPF contribution rates above 60"])
+        self.assertEqual(results[0].retrieval_query, "CPF contribution rates above 60")
+        self.assertIn("retrieval_query", build_report(results, 5)["cases"][0])
+
     def test_run_evaluation_uses_injected_retriever(self):
         cases = [
             EvalCase("one", "First?", ("one.md",), (), ()),

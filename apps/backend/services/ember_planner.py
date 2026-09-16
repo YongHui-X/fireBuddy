@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from lib.clock import singapore_today
 from schemas.rag import ChatMessage
+from services.ember_figure_tools import FIGURE_KEYS, FigureKey
 
 
 PLANNER_MODEL = os.getenv("EMBER_PLANNER_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
@@ -19,7 +20,9 @@ EmberToolName = Literal[
     "financial_summary",
     "fire_projection",
     "financial_health_review",
+    "figure_lookup",
 ]
+MAX_RETRIEVAL_QUERY_LENGTH = 200
 
 
 class EmberPlan(BaseModel):
@@ -36,6 +39,11 @@ class EmberPlan(BaseModel):
     category_name: str | None = Field(max_length=80)
     requires_explanation: bool
     clarification_question: str | None = Field(max_length=240)
+    # Standalone rewrite of the question with conversation references resolved
+    # and Singapore finance acronyms expanded. Used for retrieval only.
+    retrieval_query: str | None = Field(default=None, max_length=MAX_RETRIEVAL_QUERY_LENGTH)
+    figure_key: FigureKey | None = None
+    figure_year: int | None = Field(default=None, ge=2000, le=2100)
 
     @model_validator(mode="after")
     def validate_plan(self):
@@ -48,6 +56,10 @@ class EmberPlan(BaseModel):
             raise ValueError("Only data plans may select a tool")
         if self.mode == "clarification" and not self.clarification_question:
             raise ValueError("Clarification plans require a question")
+        if self.tool == "figure_lookup" and self.figure_key is None:
+            raise ValueError("Figure lookups require a figure key")
+        if self.tool != "figure_lookup" and self.figure_key is not None:
+            raise ValueError("Only figure lookups may select a figure key")
         for start, end in (
             (self.start_date, self.end_date),
             (self.comparison_start_date, self.comparison_end_date),
@@ -71,6 +83,7 @@ class _PlannerOutputBase(BaseModel):
     category_name: str | None = Field(max_length=80)
     requires_explanation: bool
     clarification_question: str | None = Field(max_length=240)
+    retrieval_query: str | None = Field(max_length=MAX_RETRIEVAL_QUERY_LENGTH)
 
 
 class _KnowledgePlannerOutput(_PlannerOutputBase):
@@ -78,13 +91,29 @@ class _KnowledgePlannerOutput(_PlannerOutputBase):
 
     mode: Literal["knowledge"]
     tool: None
+    retrieval_query: str = Field(max_length=MAX_RETRIEVAL_QUERY_LENGTH)
 
 
 class _DataPlannerOutput(_PlannerOutputBase):
     """Represent a personal-data plan that must select an allowlisted tool."""
 
     mode: Literal["data", "hybrid"]
-    tool: EmberToolName
+    tool: Literal[
+        "expense_summary",
+        "spending_comparison",
+        "financial_summary",
+        "fire_projection",
+        "financial_health_review",
+    ]
+
+
+class _FigurePlannerOutput(_PlannerOutputBase):
+    """Represent an exact-figure lookup that names a curated figure key."""
+
+    mode: Literal["data"]
+    tool: Literal["figure_lookup"]
+    figure_key: FigureKey
+    figure_year: int | None
 
 
 class _ClarificationPlannerOutput(_PlannerOutputBase):
@@ -110,6 +139,7 @@ class EmberPlannerResponse(BaseModel):
     plan: (
         _KnowledgePlannerOutput
         | _DataPlannerOutput
+        | _FigurePlannerOutput
         | _ClarificationPlannerOutput
         | _UnsupportedPlannerOutput
     )
@@ -150,10 +180,25 @@ def plan_ember_question(
                     "financial_summary reports net worth and the current monthly pulse. "
                     "fire_projection reports the saved deterministic FIRE calculation. "
                     "financial_health_review reports the deterministic recommended action, cash flow, "
-                    "runway, warnings, and anomalies. Resolve relative dates from the supplied date. "
+                    "runway, warnings, and anomalies. "
+                    "figure_lookup (mode data) returns one exact official figure when the whole question "
+                    "asks for a single current or year-specific number and one of these keys fits exactly: "
+                    + ", ".join(FIGURE_KEYS)
+                    + ". Set figure_year only when the question names a year. Use knowledge instead "
+                    "when the question asks for more than one figure, how something works, why, "
+                    "or for comparisons. "
+                    "For knowledge plans, write retrieval_query: one standalone question that resolves "
+                    "pronouns and follow-ups from the recent conversation and writes Singapore finance "
+                    "acronyms with their full form (OA Ordinary Account, FRS Full Retirement Sum, "
+                    "SSB Singapore Savings Bonds, SRS Supplementary Retirement Scheme). Keep the "
+                    "user's wording otherwise; do not add topics the user did not ask about. "
+                    "Resolve relative dates from the supplied date. "
                     "For expense tools, provide start_date and end_date. For comparison, also provide "
-                    "comparison dates. Use clarification only when a required period truly cannot be "
-                    "inferred. Use unsupported for non-finance or live market-price requests. Set "
+                    "comparison dates. Use clarification only for a data question whose required "
+                    "period truly cannot be inferred; never ask clarifying questions about "
+                    "non-finance topics. Use unsupported for any request that is not Singapore "
+                    "personal finance (coding, recipes, medical, legal, sports, weather) and for "
+                    "live market prices. Set "
                     "requires_explanation false for a simple total or lookup, otherwise true."
                 ),
             },

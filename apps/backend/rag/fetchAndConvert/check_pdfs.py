@@ -42,45 +42,66 @@ HEADERS = {
     ),
 }
 
+# Registry fields:
+#   label, dest, url   required; dest is relative to source-pdfs/ and the
+#                      markdown cache mirrors it with a .md suffix.
+#   superseded_by      optional manual/ path. The PDF is still downloaded and
+#                      hash-checked so a change still triggers a Telegram
+#                      alert, but its markdown cache is NOT ingested because a
+#                      hand-authored table document replaces it.
+#   skip_pages         optional 1-based page numbers dropped during conversion,
+#                      used for cover and table-of-contents pages that would
+#                      otherwise become keyword-heavy chunks with no answers.
+#   extract_tables     optional; append pdfplumber tables as Markdown tables.
+#                      Enable only for PDFs with real grid tables; infographic
+#                      layouts produce garbage tables.
 PDFS = [
     {
         "label": "CPF Contribution Rates 2026",
         "dest": "cpf/cpf-contribution-rates-2026.pdf",
         "url": "https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFcontributionratesfrom1Jan2026.pdf",
+        "superseded_by": "manual/cpf/cpf-contribution-rates-2026.md",
     },
     {
         "label": "CPF Allocation Rates 2026",
         "dest": "cpf/cpf-allocation-rates-2026.pdf",
         "url": "https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFAllocationRatesfromJanuary2026.pdf",
+        "superseded_by": "manual/cpf/cpf-allocation-rates-2026.md",
     },
     {
         "label": "CPF Retirement Sums",
         "dest": "cpf/cpf-retirement-sums.pdf",
         "url": "https://www.cpf.gov.sg/content/dam/web/member/general-documents/Retirement%20Sums.pdf",
+        "superseded_by": "manual/cpf/cpf-retirement-sums.md",
     },
     {
         "label": "CPF LIFE Payout Examples",
         "dest": "cpf/cpf-life-payout-examples.pdf",
         "url": "https://www.cpf.gov.sg/content/dam/web/member/retirement-income/documents/CPF_LIFE_Payout_Examples.pdf",
+        "superseded_by": "manual/cpf/cpf-life-payout-examples.md",
     },
     {
         "label": "CPFIS Investment Products",
         "dest": "cpf/cpfis-investment-products.pdf",
+        "extract_tables": True,
         "url": "https://www.cpf.gov.sg/content/dam/web/member/growing-your-savings/documents/CPFISInvestmentProducts.pdf",
     },
     {
         "label": "CPFIS Instruments and Investment Limits",
         "dest": "cpf/cpfis-instruments-and-limits.pdf",
+        "extract_tables": True,
         "url": "https://www.cpf.gov.sg/content/dam/web/member/faq/documents/INV_InstrumentsunderCPFIS.pdf",
     },
     {
         "label": "MoneySense Basic Financial Planning Guide",
         "dest": "moneysense/basic-financial-planning-guide.pdf",
+        "extract_tables": True,
         "url": "https://www.moneysense.gov.sg/files/streamlined%20basic%20financial%20planning%20guide.pdf",
     },
     {
         "label": "MoneySense Basic Financial Planning Guide FAQs",
         "dest": "moneysense/basic-financial-planning-guide-faqs.pdf",
+        "extract_tables": True,
         "url": "https://www.moneysense.gov.sg/files/faqs%20for%20consumers%20on%20basic%20financial%20planning%20%28for%207%20oct%202023%29.pdf",
     },
     {
@@ -96,14 +117,32 @@ PDFS = [
     {
         "label": "MAS Singapore Savings Bonds Factsheet",
         "dest": "mas/singapore-savings-bonds-factsheet.pdf",
+        "extract_tables": True,
         "url": "https://www.mas.gov.sg/-/media/mas/sgs/sgs-announcements-pdf/ssb-pdf/faq/ssb-factsheet-english-updated-1-feb-2019-002.pdf",
     },
     {
         "label": "MAS Singapore Savings Bonds FAQs",
         "dest": "mas/singapore-savings-bonds-faqs.pdf",
         "url": "https://www.mas.gov.sg/-/media/mas/sgs/sgs-announcements-pdf/ssb-pdf/faq/2022-06-13-ssb-faqs.pdf",
+        # Pages 2 to 4 are the table of contents: question titles without answers.
+        "skip_pages": [2, 3, 4],
     },
 ]
+
+
+def registry_by_cache_path() -> dict[str, dict[str, Any]]:
+    """Index the registry by markdown cache path (forward slashes, .md suffix)."""
+
+    return {
+        str(Path(source["dest"]).with_suffix(".md")).replace("\\", "/"): source
+        for source in PDFS
+    }
+
+
+def registry_by_pdf_name() -> dict[str, dict[str, Any]]:
+    """Index the registry by PDF filename for the converter."""
+
+    return {Path(source["dest"]).name: source for source in PDFS}
 
 
 def require_requests() -> None:

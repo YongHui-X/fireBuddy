@@ -1,8 +1,11 @@
 """
-Extract annual finance figures into annual-figures.json.
+Extract annual finance figures into annual-figures.extracted.json.
 
-This is a pre-RAG utility. It updates the structured figures file only; it does
-not chunk documents, create embeddings, or write to Supabase.
+This is a pre-RAG utility that produces an LLM extraction for comparison. The
+curated `annual-figures.json` used by Ember's figure_lookup tool is maintained
+by hand; compare the two files after a source PDF changes and update the
+curated file deliberately. It does not chunk documents, create embeddings, or
+write to Supabase.
 
 Run from the repo root:
     python apps/backend/rag/scripts/fetch_figures.py
@@ -61,7 +64,7 @@ log = logging.getLogger(__name__)
 
 SCRIPT_DIR = Path(__file__).parent
 RAG_DIR = SCRIPT_DIR.parent
-FIGURES_PATH = RAG_DIR / "annual-figures.json"
+FIGURES_PATH = RAG_DIR / "annual-figures.extracted.json"
 DEFAULT_KNOWLEDGE_BASE_DIR = RAG_DIR / "knowledge-base"
 KNOWLEDGE_BASE_DIR = Path(
     os.getenv("RAG_KNOWLEDGE_BASE_DIR", DEFAULT_KNOWLEDGE_BASE_DIR)

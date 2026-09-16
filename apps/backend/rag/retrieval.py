@@ -13,13 +13,17 @@ from openai import OpenAI
 from supabase import create_client
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-  
+from rag.query_terms import expand_query_acronyms
+
+
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env", override=False)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 HYBRID_RETRIEVAL_RPC = "hybrid_match_rag_chunks"
-INTERNAL_CANDIDATE_COUNT = 10
+# Chunks are now about 1,500 characters, so more candidates per signal are
+# needed to still surface five distinct source documents after deduplication.
+INTERNAL_CANDIDATE_COUNT = 20
 FULL_TEXT_RRF_WEIGHT = 0.6
 SEMANTIC_RRF_WEIGHT = 1.0
 RRF_SMOOTHING = 50
@@ -121,20 +125,24 @@ def retrieve_chunks(question: str, match_count: int = 5) -> list[dict]:
     """
     Retrieve relevant chunks with vector and keyword reciprocal rank fusion.
 
-    The private RPC ranks ten vector and keyword candidates, deduplicates source
-    documents, and returns the best requested chunks with citation metadata.
+    Singapore finance acronyms in the question are expanded first so both the
+    embedding and the keyword query see the full terms used in the corpus. The
+    private RPC ranks vector and keyword candidates, deduplicates source
+    documents, and returns the best requested chunks with citation metadata
+    plus `fused_score` and `signal_count` for confidence gating.
     """
 
     supabase_client = get_supabase_client()
     ensure_rag_store_ready(supabase_client)
 
+    retrieval_query = expand_query_acronyms(question)
     openai_client = OpenAI()
-    embedding = embed_question(openai_client, question)
+    embedding = embed_question(openai_client, retrieval_query)
 
     response = supabase_client.rpc(
         HYBRID_RETRIEVAL_RPC,
         {
-            "query_text": question,
+            "query_text": retrieval_query,
             "query_embedding": embedding,
             "match_count": match_count,
             "candidate_count": INTERNAL_CANDIDATE_COUNT,
