@@ -4,6 +4,7 @@ source_url: https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations
 agency: CPF Board
 topic: cpf-contribution-rates-2026
 ingest: true
+last_reviewed: 2026-09-15
 ---
 
 # CPF contribution rates from 1 January 2026

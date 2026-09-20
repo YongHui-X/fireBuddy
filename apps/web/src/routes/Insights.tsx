@@ -29,6 +29,8 @@ import { exportTransactions as exportApiTransactions } from '../api';
 import { buildTransactionCsv, downloadCsvBlob, getTransactionExportFilename } from '../app/transactionExport';
 import { PageToolbar } from '../components/PageToolbar';
 import { SpendingPieChart, groupSpendingPieData, type SpendingPieDatum } from '../components/SpendingPieChart';
+import { mq } from '../app/breakpoints';
+import { useMediaQuery } from '../app/useMediaQuery';
 
 export type InsightRange = 'Day' | 'Week' | 'Month' | 'Year';
 
@@ -134,6 +136,10 @@ function Insights() {
   const location = useLocation();
   const [range, setRange] = useState<InsightRange>('Month');
   const [isExporting, setIsExporting] = useState(false);
+  // A 320px chart is most of a phone screen before any of the figures below it are reached.
+  const isCompactChart = !useMediaQuery(mq.md);
+  const isNarrowChart = !useMediaQuery(mq.sm);
+  const isTouch = useMediaQuery(mq.coarse);
   const requestedMonth = new URLSearchParams(location.search).get('month');
   const selectedMonth = requestedMonth && /^\d{4}-\d{2}$/.test(requestedMonth) ? requestedMonth : null;
   const latestMonth = getDeviceMonthKey();
@@ -207,6 +213,9 @@ function Insights() {
         actions={<button className="secondary-button" type="button" onClick={() => void downloadCsv()} disabled={isExporting}>
           <Download size={15} /> {isExporting ? 'Exporting...' : 'Export CSV'}
         </button>}
+        overflowActions={[
+          { label: 'Export CSV', icon: Download, disabled: isExporting, onSelect: () => void downloadCsv() },
+        ]}
       />
 
       <section className="analytics-content">
@@ -247,7 +256,12 @@ function Insights() {
           </div>
           {groupedCategoryData.length > 0 ? <>
             <div className="insights-spending-chart" role="img" aria-label={`Spending by category for the selected ${range.toLowerCase()} range`}>
-              <SpendingPieChart data={groupedCategoryData} height={320} />
+              <SpendingPieChart
+                data={groupedCategoryData}
+                height={isNarrowChart ? 200 : isCompactChart ? 240 : 320}
+                labels={isNarrowChart ? 'none' : 'callout'}
+                interaction={isTouch ? 'tap' : 'hover'}
+              />
             </div>
             <div className="spending-detail-list" role="list" aria-label="Spending breakdown by category">
               {categoryData.map((category) => {
@@ -270,7 +284,7 @@ function Insights() {
             </div>
           </div>
           {expenseSeries.length > 0 ? (
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={isCompactChart ? 170 : 230}>
               <AreaChart data={expenseSeries}>
                 <XAxis dataKey="label" axisLine={false} tickLine={false} />
                 <YAxis hide />

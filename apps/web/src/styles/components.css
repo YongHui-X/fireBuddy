@@ -28,8 +28,10 @@
   box-shadow: 0 1px 0 rgba(20, 35, 28, 0.08);
 }
 
-.primary-button:hover:not(:disabled) {
-  background: var(--primary-hover);
+@media (hover: hover) {
+  .primary-button:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
 }
 
 .secondary-button,
@@ -39,10 +41,12 @@
   color: var(--ink);
 }
 
-.secondary-button:hover:not(:disabled),
-.pill-button:hover:not(:disabled) {
-  border-color: var(--ink-3);
-  background: var(--surface-2);
+@media (hover: hover) {
+  .secondary-button:hover:not(:disabled),
+  .pill-button:hover:not(:disabled) {
+    border-color: var(--ink-3);
+    background: var(--surface-2);
+  }
 }
 
 .danger-button {
@@ -51,9 +55,11 @@
   color: var(--danger);
 }
 
-.danger-button:hover:not(:disabled) {
-  background: var(--expense-soft);
-  border-color: var(--danger);
+@media (hover: hover) {
+  .danger-button:hover:not(:disabled) {
+    background: var(--expense-soft);
+    border-color: var(--danger);
+  }
 }
 
 .text-button {
@@ -70,9 +76,11 @@
   font-weight: 600;
 }
 
-.text-button:hover:not(:disabled) {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .text-button:hover:not(:disabled) {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .full-width {
@@ -93,10 +101,12 @@
   color: var(--ink);
 }
 
-.icon-button.quiet:hover,
-.plain-icon-button:hover:not(:disabled) {
-  border-color: var(--line);
-  background: var(--surface-2);
+@media (hover: hover) {
+  .icon-button.quiet:hover,
+  .plain-icon-button:hover:not(:disabled) {
+    border-color: var(--line);
+    background: var(--surface-2);
+  }
 }
 
 .plain-icon-button.muted {
@@ -107,8 +117,10 @@
   color: var(--danger);
 }
 
-.plain-icon-button.danger-icon:hover:not(:disabled) {
-  background: var(--expense-soft);
+@media (hover: hover) {
+  .plain-icon-button.danger-icon:hover:not(:disabled) {
+    background: var(--expense-soft);
+  }
 }
 
 .compact-add-button,
@@ -126,10 +138,12 @@
   font-weight: 600;
 }
 
-.compact-add-button:hover:not(:disabled),
-.category-suggestion-button:hover:not(:disabled) {
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+@media (hover: hover) {
+  .compact-add-button:hover:not(:disabled),
+  .category-suggestion-button:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  }
 }
 
 /* Fields ----------------------------------------------------------------- */
@@ -227,6 +241,11 @@ input[type='month'] {
   gap: 14px;
 }
 
+/* A hint under one field must not stretch its neighbour's input to fill the taller row. */
+.form-row > label {
+  align-content: start;
+}
+
 .check-stack {
   display: grid;
   gap: 10px;
@@ -298,8 +317,10 @@ input[type='month'] {
   color: var(--ink-2);
 }
 
-.search-field button:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .search-field button:hover {
+    background: var(--surface-2);
+  }
 }
 
 /* Cards ------------------------------------------------------------------ */
@@ -374,9 +395,11 @@ input[type='month'] {
   font-weight: 600;
 }
 
-.transaction-type-toggle button:hover:not(.active),
-.range-tabs button:hover:not(.range-tab-active) {
-  color: var(--ink);
+@media (hover: hover) {
+  .transaction-type-toggle button:hover:not(.active),
+  .range-tabs button:hover:not(.range-tab-active) {
+    color: var(--ink);
+  }
 }
 
 .transaction-type-toggle button.active,
@@ -442,9 +465,11 @@ input[type='month'] {
   font-weight: 600;
 }
 
-.type-chip:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: var(--ink-3);
+@media (hover: hover) {
+  .type-chip:hover:not(:disabled) {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
 }
 
 .type-chip-active {
@@ -609,8 +634,10 @@ input[type='month'] {
   font-weight: 600;
 }
 
-.delete-confirm button:hover:not(:disabled) {
-  background: var(--danger-fill-hover);
+@media (hover: hover) {
+  .delete-confirm button:hover:not(:disabled) {
+    background: var(--danger-fill-hover);
+  }
 }
 
 .nested-sheet-layer {
@@ -658,9 +685,11 @@ input[type='month'] {
   color: var(--ink-2);
 }
 
-.icon-option:hover:not(:disabled) {
-  border-color: var(--line-strong);
-  color: var(--ink);
+@media (hover: hover) {
+  .icon-option:hover:not(:disabled) {
+    border-color: var(--line-strong);
+    color: var(--ink);
+  }
 }
 
 .icon-option-active {
@@ -852,9 +881,22 @@ input[type='month'] {
   color: var(--rail-ink-muted);
 }
 
-.crud-toast button:hover {
-  background: var(--rail-hover-bg);
-  color: #fff;
+@media (hover: hover) {
+  .crud-toast button:hover {
+    background: var(--rail-hover-bg);
+    color: #fff;
+  }
+}
+
+/* On phones the tab bar owns the bottom edge, so the toast clears it and spans the gutter,
+   which is also what a Material snackbar does. */
+@media (max-width: 767px) {
+  .crud-toast {
+    right: 12px;
+    bottom: calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom));
+    left: 12px;
+    max-width: none;
+  }
 }
 
 .sync-banner {

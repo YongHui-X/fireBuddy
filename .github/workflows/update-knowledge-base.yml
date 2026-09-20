@@ -48,6 +48,12 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      # annual-figures.json is hand-maintained, so nothing else notices when an
+      # agency changes a figure. This compares it with the fresh extraction and
+      # fails the run so the change is reviewed by hand.
+      - name: Check curated figures against the extracted figures
+        run: python apps/backend/rag/fetchAndConvert/check_figure_drift.py
+
       - name: Run retrieval evaluation
         run: >-
           python apps/backend/rag/evaluation/eval_retrieval.py

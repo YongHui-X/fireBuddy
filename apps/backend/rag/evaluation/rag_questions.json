@@ -89,6 +89,10 @@
       "cpf",
       "cpfis",
       "investing"
+    ],
+    "required_substrings": [
+      "35% of investible savings",
+      "Unit Trusts"
     ]
   },
   {
@@ -190,14 +194,15 @@
       "redemption"
     ],
     "required_substrings": [
-      "redeem"
+      "redeem",
+      "no penalty"
     ]
   },
   {
     "id": "mas_ssb_factsheet_interest",
     "question": "What should I know about Singapore Savings Bond interest before buying?",
     "expected_source_paths": [
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+      "manual/mas/singapore-savings-bonds.md",
       "markdown-cache/mas/singapore-savings-bonds-faqs.md"
     ],
     "expected_topics": [
@@ -208,13 +213,16 @@
       "mas",
       "ssb",
       "interest"
+    ],
+    "required_substrings": [
+      "step-up"
     ]
   },
   {
     "id": "mas_ssb_safe_cash_allocation",
     "question": "Are Singapore Savings Bonds useful for lower-risk cash allocation?",
     "expected_source_paths": [
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+      "manual/mas/singapore-savings-bonds.md",
       "manual/investing/investing-in-singapore.md"
     ],
     "expected_topics": [
@@ -240,13 +248,17 @@
       "mas",
       "ssb",
       "application"
+    ],
+    "required_substrings": [
+      "CDP",
+      "$500"
     ]
   },
   {
     "id": "mas_ssb_vs_general_investing",
     "question": "How are Singapore Savings Bonds different from equity investing?",
     "expected_source_paths": [
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md",
+      "manual/mas/singapore-savings-bonds.md",
       "manual/investing/investing-in-singapore.md"
     ],
     "expected_topics": [
@@ -274,6 +286,11 @@
       "moneysense",
       "planning",
       "basics"
+    ],
+    "required_substrings": [
+      "3 to 6 months",
+      "15%",
+      "10%"
     ]
   },
   {
@@ -289,6 +306,9 @@
       "moneysense",
       "planning",
       "faq"
+    ],
+    "required_substrings": [
+      "rules of thumb"
     ]
   },
   {
@@ -340,13 +360,16 @@
       "moneysense",
       "insurance",
       "planning"
+    ],
+    "required_substrings": [
+      "9x annual income"
     ]
   },
   {
     "id": "iras_tax_relief_individuals",
     "question": "What individual income tax relief information is available from IRAS?",
     "expected_source_paths": [
-      "markdown-cache/iras/tax-relief-individuals.md"
+      "manual/iras/tax-reliefs.md"
     ],
     "expected_topics": [
       "tax-relief-individuals"
@@ -364,7 +387,7 @@
     "id": "iras_tax_relief_retirement_planning",
     "question": "How do tax reliefs relate to retirement planning in Singapore?",
     "expected_source_paths": [
-      "markdown-cache/iras/tax-relief-individuals.md",
+      "manual/iras/tax-reliefs.md",
       "manual/fire/fire-planning-singapore.md"
     ],
     "expected_topics": [
@@ -375,13 +398,16 @@
       "iras",
       "tax",
       "retirement"
+    ],
+    "required_substrings": [
+      "$80,000"
     ]
   },
   {
     "id": "iras_relief_personal_finance",
     "question": "Which source should I consult for Singapore individual tax relief rules?",
     "expected_source_paths": [
-      "markdown-cache/iras/tax-relief-individuals.md"
+      "manual/iras/tax-reliefs.md"
     ],
     "expected_topics": [
       "tax-relief-individuals"
@@ -445,8 +471,9 @@
     "id": "fire_with_safe_assets",
     "question": "How might lower-risk assets fit into a FIRE portfolio in Singapore?",
     "expected_source_paths": [
+      "manual/fire/FIRE.md",
       "manual/fire/fire-planning-singapore.md",
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      "manual/mas/singapore-savings-bonds.md"
     ],
     "expected_topics": [
       "fire",
@@ -632,7 +659,7 @@
     "question": "How do Singapore Savings Bonds work, and what should I understand before applying?",
     "expected_source_paths": [
       "markdown-cache/mas/singapore-savings-bonds-faqs.md",
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      "manual/mas/singapore-savings-bonds.md"
     ],
     "expected_topics": [
       "singapore-savings-bonds-faqs",
@@ -764,7 +791,7 @@
     ],
     "expected_source_paths": [
       "markdown-cache/mas/singapore-savings-bonds-faqs.md",
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      "manual/mas/singapore-savings-bonds.md"
     ],
     "expected_topics": [
       "singapore-savings-bonds-faqs",
@@ -807,6 +834,257 @@
     "required_substrings": [
       "2027",
       "$228,200"
+    ]
+  },
+  {
+    "id": "mas_ssb_faq_minimum_and_limit",
+    "question": "What is the minimum amount I can invest in Singapore Savings Bonds and the most I can hold?",
+    "expected_source_paths": [
+      "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+    ],
+    "expected_topics": [
+      "singapore-savings-bonds-faqs"
+    ],
+    "tags": [
+      "mas",
+      "ssb",
+      "limits",
+      "faq-structure"
+    ],
+    "required_substrings": [
+      "$500",
+      "$200,000"
+    ]
+  },
+  {
+    "id": "mas_ssb_faq_age_requirement",
+    "question": "How old must I be to buy Singapore Savings Bonds?",
+    "expected_source_paths": [
+      "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+    ],
+    "expected_topics": [
+      "singapore-savings-bonds-faqs"
+    ],
+    "tags": [
+      "mas",
+      "ssb",
+      "eligibility",
+      "faq-structure"
+    ],
+    "required_substrings": [
+      "18 years old"
+    ]
+  },
+  {
+    "id": "mas_ssb_faq_dcs_application",
+    "question": "How do I apply for the CDP Direct Crediting Service for Savings Bonds?",
+    "expected_source_paths": [
+      "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+    ],
+    "expected_topics": [
+      "singapore-savings-bonds-faqs"
+    ],
+    "tags": [
+      "mas",
+      "ssb",
+      "dcs",
+      "faq-structure"
+    ],
+    "required_substrings": [
+      "Direct Crediting Service",
+      "CDP Internet"
+    ]
+  },
+  {
+    "id": "moneysense_faq_cpf_as_emergency_fund",
+    "question": "Can I use my CPF savings as my emergency fund?",
+    "expected_source_paths": [
+      "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+    ],
+    "expected_topics": [
+      "basic-financial-planning-guide-faqs"
+    ],
+    "tags": [
+      "moneysense",
+      "cpf",
+      "emergency-fund",
+      "faq-structure"
+    ],
+    "required_substrings": [
+      "conditions tied to the use of your CPF"
+    ]
+  },
+  {
+    "id": "moneysense_faq_insurance_coverage_multiples",
+    "question": "How much death and critical illness cover does the MoneySense guide suggest as a multiple of income?",
+    "expected_source_paths": [
+      "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+      "markdown-cache/moneysense/basic-financial-planning-guide.md"
+    ],
+    "expected_topics": [
+      "basic-financial-planning-guide-faqs",
+      "basic-financial-planning-guide"
+    ],
+    "tags": [
+      "moneysense",
+      "insurance",
+      "faq-structure"
+    ],
+    "required_substrings": [
+      "9x annual income",
+      "4x annual income"
+    ]
+  },
+  {
+    "id": "cpf_frs_unqualified_current_year",
+    "question": "What is the CPF Full Retirement Sum?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-retirement-sums.md"
+    ],
+    "expected_topics": [
+      "cpf-retirement-sums"
+    ],
+    "tags": [
+      "cpf",
+      "retirement-sums",
+      "undated",
+      "recency"
+    ],
+    "required_substrings": [
+      "$220,400",
+      "2026"
+    ]
+  },
+  {
+    "id": "cpf_frs_past_year_2024",
+    "question": "What was the Full Retirement Sum in 2024?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-retirement-sums.md"
+    ],
+    "expected_topics": [
+      "cpf-retirement-sums"
+    ],
+    "tags": [
+      "cpf",
+      "retirement-sums",
+      "past-year",
+      "recency"
+    ],
+    "required_substrings": [
+      "$205,800",
+      "2024"
+    ]
+  },
+  {
+    "id": "iras_personal_relief_cap_currency",
+    "question": "Is there a cap on the total personal income tax relief I can claim?",
+    "expected_source_paths": [
+      "manual/iras/tax-reliefs.md"
+    ],
+    "expected_topics": [
+      "tax-relief-individuals"
+    ],
+    "tags": [
+      "iras",
+      "relief",
+      "recency"
+    ],
+    "required_substrings": [
+      "$80,000"
+    ]
+  },
+  {
+    "id": "cpf_basic_healthcare_sum_current",
+    "question": "What is the Basic Healthcare Sum?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-healthcare-sums.md"
+    ],
+    "expected_topics": [
+      "cpf-healthcare-sums"
+    ],
+    "tags": [
+      "cpf",
+      "medisave",
+      "bhs",
+      "recency"
+    ],
+    "required_substrings": [
+      "$79,000",
+      "2026"
+    ]
+  },
+  {
+    "id": "cpf_interest_rates_by_account",
+    "question": "What interest do CPF Ordinary and Special Accounts earn?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-interest-rates.md"
+    ],
+    "expected_topics": [
+      "cpf-interest-rates"
+    ],
+    "tags": [
+      "cpf",
+      "interest"
+    ],
+    "required_substrings": [
+      "2.5%",
+      "4%"
+    ]
+  },
+  {
+    "id": "cpf_extra_interest_tiers",
+    "question": "How much extra interest do CPF members aged 55 and above earn on their combined balances?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-interest-rates.md"
+    ],
+    "expected_topics": [
+      "cpf-interest-rates"
+    ],
+    "tags": [
+      "cpf",
+      "interest",
+      "extra-interest"
+    ],
+    "required_substrings": [
+      "2%",
+      "$30,000",
+      "$20,000"
+    ]
+  },
+  {
+    "id": "cpf_additional_wage_ceiling_formula",
+    "question": "How is the CPF Additional Wage ceiling calculated?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-wage-ceilings-and-limits.md"
+    ],
+    "expected_topics": [
+      "cpf-wage-ceilings"
+    ],
+    "tags": [
+      "cpf",
+      "wage-ceiling"
+    ],
+    "required_substrings": [
+      "$102,000"
+    ]
+  },
+  {
+    "id": "iras_cpf_cash_topup_relief",
+    "question": "How much tax relief can I get for CPF cash top-ups?",
+    "expected_source_paths": [
+      "manual/iras/tax-reliefs.md"
+    ],
+    "expected_topics": [
+      "tax-relief-individuals"
+    ],
+    "tags": [
+      "iras",
+      "relief",
+      "cpf",
+      "recency"
+    ],
+    "required_substrings": [
+      "$8,000"
     ]
   }
 ]

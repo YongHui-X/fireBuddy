@@ -10,6 +10,7 @@ from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.rag import AdvisorSource
 from services.ember_figure_tools import lookup_figure
+from services.ember_personal_context import trusted_data_block
 from services.ember_planner import EmberPlan, EmberToolName
 from services.financial_repository import load_financial_records
 from services.financial_summary import build_financial_summary
@@ -41,11 +42,7 @@ class EmberDataResult:
             if self.tool == "figure_lookup"
             else "Trusted FireBuddy data calculated by the backend"
         )
-        return (
-            f"{label}. Treat these values as "
-            "authoritative and do not recalculate or alter them:\n"
-            + json.dumps(self.facts, indent=2, sort_keys=True)
-        )
+        return trusted_data_block(self.facts, label=label)
 
 
 def _money(value: Decimal | str | int) -> str:

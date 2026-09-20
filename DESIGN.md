@@ -332,6 +332,73 @@ Desktop rail items are 42px rows with muted ink; the active row has a lime-tinte
 
 Assistant answers are white reading panels with sources beneath a divider; user messages are forest bubbles on the right. The composer is a forest field with a lime send button. History is a 300px rail at 1180px and up, a right drawer below.
 
+## Mobile and Touch
+
+The phone layout is the same system, not a second one. Palette, type scale, radii and shadows are
+unchanged; what changes is the shell, the density, and how a control is reached by a thumb.
+
+**Breakpoint ladder.** CSS media queries cannot read custom properties and there is no PostCSS
+step, so the stylesheets use literals — but only these, and `apps/web/src/app/breakpoints.ts`
+mirrors them for JavaScript. Keep the two in sync.
+
+| Name | Query | Purpose |
+|---|---|---|
+| `xs` | `max-width: 379.98px` | last squeeze; 360dp Androids and the 375pt iPhone SE |
+| base | — | 360-479, the mobile-first default, not a breakpoint |
+| `sm` | `min-width: 480px` | large phone, phone landscape |
+| `md` | `min-width: 600px` | phablet; two-up tiles become safe |
+| `lg` | `min-width: 768px` | tablet portrait; cards return to 22/24 padding |
+| `xl` | `min-width: 1024px` | the shell switch: sidebar in, tab bar out |
+| `2xl` | `min-width: 1280px` | the wide dashboard grid |
+| `coarse` | `pointer: coarse` | touch affordances, independent of width |
+
+360px is the median Android width, so it is the **base** the layout is designed at. `xs` exists for
+what sits below it, not for the common case.
+
+**Touch metrics.** `--touch-target` is 48px, the Material minimum, and applies to every icon
+button, list row and field under a coarse pointer. `--touch-target-compact` (44px) is for controls
+inside dense rows. One documented exception: `.compact-add-button` stays 36px because it sits
+inline in a field's label row, where its wrapping `<label>` provides the real target.
+
+**Hover belongs in a media query.** Every `:hover` rule lives inside `@media (hover: hover)`.
+Without that guard a hover state sticks after a tap on Android until something else is tapped.
+`base.css` clears `-webkit-tap-highlight-color` globally, so `mobile.css` supplies the replacement
+press feedback: a `color-mix` overlay on `:active` with `transition-duration: 0ms`, because a press
+must land instantly and only the release may fade.
+
+**Bottom sheets.** Below 768px every modal surface arrives from the bottom edge — the More menu,
+row actions, ledger filters, the Wealth forms, and the existing centred dialogs. `BottomSheet`
+carries the geometry; `useAccessibleDialog` carries focus trapping, Escape and the body scroll
+lock. Sheets use `--shadow-lg`, the existing transient tier. No new elevation was added.
+
+**Navigation.** The four tabs are fixed: Home, Transactions, Categories, Profile, with the lime Add
+tile centred. Everything else — Ask Ember, Insights, Accounts, Wealth, FIRE Planner, Plan, Goals —
+and Log out live in the More sheet. The floating Ember launcher does not mount below 1024px.
+
+**The active tab indicator is forest, not lime.** As a 3px non-text indicator it needs 3:1 contrast
+against white; lime `#CBEA63` on `#FFFFFF` is about 1.4:1 and fails. Lime stays reserved for the
+Add tile, which is the tab bar's only action.
+
+**One Lime Rule on a phone.** The Add tile is the lime on the four tab screens, so their toolbars
+carry none — the Categories and Accounts primary buttons demote to `secondary-button` below the
+shell switch.
+
+**The keyboard.** `useVisualViewportInset` publishes the keyboard's height as `--kb-inset`. Both
+Android Chrome and iOS Safari shrink the visual viewport while leaving the layout viewport alone,
+so anything anchored to the bottom — the Ember composer, a `.sticky-form-footer`, the add sheet's
+save button — must add that inset or sit underneath the keyboard. Inputs are 16px under a coarse
+pointer, below which iOS zooms the viewport on focus.
+
+**Tables.** A ledger stacks into cards below 768px via the `data-label` pattern. A *matrix* does
+not: the yearly cash flow table is six numeric columns against forty rows, and stacking it destroys
+the comparison it exists for. It scrolls sideways with its first column pinned instead.
+
+**Charts.** Callout labels collide below 480px, so `SpendingPieChart` takes `labels="none"` there
+and the companion legend carries the figures. On touch, `interaction="tap"` replaces the hover
+tooltip with a selected-slice readout, because a recharts tooltip lands under the thumb that
+summoned it. The recharts legend is replaced below 600px by a static `.chart-key` list, which also
+reads better in TalkBack.
+
 ## Do's and Don'ts
 
 ### Do:

@@ -77,6 +77,7 @@ class AdvisorDataEvidence(BaseModel):
     "fire_projection",
     "financial_health_review",
     "figure_lookup",
+    "personal_context",
   ]
   label: str
   period: str

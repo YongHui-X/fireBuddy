@@ -94,26 +94,58 @@ def should_join_wrapped_line(previous: str, current: str) -> bool:
     return len(previous.split()) >= MIN_WORDS_FOR_WRAPPED_LINE
 
 
-def clean_extracted_text(text: str, source_filename: str) -> str:
+NUMBERED_QUESTION_PATTERN = re.compile(r"^(\d{1,2})\. (\S.*)$")
+
+
+def is_question_tail(previous: str | None, current: str) -> bool:
+    """
+    Keep a very short line that completes a numbered question.
+
+    Short lines are normally dropped as extraction noise, but a wrapped question
+    such as "12. ... back to the" / "Individual Limit?" leaves a two-word tail
+    that carries the question mark. It is kept so the join step can restore it.
+    """
+
+    return bool(
+        previous
+        and current.endswith("?")
+        and NUMBERED_QUESTION_PATTERN.match(previous)
+        and not previous.endswith(SENTENCE_END_CHARS)
+    )
+
+
+def clean_extracted_text(
+    text: str,
+    source_filename: str,
+    *,
+    strip_lines: tuple[str, ...] | list[str] = (),
+) -> str:
     """
     Light cleanup of raw pdfplumber output.
 
     The goal is to remove obvious extraction noise and rejoin wrapped lines
-    into paragraphs while preserving enough structure for chunking.
+    into paragraphs while preserving enough structure for chunking. Exact
+    `strip_lines` (repeated page headers and footers) are removed before the
+    join so they are never glued into the middle of a sentence.
     """
     lines = text.split("\n")
     cleaned: list[str] = []
+    strip_set = {item.strip() for item in strip_lines}
 
     for line in lines:
         stripped = line.strip()
-        if not stripped:
+        if not stripped or stripped in strip_set:
             continue
 
         if re.fullmatch(r"[-\u2013\u2014]?\s*\d+\s*[-\u2013\u2014]?", stripped):
             continue
 
         word_count = len(stripped.split())
-        if word_count <= 2 and not stripped.startswith(("-", "\u2022", "#", "|")):
+        if (
+            word_count <= 2
+            and not stripped.startswith(("-", "\u2022", "#", "|"))
+            and not is_question_tail(cleaned[-1] if cleaned else None, stripped)
+        ):
             continue
 
         if cleaned and should_join_wrapped_line(cleaned[-1], stripped):
@@ -124,6 +156,139 @@ def clean_extracted_text(text: str, source_filename: str) -> str:
     result = "\n\n".join(cleaned)
     result = re.sub(r"\n{3,}", "\n\n", result)
     return f"# Source: {source_filename}\n\n{result}"
+
+
+def strip_inline_noise(paragraphs: list[str], strip_lines: list[str]) -> list[str]:
+    """Remove page header text that survived inside a paragraph; drop emptied ones."""
+
+    if not strip_lines:
+        return paragraphs
+    result = []
+    for paragraph in paragraphs:
+        cleaned = paragraph
+        for noise in strip_lines:
+            cleaned = re.sub(r"\s*" + re.escape(noise) + r"\s*", " ", cleaned)
+        cleaned = re.sub(r"[ \t]{2,}", " ", cleaned).strip()
+        if cleaned:
+            result.append(cleaned)
+    return result
+
+
+def promote_section_headings(paragraphs: list[str], rules: list[dict]) -> list[str]:
+    """Turn paragraphs that fully match a section pattern into Markdown headings."""
+
+    compiled = [(re.compile(rule["pattern"]), int(rule["level"])) for rule in rules or []]
+    if not compiled:
+        return paragraphs
+    result = []
+    for paragraph in paragraphs:
+        promoted = paragraph
+        for pattern, level in compiled:
+            if pattern.fullmatch(paragraph):
+                promoted = f"{'#' * level} {paragraph}"
+                break
+        result.append(promoted)
+    return result
+
+
+def split_fused_question(text: str, max_heading_chars: int = 160) -> tuple[str, str | None]:
+    """
+    Separate a question line from an answer that pdfplumber fused onto it.
+
+    Returns (heading_text, body_or_None). When a long answer follows the first
+    question mark, the heading stops at that mark and the rest becomes body.
+    A question without a usable mark that exceeds the heading cap is truncated
+    for the heading while the full line is kept as body, so nothing is lost.
+    """
+
+    mark = text.find("?")
+    if mark != -1:
+        remainder = text[mark + 1:].strip()
+        if len(remainder) >= 60 and not remainder.endswith("?"):
+            return text[:mark + 1].strip(), remainder
+
+    if len(text) > max_heading_chars:
+        cut = text.rfind(" ", 0, max_heading_chars)
+        cut = cut if cut > 40 else max_heading_chars
+        return text[:cut].rstrip() + " ...", text
+    return text, None
+
+
+def promote_numbered_questions(paragraphs: list[str], config: dict | None) -> list[str]:
+    """
+    Turn numbered FAQ questions into headings using a monotonic counter.
+
+    A line "N. ..." is a question only when N is exactly one more than the
+    last accepted question, which rejects numbered steps inside an answer.
+    When the config supplies `section_titles`, a reset to 1 after a higher
+    number starts a new part and each part (including the first) gets a
+    level-2 heading with the matching title. Without titles a stray "1." is
+    treated as a list item, never as a restart.
+    """
+
+    if not config or config.get("style") != "numbered":
+        return paragraphs
+    level = int(config.get("level", 3))
+    titles = list(config.get("section_titles") or [])
+    expected = 1
+    part = -1
+    result: list[str] = []
+
+    for paragraph in paragraphs:
+        match = NUMBERED_QUESTION_PATTERN.match(paragraph)
+        if not match:
+            result.append(paragraph)
+            continue
+        number = int(match.group(1))
+        restarts_part = bool(titles) and number == 1 and expected > 1
+        if number == expected or restarts_part:
+            if number == 1 and titles:
+                part += 1
+                title = titles[part] if part < len(titles) else f"Part {part + 1}"
+                result.append(f"## {title}")
+            heading, body = split_fused_question(match.group(2))
+            result.append(f"{'#' * level} {number}. {heading}")
+            if body:
+                result.append(body)
+            expected = number + 1
+        else:
+            result.append(paragraph)
+    return result
+
+
+def dedupe_table_rows(paragraphs: list[str]) -> list[str]:
+    """Drop Markdown table rows that repeat an earlier identical row in the file."""
+
+    seen: set[str] = set()
+    result = []
+    for paragraph in paragraphs:
+        if paragraph.startswith("|"):
+            if paragraph in seen:
+                continue
+            seen.add(paragraph)
+        result.append(paragraph)
+    return result
+
+
+def recover_structure(markdown: str, structure: dict | None) -> str:
+    """
+    Apply the registry's deterministic structure rules to converted Markdown.
+
+    Order: strip inline page-header noise, promote section headings, promote
+    numbered questions, drop repeated table rows. The `# Source:` first line is
+    preserved. Without a config the input is returned unchanged.
+    """
+
+    if not structure:
+        return markdown
+    first_line, separator, rest = markdown.partition("\n\n")
+    paragraphs = [item for item in rest.split("\n\n") if item.strip()]
+    paragraphs = strip_inline_noise(paragraphs, list(structure.get("strip_lines") or []))
+    paragraphs = promote_section_headings(paragraphs, structure.get("promote_sections") or [])
+    paragraphs = promote_numbered_questions(paragraphs, structure.get("promote_questions"))
+    if structure.get("dedupe_table_rows"):
+        paragraphs = dedupe_table_rows(paragraphs)
+    return first_line + separator + "\n\n".join(paragraphs)
 
 
 def table_to_markdown(table: list[list[str | None]]) -> str:
@@ -164,6 +329,7 @@ def pdf_to_markdown(
     *,
     skip_pages: set[int] | None = None,
     extract_tables: bool = False,
+    structure: dict | None = None,
 ) -> str:
     """
     Extract and clean text from a PDF.
@@ -172,10 +338,12 @@ def pdf_to_markdown(
     table-of-contents pages. With `extract_tables`, tables detected by
     pdfplumber are appended to the page as Markdown tables so row and column
     labels survive extraction. It is opt-in per registry entry because
-    infographic-style PDFs produce garbage tables.
+    infographic-style PDFs produce garbage tables. `structure` applies the
+    registry's deterministic heading recovery after cleanup.
     """
     require_pdfplumber()
     skipped = skip_pages or set()
+    structure = structure or {}
 
     pages = []
     with pdfplumber.open(pdf_path) as pdf:
@@ -219,7 +387,12 @@ def pdf_to_markdown(
         log.warning("No text extracted from %s; it may be scanned", pdf_path.name)
         return ""
 
-    return clean_extracted_text("\n\n".join(pages), pdf_path.name)
+    cleaned = clean_extracted_text(
+        "\n\n".join(pages),
+        pdf_path.name,
+        strip_lines=structure.get("strip_lines") or (),
+    )
+    return recover_structure(cleaned, structure)
 
 
 def markdown_size_problem(markdown: str, md_path: Path) -> str | None:
@@ -284,6 +457,7 @@ def convert_pdf(
             pdf_path,
             skip_pages=skip_pages,
             extract_tables=bool(registry_entry.get("extract_tables", False)),
+            structure=registry_entry.get("structure"),
         )
         if not markdown.strip():
             log.warning("Empty output for %s; skipping save", pdf_path.name)

@@ -80,6 +80,37 @@ The command only connects to the local `supabase_db_fireBuddy` Docker container.
 
 ## Local CLI verification
 
+### Financial state reliability
+
+Apply `migrations/20260916044650_financial_state_reliability.sql` before running
+the backend version that uses `get_latest_wealth_snapshots` and
+`replace_essential_categories`. The migration adds backend-only functions,
+keeps essential category replacement atomic, and reloads the PostgREST schema
+cache. It does not alter existing financial records.
+
+The web app loads latest position values first. The mounted
+`GET /wealth/snapshots` endpoint supplies owned history when the Wealth screen
+requests it. Transaction changes refresh the derived financial summary without
+fetching all wealth history again.
+
+Run `npx supabase test db --local supabase/tests` after applying migrations.
+CI starts a fresh database and runs these SQL tests in addition to Python tests.
+The financial reliability tests verify function permissions, owner isolation,
+and rollback after a simulated insert failure.
+
+If this CLI version rejects a multi-statement SQL file, the existing local
+container can apply it in one transaction from PowerShell:
+
+```powershell
+Get-Content -Raw supabase/migrations/20260916044650_financial_state_reliability.sql |
+  docker exec -i supabase_db_fireBuddy psql -U postgres -d postgres -v ON_ERROR_STOP=1 --single-transaction
+```
+
+This command applies SQL directly; it does not register migration history.
+Use the normal migration workflow for other environments. A `PGRST202` for
+either function indicates that the target database still needs the migration
+or its PostgREST schema cache has not reloaded.
+
 The migration was created with the pinned repository CLI. Discover flags from the installed version before using them:
 
 ```powershell

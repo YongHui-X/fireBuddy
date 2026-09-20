@@ -265,12 +265,29 @@ export function SpendingPieChart({
   data,
   height = 300,
   outerRadius = 78,
+  labels = 'callout',
+  interaction = 'hover',
 }: {
   data: SpendingPieDatum[];
   height?: number;
   outerRadius?: number | string;
+  /**
+   * Callout labels need room the pie does not have on a narrow screen, where they collide. Both
+   * callers render a companion list of the same figures, so dropping them loses no information
+   * and lets the pie itself grow.
+   */
+  labels?: 'callout' | 'none';
+  /**
+   * On touch a hover tooltip lands under the user's thumb. 'tap' selects a slice instead and
+   * reports it in a readout line below the chart.
+   */
+  interaction?: 'hover' | 'tap';
 }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const showCallouts = labels === 'callout';
+  const isTap = interaction === 'tap';
+  const activeDatum = activeIndex === null ? null : data[activeIndex] ?? null;
+  const total = data.reduce((sum, datum) => sum + datum.value, 0);
   const layoutCache = useRef<{ key: string; positions: SpendingLabelPosition[] }>({ key: '', positions: [] });
 
   /* Recharts renders one label at a time, so the shared layout is computed once per geometry and reused. */
@@ -285,31 +302,42 @@ export function SpendingPieChart({
     return layoutCache.current.positions;
   };
 
-  return <ResponsiveContainer width="100%" height={height}>
-    <PieChart>
-      <Pie
-        data={data}
-        dataKey="value"
-        nameKey="name"
-        startAngle={90}
-        endAngle={-270}
-        innerRadius={0}
-        outerRadius={outerRadius}
-        paddingAngle={0}
-        shape={(props) => renderSpendingSector(props, activeIndex)}
-        label={(props) => renderSpendingLabel(props, activeIndex, getLayout)}
-        labelLine={(props) => renderSpendingLabelLine(props, activeIndex, getLayout)}
-        onMouseEnter={(_, index) => setActiveIndex(index)}
-        onMouseLeave={() => setActiveIndex(null)}
-        onClick={(_, index) => setActiveIndex((currentIndex) => currentIndex === index ? null : index)}
-        isAnimationActive="auto"
-        animationDuration={250}
-        animationEasing="ease-out"
-      />
-      <Tooltip
-        formatter={(value, name) => [formatSGD(Number(value)), name]}
-        separator=" · "
-      />
-    </PieChart>
-  </ResponsiveContainer>;
+  return <>
+    <ResponsiveContainer width="100%" height={height}>
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          startAngle={90}
+          endAngle={-270}
+          innerRadius={0}
+          outerRadius={outerRadius}
+          paddingAngle={0}
+          shape={(props) => renderSpendingSector(props, activeIndex)}
+          label={showCallouts ? (props) => renderSpendingLabel(props, activeIndex, getLayout) : false}
+          labelLine={showCallouts ? (props) => renderSpendingLabelLine(props, activeIndex, getLayout) : false}
+          onMouseEnter={isTap ? undefined : (_, index) => setActiveIndex(index)}
+          onMouseLeave={isTap ? undefined : () => setActiveIndex(null)}
+          onClick={(_, index) => setActiveIndex((currentIndex) => currentIndex === index ? null : index)}
+          isAnimationActive="auto"
+          animationDuration={250}
+          animationEasing="ease-out"
+        />
+        {isTap ? null : (
+          <Tooltip
+            formatter={(value, name) => [formatSGD(Number(value)), name]}
+            separator=" · "
+          />
+        )}
+      </PieChart>
+    </ResponsiveContainer>
+    {isTap ? (
+      <p className="spending-active-readout" role="status">
+        {activeDatum
+          ? `${activeDatum.name} · ${formatSGD(activeDatum.value)} · ${total > 0 ? Math.round((activeDatum.value / total) * 100) : 0}%`
+          : 'Tap a slice for its share.'}
+      </p>
+    ) : null}
+  </>;
 }

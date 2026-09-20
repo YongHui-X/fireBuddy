@@ -1,16 +1,17 @@
 {
   "recorded": "2026-09-16",
-  "note": "Minimum metrics CI enforces on the committed *_latest.json reports (see check_regression.py). Set just below retrieval v9 and answer v8. Raise after a run improves the numbers; never lower silently.",
+  "note": "Minimum metrics CI enforces on the committed *_latest.json reports (see check_regression.py). Set just below retrieval v17, answer v16 and personal v7. Raise after a run improves the numbers; never lower silently.",
   "tolerance": 0.0,
-  "min_retrieval_cases": 45,
-  "min_answer_cases": 23,
+  "min_retrieval_cases": 58,
+  "min_answer_cases": 29,
+  "min_personal_cases": 10,
   "retrieval": {
-    "mrr": 0.85,
-    "hit_rate@1": 0.75,
-    "hit_rate@3": 0.95,
+    "mrr": 0.9,
+    "hit_rate@1": 0.82,
+    "hit_rate@3": 0.96,
     "hit_rate@5": 1.0,
-    "recall@5": 0.90,
-    "ndcg@5": 0.84,
+    "recall@5": 0.95,
+    "ndcg@5": 0.89,
     "substring_hit_rate": 0.95
   },
   "answer": {
@@ -19,8 +20,16 @@
     "refusal_accuracy": 1.0,
     "concept_coverage": 0.95,
     "numeric_accuracy": 0.95,
-    "citation_recall": 0.95,
+    "citation_recall": 0.97,
     "judge_factual_correctness": 0.95,
     "judge_groundedness": 0.95
+  },
+  "personal": {
+    "overall_pass_rate": 0.9,
+    "mode_accuracy": 0.9,
+    "fact_accuracy": 0.9,
+    "leak_free_rate": 1.0,
+    "missing_data_refusal_accuracy": 1.0,
+    "judge_groundedness": 0.9
   }
 }

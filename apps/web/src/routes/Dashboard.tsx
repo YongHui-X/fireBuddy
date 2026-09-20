@@ -9,6 +9,8 @@ import {
   type Transaction,
 } from '../app/FireBuddyProvider';
 import { getDisplayName } from '../app/displayName';
+import { useMediaQuery } from '../app/useMediaQuery';
+import { mq } from '../app/breakpoints';
 import { MoneyPulseBars } from '../components/MoneyPulseBars';
 import { PageToolbar } from '../components/PageToolbar';
 import { SpendingPieChart, groupSpendingPieData, type SpendingPieDatum } from '../components/SpendingPieChart';
@@ -204,6 +206,12 @@ type DashboardProps = {
 export default function Dashboard({ onSelectTransaction }: DashboardProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  /* Row two hands the breakdown eight of twelve columns from 1280px up. That is the only width where the
+     pie can grow without crowding the callout labels that sit outside it. */
+  const hasWideSpendingCard = useMediaQuery(mq.wide);
+  // Below 480px the callouts collide; the legend beside the chart carries the same figures.
+  const isNarrowChart = !useMediaQuery(mq.sm);
+  const isTouch = useMediaQuery(mq.coarse);
   const { transactions, categories, session, themeMode, getCategoryById } = useFireBuddy();
   const { summary, status, error, demoMode, essentialCategoryIds, refresh } = useFinancialFoundation();
   const latestMonth = getDeviceMonthKey();
@@ -407,7 +415,13 @@ export default function Dashboard({ onSelectTransaction }: DashboardProps) {
                 <div className="spending-chart-layout">
                   <div className="spending-pie-panel" role="img" aria-label={`${spendingPeriod} spending by category. The five largest categories and all remaining spending grouped as Others.`}>
                     <div className="spending-pie">
-                      <SpendingPieChart data={groupedSpendingData} height={340} outerRadius="52%" />
+                      <SpendingPieChart
+                        data={groupedSpendingData}
+                        height={isNarrowChart ? 230 : 340}
+                        outerRadius={hasWideSpendingCard ? '63%' : isNarrowChart ? '74%' : '52%'}
+                        labels={isNarrowChart ? 'none' : 'callout'}
+                        interaction={isTouch ? 'tap' : 'hover'}
+                      />
                     </div>
                   </div>
                   <ul className="spending-legend" aria-label="Spending by category">

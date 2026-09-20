@@ -1,8 +1,16 @@
 import { calendarMonth, monthIndex, type FireProfile, type RetirementPlan, type WealthPosition } from '@firebuddy/shared';
 
-/** Exclude restricted resources regardless of legacy FI flags. */
+/** Any active asset can be chosen for retirement; the user decides what they can spend. Liabilities never qualify. */
 export function eligibleRetirementAsset(p: WealthPosition) {
-  return !p.isArchived && p.positionKind === 'asset' && !['cpf', 'property'].includes(p.positionType) && p.restrictionType === 'none' && p.liquidityClass !== 'restricted' && !p.isEmergencyFund;
+  return !p.isArchived && p.positionKind === 'asset';
+}
+/** Plain label for assets the user may not be able to spend freely, shown beside the checkbox rather than blocking it. */
+export function retirementAssetNote(p: WealthPosition) {
+  if (p.positionKind === 'liability') return 'Liability';
+  if (p.positionType === 'cpf' || p.restrictionType !== 'none' || p.liquidityClass === 'restricted') return 'Restricted';
+  if (p.positionType === 'property') return 'Property';
+  if (p.isEmergencyFund) return 'Emergency fund';
+  return 'Spendable';
 }
 /** Reuse values for confirmation without activating defaults. */
 export function initialRetirementPlan(profile: FireProfile | null, positions: WealthPosition[]): RetirementPlan {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { cloneElement, useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
 import { Archive, Landmark, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import type { CreateWealthPositionInput, WealthPositionKind, WealthPositionType, WealthPosition } from '@firebuddy/shared';
@@ -6,6 +6,9 @@ import type { CreateWealthPositionInput, WealthPositionKind, WealthPositionType,
 import { useFinancialFoundation } from '../app/FinancialFoundationProvider';
 import { formatSGD } from '../app/FireBuddyProvider';
 import { PageToolbar } from '../components/PageToolbar';
+import { BottomSheet } from '../components/BottomSheet';
+import { mq } from '../app/breakpoints';
+import { useMediaQuery } from '../app/useMediaQuery';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
@@ -38,7 +41,8 @@ export default function Wealth() {
     try {
       await addPosition(input, positionDraft.amount ? { valueDate: today(), amount: Number(positionDraft.amount).toFixed(2) } : undefined);
       setPositionDraft({ name: '', positionKind: 'asset', positionType: 'cash', amount: '', includeInFi: true, isEmergencyFund: false, isRestricted: false });
-    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to add position.'); }
+      return true;
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to add position.'); return false; }
   }
 
   /** Save a resource restriction and surface API failures without changing the planner silently. */
@@ -51,19 +55,51 @@ export default function Wealth() {
 
   async function submitSnapshot(event: FormEvent) {
     event.preventDefault(); setError(null);
-    try { await addSnapshot(snapshotDraft.positionId, { valueDate: snapshotDraft.valueDate, amount: Number(snapshotDraft.amount).toFixed(2) }); setSnapshotDraft({ positionId: '', amount: '', valueDate: today() }); }
-    catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to add snapshot.'); }
+    try { await addSnapshot(snapshotDraft.positionId, { valueDate: snapshotDraft.valueDate, amount: Number(snapshotDraft.amount).toFixed(2) }); setSnapshotDraft({ positionId: '', amount: '', valueDate: today() }); return true; }
+    catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to add snapshot.'); return false; }
   }
 
   async function submitContribution(event: FormEvent) {
     event.preventDefault(); setError(null);
-    try { await addContribution({ ...contributionDraft, amount: Number(contributionDraft.amount).toFixed(2), note: contributionDraft.note || null }); setContributionDraft({ wealthPositionId: '', amount: '', contributionDate: today(), note: '' }); }
-    catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to add contribution.'); }
+    try { await addContribution({ ...contributionDraft, amount: Number(contributionDraft.amount).toFixed(2), note: contributionDraft.note || null }); setContributionDraft({ wealthPositionId: '', amount: '', contributionDate: today(), note: '' }); return true; }
+    catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to add contribution.'); return false; }
   }
+
+  // Three stacked forms are roughly 1600px of scrolling before the history is reached, so on a
+  // phone they become sheets opened from a single action row.
+  const isWideWealth = useMediaQuery(mq.lg);
+  const [openForm, setOpenForm] = useState<'position' | 'snapshot' | 'contribution' | null>(null);
+
+  /** Re-point a form's submit at the sheet, so a successful save closes it. */
+  const inSheet = (form: ReactElement, handler: (event: FormEvent) => Promise<boolean>) =>
+    cloneElement(form, {
+      onSubmit: async (event: FormEvent) => {
+        if (await handler(event)) setOpenForm(null);
+      },
+    } as never);
+
+  const positionForm = (
+    <form className="white-card foundation-form" onSubmit={submitPosition}><h3>Add wealth position</h3><label>Name<input required value={positionDraft.name} onChange={(event) => setPositionDraft({ ...positionDraft, name: event.target.value })} /></label><div className="form-row"><label>Kind<select value={positionDraft.positionKind} onChange={(event) => setPositionDraft({ ...positionDraft, positionKind: event.target.value as WealthPositionKind })}><option value="asset">Asset</option><option value="liability">Liability</option></select></label><label>Type<select value={positionDraft.positionType} onChange={(event) => setPositionDraft({ ...positionDraft, positionType: event.target.value as WealthPositionType })}>{['cash', 'investment', 'property', 'mortgage', 'loan', 'cpf', 'other'].map((item) => <option key={item} value={item}>{item}</option>)}</select></label></div><label>Current value (SGD)<input required min="0" step="0.01" type="number" value={positionDraft.amount} onChange={(event) => setPositionDraft({ ...positionDraft, amount: event.target.value })} /></label>{positionDraft.positionKind === 'asset' ? <div className="check-stack"><label><input type="checkbox" checked={positionDraft.isRestricted} onChange={event => setPositionDraft({ ...positionDraft, isRestricted: event.target.checked, isEmergencyFund: false })} /> SRS or other restricted retirement resource</label><label><input type="checkbox" checked={positionDraft.includeInFi} onChange={(event) => setPositionDraft({ ...positionDraft, includeInFi: event.target.checked })} /> Include in FI assets</label>{positionDraft.positionType === 'cash' ? <label><input type="checkbox" checked={positionDraft.isEmergencyFund} onChange={(event) => setPositionDraft({ ...positionDraft, isEmergencyFund: event.target.checked })} /> Designate as emergency fund</label> : null}</div> : null}<button className="primary-button" type="submit"><Plus size={16} /> Add position and value</button></form>
+  );
+
+  const snapshotForm = (
+    <form className="white-card foundation-form" onSubmit={submitSnapshot}><h3>Record updated value</h3><label>Position<select required value={snapshotDraft.positionId} onChange={(event) => setSnapshotDraft({ ...snapshotDraft, positionId: event.target.value })}><option value="">Select position</option>{positions.filter((item) => !item.isArchived).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><div className="form-row"><label>Date<input required max={today()} type="date" value={snapshotDraft.valueDate} onChange={(event) => setSnapshotDraft({ ...snapshotDraft, valueDate: event.target.value })} /></label><label>Amount<input required min="0" step="0.01" type="number" value={snapshotDraft.amount} onChange={(event) => setSnapshotDraft({ ...snapshotDraft, amount: event.target.value })} /></label></div><button className="secondary-button" type="submit">Save snapshot</button></form>
+  );
+
+  const contributionForm = (
+    <form className="white-card foundation-form" onSubmit={submitContribution}><h3>Record invested contribution</h3><p className="form-help">Contributions affect the invested total and never count as expenses.</p><label>FI asset<select required value={contributionDraft.wealthPositionId} onChange={(event) => setContributionDraft({ ...contributionDraft, wealthPositionId: event.target.value })}><option value="">Select position</option>{contributionPositions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><div className="form-row"><label>Date<input required max={today()} type="date" value={contributionDraft.contributionDate} onChange={(event) => setContributionDraft({ ...contributionDraft, contributionDate: event.target.value })} /></label><label>Amount<input required min="0.01" step="0.01" type="number" value={contributionDraft.amount} onChange={(event) => setContributionDraft({ ...contributionDraft, amount: event.target.value })} /></label></div><label>Note<input maxLength={240} value={contributionDraft.note} onChange={(event) => setContributionDraft({ ...contributionDraft, note: event.target.value })} /></label><button className="secondary-button" type="submit">Save contribution</button></form>
+  );
 
   return <main className="page foundation-management-page">
     <PageToolbar title="Wealth positions" description="Assets and liabilities are dated separately from payment accounts." backAction={() => navigate(-1)} metadata={demoMode ? <span className="demo-data-label">Local demo data</span> : null} />
     {error || loadError ? <p className="foundation-error" role="alert">{error ?? loadError}</p> : null}
+    {isWideWealth ? null : (
+      <div className="wealth-action-row">
+        <button className="primary-button" type="button" onClick={() => setOpenForm('position')}><Plus size={16} /> Add position</button>
+        <button className="secondary-button" type="button" onClick={() => setOpenForm('snapshot')}>Record value</button>
+        <button className="secondary-button" type="button" onClick={() => setOpenForm('contribution')}>Contribution</button>
+      </div>
+    )}
     <p>FIRE Planner uses your confirmed eligible asset selection. Mark SRS and other locked resources as restricted; property, CPF and emergency reserves are always excluded from spendable retirement capital.</p>
     <section className="management-grid">
       <article className="white-card management-list-card"><div className="section-title-row"><h3>Balance sheet</h3><span>{positions.filter((item) => !item.isArchived).length} active</span></div>
@@ -80,12 +116,25 @@ export default function Wealth() {
           </div></div>;
         })}</div>
       </article>
-      <form className="white-card foundation-form" onSubmit={submitPosition}><h3>Add wealth position</h3><label>Name<input required value={positionDraft.name} onChange={(event) => setPositionDraft({ ...positionDraft, name: event.target.value })} /></label><div className="form-row"><label>Kind<select value={positionDraft.positionKind} onChange={(event) => setPositionDraft({ ...positionDraft, positionKind: event.target.value as WealthPositionKind })}><option value="asset">Asset</option><option value="liability">Liability</option></select></label><label>Type<select value={positionDraft.positionType} onChange={(event) => setPositionDraft({ ...positionDraft, positionType: event.target.value as WealthPositionType })}>{['cash', 'investment', 'property', 'mortgage', 'loan', 'cpf', 'other'].map((item) => <option key={item} value={item}>{item}</option>)}</select></label></div><label>Current value (SGD)<input required min="0" step="0.01" type="number" value={positionDraft.amount} onChange={(event) => setPositionDraft({ ...positionDraft, amount: event.target.value })} /></label>{positionDraft.positionKind === 'asset' ? <div className="check-stack"><label><input type="checkbox" checked={positionDraft.isRestricted} onChange={event => setPositionDraft({ ...positionDraft, isRestricted: event.target.checked, isEmergencyFund: false })} /> SRS or other restricted retirement resource</label><label><input type="checkbox" checked={positionDraft.includeInFi} onChange={(event) => setPositionDraft({ ...positionDraft, includeInFi: event.target.checked })} /> Include in FI assets</label>{positionDraft.positionType === 'cash' ? <label><input type="checkbox" checked={positionDraft.isEmergencyFund} onChange={(event) => setPositionDraft({ ...positionDraft, isEmergencyFund: event.target.checked })} /> Designate as emergency fund</label> : null}</div> : null}<button className="primary-button" type="submit"><Plus size={16} /> Add position and value</button></form>
+      {isWideWealth ? positionForm : null}
     </section>
     <section className="management-grid">
-      <form className="white-card foundation-form" onSubmit={submitSnapshot}><h3>Record updated value</h3><label>Position<select required value={snapshotDraft.positionId} onChange={(event) => setSnapshotDraft({ ...snapshotDraft, positionId: event.target.value })}><option value="">Select position</option>{positions.filter((item) => !item.isArchived).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><div className="form-row"><label>Date<input required max={today()} type="date" value={snapshotDraft.valueDate} onChange={(event) => setSnapshotDraft({ ...snapshotDraft, valueDate: event.target.value })} /></label><label>Amount<input required min="0" step="0.01" type="number" value={snapshotDraft.amount} onChange={(event) => setSnapshotDraft({ ...snapshotDraft, amount: event.target.value })} /></label></div><button className="secondary-button" type="submit">Save snapshot</button></form>
-      <form className="white-card foundation-form" onSubmit={submitContribution}><h3>Record invested contribution</h3><p className="form-help">Contributions affect the invested total and never count as expenses.</p><label>FI asset<select required value={contributionDraft.wealthPositionId} onChange={(event) => setContributionDraft({ ...contributionDraft, wealthPositionId: event.target.value })}><option value="">Select position</option>{contributionPositions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><div className="form-row"><label>Date<input required max={today()} type="date" value={contributionDraft.contributionDate} onChange={(event) => setContributionDraft({ ...contributionDraft, contributionDate: event.target.value })} /></label><label>Amount<input required min="0.01" step="0.01" type="number" value={contributionDraft.amount} onChange={(event) => setContributionDraft({ ...contributionDraft, amount: event.target.value })} /></label></div><label>Note<input maxLength={240} value={contributionDraft.note} onChange={(event) => setContributionDraft({ ...contributionDraft, note: event.target.value })} /></label><button className="secondary-button" type="submit">Save contribution</button></form>
+      {isWideWealth ? snapshotForm : null}
+      {isWideWealth ? contributionForm : null}
     </section>
     <section className="white-card history-card"><h3>Recent financial history</h3>{[...snapshots].sort((a, b) => b.valueDate.localeCompare(a.valueDate)).slice(0, 8).map((item) => <div className="history-row" key={item.id}><span><strong>{positions.find((position) => position.id === item.wealthPositionId)?.name ?? 'Archived position'}</strong><small>Snapshot · {item.valueDate}</small></span><strong>{formatSGD(Number(item.amount), 0)}</strong><button type="button" aria-label="Delete snapshot" onClick={() => void removeSnapshot(item.wealthPositionId, item.id)}><Trash2 size={15} /></button></div>)}{[...contributions].sort((a, b) => b.contributionDate.localeCompare(a.contributionDate)).slice(0, 5).map((item) => <div className="history-row" key={item.id}><span><strong>{positions.find((position) => position.id === item.wealthPositionId)?.name ?? 'Archived position'}</strong><small>Contribution · {item.contributionDate}</small></span><strong>{formatSGD(Number(item.amount), 0)}</strong><button type="button" aria-label="Delete contribution" onClick={() => void removeContribution(item.id)}><Trash2 size={15} /></button></div>)}</section>
+    {isWideWealth ? null : (
+      <>
+        <BottomSheet isOpen={openForm === 'position'} title="Add wealth position" onClose={() => setOpenForm(null)} className="wealth-form-sheet">
+          {inSheet(positionForm, submitPosition)}
+        </BottomSheet>
+        <BottomSheet isOpen={openForm === 'snapshot'} title="Record updated value" onClose={() => setOpenForm(null)} className="wealth-form-sheet">
+          {inSheet(snapshotForm, submitSnapshot)}
+        </BottomSheet>
+        <BottomSheet isOpen={openForm === 'contribution'} title="Record invested contribution" onClose={() => setOpenForm(null)} className="wealth-form-sheet">
+          {inSheet(contributionForm, submitContribution)}
+        </BottomSheet>
+      </>
+    )}
   </main>;
 }

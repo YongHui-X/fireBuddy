@@ -120,8 +120,10 @@
   font-weight: 600;
 }
 
-.amount-field > div button:hover {
-  color: var(--ink);
+@media (hover: hover) {
+  .amount-field > div button:hover {
+    color: var(--ink);
+  }
 }
 
 .add-paired-row {
@@ -159,14 +161,29 @@
     width: 100%;
     height: auto;
     max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
+    max-height: var(--sheet-max-h);
     border-left: 0;
     border-top: 1px solid var(--line);
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--r-drawer) var(--r-drawer) 0 0;
     animation: rise-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
+  /* The sticky footer now owns the bottom padding and the safe-area inset. */
   .add-card {
-    padding: 18px 18px calc(24px + env(safe-area-inset-bottom));
+    padding: 18px 18px 0;
+  }
+
+  .add-panel .sheet-handle {
+    display: block;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 4px;
+    margin: 10px auto 0;
+    border-radius: var(--r-pill);
+    background: var(--line-strong);
+  }
+
+  .add-save-button {
+    margin-top: 0;
   }
 }

@@ -4,6 +4,7 @@ source_url: https://sgfireplanner.com/
 agency: SG FIRE Planner
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # SG FIRE Planner

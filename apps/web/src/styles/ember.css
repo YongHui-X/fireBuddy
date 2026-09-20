@@ -11,6 +11,21 @@
   min-height: calc(100dvh - var(--topbar-h));
 }
 
+/* Below the shell switch the tab bar owns the bottom of the screen, so the conversation has to
+   stop short of it and the composer has to sit above it — and above the keyboard when one opens. */
+@media (max-width: 1023px) {
+  .ember-layout {
+    min-height: calc(
+      100dvh - var(--topbar-h) - var(--bottom-nav-h) - env(safe-area-inset-bottom)
+    );
+  }
+
+  .ember-composer {
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--kb-inset));
+    padding-bottom: 12px;
+  }
+}
+
 @media (min-width: 1024px) {
   .ember-layout {
     min-height: 100vh;
@@ -96,10 +111,12 @@
   color: var(--ink-2);
 }
 
-.ember-header-icon-button:hover:not(:disabled) {
-  border-color: var(--line);
-  background: var(--surface);
-  color: var(--ink);
+@media (hover: hover) {
+  .ember-header-icon-button:hover:not(:disabled) {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
 }
 
 .ember-header-new-chat {
@@ -116,8 +133,10 @@
   font-weight: 600;
 }
 
-.ember-header-new-chat:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .ember-header-new-chat:hover {
+    background: var(--surface-2);
+  }
 }
 
 .ember-request-status {
@@ -230,9 +249,11 @@
   text-align: left;
 }
 
-.ember-starter-grid button:hover {
-  border-color: var(--forest-600);
-  background: var(--accent-soft);
+@media (hover: hover) {
+  .ember-starter-grid button:hover {
+    border-color: var(--forest-600);
+    background: var(--accent-soft);
+  }
 }
 
 .ember-starter-grid strong {
@@ -288,17 +309,24 @@
   opacity: 0;
 }
 
-.ember-message:hover .ember-copy-button,
 .ember-copy-button:focus-visible,
 .ember-copy-button-copied,
 .ember-copy-button-error {
   opacity: 1;
 }
 
-.ember-copy-button:hover:not(:disabled) {
-  border-color: var(--line);
-  background: var(--surface);
-  color: var(--ink);
+@media (hover: hover) {
+  .ember-message:hover .ember-copy-button {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) {
+  .ember-copy-button:hover:not(:disabled) {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
 }
 
 .ember-copy-button-copied {
@@ -463,9 +491,11 @@
   text-align: left;
 }
 
-.ember-follow-ups button:hover {
-  border-color: var(--forest-600);
-  background: var(--accent-soft);
+@media (hover: hover) {
+  .ember-follow-ups button:hover {
+    border-color: var(--forest-600);
+    background: var(--accent-soft);
+  }
 }
 
 .ember-inline-error {
@@ -565,8 +595,10 @@
   color: var(--forest-900);
 }
 
-.ember-composer-field button:hover:not(:disabled) {
-  background: var(--lime-600);
+@media (hover: hover) {
+  .ember-composer-field button:hover:not(:disabled) {
+    background: var(--lime-600);
+  }
 }
 
 .ember-composer-field button:disabled {
@@ -697,13 +729,20 @@
   border-radius: var(--r-control);
 }
 
-.ember-topic-row:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .ember-topic-row:hover {
+    background: var(--surface-2);
+  }
 }
 
-.ember-topic-active,
-.ember-topic-active:hover {
+.ember-topic-active {
   background: var(--accent-soft);
+}
+
+@media (hover: hover) {
+  .ember-topic-active:hover {
+    background: var(--accent-soft);
+  }
 }
 
 .ember-topic-select {
@@ -749,14 +788,21 @@
   opacity: 0;
 }
 
-.ember-topic-row:hover .ember-topic-delete,
 .ember-topic-delete:focus-visible {
   opacity: 1;
 }
 
-.ember-topic-delete:hover:not(:disabled) {
-  background: var(--expense-soft);
-  color: var(--danger);
+@media (hover: hover) {
+  .ember-topic-row:hover .ember-topic-delete {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) {
+  .ember-topic-delete:hover:not(:disabled) {
+    background: var(--expense-soft);
+    color: var(--danger);
+  }
 }
 
 .ember-history-empty {
@@ -800,8 +846,10 @@
   box-shadow: var(--shadow-lg);
 }
 
-.ember-floating-launcher:hover {
-  background: var(--forest-700);
+@media (hover: hover) {
+  .ember-floating-launcher:hover {
+    background: var(--forest-700);
+  }
 }
 
 .ember-floating-launcher-icon {
@@ -857,9 +905,11 @@
   color: var(--ink-2);
 }
 
-.ember-floating-panel > header button:hover {
-  background: var(--surface-2);
-  color: var(--ink);
+@media (hover: hover) {
+  .ember-floating-panel > header button:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
 }
 
 .ember-floating-context {
@@ -918,9 +968,11 @@
   text-align: left;
 }
 
-.ember-floating-empty button:hover {
-  border-color: var(--forest-600);
-  background: var(--accent-soft);
+@media (hover: hover) {
+  .ember-floating-empty button:hover {
+    border-color: var(--forest-600);
+    background: var(--accent-soft);
+  }
 }
 
 .ember-float-message {
@@ -1016,8 +1068,10 @@
   color: var(--forest-900);
 }
 
-.ember-floating-composer button:hover:not(:disabled) {
-  background: var(--lime-600);
+@media (hover: hover) {
+  .ember-floating-composer button:hover:not(:disabled) {
+    background: var(--lime-600);
+  }
 }
 
 .ember-floating-panel > footer {
@@ -1073,5 +1127,27 @@
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* A 360px drawer on a 360px screen is a full screen wearing the wrong corners. */
+@media (max-width: 767px) {
+  .ember-history-panel {
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .ember-header-icon-button {
+    width: var(--touch-target-compact);
+    height: var(--touch-target-compact);
+  }
+}
+
+@media (max-width: 379.98px) {
+  .ember-message-bubble {
+    max-width: 88%;
   }
 }

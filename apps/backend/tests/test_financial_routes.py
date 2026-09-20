@@ -184,7 +184,7 @@ class FinancialRouteTests(unittest.TestCase):
         self.assertIsNone(self.client.get('/fire/profile').json()['profile'])
         self.assertEqual(self.client.post('/fire/calculate', json={}).json()['fundingStatus'], 'review_required')
 
-    def test_retirement_activation_rejects_foreign_and_restricted_assets(self):
+    def test_retirement_activation_rejects_foreign_assets_but_allows_any_owned_asset(self):
         from test_retirement_calculator import FIXTURES
         plan = {**FIXTURES['base'], 'birthMonth': '1990-01', 'retirementMonth': '2040-01', 'assetIds': [OTHER_POSITION_ID]}
         legacy = {'monthlyContribution': '0', 'expectedReturnRate': '0.05', 'inflationRate': '0.025', 'withdrawalRate': '0.04'}
@@ -194,7 +194,7 @@ class FinancialRouteTests(unittest.TestCase):
         owned = next(p for p in self.supabase.rows['wealth_positions'] if p['id'] == POSITION_ID)
         owned['position_type'] = 'property'
         response = self.client.put('/fire/profile', json={**legacy, 'activePlan': {**plan, 'assetIds': [POSITION_ID]}})
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code, 200)
 
 
 if __name__ == "__main__":

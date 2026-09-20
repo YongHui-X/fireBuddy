@@ -4,6 +4,7 @@ source_url: https://www.thefinancialcoconut.com/blog/the-fire-spreadsheet-that-b
 agency: The Financial Coconut
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # The Financial Coconut on expense based FI layers

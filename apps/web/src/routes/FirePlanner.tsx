@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { Landmark } from 'lucide-react';
+import { AscentMark } from '../app/BrandMarks';
 import { Legend, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { calendarMonth, monthIndex, type FireCalculationResult, type FireScenarioRequest, type RetirementPlan } from '@firebuddy/shared';
 import { useFinancialFoundation } from '../app/FinancialFoundationProvider';
 import { formatSGD } from '../app/FireBuddyProvider';
 import { PageToolbar } from '../components/PageToolbar';
+import { mq } from '../app/breakpoints';
+import { useMediaQuery } from '../app/useMediaQuery';
 
 const amount = (value: string | null | undefined) => value == null ? 'Unavailable' : formatSGD(Number(value), 0);
 /** Print a decimal rate as a percentage without binary float noise such as 7.000000000000001. */
@@ -34,10 +38,22 @@ function describe(fire: FireCalculationResult) {
 /** Render the authoritative saved model, including accumulation, income gaps and withdrawals. */
 export default function FirePlanner() {
   const { summary, profile, status, error, refresh, demoMode } = useFinancialFoundation();
+  const navigate = useNavigate();
   const fire = summary?.fire, plan = fire?.plan;
   const ready = !!fire && !!plan && fire.fundingStatus !== 'review_required';
   return <main className="page foundation-management-page retirement-page">
-    <PageToolbar title="FIRE Planner" description="Your retirement timeline, from investing to drawing down." metadata={demoMode ? <span className="demo-data-label">Local demo data</span> : null} actions={<div className="retirement-actions"><Link className="secondary-button" to="/wealth">Review assets</Link><Link className="primary-button" to="/fire/setup">{profile?.draftPlan ? 'Resume setup' : plan ? 'Review plan' : 'Start setup'}</Link></div>} />
+    <PageToolbar
+      title="FIRE Planner"
+      description="Your retirement timeline, from investing to drawing down."
+      metadata={demoMode ? <span className="demo-data-label">Local demo data</span> : null}
+      actions={<div className="retirement-actions"><Link className="secondary-button" to="/wealth">Review assets</Link><Link className="primary-button" to="/fire/setup">{profile?.draftPlan ? 'Resume setup' : plan ? 'Review plan' : 'Start setup'}</Link></div>}
+      /* On a phone the setup call to action is the one thing worth a toolbar slot; Review assets
+         moves behind the overflow button rather than competing with it. */
+      overflowActions={[
+        { label: profile?.draftPlan ? 'Resume setup' : plan ? 'Review plan' : 'Start setup', icon: AscentMark, onSelect: () => navigate('/fire/setup') },
+        { label: 'Review assets', icon: Landmark, onSelect: () => navigate('/wealth') },
+      ]}
+    />
     {error && <div className="foundation-error" role="alert">{error}<button onClick={() => void refresh()}>Try again</button></div>}
     {!summary && status === 'loading' ? <p role="status">Loading your retirement plan…</p> : !ready ? <section className="white-card foundation-form"><h2>Review required</h2><p>Confirm your timeline, retirement spending, spendable assets, income and assumptions. Existing information is available for review; it does not activate a projection.</p><Link className="primary-button" to="/fire/setup">{profile?.draftPlan ? 'Resume your draft' : 'Begin the five steps'}</Link>{fire?.warnings.map(w => <p key={w.code}>{w.message}</p>)}</section> : <>
       {profile?.draftPlan && <p role="status">You have an unfinished draft. These results still use your active plan.</p>}
@@ -50,6 +66,10 @@ export default function FirePlanner() {
 /** Headline cards, progress, chart, spending and evidence for one activated plan. */
 function Results({ fire }: { fire: FireCalculationResult }) {
   const { plan, rows, depletion, retirementAge, earliestAge, progress, contributionDelta, peak } = describe(fire);
+  // A 320px chart with a wrapping legend leaves no room for the figures it is meant to explain.
+  const isCompactChart = !useMediaQuery(mq.md);
+  const isNarrowChart = !useMediaQuery(mq.sm);
+  const isTouch = useMediaQuery(mq.coarse);
   const funded = fire.fundingStatus === 'funded';
   const sampled = rows.filter((row, i) => i % 12 === 0 || row.month === plan.retirementMonth || i === rows.length - 1);
   const chart = [
@@ -88,11 +108,13 @@ function Results({ fire }: { fire: FireCalculationResult }) {
         <div><dt>Peak portfolio</dt><dd>{formatSGD(peak, 0)}<small> nominal SGD</small></dd></div>
       </dl>
       <div className="fire-chart" role="img" aria-label="Projected accumulation and retirement portfolio drawdown in nominal SGD">
-        <ResponsiveContainer width="100%" height={320}><LineChart data={chart} margin={{ top: 24, right: 24, bottom: 4, left: 8 }}>
-          <XAxis dataKey="date" minTickGap={40} tickFormatter={v => String(v).slice(0, 4)} tick={{ fontSize: 12 }} />
-          <YAxis width={62} domain={[floor, ceiling]} ticks={[floor, 0, ceiling * 0.25, ceiling * 0.5, ceiling * 0.75, ceiling]} allowDataOverflow tickFormatter={v => compact(Number(v))} tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(v, name) => [formatSGD(Number(v), 0), name]} labelFormatter={label => monthLabel(String(label))} />
-          <Legend />
+        <ResponsiveContainer width="100%" height={isNarrowChart ? 200 : isCompactChart ? 230 : 320}><LineChart data={chart} margin={isCompactChart ? { top: 12, right: 8, bottom: 0, left: 0 } : { top: 24, right: 24, bottom: 4, left: 8 }}>
+          <XAxis dataKey="date" minTickGap={isCompactChart ? 28 : 40} interval="preserveStartEnd" tickMargin={6} tickFormatter={v => String(v).slice(0, 4)} tick={{ fontSize: 12 }} />
+          <YAxis width={isCompactChart ? 44 : 62} domain={[floor, ceiling]} ticks={[floor, 0, ceiling * 0.25, ceiling * 0.5, ceiling * 0.75, ceiling]} allowDataOverflow tickFormatter={v => compact(Number(v))} tick={{ fontSize: 12 }} />
+          <Tooltip trigger={isTouch ? 'click' : 'hover'} formatter={(v, name) => [formatSGD(Number(v), 0), name]} labelFormatter={label => monthLabel(String(label))} />
+          {/* Recharts' own legend wraps badly at phone widths and reads poorly in TalkBack; the
+              static key list below the chart replaces it. */}
+          {isCompactChart ? null : <Legend />}
           <ReferenceLine y={0} stroke="var(--line-strong)" />
           <ReferenceLine x={plan.retirementMonth} stroke="var(--ink-3)" strokeDasharray="4 4" label={{ value: `Retire ${plan.retirementMonth.slice(0, 4)}`, position: 'insideBottomLeft', fill: 'var(--ink-2)', fontSize: 12 }} />
           {depletionTick && <ReferenceLine x={depletionTick} stroke="var(--expense)" strokeDasharray="4 4" label={{ value: `Depleted ${depletion!.slice(0, 4)}`, position: 'insideTopRight', fill: 'var(--expense)', fontSize: 12 }} />}
@@ -101,6 +123,13 @@ function Results({ fire }: { fire: FireCalculationResult }) {
           <Line name="Accumulation" dataKey="accumulation" stroke="var(--chart-actual)" strokeWidth={3} dot={false} isAnimationActive={false} />
           <Line name="Retirement drawdown" dataKey="retirement" stroke="var(--chart-projection)" strokeWidth={2} strokeDasharray="7 6" dot={false} isAnimationActive={false} />
         </LineChart></ResponsiveContainer>
+        {isCompactChart ? (
+          <ul className="chart-key">
+            <li><span style={{ background: 'var(--chart-actual)' }} aria-hidden="true" />Recorded and accumulation</li>
+            <li><span style={{ background: 'var(--chart-projection)' }} aria-hidden="true" />Retirement drawdown</li>
+            <li><span style={{ background: 'var(--chart-target)' }} aria-hidden="true" />Required at retirement</li>
+          </ul>
+        ) : null}
       </div>
       <p>Nominal SGD, smooth returns. The gold dot is the capital required in {monthLabel(plan.retirementMonth)}; balances below zero are unfunded months, not borrowing. {depletion ? 'Compare a later retirement date or a higher contribution below.' : 'Review assumptions and refresh asset values regularly.'} <Link to="/wealth">Manage wealth separately</Link>.</p>
     </section>
@@ -163,7 +192,7 @@ function Scenario({ baseline }: { baseline: FireCalculationResult }) {
   };
   return <form className="white-card foundation-form retirement-scenario" onSubmit={calculate}>
     <div className="section-title-row"><div><h2>Temporary scenario</h2><p className="card-subtitle">Compare one change set. Your saved plan and transactions remain unchanged.</p></div>{changed.length > 0 && <button type="button" className="text-button" onClick={() => { setOverrides(initial); setResult(null); setError(''); }}>Reset to saved plan</button>}</div>
-    <div className="retirement-scenario-fields">{(Object.keys(scenarioLabels) as (keyof Overrides)[]).map(key => <div key={key} className={changed.includes(key) ? 'retirement-field-changed' : undefined}><label>{scenarioLabels[key]}<input required type={key === 'retirementMonth' ? 'month' : 'number'} step={isRate(key) ? '0.1' : 'any'} min={key === 'retirementMonth' ? baseline.effectiveDate.slice(0, 7) : isRate(key) ? (key === 'inflation' ? 0 : -20) : 0} max={isRate(key) ? (key === 'inflation' ? 20 : 30) : undefined} value={isRate(key) ? Number((Number(overrides[key]) * 100).toFixed(4)) : overrides[key]} onChange={e => { setResult(null); setOverrides({ ...overrides, [key]: key === 'retirementMonth' ? e.target.value : Number(e.target.value) / (isRate(key) ? 100 : 1) }); }} /></label><small>Saved: {key === 'retirementMonth' ? monthLabel(plan.retirementMonth) : isRate(key) ? pct(plan[key]) : formatSGD(plan[key], 0)}</small></div>)}</div>
+    <div className="retirement-scenario-fields">{(Object.keys(scenarioLabels) as (keyof Overrides)[]).map(key => <div key={key} className={changed.includes(key) ? 'retirement-field-changed' : undefined}><label>{scenarioLabels[key]}<input required type={key === 'retirementMonth' ? 'month' : 'number'} step={isRate(key) ? '0.1' : '1'} min={key === 'retirementMonth' ? baseline.effectiveDate.slice(0, 7) : isRate(key) ? (key === 'inflation' ? 0 : -20) : 0} max={isRate(key) ? (key === 'inflation' ? 20 : 30) : undefined} value={isRate(key) ? Number((Number(overrides[key]) * 100).toFixed(4)) : overrides[key]} onChange={e => { setResult(null); setOverrides({ ...overrides, [key]: key === 'retirementMonth' ? e.target.value : isRate(key) ? Number(e.target.value) / 100 : Math.ceil(Number(e.target.value)) }); }} /></label><small>Saved: {key === 'retirementMonth' ? monthLabel(plan.retirementMonth) : isRate(key) ? pct(plan[key]) : formatSGD(plan[key], 0)}</small></div>)}</div>
     <div className="retirement-actions"><button className="secondary-button" disabled={busy}>{busy ? 'Calculating…' : 'Compare scenario'}</button></div>
     {error && <p role="alert">{error}</p>}
     {result && <div role="status" className="retirement-scenario-result">{result.fundingStatus === 'review_required' ? <p>{result.warnings.map(w => w.message).join(' ')}</p> : <>

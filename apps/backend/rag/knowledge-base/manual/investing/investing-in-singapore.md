@@ -1,3 +1,10 @@
+---
+source_title: Investing in Singapore
+agency: FireBuddy
+topic: investing
+ingest: true
+last_reviewed: 2026-05-25
+---
 # Investing in Singapore: RAG Context
 
 Last reviewed: 2026-05-25

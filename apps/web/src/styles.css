@@ -13,3 +13,5 @@
 @import './styles/ember.css';
 @import './styles/auth.css';
 @import './styles/add-transaction.css';
+/* Last: the touch layer neutralises hover and raises hit targets across everything above. */
+@import './styles/mobile.css';

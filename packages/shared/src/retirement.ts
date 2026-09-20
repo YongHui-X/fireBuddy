@@ -87,7 +87,7 @@ export function calculateRetirement(plan: RetirementPlan | null | undefined, ass
     requiredMonthlyInvestment: required === null ? null : money(Math.ceil(required * 100) / 100), estimatedMonths: earliest,
     earliestRetirementMonth: earliest === null ? null : calendarMonth(now + earliest), estimatedFiYear: earliest === null ? null : Math.floor((now + earliest) / 12) });
   warn('smooth_returns', 'Smooth returns do not capture market sequence risk or guarantee funding beyond the selected end age. Negative balances show unfunded cash flows, not available borrowing.');
-  warn('excluded_assets', 'CPF, SRS and other restricted resources, property and designated emergency reserves are excluded, regardless of legacy FI flags. CPF principal is never counted alongside payouts.');
+  warn('selected_assets', 'Only the assets you selected in setup count as retirement capital. Check that restricted resources, property and emergency reserves you included can really be spent.');
   if (plan.cpfPlan === 'unknown' || plan.cpfPlan === 'basic') warn('cpf_not_included', plan.cpfPlan === 'basic' ? 'CPF income not included: Basic declining payouts are not modelled.' : 'CPF income not included: payout is not yet known.');
   if (plan.portfolioOverride && (Date.parse(effectiveDate) - Date.parse(plan.portfolioOverride.date)) / 86400000 > 35) warn('stale_snapshot', 'The planning-only portfolio total is older than 35 days; it is not automatically grown to today.');
   return result;

@@ -1,0 +1,2621 @@
+{
+  "generated_at": "2026-09-17T02:31:49.879448+00:00",
+  "match_count": 5,
+  "case_count": 58,
+  "metrics": {
+    "mrr": 0.8948275862068965,
+    "hit_rate@1": 0.8103448275862069,
+    "precision@1": 0.8103448275862069,
+    "recall@1": 0.6666666666666666,
+    "map@1": 0.8103448275862069,
+    "ndcg@1": 0.8103448275862069,
+    "hit_rate@3": 0.9655172413793104,
+    "precision@3": 0.41379310344827586,
+    "recall@3": 0.8994252873563218,
+    "map@3": 0.8333333333333334,
+    "ndcg@3": 0.8653623772347696,
+    "hit_rate@5": 1.0,
+    "precision@5": 0.27241379310344827,
+    "recall@5": 0.9568965517241379,
+    "map@5": 0.8557471264367816,
+    "ndcg@5": 0.8938479640092458,
+    "substring_hit_rate": 1.0
+  },
+  "cases": [
+    {
+      "id": "cpf_contribution_rates_2026_employee",
+      "question": "What are the CPF contribution rates for employees in 2026?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "tags": [
+        "cpf",
+        "contributions",
+        "2026"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-interest-rates.md",
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-interest-rates.md",
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "similarities": [
+        0.722740694032391,
+        0.655711471179198,
+        0.556426699679508,
+        0.556266570151115,
+        0.58886646270947
+      ],
+      "required_substrings": [
+        "37%",
+        "20%",
+        "$8,000"
+      ],
+      "substring_hits": [
+        true,
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_allocation_rates_2026_ordinary_special_medisave",
+      "question": "How are CPF contributions allocated across Ordinary, Special, Retirement, and MediSave accounts in 2026?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md"
+      ],
+      "tags": [
+        "cpf",
+        "allocation",
+        "2026"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.758128659028966,
+        0.598949917554311,
+        0.604651907148768,
+        0.581329272310252,
+        0.581199895561779
+      ],
+      "required_substrings": [
+        "0.6217",
+        "0.2162"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_retirement_sums_basic_full_enhanced",
+      "question": "What are the Basic, Full, and Enhanced Retirement Sums for CPF retirement planning?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "cpf",
+        "retirement",
+        "retirement-sums"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md"
+      ],
+      "similarities": [
+        0.758521602686678,
+        0.642713092395074,
+        0.6631061740053,
+        0.630944650743966,
+        0.631628925577149
+      ],
+      "required_substrings": [
+        "$220,400",
+        "$440,800"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_life_payout_examples",
+      "question": "Where can I find CPF LIFE payout examples for different retirement sums?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "tags": [
+        "cpf",
+        "cpf-life",
+        "retirement-income"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-life-payout-examples.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-life-payout-examples.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "similarities": [
+        0.702186985942068,
+        0.692039372776277,
+        0.668541971158047,
+        0.647253688156323,
+        0.583660982925804
+      ],
+      "required_substrings": [
+        "$319,400",
+        "$213,000"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpfis_investment_products",
+      "question": "What investment products can be included under CPFIS?",
+      "expected_source_paths": [
+        "markdown-cache/cpf/cpfis-investment-products.md"
+      ],
+      "tags": [
+        "cpf",
+        "cpfis",
+        "investing"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/cpf/cpfis-investment-products.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.754640746566374,
+        0.720947443402444,
+        0.580919537828961,
+        0.517665354485871,
+        0.551287029068873
+      ],
+      "required_substrings": [
+        "35% of investible savings",
+        "Unit Trusts"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpfis_instruments_limits",
+      "question": "What limits apply when investing CPF savings through CPFIS instruments?",
+      "expected_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "tags": [
+        "cpf",
+        "cpfis",
+        "limits"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/sources/sg-fire-planner.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/sources/sg-fire-planner.md"
+      ],
+      "similarities": [
+        0.737562011691317,
+        0.653200881227389,
+        0.608494885559329,
+        0.636081980134374,
+        0.624338176596079
+      ],
+      "required_substrings": [
+        "$20,000"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_investing_safer_sequence",
+      "question": "How should a Singapore investor think about CPF before investing cash?",
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-investment-products.md"
+      ],
+      "tags": [
+        "cpf",
+        "investing",
+        "singapore"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "similarities": [
+        0.665500286055973,
+        0.618894876596126,
+        0.610007378803746,
+        0.590279836249623,
+        0.581363683210927
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_retirement_income_context",
+      "question": "How does CPF LIFE fit into retirement income planning in Singapore?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-life-payout-examples.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "tags": [
+        "cpf",
+        "retirement",
+        "moneysense"
+      ],
+      "hit": true,
+      "first_relevant_rank": 5,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.753853965592852,
+        0.748265299671763,
+        0.692484342097554,
+        0.711350484247303,
+        0.682794551719793
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_retirement_age_planning",
+      "question": "What CPF topics should I review when planning for retirement in Singapore?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "tags": [
+        "cpf",
+        "retirement",
+        "fire"
+      ],
+      "hit": true,
+      "first_relevant_rank": 5,
+      "matched_source_paths": [
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "similarities": [
+        0.660069971113124,
+        0.656603153985473,
+        0.670070113668679,
+        0.701205134326182,
+        0.646539969657585
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_contribution_allocation_understanding",
+      "question": "Why might my CPF contribution not all go into the same CPF account?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md"
+      ],
+      "tags": [
+        "cpf",
+        "allocation",
+        "contributions"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.587095473871338,
+        0.515130783920877,
+        0.517886555032667,
+        0.492741261658695,
+        0.480692372073603
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "mas_ssb_faq_redemption",
+      "question": "How does redeeming a Singapore Savings Bond work?",
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "redemption"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.731116291464149,
+        0.724295157053828,
+        0.70719295313904,
+        0.704720370587001
+      ],
+      "required_substrings": [
+        "redeem",
+        "no penalty"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "mas_ssb_factsheet_interest",
+      "question": "What should I know about Singapore Savings Bond interest before buying?",
+      "expected_source_paths": [
+        "manual/mas/singapore-savings-bonds.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "interest"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.759724082750989,
+        0.734844202062035,
+        0.713362805945258,
+        0.698330137226093
+      ],
+      "required_substrings": [
+        "step-up"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "mas_ssb_safe_cash_allocation",
+      "question": "Are Singapore Savings Bonds useful for lower-risk cash allocation?",
+      "expected_source_paths": [
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "investing"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "similarities": [
+        0.660104266098874,
+        0.669323225088676,
+        0.718349610511485,
+        0.713294270267536,
+        0.629408889507848
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "mas_ssb_application_basics",
+      "question": "What are the basics of applying for Singapore Savings Bonds?",
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "application"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.734805117073181,
+        0.75079605745924,
+        0.732305141838786,
+        0.695875876533943
+      ],
+      "required_substrings": [
+        "CDP",
+        "$500"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "mas_ssb_vs_general_investing",
+      "question": "How are Singapore Savings Bonds different from equity investing?",
+      "expected_source_paths": [
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "equities"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.736041495882969,
+        0.714923022413408,
+        0.74781932991074,
+        0.697517184511998
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "moneysense_basic_financial_planning_steps",
+      "question": "What basic steps does MoneySense recommend for financial planning?",
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "tags": [
+        "moneysense",
+        "planning",
+        "basics"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.589204526846201,
+        0.569032445744225,
+        0.499138874232945,
+        0.493175070619564,
+        0.485445574164353
+      ],
+      "required_substrings": [
+        "3 to 6 months",
+        "15%",
+        "10%"
+      ],
+      "substring_hits": [
+        true,
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "moneysense_financial_planning_faq",
+      "question": "Where can I find frequently asked questions about basic financial planning in Singapore?",
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "tags": [
+        "moneysense",
+        "planning",
+        "faq"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.680429284361051,
+        0.635665472489454,
+        0.635983770994594,
+        0.617235901631605,
+        0.584914117614888
+      ],
+      "required_substrings": [
+        "rules of thumb"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "moneysense_retirement_booklet",
+      "question": "What does MoneySense say about preparing for retirement?",
+      "expected_source_paths": [
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "tags": [
+        "moneysense",
+        "retirement"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/sources/fire-path-lion.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/sources/fire-path-lion.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "similarities": [
+        0.559063514420544,
+        0.521263569313308,
+        0.516951127287679,
+        0.519590215777526,
+        0.517428719000247
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "moneysense_emergency_fund",
+      "question": "How should I think about an emergency fund before investing?",
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "tags": [
+        "moneysense",
+        "emergency-fund",
+        "investing"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "similarities": [
+        0.63062650877238,
+        0.46794123704077,
+        0.444187856141168,
+        0.435092743421231,
+        0.434047921796499
+      ],
+      "required_substrings": [
+        "3 to 6 months"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "moneysense_insurance_before_investing",
+      "question": "Why does basic financial planning include insurance before wealth building?",
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "tags": [
+        "moneysense",
+        "insurance",
+        "planning"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/dr-wealth.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/dr-wealth.md"
+      ],
+      "similarities": [
+        0.51800174168742,
+        0.528234391858066,
+        0.448480862722128,
+        0.444778183207365,
+        0.428728128725257
+      ],
+      "required_substrings": [
+        "9x annual income"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "iras_tax_relief_individuals",
+      "question": "What individual income tax relief information is available from IRAS?",
+      "expected_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "tags": [
+        "iras",
+        "tax",
+        "relief"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/tree-of-wealth.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/tree-of-wealth.md"
+      ],
+      "similarities": [
+        0.704315119069194,
+        0.570579169963808,
+        0.519276861505587,
+        0.536926070388329,
+        0.483391929233919
+      ],
+      "required_substrings": [
+        "$80,000"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "iras_tax_relief_retirement_planning",
+      "question": "How do tax reliefs relate to retirement planning in Singapore?",
+      "expected_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "tags": [
+        "iras",
+        "tax",
+        "retirement"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.642435282497256,
+        0.60116260223114,
+        0.585084360336815,
+        0.559318185254518,
+        0.596612645535512
+      ],
+      "required_substrings": [
+        "$80,000"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "iras_relief_personal_finance",
+      "question": "Which source should I consult for Singapore individual tax relief rules?",
+      "expected_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "tags": [
+        "iras",
+        "tax",
+        "rules"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/finsight-sg.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/finsight-sg.md"
+      ],
+      "similarities": [
+        0.595843789701452,
+        0.594992876824767,
+        0.605913583528037,
+        0.564835331896649,
+        0.555702883948294
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_number_singapore",
+      "question": "How do I think about my FIRE number in Singapore?",
+      "expected_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "tags": [
+        "fire",
+        "planning",
+        "singapore"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/the-financial-coconut.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/the-financial-coconut.md"
+      ],
+      "similarities": [
+        0.79109806187525,
+        0.769697766851552,
+        0.754940898185748,
+        0.450290616789032
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_with_cpf",
+      "question": "How should CPF be considered in a Singapore FIRE plan?",
+      "expected_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "fire",
+        "cpf",
+        "retirement"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.728359977737926,
+        0.687743074529497,
+        0.704538981429561,
+        0.389981146923427,
+        0.528681428892781
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_expense_tracking",
+      "question": "Why is expense tracking important for FIRE planning?",
+      "expected_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "tags": [
+        "fire",
+        "expenses",
+        "planning"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/fire-path-lion.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/fire-path-lion.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.573702123766829,
+        0.522933753698346,
+        0.532597863966811,
+        0.520420730945475,
+        0.551523916780062
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_with_safe_assets",
+      "question": "How might lower-risk assets fit into a FIRE portfolio in Singapore?",
+      "expected_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/mas/singapore-savings-bonds.md"
+      ],
+      "tags": [
+        "fire",
+        "ssb",
+        "portfolio"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/the-financial-coconut.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/the-financial-coconut.md"
+      ],
+      "similarities": [
+        0.719160722769545,
+        0.756417418731847,
+        0.657356654727538,
+        0.63698742550647,
+        0.445172830224376
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "singapore_investing_basics",
+      "question": "What are sensible investing basics for someone in Singapore?",
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "tags": [
+        "investing",
+        "singapore",
+        "basics"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "similarities": [
+        0.717492538565118,
+        0.584105948634593,
+        0.608843931011829,
+        0.614394821495635,
+        0.522860586798949
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "singapore_investing_etfs",
+      "question": "How should a Singapore investor think about ETFs?",
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "tags": [
+        "investing",
+        "etf",
+        "singapore"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "similarities": [
+        0.63580576211238,
+        0.621657917592469,
+        0.521093665504365,
+        0.518653088560996,
+        0.506845038552206
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "singapore_investing_order_of_operations",
+      "question": "What order should I consider for saving, CPF, insurance, and investing?",
+      "expected_source_paths": [
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "tags": [
+        "investing",
+        "cpf",
+        "planning"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-investment-products.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.596869397049396,
+        0.620509256018447,
+        0.572185702513921,
+        0.538179966297539,
+        0.556036134159755
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_deterministic_projection_vs_monte_carlo",
+      "question": "How is a deterministic FIRE projection different from a Monte Carlo simulation?",
+      "expected_source_paths": [
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/sg-fire-planner-repository.md",
+        "manual/fire/sources/tree-of-wealth.md"
+      ],
+      "tags": [
+        "fire",
+        "projection",
+        "monte-carlo"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/sources/tree-of-wealth.md",
+        "manual/fire/sources/sg-fire-planner-repository.md",
+        "manual/fire/sources/sg-fire-planner.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/sources/tree-of-wealth.md",
+        "manual/fire/sources/sg-fire-planner-repository.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/sources/tree-of-wealth.md",
+        "manual/fire/sources/sg-fire-planner-repository.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "similarities": [
+        0.600473270970528,
+        0.611477304386796,
+        0.558640625428456,
+        0.532965300911071,
+        0.491204510716422
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_early_retirement_cpf_bridge",
+      "question": "Why does someone retiring early in Singapore need a liquid bridge before CPF LIFE starts?",
+      "expected_source_paths": [
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/sources/finsight-sg.md"
+      ],
+      "tags": [
+        "fire",
+        "cpf-life",
+        "bridge"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/retirecan.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/fire-planning-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "similarities": [
+        0.748738431447877,
+        0.683708549193589,
+        0.647799429910009,
+        0.597671586800488,
+        0.624124903291524
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_expense_categories_partial_milestones",
+      "question": "How can expense categories be turned into partial FIRE milestones without double counting my portfolio?",
+      "expected_source_paths": [
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/sources/fire-path-lion.md"
+      ],
+      "tags": [
+        "fire",
+        "expenses",
+        "milestones"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/sources/fire-path-lion.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/fire/sources/fire-path-lion.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/fire/sources/fire-path-lion.md"
+      ],
+      "similarities": [
+        0.66455679324269,
+        0.547286782360308,
+        0.548842777711665,
+        0.517051542340446,
+        0.575382889650511
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_historical_backtesting_limitations",
+      "question": "Why does a 100 percent success rate in historical FIRE backtesting not guarantee future success?",
+      "expected_source_paths": [
+        "manual/fire/sources/fi-calc.md",
+        "manual/fire/sources/sg-fire-planner.md"
+      ],
+      "tags": [
+        "fire",
+        "backtesting",
+        "limitations"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/fi-calc.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/sources/fi-calc.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/fire/sources/the-financial-coconut.md",
+        "manual/fire/sources/fi-calc.md"
+      ],
+      "similarities": [
+        0.558383654205855,
+        0.510377537351346,
+        0.527086689833472,
+        0.466910440226665,
+        0.547270661825722
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "fire_target_vs_retirement_drawdown",
+      "question": "What is the difference between a FIRE target and a retirement drawdown simulation?",
+      "expected_source_paths": [
+        "manual/fire/sources/fi-calc.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/sources/tree-of-wealth.md"
+      ],
+      "tags": [
+        "fire",
+        "target",
+        "drawdown"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/sources/fi-calc.md",
+        "manual/fire/sources/tree-of-wealth.md",
+        "manual/fire/sources/retirecan.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/sources/fi-calc.md",
+        "manual/fire/sources/tree-of-wealth.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/sources/fi-calc.md",
+        "manual/fire/sources/tree-of-wealth.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "similarities": [
+        0.652479820562811,
+        0.621810922487136,
+        0.573037936106737,
+        0.582586609942688,
+        0.556536488645688
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "ember_starter_cpf_rates_by_age",
+      "question": "What are the CPF contribution rates for 2026, and how do they vary by age?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "tags": [
+        "ember-starter",
+        "cpf",
+        "contributions",
+        "2026"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/cpf/cpf-interest-rates.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/cpf/cpf-interest-rates.md"
+      ],
+      "similarities": [
+        0.72736699551578,
+        0.715728017747811,
+        0.626063297087414,
+        0.618250784849965,
+        0.601274686917384
+      ],
+      "required_substrings": [
+        "Above 55 to 60",
+        "34%",
+        "12.5%"
+      ],
+      "substring_hits": [
+        true,
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "ember_starter_retirement_sums",
+      "question": "How do the Basic, Full, and Enhanced Retirement Sums differ?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "ember-starter",
+        "cpf",
+        "retirement-sums"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "similarities": [
+        0.68746016972102,
+        0.515035864602235,
+        0.492333601244414,
+        0.472518051028952,
+        0.497265103293929
+      ],
+      "required_substrings": [
+        "Full Retirement Sum",
+        "Enhanced Retirement Sum"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "ember_starter_savings_bonds",
+      "question": "How do Singapore Savings Bonds work, and what should I understand before applying?",
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md"
+      ],
+      "tags": [
+        "ember-starter",
+        "mas",
+        "ssb",
+        "application"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.713187825329267,
+        0.758669885864585,
+        0.735830496682117,
+        0.719330062934264
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "ember_starter_fire_before_55",
+      "question": "What should a Singapore FIRE plan consider before age 55?",
+      "expected_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "tags": [
+        "ember-starter",
+        "fire",
+        "cpf",
+        "liquidity"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+      ],
+      "similarities": [
+        0.800778353153494,
+        0.739335524056095,
+        0.719143534906042,
+        0.58617525262642
+      ],
+      "required_substrings": [],
+      "substring_hits": [],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_frs_2026_exact",
+      "question": "What is the Full Retirement Sum for someone turning 55 in 2026?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "cpf",
+        "retirement-sums",
+        "2026",
+        "exact-figure"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "similarities": [
+        0.698222249631003,
+        0.570213628718682,
+        0.487165812182049,
+        0.461518129135615,
+        0.543036705633141
+      ],
+      "required_substrings": [
+        "$220,400",
+        "2026"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_ers_2025_rule_change",
+      "question": "Why did the Enhanced Retirement Sum jump in 2025?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "cpf",
+        "retirement-sums",
+        "ers"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.648340750569471,
+        0.508797778091989,
+        0.558128672305079,
+        0.502156766349157,
+        0.505416824416739
+      ],
+      "required_substrings": [
+        "1 January 2025",
+        "$426,000"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_ow_ceiling_2026",
+      "question": "What is the CPF Ordinary Wage ceiling in 2026?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "tags": [
+        "cpf",
+        "contributions",
+        "ceiling",
+        "exact-figure"
+      ],
+      "hit": true,
+      "first_relevant_rank": 2,
+      "matched_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.744660926877143,
+        0.662187081942271,
+        0.586099024494395,
+        0.552680548011205,
+        0.558412718247735
+      ],
+      "required_substrings": [
+        "$8,000"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "multi_turn_cpf_rates_over_60",
+      "question": "And for someone above 60?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "tags": [
+        "multi-turn",
+        "cpf",
+        "contributions"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/sources/sg-fire-planner.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/sources/sg-fire-planner.md"
+      ],
+      "similarities": [
+        0.764929095947257,
+        0.693660162373965,
+        0.648886072120791,
+        0.628178416785151,
+        0.613030394767534
+      ],
+      "required_substrings": [
+        "Above 60 to 65",
+        "25%"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": "What are the CPF contribution rates for employees in Singapore who are above 60 years old in 2026?"
+    },
+    {
+      "id": "multi_turn_ssb_redeem_early",
+      "question": "Can I get out of it early?",
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md"
+      ],
+      "tags": [
+        "multi-turn",
+        "mas",
+        "ssb",
+        "redemption"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.76084347405593,
+        0.73506559252534,
+        0.713553602069399,
+        0.712848780478728
+      ],
+      "required_substrings": [
+        "redeem"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": "How do Singapore Savings Bonds work and can I redeem them early?"
+    },
+    {
+      "id": "multi_turn_frs_next_year",
+      "question": "What about next year?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "multi-turn",
+        "cpf",
+        "retirement-sums"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/finsight-sg.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/sources/sg-fire-planner.md",
+        "manual/fire/sources/finsight-sg.md"
+      ],
+      "similarities": [
+        0.722212842512063,
+        0.630372792989343,
+        0.580311540973682,
+        0.618400279619906,
+        0.610581413928629
+      ],
+      "required_substrings": [
+        "2027",
+        "$228,200"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": "What is the Full Retirement Sum (FRS) for Singapore in 2027?"
+    },
+    {
+      "id": "mas_ssb_faq_minimum_and_limit",
+      "question": "What is the minimum amount I can invest in Singapore Savings Bonds and the most I can hold?",
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "limits",
+        "faq-structure"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "similarities": [
+        0.810485838099702,
+        0.800751210923312,
+        0.725562933009561,
+        0.686507544133072,
+        0.657900094247317
+      ],
+      "required_substrings": [
+        "$500",
+        "$200,000"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "mas_ssb_faq_age_requirement",
+      "question": "How old must I be to buy Singapore Savings Bonds?",
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "eligibility",
+        "faq-structure"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "manual/mas/singapore-savings-bonds.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.680915757368263,
+        0.65176900536144,
+        0.666906791828884,
+        0.600384474949232
+      ],
+      "required_substrings": [
+        "18 years old"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "mas_ssb_faq_dcs_application",
+      "question": "How do I apply for the CDP Direct Crediting Service for Savings Bonds?",
+      "expected_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "tags": [
+        "mas",
+        "ssb",
+        "dcs",
+        "faq-structure"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+      ],
+      "similarities": [
+        0.696867994069804
+      ],
+      "required_substrings": [
+        "Direct Crediting Service",
+        "CDP Internet"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "moneysense_faq_cpf_as_emergency_fund",
+      "question": "Can I use my CPF savings as my emergency fund?",
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "tags": [
+        "moneysense",
+        "cpf",
+        "emergency-fund",
+        "faq-structure"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "markdown-cache/mas/singapore-savings-bonds-faqs.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "similarities": [
+        0.771426927282597,
+        0.571026133145699,
+        0.525245132342298,
+        0.529709341862366,
+        0.508171057798882
+      ],
+      "required_substrings": [
+        "conditions tied to the use of your CPF"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "moneysense_faq_insurance_coverage_multiples",
+      "question": "How much death and critical illness cover does the MoneySense guide suggest as a multiple of income?",
+      "expected_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "tags": [
+        "moneysense",
+        "insurance",
+        "faq-structure"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md"
+      ],
+      "retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/sources/fire-path-lion.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "manual/fire/sources/fire-path-lion.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.681697170694489,
+        0.559411722804743,
+        0.459169936866485,
+        0.456249225873386,
+        0.455605495429575
+      ],
+      "required_substrings": [
+        "9x annual income",
+        "4x annual income"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_frs_unqualified_current_year",
+      "question": "What is the CPF Full Retirement Sum?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "cpf",
+        "retirement-sums",
+        "undated",
+        "recency"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/FIRE.md",
+        "manual/fire/sources/finsight-sg.md",
+        "manual/fire/sources/dr-wealth.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "similarities": [
+        0.694559490932862,
+        0.614682069618509,
+        0.601518566276971,
+        0.595412345297269,
+        0.594556549204022
+      ],
+      "required_substrings": [
+        "$220,400",
+        "2026"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_frs_past_year_2024",
+      "question": "What was the Full Retirement Sum in 2024?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "tags": [
+        "cpf",
+        "retirement-sums",
+        "past-year",
+        "recency"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-retirement-sums.md",
+        "markdown-cache/moneysense/retirement-booklet-english-2024.md",
+        "manual/cpf/cpf-healthcare-sums.md",
+        "manual/fire/sources/retirecan.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.63762977099525,
+        0.486155787067293,
+        0.514402120013282,
+        0.462574376977046,
+        0.5054371614014
+      ],
+      "required_substrings": [
+        "$205,800",
+        "2024"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "iras_personal_relief_cap_currency",
+      "question": "Is there a cap on the total personal income tax relief I can claim?",
+      "expected_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "tags": [
+        "iras",
+        "relief",
+        "recency"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md",
+        "manual/fire/fire-planning-singapore.md"
+      ],
+      "similarities": [
+        0.749619155445127,
+        0.353234488018119,
+        0.371834616240923,
+        0.328126451464079,
+        0.326645340236388
+      ],
+      "required_substrings": [
+        "$80,000"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_basic_healthcare_sum_current",
+      "question": "What is the Basic Healthcare Sum?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-healthcare-sums.md"
+      ],
+      "tags": [
+        "cpf",
+        "medisave",
+        "bhs",
+        "recency"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-healthcare-sums.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-healthcare-sums.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-healthcare-sums.md",
+        "manual/cpf/cpf-retirement-sums.md",
+        "manual/fire/fire-planning-singapore.md",
+        "manual/fire/FIRE.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+      ],
+      "similarities": [
+        0.687571321205933,
+        0.425638225933436,
+        0.422597219889157,
+        0.398242794842975,
+        0.393190974166752
+      ],
+      "required_substrings": [
+        "$79,000",
+        "2026"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_interest_rates_by_account",
+      "question": "What interest do CPF Ordinary and Special Accounts earn?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-interest-rates.md"
+      ],
+      "tags": [
+        "cpf",
+        "interest"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-interest-rates.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-interest-rates.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-interest-rates.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/investing/investing-in-singapore.md"
+      ],
+      "similarities": [
+        0.660192420983099,
+        0.656721821225897,
+        0.549646179729455,
+        0.535369810459507,
+        0.526101907203395
+      ],
+      "required_substrings": [
+        "2.5%",
+        "4%"
+      ],
+      "substring_hits": [
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_extra_interest_tiers",
+      "question": "How much extra interest do CPF members aged 55 and above earn on their combined balances?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-interest-rates.md"
+      ],
+      "tags": [
+        "cpf",
+        "interest",
+        "extra-interest"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-interest-rates.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-interest-rates.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-interest-rates.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md",
+        "manual/fire/FIRE.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-life-payout-examples.md"
+      ],
+      "similarities": [
+        0.794573769696971,
+        0.686462993476602,
+        0.628483774787911,
+        0.64041508864051,
+        0.627895611480013
+      ],
+      "required_substrings": [
+        "2%",
+        "$30,000",
+        "$20,000"
+      ],
+      "substring_hits": [
+        true,
+        true,
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "cpf_additional_wage_ceiling_formula",
+      "question": "How is the CPF Additional Wage ceiling calculated?",
+      "expected_source_paths": [
+        "manual/cpf/cpf-wage-ceilings-and-limits.md"
+      ],
+      "tags": [
+        "cpf",
+        "wage-ceiling"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/cpf/cpf-wage-ceilings-and-limits.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-interest-rates.md",
+        "manual/fire/FIRE.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/cpf/cpf-wage-ceilings-and-limits.md",
+        "manual/cpf/cpf-contribution-rates-2026.md",
+        "manual/cpf/cpf-allocation-rates-2026.md",
+        "manual/cpf/cpf-interest-rates.md",
+        "manual/fire/FIRE.md"
+      ],
+      "similarities": [
+        0.765010505291865,
+        0.656502031860158,
+        0.56181780232594,
+        0.531242133446394,
+        0.52577733401826
+      ],
+      "required_substrings": [
+        "$102,000"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    },
+    {
+      "id": "iras_cpf_cash_topup_relief",
+      "question": "How much tax relief can I get for CPF cash top-ups?",
+      "expected_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "tags": [
+        "iras",
+        "relief",
+        "cpf",
+        "recency"
+      ],
+      "hit": true,
+      "first_relevant_rank": 1,
+      "matched_source_paths": [
+        "manual/iras/tax-reliefs.md"
+      ],
+      "retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "unique_retrieved_source_paths": [
+        "manual/iras/tax-reliefs.md",
+        "manual/fire/FIRE.md",
+        "manual/investing/investing-in-singapore.md",
+        "markdown-cache/moneysense/basic-financial-planning-guide.md",
+        "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+      ],
+      "similarities": [
+        0.726313707492697,
+        0.634781755338906,
+        0.503880616821545,
+        0.503407733988423,
+        0.543712415401443
+      ],
+      "required_substrings": [
+        "$8,000"
+      ],
+      "substring_hits": [
+        true
+      ],
+      "retrieval_query": null
+    }
+  ],
+  "report_version": 16,
+  "report_label": "Current SSB terms supersede the 2019 factsheet"
+}

@@ -68,6 +68,25 @@ describe('AddExpense', () => {
     expect(document.activeElement).toBe(screen.getByPlaceholderText('Netflix'));
   });
 
+  it('asks Android for a decimal keypad on the amount and keeps the save action reachable', () => {
+    render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+
+    expect(screen.getByPlaceholderText('0.00').getAttribute('inputmode')).toBe('decimal');
+    expect(screen.getByPlaceholderText('Netflix').getAttribute('enterkeyhint')).toBe('next');
+
+    // The save button sits in the sticky footer, not at the end of the scrolling form.
+    const save = screen.getByRole('button', { name: 'Save transaction' });
+    expect(save.closest('.sticky-form-footer')).not.toBeNull();
+    expect(document.querySelector('.add-panel .sheet-handle')).not.toBeNull();
+  });
+
+  it('holds the page still while the add sheet is open', () => {
+    const { unmount } = render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+    expect(document.body.style.position).toBe('fixed');
+    unmount();
+    expect(document.body.style.position).toBe('');
+  });
+
   it('creates and attaches an inline tag before saving', async () => {
     mocks.addTag.mockResolvedValue({ id: 'tax-tag', userId: 'user', name: 'Tax', usageCount: 0, createdAt: '', updatedAt: '' });
     render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);

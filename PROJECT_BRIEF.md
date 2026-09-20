@@ -243,11 +243,13 @@ Current:
 - Ember requests may include bounded interface context: the current route label and up to five generic action labels from the current browser session. This context never includes amounts, descriptions, account names, or record IDs, and is used only to tailor answer emphasis.
 - Ember opens with an empty transcript and supported starter questions. It streams search status, grounded answer text, and citations without automatically submitting a starter or greeting the user.
 - Ember uses one structured planning call to select a fixed read-only expense summary, spending comparison, financial summary, FIRE projection, financial health review, curated finance RAG, or a hybrid of data and RAG. FastAPI injects the authenticated user ID, tools scope every query to that ID, and only aggregate tool results can enter the answer prompt.
+- Knowledge answers that would benefit from the user's own numbers (emergency fund sizing, savings rate, FIRE timeline, retirement adequacy, budgeting) attach a bounded aggregate snapshot built from one `build_financial_summary` call and return mode `hybrid` with a `personal_context` evidence entry. The snapshot holds aggregates and the deterministic recommended action only; never transactions, descriptions, or identifiers.
 - Ember can explain saved deterministic personal results but cannot change records, generate SQL, run an iterative tool loop, retrieve live prices, or provide regulated financial advice.
 - Authenticated category suggestions at `POST /ai/parse-input`, limited to 10 requests per user per 60 seconds by default
 - Knowledge base under `apps/backend/rag/knowledge-base/`
 - Ingestion script under `apps/backend/rag/Implementation/ingest.py`
 - Retrieval helper under `apps/backend/rag/retrieval.py`, using keyword and vector reciprocal rank fusion
+- Source review and publication dates in the generated `apps/backend/rag/source-metadata.json`, surfaced to the answer model as an `As of` line per citation so a stale source loses to a fresher one
 - Supabase pgvector schema in `supabase/migrations/20260702161557_rag_pgvector.sql`
 - HNSW and private hybrid retrieval migrations in `supabase/migrations/20260814051717_replace_rag_ivfflat_with_hnsw.sql` and `supabase/migrations/20260814052904_add_private_hybrid_rag_retrieval.sql`
 - Versioned evaluation reports that preserve each major run instead of overwriting its historical result

@@ -79,10 +79,10 @@ Workflow notes:
 
 - The app workflow covers auth, account CRUD, typed income and expense transaction CRUD, custom category CRUD, and screen refreshes.
 - The RAG ingestion workflow is offline and separate from normal user actions.
-- Ember uses the private `hybrid_match_rag_chunks` RPC and does not inspect or write user account and transaction data.
+- Ember uses the private `hybrid_match_rag_chunks` RPC for curated sources and, through server-selected read-only tools, explains bounded aggregates calculated from the signed-in user's own records. Knowledge answers about emergency funds, savings rates, FIRE progress, or budgeting attach the user's aggregate snapshot so the guidance is applied to their numbers. Ember never writes data and never places raw transactions or descriptions in a prompt.
 - New Ember topics open with starter questions and an empty transcript. A starter fills the composer but never sends automatically.
 - The user-facing guide currently covers CPF, CPFIS, Singapore Savings Bonds, MoneySense, IRAS reliefs, Singapore investing basics, and FIRE planning. The internal `financial-advisor` route name remains only for compatibility.
-- Budgets beyond current category limits, goals, recurring tools, personal FIRE calculations, account inspection by Ember, and regulated advice remain later work.
+- Budgets beyond current category limits, goals, recurring tools, and regulated advice remain later work.
 
 ## Important Class Diagrams
 

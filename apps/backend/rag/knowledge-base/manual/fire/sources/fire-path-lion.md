@@ -4,6 +4,7 @@ source_url: https://www.firepathlion.com/detail-of-my-planned-expenses-revising-
 agency: FIRE Path Lion
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # FIRE Path Lion on itemised retirement spending

@@ -143,3 +143,27 @@
 .card-list .transaction-card {
   padding: 10px 0;
 }
+
+/* Phones -------------------------------------------------------------------- */
+
+@media (max-width: 479.98px) {
+  /* Four equal segments fit at 360px; a content-sized track does not. */
+  .range-tabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .range-tabs button {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: 599px) {
+  .insights-spending-heading {
+    text-align: left;
+  }
+
+  .insights-spending-heading select {
+    width: 100%;
+  }
+}

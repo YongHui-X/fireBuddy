@@ -21,13 +21,16 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import type { RagChatSource } from '@firebuddy/shared';
+import type { RagChatSource, RagDataEvidence } from '@firebuddy/shared';
 
 import { ApiRequestError, streamFinancialAdvisor } from '../api';
 import { EmberMark } from '../app/BrandMarks';
 import { formatEmberConversationMarkdown, getEmberExportFilename } from '../app/emberExport';
 import { buildEmberAppContext } from '../app/emberAppContext';
+import { EmberRichText } from '../app/emberRichText';
 import { useFireBuddy } from '../app/FireBuddyProvider';
+import { mq } from '../app/breakpoints';
+import { useMediaQuery } from '../app/useMediaQuery';
 import { getEmberSuggestedQuestions } from '../app/emberSuggestions';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';
 import {
@@ -75,108 +78,13 @@ const starterPrompts = [
     question: 'How do Singapore Savings Bonds work, and what should I understand before applying?',
   },
   {
-    title: 'Plan around FIRE',
-    description: 'Review the concepts a Singapore-based plan should consider.',
-    question: 'What should a Singapore FIRE plan consider before age 55?',
+    title: 'Size my emergency fund',
+    description: 'Apply the MoneySense guideline to your recorded essential spending and runway.',
+    question: 'Is my emergency fund large enough compared with MoneySense guidance?',
   },
 ];
 
-type RichTextBlock =
-  | { type: 'heading'; level: number; text: string }
-  | { type: 'paragraph'; text: string }
-  | { type: 'unordered-list'; items: string[] }
-  | { type: 'ordered-list'; items: string[] };
-
-/** Parse a small, safe subset of answer formatting without evaluating HTML. */
-function parseRichText(content: string): RichTextBlock[] {
-  const lines = content.replace(/\r\n/g, '\n').split('\n');
-  const blocks: RichTextBlock[] = [];
-  let paragraphLines: string[] = [];
-
-  function flushParagraph() {
-    if (paragraphLines.length > 0) {
-      blocks.push({ type: 'paragraph', text: paragraphLines.join(' ').trim() });
-      paragraphLines = [];
-    }
-  }
-
-  for (let index = 0; index < lines.length;) {
-    const line = lines[index].trim();
-    if (!line) {
-      flushParagraph();
-      index += 1;
-      continue;
-    }
-
-    const heading = /^(#{1,3})\s+(.+)$/.exec(line);
-    if (heading) {
-      flushParagraph();
-      blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] });
-      index += 1;
-      continue;
-    }
-
-    const unorderedItem = /^[-*]\s+(.+)$/.exec(line);
-    if (unorderedItem) {
-      flushParagraph();
-      const items: string[] = [];
-      while (index < lines.length) {
-        const match = /^[-*]\s+(.+)$/.exec(lines[index].trim());
-        if (!match) {
-          break;
-        }
-        items.push(match[1]);
-        index += 1;
-      }
-      blocks.push({ type: 'unordered-list', items });
-      continue;
-    }
-
-    const orderedItem = /^\d+[.)]\s+(.+)$/.exec(line);
-    if (orderedItem) {
-      flushParagraph();
-      const items: string[] = [];
-      while (index < lines.length) {
-        const match = /^\d+[.)]\s+(.+)$/.exec(lines[index].trim());
-        if (!match) {
-          break;
-        }
-        items.push(match[1]);
-        index += 1;
-      }
-      blocks.push({ type: 'ordered-list', items });
-      continue;
-    }
-
-    paragraphLines.push(line);
-    index += 1;
-  }
-
-  flushParagraph();
-  return blocks;
-}
-
-/** Render headings, paragraphs, and lists as React text nodes so raw HTML stays inert. */
-export function EmberRichText({ content }: { content: string }) {
-  return (
-    <div className="ember-rich-text">
-      {parseRichText(content).map((block, index) => {
-        const key = `${block.type}-${index}`;
-        if (block.type === 'heading') {
-          const Heading = `h${Math.min(block.level + 2, 5)}` as 'h3' | 'h4' | 'h5';
-          return <Heading key={key}>{block.text}</Heading>;
-        }
-        if (block.type === 'unordered-list') {
-          return <ul key={key}>{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}</ul>;
-        }
-        if (block.type === 'ordered-list') {
-          return <ol key={key}>{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}</ol>;
-        }
-        return <p key={key}>{block.text}</p>;
-      })}
-    </div>
-  );
-}
+export { EmberRichText };
 
 function normalizeResponseSources(sources: RagChatSource[]): EmberSource[] {
   return sources.flatMap((source) => {
@@ -250,14 +158,6 @@ async function writeClipboardText(content: string): Promise<void> {
   }
 }
 
-/** Keep history inline on wide workspaces and closed as a drawer elsewhere. */
-function isWideHistoryLayout(): boolean {
-  if (typeof window === 'undefined') {
-    return true;
-  }
-  return window.innerWidth >= 1180;
-}
-
 function SourceList({ sources }: { sources: EmberSource[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const visibleSources = isExpanded ? sources : sources.slice(0, 2);
@@ -304,9 +204,12 @@ function DataEvidence({ message }: { message: EmberMessage }) {
   const recordCopy = evidence.record_count === null
     ? ''
     : ` | ${evidence.record_count} matching ${evidence.record_count === 1 ? 'record' : 'records'}`;
+  const evidenceCopy = evidence.tool === 'personal_context'
+    ? 'Tailored to your FireBuddy data'
+    : 'Calculated from your FireBuddy data';
   return (
     <a className="ember-data-evidence" href={evidence.destination}>
-      <span>Calculated from your FireBuddy data</span>
+      <span>{evidenceCopy}</span>
       <strong>{evidence.label}</strong>
       <small>{evidence.period}{recordCopy}</small>
     </a>
@@ -421,12 +324,15 @@ export default function Ember({
   const [question, setQuestion] = useState('');
   const [isAsking, setIsAsking] = useState(false);
   const [historyQuery, setHistoryQuery] = useState('');
-  const [isCompactHistory, setIsCompactHistory] = useState(() => !isWideHistoryLayout());
-  const [isHistoryOpen, setIsHistoryOpen] = useState(isWideHistoryLayout);
+  // History is an inline rail on a wide workspace and a drawer everywhere else.
+  const isWideHistory = useMediaQuery(mq.emberWide);
+  const [isCompactHistory, setIsCompactHistory] = useState(() => !isWideHistory);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(isWideHistory);
   const [requestStatus, setRequestStatus] = useState<'ready' | 'searching' | 'preparing' | 'error'>('ready');
   const [topicPendingDeletion, setTopicPendingDeletion] = useState<EmberTopic | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<{ messageId: string; status: 'copied' | 'error' } | null>(null);
-  const requestInFlightRef = useRef(false);
+  // Several questions may stream at once; each keeps its own assistant message.
+  const activeRequestCountRef = useRef(0);
   const copyFeedbackTimerRef = useRef<number | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const responseStartElementRef = useRef<HTMLElement | null>(null);
@@ -449,7 +355,7 @@ export default function Ember({
       ? topics.filter((topic) => topic.title.toLocaleLowerCase('en-SG').includes(normalizedQuery))
       : topics;
   }, [historyQuery, topics]);
-  const canSend = question.trim().length > 0 && question.length <= MAX_QUESTION_LENGTH && !isAsking;
+  const canSend = question.trim().length > 0 && question.length <= MAX_QUESTION_LENGTH;
   const canExportConversation = activeTopic.messages.some((message) => !message.error && message.content.trim())
     && !isAsking
     && activeTopic.messages.every((message) => message.status === 'complete');
@@ -479,16 +385,9 @@ export default function Ember({
   }, [activeTopicId, storageUserId]);
 
   useEffect(() => {
-    /** Move history between an inline rail and a closed drawer at the layout breakpoint. */
-    function syncHistoryLayout() {
-      const isWide = isWideHistoryLayout();
-      setIsCompactHistory(!isWide);
-      setIsHistoryOpen(isWide);
-    }
-
-    window.addEventListener('resize', syncHistoryLayout);
-    return () => window.removeEventListener('resize', syncHistoryLayout);
-  }, []);
+    setIsCompactHistory(!isWideHistory);
+    setIsHistoryOpen(isWideHistory);
+  }, [isWideHistory]);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -608,7 +507,7 @@ export default function Ember({
   /** Submit one question and update its stable assistant message as SSE events arrive. */
   async function submitQuestion(rawQuestion: string, retryError?: EmberMessage) {
     const trimmedQuestion = rawQuestion.trim();
-    if (!trimmedQuestion || trimmedQuestion.length > MAX_QUESTION_LENGTH || requestInFlightRef.current) {
+    if (!trimmedQuestion || trimmedQuestion.length > MAX_QUESTION_LENGTH) {
       return;
     }
 
@@ -653,11 +552,12 @@ export default function Ember({
     }));
     setResponseStartMessageId(assistantMessage.id);
 
-    requestInFlightRef.current = true;
+    activeRequestCountRef.current += 1;
     setIsAsking(true);
     setRequestStatus('searching');
     let streamedAnswer = '';
     let streamedSources: EmberSource[] = [];
+    let streamedEvidence: RagDataEvidence | null = null;
 
     try {
       const token = session?.access_token;
@@ -699,6 +599,7 @@ export default function Ember({
           }));
         },
         onEvidence: (mode, dataEvidence) => {
+          streamedEvidence = dataEvidence;
           updateTopic(topicSnapshot.id, (topic) => ({
             ...topic,
             messages: topic.messages.map((message) => message.id === assistantMessage.id
@@ -715,6 +616,7 @@ export default function Ember({
         question: trimmedQuestion,
         history: [...historyMessages, userMessage],
         sources: streamedSources,
+        dataEvidence: streamedEvidence,
       });
       updateTopic(topicSnapshot.id, (topic) => ({
         ...topic,
@@ -723,7 +625,9 @@ export default function Ember({
           : message),
         updatedAt: new Date().toISOString(),
       }));
-      setRequestStatus('ready');
+      if (activeRequestCountRef.current <= 1) {
+        setRequestStatus('ready');
+      }
     } catch (error) {
       const failure = classifyEmberFailure(error);
       updateTopic(topicSnapshot.id, (topic) => ({
@@ -743,8 +647,8 @@ export default function Ember({
       }));
       setRequestStatus('error');
     } finally {
-      requestInFlightRef.current = false;
-      setIsAsking(false);
+      activeRequestCountRef.current = Math.max(0, activeRequestCountRef.current - 1);
+      setIsAsking(activeRequestCountRef.current > 0);
     }
   }
 
@@ -908,7 +812,6 @@ export default function Ember({
                 placeholder="Ask about your spending, FIRE progress, CPF, SSBs, or IRAS reliefs"
                 maxLength={MAX_QUESTION_LENGTH}
                 rows={1}
-                disabled={isAsking}
                 aria-describedby="ember-composer-help ember-character-count"
               />
               <button type="submit" disabled={!canSend} aria-label="Send question to Ember"><ArrowUp size={18} /></button>

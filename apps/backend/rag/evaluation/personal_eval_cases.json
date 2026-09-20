@@ -1,0 +1,78 @@
+[
+  {
+    "id": "spending_this_month",
+    "question": "How much have I spent this month?",
+    "expected_modes": ["data", "hybrid"],
+    "required_facts": [{"path": "expense.total", "format": "money"}]
+  },
+  {
+    "id": "top_categories_this_month",
+    "question": "Which categories have I spent the most on this month?",
+    "expected_modes": ["data", "hybrid"],
+    "required_facts": [{"path": "expense.categoryTotals.0.category", "format": "text"}]
+  },
+  {
+    "id": "compare_with_last_month",
+    "question": "How does my spending this month compare with last month?",
+    "expected_modes": ["data", "hybrid"],
+    "required_facts": [
+      {"path": "comparison.currentPeriod.total", "format": "money"},
+      {"path": "comparison.comparisonPeriod.total", "format": "money"}
+    ]
+  },
+  {
+    "id": "net_worth_explained",
+    "question": "What is my net worth right now and how is it made up?",
+    "expected_modes": ["data", "hybrid"],
+    "required_facts": [{"path": "personal.netWorth", "format": "money"}]
+  },
+  {
+    "id": "emergency_fund_vs_moneysense",
+    "question": "Is my emergency fund large enough compared with MoneySense guidance?",
+    "expected_modes": ["hybrid", "data"],
+    "required_facts": [{"path": "personal.emergencyRunwayMonths", "format": "months"}]
+  },
+  {
+    "id": "savings_rate_vs_guidance",
+    "question": "Am I saving enough each month compared with the MoneySense 10 percent guideline?",
+    "expected_modes": ["hybrid", "data"],
+    "required_facts": [
+      {"any_of": [
+        {"path": "personal.monthlyPulse.savingsRate", "format": "rate"},
+        {"path": "personal.monthlyPulse.savingsAmount", "format": "money"}
+      ]}
+    ]
+  },
+  {
+    "id": "fire_timeline",
+    "question": "How long more to FIRE based on my current FireBuddy data?",
+    "expected_modes": ["data", "hybrid"],
+    "required_facts": [{"path": "personal.fire.fundingStatus", "format": "status"}]
+  },
+  {
+    "id": "cpf_adequacy_personalised",
+    "question": "Given my savings rate and runway, how should I think about CPF and retirement adequacy?",
+    "expected_modes": ["hybrid", "data"],
+    "required_facts": [{"path": "personal.monthlyPulse.savingsRate", "format": "rate"}]
+  },
+  {
+    "id": "next_action",
+    "question": "What is FireBuddy's suggested next step for my finances?",
+    "expected_modes": ["data", "hybrid"],
+    "required_facts": [{"path": "personal.recommendedAction.title", "format": "text_optional"}]
+  },
+  {
+    "id": "improve_my_spending",
+    "question": "How can I improve on my spending expenses?",
+    "expected_modes": ["hybrid", "data"],
+    "required_facts": [{"path": "personal.spending.currentMonth.topCategories.0.category", "format": "text"}]
+  },
+  {
+    "id": "missing_data_user",
+    "question": "How much have I spent this month?",
+    "user": "missing",
+    "expected_modes": ["data", "hybrid", "knowledge"],
+    "required_facts": [],
+    "expected_missing_data": true
+  }
+]

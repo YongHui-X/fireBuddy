@@ -31,6 +31,14 @@ FigureKey = Literal[
     "iras_personal_relief_cap",
     "ssb_individual_holding_limit",
     "cpfis_protected_balances",
+    "cpf_basic_healthcare_sum",
+    "cpf_annual_limit",
+    # The Additional Wage ceiling is deliberately not a key: it is a formula
+    # ($102,000 minus the year's Ordinary Wages), not one number, so it belongs
+    # on the knowledge path. manual/cpf/cpf-wage-ceilings-and-limits.md has it.
+    "cpf_interest_rates",
+    "cpf_extra_interest",
+    "iras_cpf_cash_topup_relief_cap",
 ]
 FIGURE_KEYS: tuple[str, ...] = FigureKey.__args__  # type: ignore[attr-defined]
 
@@ -82,7 +90,7 @@ def _format_value(value, unit: str) -> str:
         return "; ".join(parts)
     if unit == "SGD":
         return _money(value)
-    if unit == "percent of wages":
+    if unit in ("percent of wages", "percent per annum"):
         return f"{value:g}%"
     if unit == "ratio of contribution":
         return f"{value:.4f} ({value * 100:.2f}%)"

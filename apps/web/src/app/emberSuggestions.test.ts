@@ -38,6 +38,33 @@ describe('Ember suggested questions', () => {
     expect(suggestions[0]).toContain('fixed deposits');
   });
 
+  it('puts data-aware follow ups first when the answer used the user data', () => {
+    const suggestions = getEmberSuggestedQuestions({
+      question: 'Is my emergency fund large enough?',
+      history: [],
+      sources: [{ title: 'MoneySense FAQ', headline: 'Emergency funds' }],
+      dataEvidence: {
+        tool: 'personal_context', label: 'Your FireBuddy snapshot', period: '2026-09-16',
+        record_count: null, destination: '/',
+      },
+    });
+
+    expect(suggestions).toHaveLength(3);
+    expect(suggestions[0]).toContain('emergency fund');
+    expect(suggestions[1]).toContain('suggested next step');
+  });
+
+  it('ignores evidence it does not recognise', () => {
+    const suggestions = getEmberSuggestedQuestions({
+      question: 'Where should I begin?',
+      history: [],
+      sources: [],
+      dataEvidence: { tool: 'unknown_tool' as never, label: 'x', period: 'y', record_count: null, destination: '/' },
+    });
+
+    expect(suggestions).toEqual(EMBER_STARTER_QUESTIONS.slice(0, 3));
+  });
+
   it('falls back to starter prompts for an unmatched topic', () => {
     const suggestions = getEmberSuggestedQuestions({ question: 'Where should I begin?', history: [], sources: [] });
 

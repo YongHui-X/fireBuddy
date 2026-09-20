@@ -39,6 +39,10 @@ class AnswerEvaluationTests(unittest.TestCase):
             looks_like_refusal("I can only help with the Singapore personal-finance topics covered by FireBuddy.")
         )
         self.assertFalse(looks_like_refusal("CPF contribution rates are 37%."))
+        self.assertFalse(looks_like_refusal(
+            "The first S$20,000 is protected. Given your records, I do not have enough reliable "
+            "context in the FireBuddy knowledge base to say more."
+        ))
 
     def test_summary_separates_positive_quality_and_refusal_accuracy(self):
         results = [

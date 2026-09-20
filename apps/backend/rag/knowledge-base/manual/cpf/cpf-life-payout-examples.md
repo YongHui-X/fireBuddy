@@ -4,6 +4,7 @@ source_url: https://www.cpf.gov.sg/content/dam/web/member/retirement-income/docu
 agency: CPF Board
 topic: cpf-life-payout-examples
 ingest: true
+last_reviewed: 2026-09-15
 ---
 
 # CPF LIFE payout examples: savings needed at 55, 60 and 65

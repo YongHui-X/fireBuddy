@@ -9,6 +9,7 @@ import {
   subscribeToEmberAppActions,
 } from '../app/emberAppContext';
 import { EmberMark } from '../app/BrandMarks';
+import { EmberRichText } from '../app/emberRichText';
 import { useFireBuddy } from '../app/FireBuddyProvider';
 import {
   EMBER_ACTIVE_TOPIC_STORAGE_KEY,
@@ -46,7 +47,9 @@ function FloatingMessage({ message }: { message: EmberMessage }) {
   return (
     <article className={`ember-float-message ember-float-message-${message.role}`}>
       <strong>{message.role === 'user' ? 'You' : 'Ember'}</strong>
-      <p>{message.content || (message.streamStatus === 'preparing' ? 'Preparing an answer...' : 'Understanding your question...')}</p>
+      {message.content
+        ? <EmberRichText content={message.content} />
+        : <p>{message.streamStatus === 'preparing' ? 'Preparing an answer...' : 'Understanding your question...'}</p>}
       {message.dataEvidence ? (
         <a className="ember-float-evidence" href={message.dataEvidence.destination}>
           {message.dataEvidence.label} | {message.dataEvidence.period}
@@ -82,7 +85,8 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
   const [topics, setTopics] = useState<EmberTopic[]>(initialStateRef.current.topics);
   const [activeTopicId, setActiveTopicId] = useState(initialStateRef.current.activeTopicId);
   const [isOpen, setIsOpen] = useState(false);
-  const [isAsking, setIsAsking] = useState(false);
+  // Several questions may stream at once; each keeps its own assistant message.
+  const activeRequestCountRef = useRef(0);
   const [question, setQuestion] = useState('');
   const [actionRevision, setActionRevision] = useState(0);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -93,7 +97,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
   const appContext = useMemo(() => buildEmberAppContext(pathname), [actionRevision, pathname]);
   const pageSuggestion = getEmberPageSuggestion(pathname);
   const canSend = Boolean(session?.access_token) && question.trim().length > 0
-    && question.length <= MAX_QUESTION_LENGTH && !isAsking;
+    && question.length <= MAX_QUESTION_LENGTH;
 
   useEffect(() => subscribeToEmberAppActions(() => setActionRevision((current) => current + 1)), []);
 
@@ -163,7 +167,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
   async function submitQuestion(rawQuestion: string) {
     const trimmedQuestion = rawQuestion.trim();
     const topicSnapshot = topics.find((topic) => topic.id === activeTopicId);
-    if (!trimmedQuestion || !topicSnapshot || !session?.access_token || isAsking) {
+    if (!trimmedQuestion || !topicSnapshot || !session?.access_token) {
       return;
     }
 
@@ -176,7 +180,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
       updatedAt: assistantMessage.createdAt,
     }));
     setQuestion('');
-    setIsAsking(true);
+    activeRequestCountRef.current += 1;
     let answer = '';
     let sources: EmberSource[] = [];
     window.setTimeout(() => {
@@ -253,7 +257,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
           : message),
       }));
     } finally {
-      setIsAsking(false);
+      activeRequestCountRef.current = Math.max(0, activeRequestCountRef.current - 1);
     }
   }
 
@@ -316,7 +320,6 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
                 onKeyDown={handleKeyDown}
                 maxLength={MAX_QUESTION_LENGTH}
                 rows={2}
-                disabled={isAsking}
                 placeholder="Ask Ember a question"
               />
               <button type="submit" disabled={!canSend} aria-label="Send question to Ember"><ArrowUp size={17} /></button>

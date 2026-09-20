@@ -16,11 +16,11 @@ function position(id: string, kind: 'asset' | 'liability', includeInFi: boolean,
 }
 
 describe('demo financial summary', () => {
-  it('excludes locked assets and emergency reserves regardless of legacy flags', () => {
+  it('lets any active asset be selected and counts only the selected ones', () => {
     const positions = [position('cash', 'asset', true, true), { ...position('cpf', 'asset', true), positionType: 'cpf' as const, restrictionType: 'cpf' as const, liquidityClass: 'restricted' as const },
       { ...position('srs', 'asset', true), restrictionType: 'other_restricted' as const, liquidityClass: 'restricted' as const },
       { ...position('property', 'asset', true), positionType: 'property' as const }, position('broker', 'asset', true)];
-    expect(positions.filter(eligibleRetirementAsset).map(p => p.id)).toEqual(['broker']);
+    expect(positions.filter(eligibleRetirementAsset).map(p => p.id)).toEqual(['cash', 'cpf', 'srs', 'property', 'broker']);
     const activePlan = { ...fixtures.base, retirementMonth: '2030-01', assetIds: ['broker'] } as RetirementPlan;
     const profile = { activePlan } as FireProfile;
     const snapshots = positions.map(p => ({ id: p.id, userId, wealthPositionId: p.id, amount: '1000', valueDate: '2026-01-01', createdAt: now, updatedAt: now }));

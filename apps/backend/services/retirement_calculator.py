@@ -111,7 +111,7 @@ def calculate_retirement(plan, assets, effective_date):
         earliestRetirementMonth=None if earliest is None else calendar_month(now + earliest),
         estimatedFiYear=None if earliest is None else (now + earliest) // 12)
     warn('smooth_returns', 'Smooth returns do not capture market sequence risk or guarantee funding beyond the selected end age. Negative balances show unfunded cash flows, not available borrowing.')
-    warn('excluded_assets', 'CPF, SRS and other restricted resources, property and designated emergency reserves are excluded, regardless of legacy FI flags. CPF principal is never counted alongside payouts.')
+    warn('selected_assets', 'Only the assets you selected in setup count as retirement capital. Check that restricted resources, property and emergency reserves you included can really be spent.')
     if plan['cpfPlan'] in ['unknown', 'basic']:
         warn('cpf_not_included', 'CPF income not included: Basic declining payouts are not modelled.' if plan['cpfPlan'] == 'basic' else 'CPF income not included: payout is not yet known.')
     if plan['portfolioOverride'] and (date.fromisoformat(str(effective_date)) - date.fromisoformat(plan['portfolioOverride']['date'])).days > 35:

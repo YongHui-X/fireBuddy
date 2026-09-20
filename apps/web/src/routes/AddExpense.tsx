@@ -150,6 +150,7 @@ function AddExpense() {
         onSubmit={submit}
         onClick={(event) => event.stopPropagation()}
       >
+        <div className="sheet-handle" aria-hidden="true" />
         <header className="add-header">
           <span aria-hidden="true" />
           <h2 id="add-transaction-title">Add transaction</h2>
@@ -183,7 +184,14 @@ function AddExpense() {
 
           <label className="form-field add-name-field">
             <span>Description</span>
-            <input data-dialog-initial-focus value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Netflix" />
+            <input
+              data-dialog-initial-focus
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Netflix"
+              enterKeyHint="next"
+              autoCapitalize="sentences"
+            />
           </label>
 
           <label className="amount-field add-amount-field">
@@ -197,6 +205,8 @@ function AddExpense() {
                 min="0"
                 step="0.01"
                 placeholder="0.00"
+                inputMode="decimal"
+                enterKeyHint="next"
               />
               <button type="button" onClick={() => setAmount('')}>
                 Clear
@@ -284,11 +294,13 @@ function AddExpense() {
             disabled={isSaving}
           />
 
-          {saveError ? <p className="form-error add-form-status">{saveError}</p> : null}
+          <div className="sticky-form-footer">
+            {saveError ? <p className="form-error add-form-status">{saveError}</p> : null}
 
-          <button className="primary-button full-width add-save-button" type="submit" disabled={isSaving || syncStatus === 'loading'}>
-            {isSaving ? 'Saving...' : 'Save transaction'}
-          </button>
+            <button className="primary-button full-width add-save-button" type="submit" disabled={isSaving || syncStatus === 'loading'}>
+              {isSaving ? 'Saving...' : 'Save transaction'}
+            </button>
+          </div>
         </section>
 
         {isAddingCategory ? (

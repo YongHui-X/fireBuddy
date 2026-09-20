@@ -5,6 +5,7 @@ import { ApiRequestError, type RagStreamHandlers } from '../api';
 import { clearEmberAppActions, recordEmberAppAction } from '../app/emberAppContext';
 import { EMBER_ACTIVE_TOPIC_STORAGE_KEY, EMBER_TOPICS_STORAGE_KEY } from '../app/emberState';
 import Ember from './Ember';
+import { setViewportWidth } from '../test/viewport';
 
 const mocks = vi.hoisted(() => ({
   clipboardWrite: vi.fn(),
@@ -34,7 +35,7 @@ function askQuestion(question: string) {
 
 describe('Ember page', () => {
   beforeEach(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+    setViewportWidth(1024);
     window.localStorage.clear();
     clearEmberAppActions();
     mocks.clipboardWrite.mockReset().mockResolvedValue(undefined);
@@ -122,13 +123,11 @@ describe('Ember page', () => {
     expect(onToggleMainSidebar).toHaveBeenCalledOnce();
   });
 
-  it('supports Enter submission, Shift+Enter, loading, and duplicate prevention', async () => {
-    let resolveRequest: (() => void) | undefined;
-    let handlers: RagStreamHandlers | undefined;
+  it('supports Enter submission, Shift+Enter, and sending a follow-up while a reply streams', async () => {
+    const pending: { handlers: RagStreamHandlers; resolve: () => void }[] = [];
     mocks.streamFinancialAdvisor.mockImplementation((_token, _input, nextHandlers) => {
-      handlers = nextHandlers;
       nextHandlers.onStatus('searching', 'Searching curated sources');
-      return new Promise<void>((resolve) => { resolveRequest = resolve; });
+      return new Promise<void>((resolve) => { pending.push({ handlers: nextHandlers, resolve }); });
     });
     render(<Ember />);
 
@@ -139,23 +138,34 @@ describe('Ember page', () => {
 
     fireEvent.keyDown(composer, { key: 'Enter', shiftKey: false });
     fireEvent.keyDown(composer, { key: 'Enter', shiftKey: false });
-
     expect(mocks.streamFinancialAdvisor).toHaveBeenCalledOnce();
     expect(screen.getByRole('status').textContent).toContain('Understanding your question');
-    expect((composer as HTMLTextAreaElement).disabled).toBe(true);
+    expect((composer as HTMLTextAreaElement).disabled).toBe(false);
+
+    // A second question can be sent while the first reply is still streaming.
+    fireEvent.change(composer, { target: { value: 'And what about SRS?' } });
+    fireEvent.keyDown(composer, { key: 'Enter', shiftKey: false });
+    expect(mocks.streamFinancialAdvisor).toHaveBeenCalledTimes(2);
+    const secondInput = mocks.streamFinancialAdvisor.mock.calls[1][1] as { history: { content: string }[] };
+    expect(secondInput.history.map((item) => item.content)).toEqual(['How does CPF work?']);
 
     await act(async () => {
-      handlers?.onStatus('preparing', 'Preparing a grounded answer');
+      pending[0].handlers.onStatus('preparing', 'Preparing a grounded answer');
     });
     expect(screen.getByRole('status').textContent).toContain('Preparing your answer');
     await act(async () => {
-      handlers?.onDelta('CPF is a social ');
-      handlers?.onDelta('security savings system.');
-      handlers?.onSources([]);
-      handlers?.onDone?.();
-      resolveRequest?.();
+      pending[0].handlers.onDelta('CPF is a social ');
+      pending[0].handlers.onDelta('security savings system.');
+      pending[0].handlers.onSources([]);
+      pending[0].handlers.onDone?.();
+      pending[0].resolve();
+      pending[1].handlers.onDelta('SRS is a voluntary scheme.');
+      pending[1].handlers.onSources([]);
+      pending[1].handlers.onDone?.();
+      pending[1].resolve();
     });
     expect((await screen.findAllByText('CPF is a social security savings system.')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('SRS is a voluntary scheme.')).length).toBeGreaterThan(0);
     expect((composer as HTMLTextAreaElement).disabled).toBe(false);
   });
 
@@ -181,6 +191,26 @@ describe('Ember page', () => {
       }),
       expect.any(Object),
     );
+  });
+
+  it('renders a tailored-data link when the answer used the personal snapshot', async () => {
+    mocks.streamFinancialAdvisor.mockImplementationOnce(async (_token, _input, handlers: RagStreamHandlers) => {
+      handlers.onDelta('Your runway is 5.2 months.');
+      handlers.onEvidence?.('hybrid', {
+        tool: 'personal_context', label: 'Your FireBuddy snapshot', period: '2026-09-16',
+        record_count: null, destination: '/',
+      });
+      handlers.onSources([]);
+      handlers.onDone?.();
+    });
+    render(<Ember />);
+
+    askQuestion('Is my emergency fund large enough?');
+    expect((await screen.findAllByText('Your runway is 5.2 months.')).length).toBeGreaterThan(0);
+
+    const link = await screen.findByText('Tailored to your FireBuddy data');
+    expect(link.closest('a')?.getAttribute('href')).toBe('/');
+    expect(screen.getByText('Your FireBuddy snapshot')).toBeTruthy();
   });
 
   it('scrolls once to a new answer start and not for streamed updates', async () => {
@@ -284,7 +314,7 @@ describe('Ember page', () => {
   });
 
   it('collapses and restores the desktop history rail', () => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
+    setViewportWidth(1440);
     render(<Ember />);
 
     const layout = document.querySelector('.ember-layout') as HTMLElement;

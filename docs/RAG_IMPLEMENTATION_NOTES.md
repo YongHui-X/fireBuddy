@@ -221,21 +221,82 @@ Implemented on 2026-09-16 following `docs/RAG_EVALUATION_BASELINE.md`:
   `substring_hit_rate`, in-scope-but-absent refusal cases, `--via-planner`
   answer runs, and `check_regression.py` with `baseline_thresholds.json` in CI.
 
+## Structure recovery and personalised answers (2026-09-16, second pass)
+
+- The PDF registry gained a per-entry `structure` config. `pdf_to_md.py`
+  strips repeated page headers before the wrapped-line join, promotes
+  lettered sections (`A.`, `A.4`) and numbered FAQ questions to headings using
+  a monotonic counter (a stray `1.` inside an answer stays body; a reset to 1
+  starts a new titled part only when the registry names the parts), splits a
+  question fused with its answer at the first question mark, and drops
+  duplicated table rows. Applied to the SSB FAQ (70 questions, 23 sections),
+  the MoneySense FAQ (4 parts, 21 questions) and the CPFIS products file. The
+  five infographic PDFs stay size-chunked.
+- Ingest merges runs of small sibling question sections under the same parent
+  into groups of at most 1,200 characters, and keeps the document's own
+  heading (the question list) in front of the generated headline so the
+  weight-A keyword field still holds the question text. Replacing it with the
+  generated headline alone cost one Hit@5 miss and 0.02 nDCG.
+- Semantic (embedding-breakpoint) chunking was then measured head-to-head
+  through the real RPC (`rag/evaluation/experiments/semantic_chunking_ab.py`):
+  structured nDCG@5 0.8943 against semantic 0.8807, recall@5 0.9528 against
+  0.9308, substring hit rate 1.0 against 0.9355, hit rates tied. Structured
+  chunking stays. The earlier reasoning below still applies: after
+  structure recovery the size-fallback path only serves infographic files with
+  no sentence structure, and embedding-dependent boundaries would break the
+  deterministic chunk cache. Revisit if a long-prose PDF without headings is
+  added.
+- Ember knowledge answers can now use the user's own data. The planner sets
+  `personalise` (with a keyword fallback in `should_personalise`) and the
+  service attaches `ember_personal_context.build_personal_context(user_id)`:
+  one `build_financial_summary` call reduced to aggregates and the
+  deterministic recommended action, at most 1,500 characters, never raw
+  records. The answer returns mode `hybrid` with a `personal_context` evidence
+  entry; the stream emits the evidence event before sources. A hybrid data plan
+  now always explains when curated context was retrieved.
+- New `eval_personal.py` suite runs the production planner path over the Jen
+  demo account, computes expected facts from the deterministic tools at run
+  time, and scores mode, facts, raw-record leakage, missing-data handling, and
+  judge groundedness. CI enforces its thresholds through `check_regression.py`.
+- 2026-09-17: personalisation became the default for every knowledge answer
+  (`EMBER_PERSONALISE_MODE=always`; `auto` restores the planner-or-keyword
+  behaviour) after "how can I improve my spending" returned generic advice.
+  The snapshot gained a spending block (this month and last month totals and
+  top categories) computed from the expense rows the summary already loads,
+  and the prompt now requires spending answers to name the user's largest
+  categories and compare months. The personal eval gained an
+  improve-my-spending case.
+- 2026-09-17: answer formatting. The prompt asks for short paragraphs and
+  plain "- " bullets with no numbered lists, bold, italics or headings. The
+  web renderer moved to `apps/web/src/app/emberRichText.tsx`, which strips
+  inline emphasis markers, renders numbered items as plain bullets, keeps
+  items separated by blank lines in one list (the old parser started a new
+  list at every blank line, which is why numbering restarted at 1), and is
+  now shared by the Ember page and the floating assistant.
+- 2026-09-17: the web composer no longer locks while a reply streams. Both
+  chat surfaces track in-flight requests with a counter so several answers
+  can stream into their own messages; a still-streaming reply is excluded
+  from the history sent with a follow-up question.
+
 ## Latest Live Results
 
-Retrieval version 9 (2026-09-16) across 45 questions, including 3 multi-turn
-and 3 exact-figure cases:
+Retrieval version 11 (2026-09-16) across 50 questions, including 3 multi-turn,
+3 exact-figure and 5 FAQ-structure cases:
 
-- Hit@1: `0.8000`
-- Hit@3: `0.9556`
+- Hit@1: `0.8200`
+- Hit@3: `0.9600`
 - Hit@5: `1.0000`
-- Recall@5: `0.9481`
-- MAP@5: `0.8276`
-- nDCG@5: `0.8756`
-- MRR: `0.8841`
+- Recall@5: `0.9400`
+- MAP@5: `0.8404`
+- nDCG@5: `0.8814`
+- MRR: `0.8947`
 - Substring hit rate: `1.0000`
 
-Answer version 8 (2026-09-16) across 12 supported questions and 11 refusal
+Personal-data version 3 (2026-09-16) across 10 questions over the Jen demo
+account: overall pass `1.0000`, leak-free `1.0000`, missing-data handling
+`1.0000`, judge groundedness `1.0000`.
+
+Answer version 10 (2026-09-16) across 12 supported questions and 11 refusal
 questions, routed through the planner:
 
 - Overall pass rate: `1.0000`
@@ -290,3 +351,75 @@ candidate worth testing next, measured on nDCG@3.
   problem.
 - Replace the in-memory rate limiter with shared storage before running multiple
   backend workers or instances.
+
+## Source dating (2026-09-16, third pass)
+
+### Keep document dates out of `rag_chunks`
+
+The store had no date metadata, so nothing could distinguish the IRAS relief
+leaflet (YA 2019 wording beside still-current rules) from a fresh source. The
+obvious fix was `effective_year`, `last_reviewed` and `years_mentioned`
+columns, a migration and a re-ingest.
+
+That is the wrong shape. Currency is a property of a *document*, and after
+deduplication the advisor sees at most one chunk per document, so per-chunk
+dates buy nothing. With 24 ingested documents a generated lookup file is
+cheaper, needs no migration, and cannot drift from the corpus because a test
+asserts it covers every ingested document. `ingest.py` writes
+`rag/source-metadata.json` from manual `last_reviewed` front matter and the
+registry `published` field; `services/source_metadata.py` reads it;
+`format_retrieved_context` emits an `As of:` line per source.
+
+Ranking was not touched. Choosing between a stale and a current source is not a
+ranking problem: both documents match the question, and the retriever is right
+to return both. It is the answer model that needs the dates.
+
+### Scope prompt guidance to the path it was written for
+
+The year guidance was first added to every answer. The personal `next_action`
+case then stopped returning the backend's own deterministic sentence and began
+hedging, scoring 3/5 on groundedness. Data answers have no dated sources to
+reason about, so the guidance is now added only when the evidence context
+contains curated `[Source N]` blocks. Prompt additions need the same scoping
+discipline as code.
+
+### State a year only when the evidence states one
+
+"Always state the year the value applies to" made the model write "This figure
+applies to the year 2026" about a CPF LIFE table the source computes as of 2025
+for members turning 65 in 2035. Instructing a model to be specific about dates
+will make it invent them when the evidence has none. The wording now requires
+the evidence to tie the value to the year, and otherwise asks for the source's
+own stated basis.
+
+## Figure coverage and source currency (2026-09-16, fourth pass)
+
+### Check what a source says about itself before trusting it
+
+Two traps in one pass. `InterestRate.pdf` on cpf.gov.sg is the obvious
+canonical source for CPF interest rates and would have been a natural registry
+entry; extracting it shows its last row is Jul-Sep 2024. And the IRAS relief
+PDF already in the registry states "correct as at 18 Feb 2019" in its own
+footer, yet had no `published` date, so it was being retrieved as current and
+offering an expired tax rebate.
+
+Both were caught by reading the document rather than the URL. The registry now
+carries `published` dates, and a document whose stated date is old enough to
+mislead is `superseded_by` a hand-authored current table.
+
+### Not every number belongs in annual-figures.json
+
+The Additional Wage ceiling is `$102,000 minus the year's Ordinary Wages
+subject to CPF`. Adding it as a figure key crashed the formatter, which was the
+right signal: `figure_lookup` returns one value for one year, and the planner
+prompt already says to route anything that is not a single figure to the
+knowledge path. It lives in a manual document instead.
+
+### A hand-maintained file needs an automated alarm
+
+`annual-figures.json` is the highest-stakes file in the RAG pipeline and
+nothing automated ever checked it. `fetch_figures.py` had been writing an
+independent extraction to `annual-figures.extracted.json` that nothing read.
+`check_figure_drift.py` now compares them in the monthly workflow. It reports
+rather than repairs: the extraction is a model reading a PDF and is not
+authoritative either.

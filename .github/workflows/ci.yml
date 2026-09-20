@@ -14,6 +14,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  database:
+    name: Database migrations and security tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install pinned CLI and workspace dependencies
+        run: npm ci
+      - name: Start a fresh database and apply committed migrations
+        run: npx supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Test database functions, ownership, and rollback
+        run: npx supabase test db --local supabase/tests
+
   checks:
     name: Typecheck, lint, and build
     runs-on: ubuntu-latest
@@ -79,12 +96,14 @@ jobs:
           apps/backend/routers/rag.py
           apps/backend/services/rag_service.py
           apps/backend/services/ember_figure_tools.py
+          apps/backend/services/source_metadata.py
           apps/backend/services/rate_limiter.py
           apps/backend/rag/retrieval.py
           apps/backend/rag/query_terms.py
           apps/backend/rag/Implementation/ingest.py
           apps/backend/rag/Implementation/answer.py
           apps/backend/rag/fetchAndConvert/pdf_to_md.py
+          apps/backend/rag/fetchAndConvert/check_figure_drift.py
           apps/backend/rag/evaluation/report_history.py
           apps/backend/rag/evaluation/eval_retrieval.py
           apps/backend/rag/evaluation/eval_answers.py

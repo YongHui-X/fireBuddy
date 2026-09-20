@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 import logging
+import os
 
 from rag.retrieval import RagStoreUnavailableError, retrieve_chunks
 from schemas.rag import (
@@ -11,7 +12,8 @@ from schemas.rag import (
     ChatMessage,
 )
 from services.ember_data_tools import EmberDataResult, run_ember_data_tool
-from services.ember_planner import EmberPlan, plan_ember_question
+from services.ember_personal_context import EmberPersonalContext, build_personal_context
+from services.ember_planner import EmberPlan, plan_ember_question, should_personalise
 from services.rag_service import (
     OUT_OF_SCOPE_ANSWER,
     answer_financial_advisor_question,
@@ -22,6 +24,7 @@ from services.rag_service import (
     format_source_label,
     generate_grounded_answer,
     is_clearly_out_of_scope,
+    is_insufficient_evidence_answer,
     retrieval_is_confident,
     select_recent_chat_history,
     stream_financial_advisor_question,
@@ -48,10 +51,29 @@ def _plan(question: str, history: list[ChatMessage]) -> EmberPlan:
 
     if is_clearly_out_of_scope(question):
         return _unsupported_plan()
-    return plan_ember_question(question, history)
+    plan = plan_ember_question(question, history)
+    if plan.mode == "knowledge" and not plan.personalise and (
+        PERSONALISE_MODE == "always" or should_personalise(question)
+    ):
+        plan = plan.model_copy(update={"personalise": True})
+    return plan
+
+
+def _personal_context(user_id: str) -> EmberPersonalContext | None:
+    """Build the user's aggregate snapshot; degrade to plain knowledge on failure."""
+
+    try:
+        return build_personal_context(user_id)
+    except Exception:
+        logger.exception("ember_personal_context_failed")
+        return None
 
 
 logger = logging.getLogger(__name__)
+
+# "always": every knowledge answer is tailored to the user's aggregate snapshot.
+# "auto": only when the planner or the keyword fallback asks for it.
+PERSONALISE_MODE = (os.getenv("EMBER_PERSONALISE_MODE", "always").strip().lower() or "always")
 
 
 def _evidence(result: EmberDataResult) -> AdvisorDataEvidence:
@@ -99,8 +121,10 @@ def _execute_data_plan(
         )
         source_details.extend(hybrid_sources)
 
+    # A hybrid answer always explains when curated context was retrieved; a
+    # plain data answer explains only when the planner asked for it.
     answer = result.exact_answer
-    if plan.requires_explanation:
+    if plan.requires_explanation or bool(source_context):
         combined_context = result.context()
         if source_context:
             combined_context += "\n\nCurated educational context:\n" + source_context
@@ -110,7 +134,10 @@ def _execute_data_plan(
             select_recent_chat_history(history),
             app_context,
         )
-        if generated:
+        # The deterministic sentence is the authoritative answer for a data
+        # plan. The model only adds explanation; if it declines with the
+        # insufficient-evidence sentinel, the exact answer stands.
+        if generated and not is_insufficient_evidence_answer(generated):
             answer = generated
 
     return AdvisorResponse(
@@ -133,7 +160,11 @@ def _execute_plan(
 
     if plan.mode == "knowledge":
         return answer_financial_advisor_question(
-            question, history, app_context, retrieval_query=plan.retrieval_query
+            question,
+            history,
+            app_context,
+            retrieval_query=plan.retrieval_query,
+            personal_context=_personal_context(user_id) if plan.personalise else None,
         )
     if plan.mode == "clarification":
         return AdvisorResponse(
@@ -173,8 +204,19 @@ def stream_ember_question(
     }
     plan = _plan(question, bounded_history)
     if plan.mode == "knowledge":
+        personal_context = None
+        if plan.personalise:
+            yield {
+                "event": "status",
+                "data": {"status": "preparing", "message": "Reading your FireBuddy data"},
+            }
+            personal_context = _personal_context(user_id)
         yield from stream_financial_advisor_question(
-            question, bounded_history, app_context, retrieval_query=plan.retrieval_query
+            question,
+            bounded_history,
+            app_context,
+            retrieval_query=plan.retrieval_query,
+            personal_context=personal_context,
         )
         return
 

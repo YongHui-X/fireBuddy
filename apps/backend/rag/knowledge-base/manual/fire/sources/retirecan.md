@@ -4,6 +4,7 @@ source_url: https://retirecan.sg/
 agency: RetireCan.sg
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # RetireCan.sg Singapore Retirement Calculator

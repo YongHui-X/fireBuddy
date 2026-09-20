@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -145,6 +146,83 @@ class RagServiceTests(unittest.TestCase):
         self.assertEqual(sources_event["data"]["sources"], [])
         self.assertEqual(events[-1]["event"], "done")
 
+    def test_personalised_context_makes_the_answer_hybrid_with_evidence(self):
+        from services.ember_personal_context import EmberPersonalContext
+
+        snapshot = EmberPersonalContext(
+            facts={"emergencyRunwayMonths": "5.200000", "averageMonthlyEssentialSpending": "6000.00"},
+            effective_date="2026-08-23",
+        )
+        matches = [{
+            "source_title": "MoneySense FAQ", "source_url": None, "source_path": "faq.md",
+            "headline": "Emergency funds", "content": "3 to 6 months of expenses.", "similarity": 0.9,
+        }]
+
+        with patch.object(rag_service, "generate_grounded_answer", return_value="Tailored answer") as chat:
+            response = rag_service.answer_financial_advisor_question(
+                "Is my emergency fund large enough?",
+                retrieved_matches=matches,
+                personal_context=snapshot,
+            )
+
+        self.assertEqual(response.mode, "hybrid")
+        self.assertEqual(response.data_evidence.tool, "personal_context")
+        self.assertTrue(chat.call_args.kwargs["personalised"])
+        context = chat.call_args.args[1]
+        self.assertTrue(context.rstrip().endswith("}"))
+        self.assertIn("3 to 6 months of expenses.", context.split("---")[0])
+        self.assertIn("Trusted FireBuddy data", context.split("---")[-1])
+        self.assertIn("5.200000", context)
+
+        with patch.object(rag_service, "generate_grounded_answer", return_value="Plain answer"):
+            plain = rag_service.answer_financial_advisor_question(
+                "Is my emergency fund large enough?", retrieved_matches=matches,
+            )
+        self.assertEqual(plain.mode, "knowledge")
+        self.assertIsNone(plain.data_evidence)
+
+    def test_personalised_refusal_keeps_knowledge_mode_without_evidence(self):
+        from services.ember_personal_context import EmberPersonalContext
+
+        snapshot = EmberPersonalContext(facts={}, effective_date="2026-08-23")
+        matches = [{"source_path": "x.md", "content": "irrelevant", "similarity": 0.9}]
+        with patch.object(
+            rag_service, "generate_grounded_answer", return_value=rag_service.INSUFFICIENT_EVIDENCE_SENTINEL,
+        ):
+            response = rag_service.answer_financial_advisor_question(
+                "What is the GST rate?", retrieved_matches=matches, personal_context=snapshot,
+            )
+
+        self.assertEqual(response.mode, "knowledge")
+        self.assertIsNone(response.data_evidence)
+
+    def test_stream_emits_evidence_before_sources_when_personalised(self):
+        from services.ember_personal_context import EmberPersonalContext
+
+        snapshot = EmberPersonalContext(facts={"netWorth": "1.00"}, effective_date="2026-08-23")
+        matches = [{"source_title": "Guide", "source_path": "g.md", "content": "Guidance", "similarity": 0.9}]
+        with patch.object(rag_service, "stream_grounded_answer", return_value=iter(["Tailored"])) as stream:
+            events = list(rag_service.stream_financial_advisor_question(
+                "Is my savings rate good?", retrieved_matches=matches, personal_context=snapshot,
+            ))
+
+        self.assertEqual(
+            [e["event"] for e in events],
+            ["status", "status", "delta", "evidence", "sources", "done"],
+        )
+        self.assertEqual(events[3]["data"]["mode"], "hybrid")
+        self.assertEqual(events[3]["data"]["dataEvidence"]["tool"], "personal_context")
+        self.assertTrue(stream.call_args.kwargs["personalised"])
+
+    def test_personalised_guidance_only_appears_when_requested(self):
+        plain = rag_service.build_answer_messages("Q", "context", [])
+        tailored = rag_service.build_answer_messages("Q", "context", [], personalised=True)
+
+        self.assertNotIn("must be tailored to those numbers", plain[0]["content"])
+        self.assertIn("must be tailored to those numbers", tailored[0]["content"])
+        self.assertIn("largest categories with their amounts", tailored[0]["content"])
+        self.assertIn("Never present projections", tailored[0]["content"])
+
     def test_answer_prompt_instructs_the_sentinel_refusal(self):
         messages = rag_service.build_answer_messages("What is CPF?", "context", [])
 
@@ -288,6 +366,77 @@ class RagServiceTests(unittest.TestCase):
         self.assertIn("Content:", context)
         self.assertTrue(context.endswith("..."))
         self.assertLess(len(context), len(long_content) + 300)
+
+    def test_answer_prompt_states_today_and_how_to_pick_a_year(self):
+        messages = rag_service.build_answer_messages(
+            "What is the Full Retirement Sum?",
+            "[Source 1]\nTitle: CPF\nContent:\nBody",
+            [],
+            today=date(2026, 9, 16),
+        )
+        system_prompt = messages[0]["content"]
+
+        self.assertIn("Today is 2026-09-16.", system_prompt)
+        self.assertIn("answer with the current year's value", system_prompt)
+        # The year instruction must stay conditional. An unconditional
+        # "always state the year" made the model stamp the current year
+        # onto a CPF LIFE table the source computes as of an earlier one.
+        self.assertIn("only when the evidence itself ties it", system_prompt)
+        self.assertIn("never restate it as the current year", system_prompt)
+        self.assertIn("use the one with the later date", system_prompt)
+
+    def test_answer_prompt_defaults_to_the_singapore_calendar_date(self):
+        with patch.object(
+            rag_service, "singapore_today", return_value=date(2027, 1, 1)
+        ):
+            messages = rag_service.build_answer_messages("Q", "[Source 1]\nContent:", [])
+
+        self.assertIn("Today is 2027-01-01.", messages[0]["content"])
+
+    def test_data_only_answers_do_not_receive_source_dating_guidance(self):
+        """
+        A personal data answer often repeats the backend's own deterministic
+        sentence. Year guidance there made the model elaborate and hedge, which
+        the personal evaluation scored as ungrounded.
+        """
+
+        messages = rag_service.build_answer_messages(
+            "What is my suggested next step?",
+            "FireBuddy data block\nSavings rate: 51.4%",
+            [],
+            today=date(2026, 9, 16),
+        )
+
+        self.assertNotIn("Today is", messages[0]["content"])
+        self.assertNotIn("As of", messages[0]["content"])
+
+    def test_context_formatting_reports_the_source_review_date(self):
+        with patch.object(
+            rag_service,
+            "source_as_of",
+            side_effect=lambda path: "2026-09-15" if path == "manual/cpf/sums.md" else None,
+        ):
+            context = rag_service.format_retrieved_context(
+                [
+                    {
+                        "source_path": "manual/cpf/sums.md",
+                        "source_title": "CPF Retirement Sums",
+                        "headline": "Sums by year",
+                        "content": "Body",
+                    },
+                    {
+                        "source_path": "markdown-cache/iras/tax-relief-individuals.md",
+                        "source_title": "IRAS reliefs",
+                        "headline": "Reliefs",
+                        "content": "Body",
+                    },
+                ]
+            )
+
+        self.assertIn("As of: 2026-09-15", context)
+        # An undated source is reported as unknown rather than omitted, so the
+        # model can see that it has nothing to compare against.
+        self.assertIn("As of: Date unknown", context)
 
     def test_answer_generation_receives_only_the_latest_six_history_messages(self):
         history = [

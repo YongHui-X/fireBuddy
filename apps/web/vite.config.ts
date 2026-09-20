@@ -6,6 +6,11 @@ export default defineConfig({
   resolve: {
     dedupe: ['react', 'react-dom'],
   },
+  // Bind to the LAN so the dev server can be opened on a phone on the same wifi.
+  // Note this is Vite's `server`; the `server.deps` key under `test` below is Vitest's.
+  server: {
+    host: true,
+  },
   test: {
     environment: 'jsdom',
     globals: true,

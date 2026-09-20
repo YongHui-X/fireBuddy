@@ -1,5 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 
+import { useBodyScrollLock } from './useBodyScrollLock';
+
 const focusableSelector = [
   'button:not([disabled])',
   '[href]',
@@ -13,13 +15,16 @@ type AccessibleDialogOptions = {
   isOpen?: boolean;
   canClose?: boolean;
   onClose: () => void;
+  /** Hold the page behind the dialog still. On by default; sheets and dialogs both want it. */
+  lockScroll?: boolean;
 };
 
-/** Keep keyboard focus inside an open dialog and restore it when the dialog closes. */
+/** Keep keyboard focus inside an open dialog, hold the page still, and restore both on close. */
 export function useAccessibleDialog<T extends HTMLElement>({
   isOpen = true,
   canClose = true,
   onClose,
+  lockScroll = true,
 }: AccessibleDialogOptions): RefObject<T | null> {
   const dialogRef = useRef<T | null>(null);
   const onCloseRef = useRef(onClose);
@@ -27,6 +32,8 @@ export function useAccessibleDialog<T extends HTMLElement>({
 
   onCloseRef.current = onClose;
   canCloseRef.current = canClose;
+
+  useBodyScrollLock(isOpen && lockScroll);
 
   useEffect(() => {
     if (!isOpen) {

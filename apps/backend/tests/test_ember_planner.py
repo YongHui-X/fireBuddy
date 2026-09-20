@@ -13,7 +13,7 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from services import ember_planner
-from services.ember_planner import EmberPlan, EmberPlannerResponse
+from services.ember_planner import EmberPlan, EmberPlannerResponse, should_personalise
 
 
 class EmberPlannerTests(unittest.TestCase):
@@ -56,9 +56,44 @@ class EmberPlannerTests(unittest.TestCase):
                     "mode": "knowledge", "tool": None, "start_date": None,
                     "end_date": None, "comparison_start_date": None, "comparison_end_date": None,
                     "category_name": None, "requires_explanation": True,
-                    "clarification_question": None, "retrieval_query": None,
+                    "clarification_question": None, "retrieval_query": None, "personalise": False,
                 },
             })
+
+    def test_knowledge_plan_carries_personalise_and_data_plans_cannot(self):
+        parsed = EmberPlannerResponse.model_validate({
+            "plan": {
+                "mode": "knowledge", "tool": None, "start_date": None,
+                "end_date": None, "comparison_start_date": None, "comparison_end_date": None,
+                "category_name": None, "requires_explanation": True,
+                "clarification_question": None,
+                "retrieval_query": "Is my emergency fund large enough?", "personalise": True,
+            },
+        })
+        plan = EmberPlan.model_validate(parsed.plan.model_dump())
+        self.assertTrue(plan.personalise)
+
+        with self.assertRaises(ValidationError):
+            EmberPlan.model_validate({
+                "mode": "data", "tool": "expense_summary", "start_date": None, "end_date": None,
+                "comparison_start_date": None, "comparison_end_date": None, "category_name": None,
+                "requires_explanation": False, "clarification_question": None, "personalise": True,
+            })
+
+    def test_should_personalise_keyword_fallback(self):
+        for question in (
+            "Is my emergency fund enough?",
+            "What savings rate should I aim for?",
+            "Am I on track to retire early?",
+            "How should I budget for next year?",
+        ):
+            self.assertTrue(should_personalise(question), question)
+        for question in (
+            "What are the CPF contribution rates for 2026?",
+            "How do Singapore Savings Bonds work?",
+            "Explain the Full Retirement Sum.",
+        ):
+            self.assertFalse(should_personalise(question), question)
 
     def test_figure_lookup_plan_requires_a_known_figure_key(self):
         parsed = EmberPlannerResponse.model_validate({
@@ -120,6 +155,7 @@ class EmberPlannerTests(unittest.TestCase):
         self.assertIn("figure_lookup", prompt)
         self.assertIn("cpf_full_retirement_sum", prompt)
         self.assertIn("retrieval_query", prompt)
+        self.assertIn("personalise", prompt)
         self.assertNotIn("user-a", prompt)
         self.assertNotIn("user-b", prompt)
         self.assertIs(payload["response_format"], EmberPlannerResponse)

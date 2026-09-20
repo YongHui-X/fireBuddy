@@ -1,6 +1,7 @@
 """Translate natural-language Ember questions into one validated read-only plan."""
 
 import os
+import re
 from datetime import date
 from typing import Literal
 
@@ -23,6 +24,40 @@ EmberToolName = Literal[
     "figure_lookup",
 ]
 MAX_RETRIEVAL_QUERY_LENGTH = 200
+# Deterministic fallback for the planner's `personalise` flag: questions that
+# are plainly about the user's own situation get their aggregates attached even
+# if the model forgot to ask for them.
+PERSONALISATION_PHRASES = (
+    "emergency fund",
+    "emergency savings",
+    "runway",
+    "savings rate",
+    "how much should i save",
+    "on track",
+    "am i saving",
+    "retire early",
+    "when can i retire",
+    "fire timeline",
+    "retirement adequacy",
+    "enough for retirement",
+    "enough to retire",
+    "budget",
+)
+FIRST_PERSON_TOKENS = {"my", "i", "me", "mine", "i'm", "im"}
+PERSONAL_TOPIC_TOKENS = {
+    "emergency", "saving", "savings", "save", "fire", "retire", "retirement",
+    "cpf", "budget", "spending", "spend", "networth", "wealth", "runway",
+}
+
+
+def should_personalise(question: str) -> bool:
+    """Return True when the user's own numbers would plainly help the answer."""
+
+    normalized = " ".join(question.lower().replace("net worth", "networth").split())
+    if any(phrase in normalized for phrase in PERSONALISATION_PHRASES):
+        return True
+    tokens = set(re.findall(r"[a-z']+", normalized))
+    return bool(tokens & FIRST_PERSON_TOKENS) and bool(tokens & PERSONAL_TOPIC_TOKENS)
 
 
 class EmberPlan(BaseModel):
@@ -44,6 +79,9 @@ class EmberPlan(BaseModel):
     retrieval_query: str | None = Field(default=None, max_length=MAX_RETRIEVAL_QUERY_LENGTH)
     figure_key: FigureKey | None = None
     figure_year: int | None = Field(default=None, ge=2000, le=2100)
+    # Knowledge answers may attach the user's bounded aggregate snapshot so the
+    # educational guidance can be applied to their own numbers.
+    personalise: bool = False
 
     @model_validator(mode="after")
     def validate_plan(self):
@@ -56,6 +94,8 @@ class EmberPlan(BaseModel):
             raise ValueError("Only data plans may select a tool")
         if self.mode == "clarification" and not self.clarification_question:
             raise ValueError("Clarification plans require a question")
+        if self.personalise and self.mode != "knowledge":
+            raise ValueError("Only knowledge plans may personalise")
         if self.tool == "figure_lookup" and self.figure_key is None:
             raise ValueError("Figure lookups require a figure key")
         if self.tool != "figure_lookup" and self.figure_key is not None:
@@ -92,6 +132,7 @@ class _KnowledgePlannerOutput(_PlannerOutputBase):
     mode: Literal["knowledge"]
     tool: None
     retrieval_query: str = Field(max_length=MAX_RETRIEVAL_QUERY_LENGTH)
+    personalise: bool
 
 
 class _DataPlannerOutput(_PlannerOutputBase):
@@ -175,7 +216,9 @@ def plan_ember_question(
                     "never request, include, or infer a user identifier. Choose knowledge for general CPF, SRS, "
                     "SSB, IRAS, investing, or FIRE education. Choose data for questions answered "
                     "only from the user's records. Choose hybrid when personal results need general "
-                    "educational context. expense_summary totals expenses and category breakdowns "
+                    "educational context, including any request to improve, reduce, review or budget "
+                    "the user's own spending (hybrid with expense_summary for the current month and "
+                    "requires_explanation true). expense_summary totals expenses and category breakdowns "
                     "for a date range. spending_comparison compares two expense periods. "
                     "financial_summary reports net worth and the current monthly pulse. "
                     "fire_projection reports the saved deterministic FIRE calculation. "
@@ -192,6 +235,11 @@ def plan_ember_question(
                     "acronyms with their full form (OA Ordinary Account, FRS Full Retirement Sum, "
                     "SSB Singapore Savings Bonds, SRS Supplementary Retirement Scheme). Keep the "
                     "user's wording otherwise; do not add topics the user did not ask about. "
+                    "Also set personalise true for a knowledge plan when the user's own recorded "
+                    "numbers (monthly spending, savings rate, emergency runway, net worth, FIRE "
+                    "progress) would make the educational answer more useful: emergency fund "
+                    "sizing, savings-rate guidance, FIRE timeline, CPF or retirement adequacy, "
+                    "and budgeting. Set it false for pure policy or definition questions. "
                     "Resolve relative dates from the supplied date. "
                     "For expense tools, provide start_date and end_date. For comparison, also provide "
                     "comparison dates. Use clarification only for a data question whose required "

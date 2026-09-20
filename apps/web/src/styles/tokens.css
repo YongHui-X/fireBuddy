@@ -73,9 +73,11 @@
   --hero-line: rgba(255, 255, 255, 0.14);
 
   /* Shape and depth */
-  --r-card: 16px;
+  --r-chip: 6px;
   --r-control: 10px;
   --r-tile: 12px;
+  --r-card: 16px;
+  --r-drawer: 18px;
   --r-pill: 999px;
   --shadow-card: 0 1px 2px rgba(20, 35, 28, 0.05), 0 8px 24px -12px rgba(20, 35, 28, 0.18);
   --shadow-md: 0 4px 14px -6px rgba(15, 37, 28, 0.25);
@@ -88,8 +90,16 @@
   /* Layout */
   --sidebar-w: 264px;
   --topbar-h: 60px;
+  --bottom-nav-h: 64px;
   --content-max: 1400px;
   --gutter: clamp(18px, 3vw, 40px);
+
+  /* Touch metrics. 48px is the Material minimum; the compact step is for dense list rows only. */
+  --touch-target: 48px;
+  --touch-target-compact: 44px;
+  --sheet-max-h: 92dvh;
+  /* Height of the on-screen keyboard, written at runtime by useVisualViewportInset. */
+  --kb-inset: 0px;
 
   /* Brand marks */
   --brand-mark-fill: var(--forest-800);

@@ -22,6 +22,7 @@ EVALUATION_DIR = Path(__file__).resolve().parent
 DEFAULT_THRESHOLDS_PATH = EVALUATION_DIR / "baseline_thresholds.json"
 DEFAULT_RETRIEVAL_REPORT = EVALUATION_DIR / "results" / "retrieval_latest.json"
 DEFAULT_ANSWER_REPORT = EVALUATION_DIR / "results" / "answer_latest.json"
+DEFAULT_PERSONAL_REPORT = EVALUATION_DIR / "results" / "personal_latest.json"
 
 
 def load_json(path: Path) -> dict:
@@ -32,16 +33,27 @@ def find_regressions(
     thresholds: dict,
     retrieval_report: dict,
     answer_report: dict,
+    personal_report: dict | None = None,
 ) -> list[str]:
-    """Return one line per metric that is below its threshold minus tolerance."""
+    """
+    Return one line per metric that is below its threshold minus tolerance.
+
+    The personal suite is enforced only when the thresholds file has a
+    `personal` block; a block without a report is itself a failure.
+    """
 
     tolerance = float(thresholds.get("tolerance", 0.0))
     problems: list[str] = []
 
-    checks = (
+    checks = [
         ("retrieval", thresholds.get("retrieval", {}), retrieval_report.get("metrics", {})),
         ("answer", thresholds.get("answer", {}), answer_report.get("summary", {})),
-    )
+    ]
+    if thresholds.get("personal"):
+        if personal_report is None:
+            problems.append("personal: thresholds are set but no personal report was supplied")
+        else:
+            checks.append(("personal", thresholds["personal"], personal_report.get("summary", {})))
     for suite, minimums, actual in checks:
         for metric, minimum in minimums.items():
             value = actual.get(metric)
@@ -57,6 +69,7 @@ def find_regressions(
     for suite, report, key in (
         ("retrieval", retrieval_report, "min_retrieval_cases"),
         ("answer", answer_report, "min_answer_cases"),
+        ("personal", personal_report or {}, "min_personal_cases"),
     ):
         minimum_cases = thresholds.get(key)
         if minimum_cases is not None and report.get("case_count", 0) < minimum_cases:
@@ -72,12 +85,14 @@ def main() -> int:
     parser.add_argument("--thresholds", type=Path, default=DEFAULT_THRESHOLDS_PATH)
     parser.add_argument("--retrieval-report", type=Path, default=DEFAULT_RETRIEVAL_REPORT)
     parser.add_argument("--answer-report", type=Path, default=DEFAULT_ANSWER_REPORT)
+    parser.add_argument("--personal-report", type=Path, default=DEFAULT_PERSONAL_REPORT)
     args = parser.parse_args()
 
     problems = find_regressions(
         load_json(args.thresholds),
         load_json(args.retrieval_report),
         load_json(args.answer_report),
+        load_json(args.personal_report) if args.personal_report.exists() else None,
     )
     if problems:
         print("RAG evaluation regression detected:")

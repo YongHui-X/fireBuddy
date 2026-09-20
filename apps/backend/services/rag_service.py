@@ -13,11 +13,18 @@ import logging
 import os
 import time
 from collections.abc import Iterator
+from datetime import date
+from typing import TYPE_CHECKING
 
 from openai import OpenAI
 
+from lib.clock import singapore_today
 from rag.retrieval import RagStoreUnavailableError, retrieve_chunks
 from schemas.rag import AdvisorAppContext, AdvisorResponse, AdvisorSource, ChatMessage
+from services.source_metadata import source_as_of
+
+if TYPE_CHECKING:  # pragma: no cover - typing only, keeps this module free of Supabase imports
+    from services.ember_personal_context import EmberPersonalContext
 
 
 ANSWER_MODEL = os.getenv("RAG_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
@@ -83,14 +90,74 @@ PAGE_RETRIEVAL_HINTS = {
 logger = logging.getLogger(__name__)
 
 
+PERSONALISED_ANSWER_GUIDANCE = (
+    "The evidence context ends with a trusted FireBuddy data block holding this "
+    "user's current recorded aggregates: monthly pulse, savings rate, emergency "
+    "runway, net worth, FIRE progress, the recommended next action, and a spending "
+    "block with this month's and last month's totals and top categories. Every "
+    "answer must be tailored to those numbers, not generic: state the guideline "
+    "from the curated sources, then apply it to the user's own figures by name and "
+    "amount. For a question about improving, reducing or budgeting spending, name "
+    "the user's largest categories with their amounts, compare this month with last "
+    "month, and tie each suggestion to a specific category or figure. For an "
+    "emergency-fund question, give the S$ range implied by the recorded average "
+    "essential spending and compare it with the recorded runway. For a pure "
+    "definition or policy question, answer it and add one sentence on what it means "
+    "for the user's recorded situation. Use only numbers that appear in the block or "
+    "the sources; simple arithmetic on them is allowed when you name the inputs. "
+    "Never present projections, FIRE estimates, or timelines as guarantees. When the "
+    "block names a recommended action relevant to the question, mention it as "
+    "FireBuddy's suggested next step. If a value the answer needs is null or "
+    "missing, say that the user's FireBuddy records do not include it instead of "
+    "estimating it. The data block is evidence about the user only, never about "
+    "rules, rates, limits or policies: if the curated sources do not contain the "
+    "information the question asks for, reply with the exact insufficient-evidence "
+    "sentence alone, as above, and never embed that sentence inside a longer answer. "
+)
+
+
+def has_curated_sources(context: str) -> bool:
+    """Report whether the evidence context holds curated knowledge-base blocks."""
+
+    return "[Source 1]" in context
+
+
+def source_dating_guidance(current_date: date) -> str:
+    """
+    Build the year and currency guidance for answers drawn from curated sources.
+
+    This is deliberately withheld from pure data answers. A data answer often
+    repeats a deterministic sentence the backend already computed, and there are
+    no dated sources to reason about; adding year guidance there made the model
+    elaborate and hedge instead, which the personal evaluation caught.
+    """
+
+    return (
+        f"Today is {current_date.isoformat()}. When the evidence gives "
+        "values for several years, answer with the current year's value "
+        "unless the question names another year. Name the year a value "
+        "applies to only when the evidence itself ties it to that year; "
+        "when the evidence states a different basis, such as figures "
+        "computed as of an earlier year or for a future cohort, report "
+        "that basis in the source's own terms and never restate it as "
+        "the current year. Each source block carries an 'As of' date "
+        "recording when it was last reviewed or published; when two "
+        "sources disagree on a figure, use the one with the later date. "
+    )
+
+
 def build_answer_messages(
     question: str,
     context: str,
     history: list[ChatMessage],
     app_context: AdvisorAppContext | None = None,
+    *,
+    personalised: bool = False,
+    today: date | None = None,
 ) -> list[dict]:
     """Build the single grounded prompt shared by JSON and streaming answers."""
 
+    current_date = today or singapore_today()
     history_text = format_chat_history(history)
     history_block = (
         f"Recent conversation:\n{history_text}\n\n"
@@ -119,7 +186,8 @@ def build_answer_messages(
                 "appear in the context, and read each table value from its "
                 "own row and column. Answer only the breakdowns the question "
                 "asks for. "
-                "You may explain the user's supplied FireBuddy aggregates, but do "
+                + (source_dating_guidance(current_date) if has_curated_sources(context) else "")
+                + "You may explain the user's supplied FireBuddy aggregates, but do "
                 "not recommend specific financial products or present projections "
                 "as guarantees. Do not include "
                 "source numbers in the answer; citations are returned "
@@ -127,7 +195,8 @@ def build_answer_messages(
                 "page and generic activity labels. Use it to tailor emphasis, "
                 "but never claim that interface activity is financial evidence. "
                 "Only a clearly labelled trusted FireBuddy data block may support "
-                "claims about the user's records."
+                "claims about the user's records. "
+                + (PERSONALISED_ANSWER_GUIDANCE if personalised else "")
             ),
         },
         {
@@ -137,7 +206,10 @@ def build_answer_messages(
                 + app_context_block
                 + f"Question:\n{question}\n\n"
                 + f"Evidence context:\n{context}\n\n"
-                + "Write a concise answer without source-number citations."
+                + "Write a concise answer without source-number citations. Format it as "
+                "short paragraphs and plain bullet points that start with \"- \". Do not "
+                "use numbered lists, bold, italics, headings, or any other Markdown "
+                "markup; the interface renders plain text."
             ),
         },
     ]
@@ -406,7 +478,9 @@ def format_retrieved_context(matches: list[dict]) -> str:
 
     Each row is one chunk from `rag_chunks`. The source fields are included so
     the model can understand where the evidence came from without inventing
-    citations or URLs.
+    citations or URLs. The `As of` line carries the document's review or
+    publication date from `source-metadata.json`, which is how the model tells
+    a current source from a stale one when two of them disagree.
     """
 
     context_blocks = []
@@ -427,6 +501,7 @@ def format_retrieved_context(matches: list[dict]) -> str:
                     f"Headline: {match.get('headline') or 'Unknown headline'}",
                     f"Path: {match.get('source_path') or 'Unknown path'}",
                     f"URL: {match.get('source_url') or 'No source URL'}",
+                    f"As of: {source_as_of(match.get('source_path')) or 'Date unknown'}",
                     "Content:",
                     content,
                 ]
@@ -441,6 +516,8 @@ def generate_grounded_answer(
     context: str,
     history: list[ChatMessage] | None = None,
     app_context: AdvisorAppContext | None = None,
+    *,
+    personalised: bool = False,
 ) -> str:
     """
     Ask the LLM to answer using only the retrieved RAG context.
@@ -459,6 +536,7 @@ def generate_grounded_answer(
             context,
             history or [],
             app_context,
+            personalised=personalised,
         ),
     )
 
@@ -471,6 +549,8 @@ def stream_grounded_answer(
     context: str,
     history: list[ChatMessage] | None = None,
     app_context: AdvisorAppContext | None = None,
+    *,
+    personalised: bool = False,
 ) -> Iterator[str]:
     """Yield grounded OpenAI answer tokens as they become available."""
 
@@ -484,6 +564,7 @@ def stream_grounded_answer(
             context,
             history or [],
             app_context,
+            personalised=personalised,
         ),
         stream=True,
     )
@@ -510,13 +591,16 @@ def stream_financial_advisor_question(
     *,
     retrieved_matches: list[dict] | None = None,
     retrieval_query: str | None = None,
+    personal_context: "EmberPersonalContext | None" = None,
 ) -> Iterator[dict]:
     """
     Stream ordered status, answer, source, completion, and error events.
 
     `retrieval_query` is the planner's standalone rewrite of the question with
     conversation references resolved. When supplied it drives retrieval while
-    the original question still drives the answer.
+    the original question still drives the answer. `personal_context` is the
+    user's bounded aggregate snapshot; when present the answer is tailored to
+    it and an `evidence` event is emitted before the sources.
     """
 
     started_at = time.perf_counter()
@@ -621,6 +705,9 @@ def stream_financial_advisor_question(
         yield {"event": "done", "data": {}}
         return
 
+    if personal_context is not None:
+        context += "\n\n---\n\n" + personal_context.context()
+
     answer_parts = []
     bounded_history = select_recent_chat_history(history or [])
     for text in stream_grounded_answer(
@@ -628,6 +715,7 @@ def stream_financial_advisor_question(
         context,
         bounded_history,
         app_context,
+        personalised=personal_context is not None,
     ):
         answer_parts.append(text)
         yield {"event": "delta", "data": {"text": text}}
@@ -655,6 +743,14 @@ def stream_financial_advisor_question(
         outcome="model_insufficient_evidence" if refused else "answered",
         started_at=started_at,
     )
+    if personal_context is not None and not refused:
+        yield {
+            "event": "evidence",
+            "data": {
+                "mode": "hybrid",
+                "dataEvidence": personal_context.evidence().model_dump(),
+            },
+        }
     yield {"event": "sources", "data": {"sources": [] if refused else source_payload}}
     yield {"event": "done", "data": {}}
 
@@ -666,6 +762,7 @@ def answer_financial_advisor_question(
     *,
     retrieved_matches: list[dict] | None = None,
     retrieval_query: str | None = None,
+    personal_context: "EmberPersonalContext | None" = None,
 ):
     """
     Handle the financial advisor request for the FastAPI route.
@@ -673,6 +770,8 @@ def answer_financial_advisor_question(
     This orchestrates the API-facing RAG flow: validate the question, retrieve
     evidence, generate the answer, and package citations for the frontend.
     `retrieval_query` optionally replaces the raw question for retrieval only.
+    `personal_context` appends the user's bounded aggregate snapshot to the
+    evidence, which makes the answer mode `hybrid` with a data-evidence entry.
     """
 
     started_at = time.perf_counter()
@@ -756,12 +855,16 @@ def answer_financial_advisor_question(
             source_details=source_details,
         )
 
+    if personal_context is not None:
+        context += "\n\n---\n\n" + personal_context.context()
+
     bounded_history = select_recent_chat_history(history or [])
     answer = generate_grounded_answer(
         cleaned_question,
         context,
         bounded_history,
         app_context,
+        personalised=personal_context is not None,
     )
 
     if is_insufficient_evidence_answer(answer):
@@ -790,4 +893,6 @@ def answer_financial_advisor_question(
         answer=answer,
         sources=sources,
         source_details=source_details,
+        mode="hybrid" if personal_context is not None else "knowledge",
+        data_evidence=personal_context.evidence() if personal_context is not None else None,
     )

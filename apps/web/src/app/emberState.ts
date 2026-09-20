@@ -125,8 +125,10 @@ export function getEmberTopicTitle(question: string): string {
 
 /** Convert local messages to the unchanged shared RAG history contract. */
 export function toRagChatHistory(messages: readonly EmberMessage[]): RagChatMessage[] {
+  // A reply that is still streaming is incomplete, so it is not sent as history
+  // for a follow-up question asked while it is being drafted.
   return messages
-    .filter((message) => !message.error && message.content.trim().length > 0)
+    .filter((message) => !message.error && message.status !== 'streaming' && message.content.trim().length > 0)
     .map((message) => ({ role: message.role, content: message.content }));
 }
 

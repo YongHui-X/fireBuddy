@@ -85,10 +85,12 @@
   font-weight: 600;
 }
 
-.position-actions button:hover:not(:disabled) {
-  border-color: var(--ink-3);
-  background: var(--surface-2);
-  color: var(--ink);
+@media (hover: hover) {
+  .position-actions button:hover:not(:disabled) {
+    border-color: var(--ink-3);
+    background: var(--surface-2);
+    color: var(--ink);
+  }
 }
 
 /* Forms inside planning cards */
@@ -255,10 +257,12 @@ details.foundation-form[open] > summary {
   color: var(--ink-2);
 }
 
-.history-row button:hover {
-  border-color: var(--line);
-  background: var(--expense-soft);
-  color: var(--danger);
+@media (hover: hover) {
+  .history-row button:hover {
+    border-color: var(--line);
+    background: var(--expense-soft);
+    color: var(--danger);
+  }
 }
 
 /* FIRE planner */
@@ -276,7 +280,7 @@ details.foundation-form[open] > summary {
   gap: 14px;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 479.98px) {
   .retirement-headlines {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -503,7 +507,7 @@ details.foundation-form[open] > summary {
   }
 }
 
-@media (max-width: 460px) {
+@media (max-width: 479.98px) {
   .retirement-scenario-fields {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -555,42 +559,262 @@ details.foundation-form[open] > summary {
 
 /* FIRE setup */
 
+.retirement-setup-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .retirement-setup-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+/* Steps run across the full width as a chevron strip: equal widths, no gaps, each segment pointing to the next. */
 .retirement-steps {
+  grid-column: 1 / -1;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  overflow-x: auto;
 }
 
 .retirement-steps button {
-  display: inline-flex;
+  display: flex;
+  flex: 1 1 0;
   align-items: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-pill);
-  background: var(--surface);
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 8px 30px 8px 36px;
+  border: 0;
+  background: var(--surface-2);
   color: var(--ink-2);
   font-size: 0.85rem;
   font-weight: 600;
+  text-align: center;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%, 18px 50%);
 }
 
-.retirement-steps button:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: var(--ink-3);
+.retirement-steps button + button {
+  margin-left: -14px;
+}
+
+.retirement-steps button:first-child {
+  padding-left: 18px;
+  border-radius: var(--r-tile) 0 0 var(--r-tile);
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%);
+}
+
+.retirement-steps button:last-child {
+  padding-right: 18px;
+  border-radius: 0 var(--r-tile) var(--r-tile) 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 18px 50%);
+}
+
+.retirement-steps button > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.retirement-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+}
+
+@media (hover: hover) {
+  .retirement-steps button:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--surface-3);
+  }
 }
 
 .retirement-steps button[aria-current='step'] {
-  border-color: var(--forest-700);
   background: var(--forest-700);
   color: #fff;
 }
 
-.retirement-setup-form {
-  max-width: 880px;
+.retirement-step-done:not([aria-current='step']) {
+  background: var(--forest-100);
+  color: var(--forest-700);
 }
 
-.retirement-setup-form .retirement-actions {
+:root[data-theme='dark'] .retirement-step-done:not([aria-current='step']) {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.retirement-steps button[aria-current='step'] .retirement-step-index {
+  background: var(--lime-500);
+  color: var(--forest-900);
+}
+
+.retirement-step-done:not([aria-current='step']) .retirement-step-index {
+  background: var(--income-soft);
+  color: var(--income);
+}
+
+.retirement-setup-form {
+  min-width: 0;
+}
+
+.retirement-setup-heading span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.retirement-setup-form .form-row {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.retirement-setup-form .retirement-income .form-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.retirement-setup-form select {
+  width: 100%;
+}
+
+.retirement-setup-form h3 {
+  margin-top: 4px;
+}
+
+.foundation-form > .retirement-note {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+.retirement-insight,
+.foundation-form > .retirement-insight[role='status'] {
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+.retirement-insight {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--forest-600);
+  border-radius: var(--r-tile);
+  background: var(--accent-soft);
+}
+
+.retirement-insight strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.retirement-insight span {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.retirement-insight em {
+  color: var(--expense);
+  font-size: 0.85rem;
+  font-style: normal;
+}
+
+.retirement-insight .text-button {
+  justify-self: start;
+  color: var(--accent-text);
+  font-size: 0.85rem;
+}
+
+.retirement-insight label {
+  max-width: 280px;
+}
+
+.retirement-facts-compact {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.retirement-facts-compact > div {
+  padding: 10px 12px;
+}
+
+.foundation-form .retirement-facts-compact > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+
+.foundation-form .retirement-facts-compact dt {
+  text-transform: none;
+}
+
+.foundation-form .retirement-facts-compact dd {
+  font-size: 0.95rem;
+}
+
+.retirement-setup-actions {
   margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.retirement-setup-actions .primary-button {
+  margin-left: auto;
+}
+
+.retirement-summary {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  align-self: stretch;
+  padding: 22px 24px;
+}
+
+.retirement-summary h3 {
+  font-size: 1.2rem;
+}
+
+
+
+.retirement-summary dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.retirement-summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.retirement-summary dt {
+  color: var(--ink-2);
+}
+
+.retirement-summary dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.retirement-summary p {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .retirement-asset-list {
@@ -598,27 +822,55 @@ details.foundation-form[open] > summary {
   gap: 8px;
 }
 
-.retirement-asset-list label {
-  padding: 10px 12px;
+/* Each row: the checkbox and name on the left, an editable planning value on the right. */
+.retirement-asset-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-control);
-  font-weight: 500;
 }
 
-.retirement-asset-list label:has(input:checked) {
+@media (max-width: 520px) {
+  .retirement-asset-list > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.retirement-asset-list > div.retirement-asset-selected {
   border-color: var(--forest-600);
   background: var(--accent-soft);
+}
+
+.foundation-form .retirement-asset-list label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-weight: 500;
 }
 
 .retirement-asset-list label span {
   display: grid;
   gap: 2px;
+  min-width: 0;
 }
 
-.retirement-asset-list label small {
+.retirement-asset-list label em {
   color: var(--ink-2);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
+  font-style: normal;
   font-weight: 400;
+}
+
+.retirement-asset-list > div > input {
+  width: 100%;
+  min-width: 0;
 }
 
 .essential-category-grid {
@@ -723,8 +975,10 @@ details.foundation-form[open] > summary {
   border-top: 1px solid var(--line);
 }
 
-button.setting-row:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  button.setting-row:hover {
+    background: var(--surface-2);
+  }
 }
 
 .setting-row strong {
@@ -749,4 +1003,146 @@ button.setting-row:hover {
 
 .setting-row-static {
   cursor: default;
+}
+
+@media (pointer: coarse) {
+  /* A settings list is a touch target list; 56px is the Material list-row height. */
+  .setting-row {
+    min-height: 56px;
+  }
+}
+
+/* A static replacement for the recharts legend at phone widths: cheaper to lay out, and read
+   properly by TalkBack as a list rather than as chart furniture. */
+.chart-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: 0.78rem;
+}
+
+.chart-key li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-key span {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-chip);
+  flex: 0 0 auto;
+}
+
+/* Planning surfaces on a phone --------------------------------------------- */
+
+@media (max-width: 379.98px) {
+  .retirement-headlines strong {
+    font-size: 1.35rem;
+  }
+}
+
+/* The yearly cash flow table is a matrix: six numeric columns against forty rows. Stacking it into
+   cards, the way the ledger stacks, would destroy the comparison it exists to support. It scrolls
+   sideways instead with its first column pinned, so a row never loses its label. The scenario
+   comparison table shares the class and the same shape, and wants the same treatment. */
+@media (max-width: 767px) {
+  details.foundation-form .retirement-table {
+    max-height: 420px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .retirement-table th:first-child,
+  .retirement-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface);
+  }
+
+  .retirement-table thead th:first-child {
+    z-index: 2;
+    background: var(--surface-2);
+  }
+
+  /* The step strip stays in view so the wizard never loses its place. */
+  .retirement-steps {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 4;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 16px;
+    background: var(--bg);
+  }
+
+  .retirement-steps button {
+    scroll-snap-align: center;
+  }
+
+  /* The wizard's actions stay in reach, above the tab bar and above the keyboard. */
+  .retirement-setup-actions {
+    position: sticky;
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--kb-inset));
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+    padding: 12px 0 calc(6px + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+
+  .essential-category-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .essential-category-grid label {
+    padding: 4px 0;
+  }
+
+  .essential-category-grid label + label {
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* The collapsed form of the setup summary, used below the three-column layout. */
+.setup-summary-disclosure > summary {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.setup-summary-disclosure[open] > summary {
+  margin-bottom: 12px;
+}
+
+/* Wealth on a phone: one action row instead of three stacked forms. */
+.wealth-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.wealth-action-row > button {
+  flex: 1 1 auto;
+}
+
+/* The sheet header already carries the form's title. */
+.wealth-form-sheet .foundation-form {
+  border: 0;
+  box-shadow: none;
+  padding: 4px 18px 8px;
+}
+
+.wealth-form-sheet .foundation-form > h3 {
+  display: none;
 }

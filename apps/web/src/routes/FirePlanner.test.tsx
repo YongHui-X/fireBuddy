@@ -1,10 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { calculateRetirement, type FireProfile, type RetirementPlan } from '@firebuddy/shared';
 import fixtures from '../../../../packages/shared/fixtures/retirement.json';
 import FireSetup from './FireSetup';
 import FirePlanner from './FirePlanner';
+import { setViewportWidth, viewports } from '../test/viewport';
 
 const state = vi.hoisted(() => ({ profile: null as FireProfile | null, updateProfile: vi.fn(), runScenario: vi.fn() }));
 vi.mock('../app/FinancialFoundationProvider', () => ({ useFinancialFoundation: () => ({
@@ -27,7 +28,7 @@ describe('retirement plan workflows', () => {
   it('resumes the saved step and saves manual spending only to the draft', async () => {
     render(<MemoryRouter><FireSetup /></MemoryRouter>);
     expect(screen.getByRole('heading', { name: 'Spending and savings' })).toBeTruthy();
-    fireEvent.change(screen.getByLabelText(/Retirement spending per month/), { target: { value: '4000' } });
+    fireEvent.change(screen.getByLabelText(/How much will you spend during retirement/), { target: { value: '4000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Confirm step and continue' }));
     await waitFor(() => expect(state.updateProfile).toHaveBeenCalled());
     const payload = state.updateProfile.mock.calls[0][0];
@@ -63,5 +64,40 @@ describe('retirement plan workflows', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Compare scenario' }));
     await waitFor(() => expect(state.runScenario).toHaveBeenCalledWith(expect.objectContaining({ planOverrides: expect.objectContaining({ monthlySpending: 2000 }) })));
     expect(state.updateProfile).not.toHaveBeenCalled();
+  });
+});
+
+describe('retirement planning on a phone', () => {
+  beforeEach(() => {
+    state.profile = setupProfile();
+    state.updateProfile.mockReset().mockResolvedValue(undefined);
+    state.runScenario.mockReset().mockResolvedValue(calculateRetirement(plan, 0, '2026-01-01'));
+  });
+
+  it('collapses the plan summary so it does not sit between the form and its actions', () => {
+    setViewportWidth(viewports.phone);
+    const phone = render(<MemoryRouter><FireSetup /></MemoryRouter>);
+
+    const disclosure = document.querySelector('.setup-summary-disclosure');
+    expect(disclosure).not.toBeNull();
+    expect((disclosure as HTMLDetailsElement).open).toBe(false);
+    // The aside form is reserved for the three-column layout.
+    expect(screen.queryByRole('complementary', { name: 'Your plan so far' })).toBeNull();
+    phone.unmount();
+
+    setViewportWidth(viewports.desktop);
+    render(<MemoryRouter><FireSetup /></MemoryRouter>);
+    expect(screen.getByRole('complementary', { name: 'Your plan so far' })).toBeTruthy();
+    expect(document.querySelector('.setup-summary-disclosure')).toBeNull();
+  });
+
+  it('keeps only the setup call to action in the planner toolbar on a phone', () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter><FirePlanner /></MemoryRouter>);
+
+    expect(screen.queryByRole('link', { name: 'Review assets' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'More FIRE Planner actions' }));
+    const sheet = screen.getByRole('dialog', { name: 'FIRE Planner' });
+    expect(within(sheet).getByRole('button', { name: 'Review assets' })).toBeTruthy();
   });
 });

@@ -4,6 +4,7 @@ source_url: https://github.com/RemarkRemedy/fireplanner
 agency: RemarkRemedy
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # RemarkRemedy fireplanner source repository

@@ -1,0 +1,421 @@
+/* Mobile and touch layer.
+ *
+ * This file is imported LAST and holds only cross-cutting touch primitives. Per-screen layout
+ * stays co-located in its own module — do not move responsive layout rules here.
+ *
+ * Breakpoint ladder (mirrored in src/app/breakpoints.ts — keep the two in sync):
+ *
+ *   xs      max-width: 379.98px   last squeeze: 360dp Androids, the 375pt iPhone SE
+ *   base    360-479               the mobile-first default, not a breakpoint
+ *   sm      min-width: 480px      large phone, phone landscape
+ *   md      min-width: 600px      phablet; two-up tiles become safe
+ *   lg      min-width: 768px      tablet portrait; cards return to full padding
+ *   xl      min-width: 1024px     the shell switch: sidebar in, tab bar out
+ *   2xl     min-width: 1280px     the wide dashboard grid
+ *
+ * Convention: every NEW :hover rule in this codebase belongs inside `@media (hover: hover)`.
+ * The existing ones were moved there mechanically so they cannot stick after a tap.
+ */
+
+/* Controls that only appeared on hover ------------------------------------ */
+
+/* These sit at opacity 0 and were revealed by a parent :hover, which on a touch screen made them
+   permanently invisible and unreachable. Without a pointer to hover, they are simply always on. */
+@media (hover: none) {
+  .ember-copy-button,
+  .ember-topic-delete {
+    opacity: 1;
+  }
+}
+
+/* Press feedback ----------------------------------------------------------- */
+
+/* base.css clears -webkit-tap-highlight-color globally, which leaves a tap with no acknowledgement
+   at all. A background-image overlay tints whatever background the element already has without
+   clobbering it, and works on table rows where an inset shadow would not.
+   The press must land instantly; only the release is allowed to fade. */
+@media (pointer: coarse) {
+  .primary-button:active:not(:disabled),
+  .secondary-button:active:not(:disabled),
+  .danger-button:active:not(:disabled),
+  .pill-button:active:not(:disabled),
+  .text-button:active:not(:disabled),
+  .icon-button:active:not(:disabled),
+  .plain-icon-button:active:not(:disabled),
+  .type-chip:active:not(:disabled),
+  .mobile-tab:active,
+  .mobile-fab:active:not(:disabled),
+  .category-card:active,
+  .foundation-summary-card:active,
+  .foundation-transaction:active,
+  .transaction-row-interactive:active,
+  .account-card-row:active,
+  .setting-row:active,
+  .ember-topic-row:active,
+  .range-tabs button:active:not(:disabled),
+  .retirement-steps button:active:not(:disabled) {
+    background-image: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--ink) 8%, transparent),
+      color-mix(in srgb, var(--ink) 8%, transparent)
+    );
+    transition-duration: 0ms;
+  }
+
+  /* On the forest hero and the lime tile, tint towards white instead — an ink wash on a dark
+     surface reads as nothing at all. */
+  .foundation-summary-card:active,
+  .ember-message-user:active {
+    background-image: linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.1)
+    );
+  }
+}
+
+/* Hit targets -------------------------------------------------------------- */
+
+/* Material's minimum is 48dp; WCAG 2.2 SC 2.5.8 asks for 24px. These sizes are not a style
+   choice, so they are keyed on the pointer rather than on width. */
+@media (pointer: coarse) {
+  .icon-button,
+  .plain-icon-button,
+  .app-utility-button,
+  .auth-password-toggle,
+  .ember-header-icon-button {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
+
+  .text-button,
+  .auth-text-button,
+  .auth-mode-button {
+    min-height: var(--touch-target-compact);
+    padding-inline: 8px;
+  }
+
+  .transaction-type-toggle button,
+  .range-tabs button,
+  .category-type-tabs button,
+  .type-chip {
+    min-height: var(--touch-target-compact);
+  }
+
+  /* Exception: these sit inline inside a field's label row, where 48px would break the rhythm.
+     Their wrapping label provides the real target. */
+  .compact-add-button,
+  .category-suggestion-button {
+    min-height: 36px;
+    padding-inline: 12px;
+  }
+
+  .transaction-tag-options button {
+    min-height: 36px;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    width: 20px;
+    height: 20px;
+  }
+
+  .check-stack label,
+  .checkbox-label,
+  .essential-category-grid label,
+  .retirement-asset-list label {
+    min-height: var(--touch-target);
+  }
+
+  .setting-row,
+  .history-row,
+  .account-card-row {
+    min-height: 56px;
+  }
+}
+
+/* Fields and the on-screen keyboard ---------------------------------------- */
+
+@media (pointer: coarse) {
+  /* Anything under 16px makes iOS Safari zoom the viewport on focus. Zero specificity so a
+     component rule (the add-transaction amount well, for one) still wins. */
+  :where(input:not([type='checkbox']):not([type='radio']):not([type='range'])),
+  :where(select),
+  :where(textarea) {
+    font-size: 16px;
+    min-height: var(--touch-target);
+  }
+}
+
+/* Scrolling ---------------------------------------------------------------- */
+
+/* The document stays the scroller — .scroll-area deliberately has no overflow, which is what
+   lets Android Chrome collapse its URL bar. Do not give it one. */
+
+.retirement-steps,
+.retirement-table-scroll,
+.range-tabs {
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.retirement-steps::-webkit-scrollbar,
+.retirement-table-scroll::-webkit-scrollbar,
+.range-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* A fling inside a sheet must not scroll the page behind it. */
+.sheet-backdrop,
+.add-panel,
+.center-sheet,
+.ember-history-panel {
+  overscroll-behavior: contain;
+}
+
+/* Bottom sheets ------------------------------------------------------------ */
+
+/* One geometry, two presentations: a sheet rising from the bottom edge on a phone, a centred
+   dialog from 768px up. No JavaScript media query is involved. */
+
+.sheet-backdrop-bottom {
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.bottom-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: var(--sheet-max-h);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: var(--r-drawer) var(--r-drawer) 0 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: rise-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bottom-sheet:focus {
+  outline: none;
+}
+
+.sheet-backdrop-bottom .sheet-handle {
+  display: block;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 4px;
+  margin: 10px auto 2px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+}
+
+.bottom-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bottom-sheet-header h3 {
+  font-size: 1.15rem;
+}
+
+.bottom-sheet-header p {
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+
+/* Forest owns regions: a navigation sheet is a region, so its header carries the rail colour
+   while the body stays white paper. */
+.bottom-sheet-forest .bottom-sheet-header {
+  background: var(--rail-bg);
+  border-bottom-color: var(--rail-line);
+  border-radius: var(--r-drawer) var(--r-drawer) 0 0;
+  color: var(--rail-ink);
+}
+
+.bottom-sheet-forest .bottom-sheet-header .icon-button {
+  color: var(--rail-ink);
+}
+
+.bottom-sheet-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 0 calc(12px + env(safe-area-inset-bottom) + var(--kb-inset));
+}
+
+@media (min-width: 768px) {
+  .sheet-backdrop-bottom {
+    align-items: center;
+    padding: 20px;
+  }
+
+  .bottom-sheet {
+    width: min(100%, 460px);
+    max-height: calc(100dvh - 40px);
+    border-bottom: 1px solid var(--line);
+    border-radius: var(--r-card);
+  }
+
+  .bottom-sheet-forest .bottom-sheet-header {
+    border-radius: var(--r-card) var(--r-card) 0 0;
+  }
+}
+
+/* The existing centred dialogs become bottom sheets on phones too, so every modal surface in the
+   app arrives from the same edge. */
+@media (max-width: 767px) {
+  .sheet-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .center-sheet,
+  .confirm-dialog,
+  .transaction-details-dialog {
+    width: 100%;
+    max-height: var(--sheet-max-h);
+    border-bottom: 0;
+    border-radius: var(--r-drawer) var(--r-drawer) 0 0;
+  }
+
+  .sheet-body,
+  .confirm-dialog {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom) + var(--kb-inset));
+  }
+
+  /* A row of buttons in a sheet reads better stacked and full width than crowded on one line. */
+  .sheet-actions {
+    flex-direction: column-reverse;
+  }
+
+  .sheet-actions > button {
+    width: 100%;
+  }
+}
+
+/* The More sheet ----------------------------------------------------------- */
+
+.more-sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+}
+
+.more-sheet-row.active {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.more-sheet-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.more-sheet-chevron {
+  flex: 0 0 auto;
+  color: var(--ink-3);
+}
+
+.more-sheet .nav-ai-indicator {
+  flex: 0 0 auto;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.more-sheet-divider {
+  height: 1px;
+  margin: 8px 18px;
+  background: var(--line);
+}
+
+.more-sheet-logout {
+  color: var(--danger);
+}
+
+@media (hover: hover) {
+  .more-sheet-row:hover {
+    background: var(--surface-2);
+  }
+}
+
+/* Sticky form footers ------------------------------------------------------ */
+
+/* A long form's primary action should not sit at the end of a scroll, and must clear both the
+   safe area and the on-screen keyboard. Used by the add-transaction sheet, and by the planning
+   forms that follow. Above the phone breakpoint this is an ordinary block. */
+@media (max-width: 767px) {
+  .sticky-form-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    gap: 8px;
+    padding: 12px 0 calc(6px + env(safe-area-inset-bottom) + var(--kb-inset));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* Action sheets ------------------------------------------------------------ */
+
+.action-sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.action-sheet-row-danger {
+  color: var(--danger);
+}
+
+.action-sheet-row:disabled {
+  opacity: 0.55;
+}
+
+@media (hover: hover) {
+  .action-sheet-row:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
+}
+
+/* Chart readouts ----------------------------------------------------------- */
+
+/* Tap-to-inspect replaces the hover tooltip on touch, because a recharts tooltip lands under the
+   thumb that summoned it. */
+.spending-active-readout {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  min-height: 1.2em;
+}

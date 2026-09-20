@@ -1,3 +1,10 @@
+---
+source_title: FIRE in Singapore
+agency: FireBuddy
+topic: fire
+ingest: true
+last_reviewed: 2026-05-31
+---
 # FIRE in Singapore: Comprehensive Knowledge Base
 *Last updated: May 2026. For RAG database use. Fact-checked against CPF Board, IRAS, StashAway, Endowus, and community sources.*
 
@@ -192,7 +199,7 @@ This makes UCITS ETFs superior to US-listed ETFs on **both** dividend withholdin
 
 - **CPF SA top-ups (Cash Top-Up to SA/RA):** Under the Retirement Sum Topping-Up Scheme (RSTU), you can top up your SA (or RA if 55+) with cash. Earns 4% p.a. Eligible for income tax relief up to $8,000 per year for self-top-up plus another $8,000 for top-up to family members.
 - **CPF OA voluntary top-ups:** Less commonly done; OA earns only 2.5%.
-- **MediSave top-ups:** Up to the Basic Healthcare Sum (BHS, fixed at $75,500 for those turning 65 in 2025). Eligible for tax relief.
+- **MediSave top-ups:** Up to the Basic Healthcare Sum (BHS, $79,000 in 2026; fixed for life at the value for the year the member turns 65). Eligible for tax relief.
 - **Caveat for FIRE:** Once money goes into CPF, it is **illiquid until retirement age**. For early retirees, aggressive CPF top-ups can create a cash flow problem during the pre-55/65 years. Balance liquidity needs vs. the guaranteed 4% return.
 
 ### 6.8 Supplementary Retirement Scheme (SRS)
@@ -271,7 +278,7 @@ Healthcare is often underestimated in FIRE planning, particularly in Singapore w
 - **CareShield Life** (mandatory for those born 1980 and later) provides ~$600+/month for severe disability. Optional enhancements available.
 
 **Planning approach:**
-- Ensure MediSave is at or near the BHS ($75,500 for 2025 cohort) before retiring.
+- Ensure MediSave is at or near the BHS ($79,000 in 2026) before retiring.
 - Budget for IP premiums explicitly in FIRE number calculations.
 - Consider self-insuring for certain riders if premiums become too high post-65.
 

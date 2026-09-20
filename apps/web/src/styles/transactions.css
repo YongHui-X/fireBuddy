@@ -60,9 +60,11 @@
   color: var(--ink-2);
 }
 
-.dashboard-period > button:hover:not(:disabled) {
-  background: var(--surface-2);
-  color: var(--ink);
+@media (hover: hover) {
+  .dashboard-period > button:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
 }
 
 .dashboard-period-picker select {
@@ -74,8 +76,10 @@
   font-size: 0.875rem;
 }
 
-.dashboard-period-picker select:hover {
-  background-color: var(--surface-2);
+@media (hover: hover) {
+  .dashboard-period-picker select:hover {
+    background-color: var(--surface-2);
+  }
 }
 
 .page-filter-toolbar {
@@ -283,8 +287,10 @@
   text-transform: inherit;
 }
 
-.transaction-sort-button:hover {
-  color: var(--ink);
+@media (hover: hover) {
+  .transaction-sort-button:hover {
+    color: var(--ink);
+  }
 }
 
 .sort-icon-desc {
@@ -303,8 +309,10 @@
   cursor: pointer;
 }
 
-.transaction-row-interactive:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .transaction-row-interactive:hover {
+    background: var(--surface-2);
+  }
 }
 
 .transaction-row-interactive:focus-visible {
@@ -376,11 +384,18 @@ td[data-label='Amount'] strong {
   color: var(--ink-2);
 }
 
-.transaction-action-trigger:hover,
 .transaction-action-trigger[aria-expanded='true'] {
   border-color: var(--line);
   background: var(--surface);
   color: var(--ink);
+}
+
+@media (hover: hover) {
+  .transaction-action-trigger:hover {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
 }
 
 .transaction-action-menu {
@@ -413,9 +428,14 @@ td[data-label='Amount'] strong {
   text-align: left;
 }
 
-.transaction-action-menu button:hover:not(:disabled),
 .transaction-action-menu button:focus-visible {
   background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .transaction-action-menu button:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
 }
 
 .transaction-action-menu-danger {
@@ -648,4 +668,47 @@ td[data-label='Amount'] strong {
 .transaction-card > strong:last-child {
   font-family: var(--font-display);
   white-space: nowrap;
+}
+
+/* Filters on a phone --------------------------------------------------------
+   The date range and the four selects move behind this trigger, which reports how many are
+   actually set so nothing is hidden silently. */
+.filter-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--touch-target);
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.filter-trigger-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-sheet .transaction-date-range,
+.filter-sheet .select-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 4px 18px 12px;
+}
+
+.filter-sheet .transaction-date-range {
+  padding-bottom: 4px;
 }

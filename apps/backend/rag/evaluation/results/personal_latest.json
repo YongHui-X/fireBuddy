@@ -1,0 +1,414 @@
+{
+  "generated_at": "2026-09-17T04:10:21.596910+00:00",
+  "case_count": 11,
+  "account_email": "jen@demo.com",
+  "judge_enabled": true,
+  "summary": {
+    "overall_pass_rate": 1.0,
+    "mode_accuracy": 1.0,
+    "fact_accuracy": 1.0,
+    "leak_free_rate": 1.0,
+    "missing_data_refusal_accuracy": 1.0,
+    "judge_groundedness": 1.0
+  },
+  "cases": [
+    {
+      "id": "spending_this_month",
+      "question": "How much have I spent this month?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "You spent S$3011.15 across 11 expenses from 2026-09-01 to 2026-09-30. Top categories were Housing (S$1650.00), Food & Drink (S$605.75), Bills & Utilities (S$178.60).",
+      "data_evidence": {
+        "tool": "expense_summary",
+        "label": "Expense summary",
+        "period": "2026-09-01 to 2026-09-30",
+        "record_count": 11,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "expense.total",
+          "expected": "3011.15",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": true,
+      "judge": null,
+      "passed": true
+    },
+    {
+      "id": "top_categories_this_month",
+      "question": "Which categories have I spent the most on this month?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "You spent S$3011.15 across 11 expenses from 2026-09-01 to 2026-09-30. Top categories were Housing (S$1650.00), Food & Drink (S$605.75), Bills & Utilities (S$178.60).",
+      "data_evidence": {
+        "tool": "expense_summary",
+        "label": "Expense summary",
+        "period": "2026-09-01 to 2026-09-30",
+        "record_count": 11,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "expense.categoryTotals.0.category",
+          "expected": "Housing",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": true,
+      "judge": null,
+      "passed": true
+    },
+    {
+      "id": "compare_with_last_month",
+      "question": "How does my spending this month compare with last month?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Your spending this month totals $3,011.15, which is a decrease of 39.78% compared to last month, where you spent $5,000.00. This represents a difference of $1,988.85.",
+      "data_evidence": {
+        "tool": "spending_comparison",
+        "label": "Spending comparison",
+        "period": "2026-09-01 to 2026-09-30 vs 2026-08-01 to 2026-08-31",
+        "record_count": 22,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "comparison.currentPeriod.total",
+          "expected": "3011.15",
+          "present": true
+        },
+        {
+          "path": "comparison.comparisonPeriod.total",
+          "expected": "5000.00",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects the spending totals for both the current and previous months, including the percentage decrease and the difference in amounts. All figures are directly supported by the retrieved context."
+      },
+      "passed": true
+    },
+    {
+      "id": "net_worth_explained",
+      "question": "What is my net worth right now and how is it made up?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "As of 2026-09-17, your net worth is S$493640.00. For 2026-09, recorded income is S$6200.00, spending is S$3011.15, and savings are S$3188.85.",
+      "data_evidence": {
+        "tool": "financial_summary",
+        "label": "Financial summary",
+        "period": "2026-09-17",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.netWorth",
+          "expected": "493640.00",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": true,
+      "judge": null,
+      "passed": true
+    },
+    {
+      "id": "emergency_fund_vs_moneysense",
+      "question": "Is my emergency fund large enough compared with MoneySense guidance?",
+      "user": "primary",
+      "mode": "hybrid",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "According to MoneySense guidance, it is recommended to set aside at least 3 to 6 months' worth of expenses as an emergency fund. \n\nYour average monthly essential spending is S$2,999.67. Therefore, the suggested emergency fund range would be between S$8,999.01 (3 months) and S$17,998.02 (6 months).\n\nYou currently have an emergency runway of approximately 10.41 months, which translates to about S$31,218.67 (10.41 months x S$2,999.67). This amount exceeds the upper limit of the recommended emergency fund range, indicating that your emergency fund is more than sufficient compared to MoneySense guidance.",
+      "data_evidence": {
+        "tool": "personal_context",
+        "label": "Your FireBuddy snapshot",
+        "period": "2026-09-17",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.emergencyRunwayMonths",
+          "expected": "10.414490",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects MoneySense guidance on emergency funds, stating the recommended amount of 3 to 6 months' worth of expenses. It correctly calculates the suggested emergency fund range based on the provided average monthly essential spending of S$2,999.67. The current emergency runway of approximately 10.41 months and the corresponding amount of S$31,218.67 are also correctly derived and compared to the recommended range, confirming that the emergency fund is sufficient. All calculations and references are supported by the retrieved context."
+      },
+      "passed": true
+    },
+    {
+      "id": "savings_rate_vs_guidance",
+      "question": "Am I saving enough each month compared with the MoneySense 10 percent guideline?",
+      "user": "primary",
+      "mode": "hybrid",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "To determine if you are saving enough each month compared to the MoneySense guideline of saving at least 10% of your income, we can look at your monthly income and savings amount.\n\nYour monthly income is S$6,200. According to the guideline, you should aim to save at least 10% of this amount, which is:\n\n10% of S$6,200 = S$620.\n\nYou are currently saving S$3,188.85 each month. \n\nSince S$3,188.85 is significantly higher than the S$620 guideline, you are saving well above the recommended 10% of your income.",
+      "data_evidence": {
+        "tool": "financial_summary",
+        "label": "Financial summary",
+        "period": "2026-09-30",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.monthlyPulse.savingsRate | personal.monthlyPulse.savingsAmount",
+          "expected": [
+            "0.514331",
+            "3188.85"
+          ],
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately references the MoneySense guideline of saving at least 10% of income, correctly calculates the required savings amount based on the provided income, and compares it to the actual savings amount. All numerical values are correct and supported by the retrieved context, which confirms the guideline and the calculations made."
+      },
+      "passed": true
+    },
+    {
+      "id": "fire_timeline",
+      "question": "How long more to FIRE based on my current FireBuddy data?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Review required: confirm the five FIRE Planner setup steps before I can explain an active projection.",
+      "data_evidence": {
+        "tool": "fire_projection",
+        "label": "FIRE projection",
+        "period": "2026-09-17",
+        "record_count": null,
+        "destination": "/fire"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.fire.fundingStatus",
+          "expected": "review_required",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": true,
+      "judge": null,
+      "passed": true
+    },
+    {
+      "id": "cpf_adequacy_personalised",
+      "question": "Given my savings rate and runway, how should I think about CPF and retirement adequacy?",
+      "user": "primary",
+      "mode": "hybrid",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "To assess your retirement adequacy in relation to your CPF and savings, consider your current savings rate of approximately 51.43% and your emergency runway of about 10.4 months. \n\nYour average monthly essential spending is S$2,999.67, which implies that your emergency fund should ideally be between S$8,999 and S$14,998 (3 to 5 months of essential spending). With your current runway, you have enough to cover approximately 10.4 months of essential expenses, which is a strong position.\n\nHowever, since CPF savings are not accessible until age 55 and provide monthly payouts starting at age 65, you will need to rely on your non-CPF investments for several years if you plan to retire early. This gap highlights the importance of building a robust portfolio outside of CPF to ensure you can sustain your lifestyle until CPF LIFE begins.\n\nFireBuddy's suggested next step is to review your funding status, as it indicates that further planning may be required to ensure your retirement needs are met.",
+      "data_evidence": {
+        "tool": "personal_context",
+        "label": "Your FireBuddy snapshot",
+        "period": "2026-09-17",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.monthlyPulse.savingsRate",
+          "expected": "0.514331",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 4,
+        "numerical_accuracy": 5,
+        "rationale": "The answer is well-grounded in the context provided, accurately reflecting the user's savings rate and emergency runway. It correctly explains the inaccessibility of CPF savings until age 55 and the implications for early retirement, which aligns with the retrieved context. The numerical values mentioned (savings rate, emergency runway, and essential spending) are consistent with the data. However, while the answer references the importance of reviewing funding status, it does not directly cite specific sources from the retrieved context, which slightly affects the citation support score."
+      },
+      "passed": true
+    },
+    {
+      "id": "next_action",
+      "question": "What is FireBuddy's suggested next step for my finances?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "FireBuddy did not identify a higher-priority setup or financial action from the currently recorded data.",
+      "data_evidence": {
+        "tool": "financial_health_review",
+        "label": "Financial health review",
+        "period": "2026-09-17",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.recommendedAction.title",
+          "expected": null,
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": true,
+      "judge": null,
+      "passed": true
+    },
+    {
+      "id": "improve_my_spending",
+      "question": "How can I improve on my spending expenses?",
+      "user": "primary",
+      "mode": "hybrid",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "To improve your spending expenses, consider the following strategies based on your current expense breakdown:\n\n1. **Housing**: At S$1,650.00, this is your largest expense. Explore options to reduce housing costs, such as refinancing your mortgage, negotiating rent, or considering a smaller living space.\n\n2. **Food & Drink**: You spend S$605.75. Look for ways to cut back, such as meal planning, cooking at home more often, and taking advantage of discounts or bulk buying.\n\n3. **Bills & Utilities**: At S$178.60, review your utility usage and consider energy-saving measures to lower these costs.\n\n4. **Insurance**: Your insurance costs S$145.00. Assess your policies to ensure you are not over-insured and that you have the necessary coverage without excess.\n\n5. **Transport**: Spending S$132.80 can be optimized by using public transport, carpooling, or reducing unnecessary trips.\n\n6. **Shopping**: With S$96.40 spent, evaluate your shopping habits and limit discretionary purchases.\n\n7. **Travel**: At S$75.00, consider planning trips during off-peak times or finding budget-friendly travel options.\n\n8. **Entertainment**: Your S$48.90 expense can be reduced by seeking free or low-cost activities.\n\n9. **Healthcare**: Spending S$42.50 should be monitored; ensure you are utilizing any available health benefits effectively.\n\n10. **Others**: Review the S$36.20 in this category to identify any non-essential expenses that can be eliminated.\n\nAdditionally, creating a monthly budget and tracking your expenses can help you stay within your means and identify areas for further savings.",
+      "data_evidence": {
+        "tool": "expense_summary",
+        "label": "Expense summary",
+        "period": "2026-09-01 to 2026-09-30",
+        "record_count": 11,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.spending.currentMonth.topCategories.0.category",
+          "expected": "Housing",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 4,
+        "numerical_accuracy": 5,
+        "rationale": "The answer provides a comprehensive breakdown of spending categories with specific amounts that match the retrieved context. Each suggestion for reducing expenses is relevant and actionable, aligning with the context provided. The answer is well-grounded in the data, but while it references general strategies that are supported by the context, it does not directly cite specific sources for each suggestion, which slightly lowers the citation support score."
+      },
+      "passed": true
+    },
+    {
+      "id": "missing_data_user",
+      "question": "How much have I spent this month?",
+      "user": "missing",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid",
+        "knowledge"
+      ],
+      "answer": "I found no matching expenses from 2026-09-01 to 2026-09-30.",
+      "data_evidence": {
+        "tool": "expense_summary",
+        "label": "Expense summary",
+        "period": "2026-09-01 to 2026-09-30",
+        "record_count": 0,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": null,
+      "passed": true
+    }
+  ],
+  "report_version": 9,
+  "report_label": "Always-on personal context, any-of savings fact"
+}

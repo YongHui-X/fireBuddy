@@ -59,7 +59,7 @@
     "id": "iras_relief_cap",
     "question": "What overall cap applies to personal income tax reliefs per Year of Assessment according to the IRAS material?",
     "expected_source_paths": [
-      "markdown-cache/iras/tax-relief-individuals.md"
+      "manual/iras/tax-reliefs.md"
     ],
     "required_concepts": [
       [
@@ -142,7 +142,7 @@
     "expected_source_paths": [
       "manual/investing/investing-in-singapore.md",
       "markdown-cache/mas/singapore-savings-bonds-faqs.md",
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      "manual/mas/singapore-savings-bonds.md"
     ],
     "required_concepts": [
       [
@@ -277,7 +277,7 @@
     "question": "How do Singapore Savings Bonds work, and what should I understand before applying?",
     "expected_source_paths": [
       "markdown-cache/mas/singapore-savings-bonds-faqs.md",
-      "markdown-cache/mas/singapore-savings-bonds-factsheet.md"
+      "manual/mas/singapore-savings-bonds.md"
     ],
     "required_concepts": [
       [
@@ -400,6 +400,116 @@
     "required_concepts": [],
     "required_numbers": [],
     "reference_answer": "The advisor should refuse because MAS car loan rules are not in the FireBuddy knowledge base.",
+    "expected_refusal": true
+  },
+  {
+    "id": "cpf_frs_undated_defaults_to_current_year",
+    "question": "What is the CPF Full Retirement Sum?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-retirement-sums.md"
+    ],
+    "required_concepts": [
+      [
+        "full retirement sum",
+        "frs"
+      ]
+    ],
+    "required_numbers": [
+      "220400"
+    ],
+    "reference_answer": "The question names no year, so the answer must give the current 2026 Full Retirement Sum of $220,400 and say that it applies to members turning 55 in 2026. Presenting an earlier year's sum, such as the 2025 figure of $213,000, as the current one is incorrect.",
+    "expected_refusal": false
+  },
+  {
+    "id": "cpf_frs_past_year_is_not_the_current_figure",
+    "question": "What was the Full Retirement Sum in 2024?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-retirement-sums.md"
+    ],
+    "required_concepts": [
+      [
+        "full retirement sum",
+        "frs"
+      ]
+    ],
+    "required_numbers": [
+      "205800"
+    ],
+    "reference_answer": "The Full Retirement Sum for members who turned 55 in 2024 was $205,800. The answer must give the 2024 figure, not the current 2026 figure of $220,400.",
+    "expected_refusal": false
+  },
+  {
+    "id": "cpf_life_payout_states_its_year_basis",
+    "question": "How much do I need in my CPF Retirement Account at 65 to receive a monthly CPF LIFE payout of about $1,600?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-life-payout-examples.md"
+    ],
+    "required_concepts": [
+      [
+        "cpf life"
+      ],
+      [
+        "retirement account",
+        "ra"
+      ],
+      [
+        "estimate",
+        "estimated",
+        "estimates"
+      ]
+    ],
+    "required_numbers": [
+      "319400"
+    ],
+    "reference_answer": "About $319,400 in the Retirement Account at 65 supports an estimated $1,610 to $1,730 a month under the CPF LIFE Standard Plan. Because no figure_lookup key covers this table, the answer comes from retrieval, so it must present the amount as an estimate and name the basis the source states: members turning 65 in 2035, computed as of 2025.",
+    "expected_refusal": false
+  },
+  {
+    "id": "cpf_bhs_current_year",
+    "question": "What is the CPF Basic Healthcare Sum this year?",
+    "expected_source_paths": [
+      "manual/cpf/cpf-healthcare-sums.md"
+    ],
+    "required_concepts": [
+      [
+        "basic healthcare sum",
+        "bhs"
+      ]
+    ],
+    "required_numbers": [
+      "79000"
+    ],
+    "reference_answer": "The Basic Healthcare Sum for 2026 is $79,000. It applies to members below 65 and is fixed for life for members who turn 65 in 2026. The 2025 figure of $75,500 must not be given as current.",
+    "expected_refusal": false
+  },
+  {
+    "id": "iras_cpf_cash_topup_relief_current",
+    "question": "How much income tax relief can I claim for CPF cash top-ups?",
+    "expected_source_paths": [
+      "manual/iras/tax-reliefs.md"
+    ],
+    "required_concepts": [
+      [
+        "cash top-up",
+        "top-up"
+      ],
+      [
+        "relief"
+      ]
+    ],
+    "required_numbers": [
+      "8000"
+    ],
+    "reference_answer": "Up to $8,000 a year for topping up your own CPF account and a further $8,000 for topping up family members' accounts, so $16,000 in total. The superseded YA 2019 figures of $7,000 and $7,000 are wrong.",
+    "expected_refusal": false
+  },
+  {
+    "id": "iras_bicentennial_rebate_is_not_current",
+    "question": "Do I get a 50% personal income tax rebate this year?",
+    "expected_source_paths": [],
+    "required_concepts": [],
+    "required_numbers": [],
+    "reference_answer": "The knowledge base holds no current personal income tax rebate. The 50% Bicentennial Bonus rebate capped at $200 applied to Year of Assessment 2019 only and has expired. The answer must either refuse for lack of evidence or state clearly that the rebate was a one-off for YA 2019; it must not offer the rebate as currently available.",
     "expected_refusal": true
   }
 ]

@@ -17,8 +17,10 @@
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.category-card:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .category-card:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .category-top-row {
@@ -119,4 +121,69 @@
 
 .account-sheet .swatch-grid {
   grid-template-columns: repeat(8, 1fr);
+}
+
+/* Phones -------------------------------------------------------------------
+   A 210px card grid gives one column at phone widths anyway, and a tall card per category makes
+   for a long scroll. Below 600px each category becomes a row instead: icon, name and spend on the
+   left, edit on the right, budget bar spanning underneath. `display: contents` lets the avatar and
+   the edit button leave their wrapper and take part in the card's own grid. */
+@media (max-width: 599px) {
+  .category-type-tabs {
+    width: 100%;
+  }
+
+  .category-type-tabs button {
+    flex: 1 1 0;
+  }
+
+  .category-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .category-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+    padding: 12px 14px;
+  }
+
+  .category-top-row {
+    display: contents;
+  }
+
+  .category-card .category-avatar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .category-top-row > button,
+  .category-top-row > span:not(.category-avatar) {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    justify-self: end;
+  }
+
+  .category-card h3,
+  .category-card p {
+    grid-column: 2;
+  }
+
+  .category-card .progress-bar {
+    grid-column: 1 / -1;
+    margin: 8px 0 2px;
+  }
+
+  .category-budget {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 379.98px) {
+  /* Let the balance drop under the account name rather than squeezing both onto one line. */
+  .account-card-row {
+    row-gap: 4px;
+  }
 }

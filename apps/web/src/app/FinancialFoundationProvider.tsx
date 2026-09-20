@@ -200,8 +200,7 @@ export function buildDemoFinancialSummary(
     ...(scenario.monthlyContribution !== undefined ? { monthlyContribution: Number(scenario.monthlyContribution) } : {}),
     ...(scenario.retirementSpending !== undefined ? { monthlySpending: Number(scenario.retirementSpending) } : {}),
   } : null;
-  const eligible = active.filter(item => item.positionKind === 'asset' && !['cpf', 'property'].includes(item.positionType)
-    && item.restrictionType === 'none' && item.liquidityClass !== 'restricted' && !item.isEmergencyFund && plan?.assetIds.includes(item.id));
+  const eligible = active.filter(item => item.positionKind === 'asset' && plan?.assetIds.includes(item.id));
   const completePortfolio = plan && plan.assetIds.every(id => eligible.some(item => item.id === id) && latest.has(id));
   const spendable = completePortfolio ? eligible.reduce((sum, item) => sum + Number(latest.get(item.id)!.amount), 0) : null;
   const fire = calculateRetirement(plan, spendable, asOf);

@@ -1,11 +1,23 @@
 {
-  "0291f7abd5552a6a4c049bde01087b1589831db4b02788b887bbd4555cf98e7d": {
-    "headline": "Withdrawal Rates for Singapore FIRE Planners",
-    "summary": "This chunk is from the document 'Fire' under the section 'What Singapore FIRE Planners Typically Use'. It answers questions about the withdrawal rates used by the Singapore FIRE community, highlighting the preference for a 3\u20133.5% rate due to longer retirement horizons."
+  "05442d01f6fa35251ce4e9b6752dbf8726d4e7e55b4c47ebcadc19be5ec03a33": {
+    "headline": "Review and Update Notes for Singapore Savings Bonds",
+    "summary": "This chunk comes from the document 'Singapore Savings Bonds, Product Terms' under the section 'Source and review notes'. It answers questions regarding the last review date and the sources used for the product information."
   },
-  "061110003697b2d84f0b81512b81a4bdf6adad807efc9634b1641778d5404606": {
-    "headline": "Overview of Singapore REITs for FIRE Portfolios",
-    "summary": "This chunk is from the document 'Fire', section '6.4 Singapore REITs (S-REITs)'. It answers questions about the characteristics of S-REITs, their tax treatment, and their suitability for income-focused FIRE portfolios."
+  "0574f398287ac6165c8fcabf9ab70c428421c0d72e340c1cc553230a43975cc2": {
+    "headline": "Setting Up and Checking CDP Securities Account",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section 'D.2 CDP SECURITIES ACCOUNT OPENING'. It answers how to set up a CDP Securities account and how to check if one exists."
+  },
+  "0664d1a04d17019d9f3cb65f23fd1e816c7887d65606cebf4abd0ed0cebe6ea3": {
+    "headline": "Healthcare Costs in Singapore FIRE Planning",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Healthcare Planning for Singapore FIRE'. It addresses the significant healthcare costs associated with MediShield Life and Integrated Shield Plans, emphasizing the need for careful budgeting and planning for these expenses in FIRE calculations."
+  },
+  "06694c0647adde6e49b9e3df80ea5576d6ca7da14ad5dcd864957b89e797ef30": {
+    "headline": "Incorporating Healthcare Costs in Singapore FIRE Planning",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'Healthcare and insurance'. It addresses how healthcare expenses, including MediShield Life, Integrated Shield Plan premiums, and CareShield Life, should be explicitly included in FIRE calculations."
+  },
+  "0834a985e6cd5041a222099c428bc5cd1b02dc771dab79765f7b430b5d89fd90": {
+    "headline": "Source and review notes for CPF wage ceilings",
+    "summary": "This chunk is from the document 'CPF Wage Ceilings and the CPF Annual Limit' under the section 'Source and review notes'. It provides the last review date and cites sources for the AW ceiling formula, OW ceiling, and CPF Annual Limit."
   },
   "0957b6d4a51691915689f03484949f9628149f825bc36830f3c85a8761b54b9b": {
     "headline": "Revised FIRE Target and Spending's Impact on Withdrawal Rate",
@@ -15,37 +27,33 @@
     "headline": "Distinguishing FIRE Targets from Drawdown Backtests",
     "summary": "This chunk is from the document 'FI Calc' in the section 'Useful concepts for FireBuddy'. It clarifies the difference between a FIRE target, which indicates required capital, and a drawdown backtest, which assesses the survival of a portfolio and withdrawal strategy over historical periods."
   },
-  "0f91bb108ed565d1593fc1908ddf0ea2979ed50e4f2a72c524fb036cdc9cf502": {
-    "headline": "Evaluating Insurance Coverage Against Guide Recommendations",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section discussing insurance coverage. It answers questions about whether to keep insurance coverage that exceeds the Guide's recommendations and how to assess personal insurance needs."
+  "0ef45104ee6dfa25fa594d2c0ed180edeab685d7323c2578b8e4167e494f0060": {
+    "headline": "Document Review Date and Contextual Note",
+    "summary": "This chunk comes from the document 'Investing in Singapore' under the section 'Investing in Singapore: RAG Context'. It provides the last review date and emphasizes that the note is for educational purposes, not personal financial advice."
   },
   "0fdd0b611c12bbdf63dc0a9827ad46bd679399950c0d0a998eecaa8d3509bb3d": {
     "headline": "Understanding CPF LIFE Payout Requirements at Different Ages",
     "summary": "This chunk is from the document 'CPF LIFE Payout Examples' in the section 'How to read the table'. It explains the required savings in the Retirement Account at ages 55 and 65 to achieve a desired monthly payout."
   },
+  "10efc34c45124241228c5bd97b44e7f7c31cd2bf6325a505b2a1ce723519417e": {
+    "headline": "Comparing VWRA and CSPX for Singapore FIRE Investors",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section '6.1 Ireland-Domiciled UCITS ETFs'. It clarifies the differences between VWRA and CSPX for Singapore FIRE investors, highlighting the tax implications of US-domiciled ETFs."
+  },
+  "119855b1c91000a0f9b030eb1e77924cad81275d2fde2b2b94c7c7e0ed0cb64f": {
+    "headline": "Closure of SA Shielding Strategy for CPF Members",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section '4.2 SA Shielding Hack \u2014 Now Closed'. It explains the closure of the SA shielding strategy, which allowed CPF members to invest SA funds temporarily, and notes that this loophole was closed from January 2025."
+  },
+  "11b941abeda450d112f6915224c17afd42e113b6896d3196d833ce3f3f953493": {
+    "headline": "Investment Recommendations in the Basic Financial Planning Guide",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '2. What should I invest my money in? Who should I invest my money with?'. It answers questions about general investment recommendations and the role of FA Representatives in providing personalized advice."
+  },
   "11dd67b1fc210cd2e232b55f09943d1c847a34f903a4ea8f7bcb871a1d982175": {
     "headline": "Calculating Your FIRE Number for Retirement Planning",
     "summary": "This chunk is from the document 'FinSight SG, How to Calculate Your FIRE Number as a Singaporean' in the section 'Proposed inputs and formula'. It answers how to calculate the FIRE number using annual retirement spending and withdrawal rates, and discusses the implications of different withdrawal rates for early and later retirement."
   },
-  "1221097a41d591dbef22d52987df124cdce3e47ddc9ac5f899a4bc9cdbb527b4": {
-    "headline": "Applying for Savings Bonds with CDP and SRS",
-    "summary": "This chunk is from the Singapore Savings Bonds Factsheet, under the section 'Source'. It answers questions about how to apply for Savings Bonds using cash or SRS funds, including the need for a CDP Securities account and the application process."
-  },
   "125dc17f0a05d1b1e2b0ab1421c3819e29d85fc4ad57c0046a16f76bd9974377": {
     "headline": "Role of HDB Home in FIRE Planning",
     "summary": "This chunk is from the document 'FinSight SG, How to Calculate Your FIRE Number as a Singaporean' in the section 'Housing and liquidity'. It answers how to treat a paid off HDB home in the context of FIRE planning, emphasizing that property equity should not be counted as liquid assets."
-  },
-  "12cb71e201c5088a9fead0c42f0f4409826561e254ac3a65db5615941bdc47a1": {
-    "headline": "Eligibility and Purchase Restrictions for Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing eligibility. It answers questions about who can purchase Savings Bonds, including restrictions for corporates and age requirements."
-  },
-  "13f139c6016d9e8fd512935435de254deeaad8f3cad66aadacc35a1df655b843": {
-    "headline": "Understanding the CPF Gap in FIRE Planning",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'CPF gap analysis'. It explains the CPF gap, which is the period between the user's intended FIRE age and when CPF assets can support spending, detailing the necessary calculations for non-CPF funding."
-  },
-  "145464138faaa25bcedd90c210eb1cc29f01fbe708f1e94cbc0f00d66723a65f": {
-    "headline": "Redemption and Transfer Rules for Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing transfer and redemption rules. It answers questions about the minimum holding period for redemption, transfer scenarios, and the implications of death on Savings Bonds."
   },
   "1468ef71010145c2a4a653e3586e37db9be188bc45b70a66f2b604e59a1d287c": {
     "headline": "Limitations of the 25 Times Rule in FIRE Planning",
@@ -55,10 +63,6 @@
     "headline": "Allocation of CPF Contributions for Members Aged 55 and Above",
     "summary": "This chunk is from the document 'CPF Allocation Rates from 1 January 2026' in the section 'Notes on the allocation'. It explains how contributions are allocated to the Retirement Account and Ordinary Account for members aged 55 and above."
   },
-  "14f1eebc7c615e9ab506b6f75f452298d84156ab0092759448c211724b7a89f3": {
-    "headline": "Applying and Redeeming Singapore Savings Bonds via Bank Accounts",
-    "summary": "This chunk is from the 'Apply and redeem through ATMs and Internet Banking' section of the Singapore Savings Bonds Factsheet. It explains the process of applying for and redeeming Savings Bonds through bank accounts linked to a CDP account."
-  },
   "169ebe64412f51cfd5c02e88142b34b0fe0f8be18f038740f03cf78a7eaebe40": {
     "headline": "Understanding MediShield Life and Supplementary Retirement Scheme",
     "summary": "This chunk is from the Retirement Booklet English 2024, under the section discussing retirement planning. It answers questions about MediShield Life, ElderShield, and the Supplementary Retirement Scheme (SRS) for building retirement savings."
@@ -67,41 +71,37 @@
     "headline": "FIRE Number Calculation with CPF and Home Equity",
     "summary": "This chunk is from the document 'FinSight SG, How to Calculate Your FIRE Number as a Singaporean' in the 'FireBuddy takeaway' section. It addresses how to structure retirement income streams, emphasizing the importance of separating liquid portfolio, CPF retirement income, and home equity."
   },
-  "16d2a9a8e265b6ed383bdc811b1b57b83181e5260b0c5a85564e428111999b82": {
-    "headline": "Understanding Savings Bonds Allotment and Cutoff Amounts",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about how Savings Bonds are allotted, including the cutoff amount and random allotment percentage."
-  },
   "1759e54f0600753a7348680e2202a4b1bf123680f6c4f8ecdc2755d4d70bff40": {
     "headline": "Using Transaction History for Retirement Assumptions",
     "summary": "This chunk comes from the document 'FIRE Path Lion' in the 'FireBuddy takeaway' section. It answers how to utilize actual transaction history to inform and adjust retirement spending assumptions."
-  },
-  "176927fcdb8af03f2ad09c7c5aa3c601bd7eea6d046d8cf41ec0397d81ab6bc5": {
-    "headline": "Top Brokers for Singapore FIRE Investors",
-    "summary": "This chunk is from the document 'Fire', section '12. Brokers for Singapore FIRE Investors'. It answers questions about the best brokers for FIRE investors in Singapore, detailing their specialties and notable features."
   },
   "17e59f9a3d014d255784716530d16567db0b79770c506b15f95a974c8965266c": {
     "headline": "Limitations of the 3.25% Withdrawal Rate in Retirement Planning",
     "summary": "This chunk is from 'The Financial Coconut' document, section 'Limitations and official checks'. It addresses the assumptions and limitations of using a 3.25% withdrawal rate, including the treatment of CPF LIFE, property, and healthcare in retirement planning."
   },
-  "1b1f21118f0644f2f77ec5e0247f43a41ab4dcd41df643104b849c03f8a6130b": {
-    "headline": "Applying for Savings Bonds with SRS Accounts",
-    "summary": "This chunk is from the 'Source' section of the 'Singapore Savings Bonds Factsheet' document. It explains the process of applying for Savings Bonds using SRS accounts, including transaction fees and fund availability."
+  "19e7375406bb87637e6d1a34b79e8147908ad21f276adf51428ed8b79965c527": {
+    "headline": "Chatbot Guidance for Singapore FIRE Planning",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'Common Singapore FIRE answer pattern'. It outlines the steps a chatbot should take to assist users with FIRE planning in Singapore, including considerations for pre-CPF and post-CPF phases."
   },
-  "1c5e741d00d44bf0509f0cfa84fbe7996cf5cc6b3adb5cfedc77e4de02f28f94": {
-    "headline": "Allotment Process for Singapore Savings Bonds Applications",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing the allotment process. It answers questions about how Savings Bonds are allotted and why applicants may receive less than the amount they applied for."
+  "1bbace7fe1b5aa5c2439da6f8241b53cf5d83ba0c2023e1e1fbbdd06b5403839": {
+    "headline": "Guide Usage by Financial Advisors: Regulatory Insights",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '2. My FA representative did not use the Guide in our conversation, is this a breach of regulations?'. It clarifies that using the Guide is not a regulatory requirement but is encouraged for enhancing customer conversations."
   },
-  "1e5350f622af961b967563acf4879a92345f47e79f507ff26fb7d466ba7b5671": {
-    "headline": "Recommended Insurance Spending Limit in Financial Planning",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section discussing insurance spending. It answers questions about the recommended limit of 15% of income for purchasing pure insurance products and considerations for those with policies exceeding this limit."
+  "209cf21dfb35b0cdef94d15ea5d67fd7cf05bdb20500c90f95a0ab3471dbccce": {
+    "headline": "Understanding CPF LIFE and Its Role in Retirement Planning",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '7. CPF LIFE \u2014 The Post-65 Annuity Floor'. It answers questions about the CPF LIFE scheme, including retirement sums for 2025 and the implications for FIRE planners."
   },
-  "1f622d856387a8adfe9e02ea1b1960d05e0aebae12c02a37762d73032421212d": {
-    "headline": "Using SRS for Tax Benefits in FIRE Planning",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' in the section 'SRS in FIRE'. It answers questions about how the Supplementary Retirement Scheme (SRS) can benefit high-income users by reducing taxable income and discusses the tradeoffs involved."
+  "20ce756a88d2e5c72aa8d883b4d1ca1aeddf3352f70239ce039838074e976da9": {
+    "headline": "Understanding Savings Bonds Issue Codes and Identification",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Can you help me understand the names and the issue codes for Savings Bonds?'. It explains how Savings Bonds are identified by their issuance year and month, including the unique issue code format and its components."
   },
-  "210383cecdcb7b6b9a03ec74bf7abdedda50bc84af2c1895058a21621bc3d81e": {
-    "headline": "Insurance Coverage Options and Costs for Young Adults",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section discussing insurance. It answers questions about the costs of term insurance plans for death, total permanent disability, and critical illness, highlighting the importance of insurance for young and healthy individuals."
+  "2116dcd63ca3dede25ef85d63e716f79f22fa2e5f3fc454e9a5e3f95a7da41e1": {
+    "headline": "Mitigating Sequence of Returns Risk in Singapore FIRE",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '8. Sequence of Returns Risk'. It answers how Singapore FIRE seekers can manage the risk of poor market returns early in retirement through strategies like maintaining a cash buffer and using conservative withdrawal rates."
+  },
+  "21568d1fcd25246a984d743dc0911130d81fc8226b2f35d2cb5b85ab23650f24": {
+    "headline": "Broad-market ETFs for Long-term Growth in Singapore",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Product map'. It answers questions about the considerations for Singapore FIRE users when investing in broad-market ETFs, including domicile, tax treatment, and risk tolerance."
   },
   "217c9f12cd4027bf7b49ca3827caa86b8102aa7da3f9ae1cb392bb63d0af9ca1": {
     "headline": "Source of CPF Retirement Sums Data and Review Notes",
@@ -111,45 +111,45 @@
     "headline": "Indicators for Considering Retirement Planning",
     "summary": "This chunk is from the 'WHAT IS RETIREMENT?' section of the 'Retirement Booklet English 2024' document. It outlines key indicators for when to start planning for retirement, emphasizing the importance of early planning."
   },
+  "2257f3f3996e5b4f776c6de542930ad4cc1cf06babc9448d7d8cfa1075165a03": {
+    "headline": "Goal-Based Allocation and Diversification in Portfolio Construction",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Portfolio construction principles'. It answers questions about how to allocate investments based on financial goals and the importance of diversification across asset classes, geography, and account types."
+  },
   "228feb48e96a428d25731ed513a3a5a0d9a7cf5890e4942f7aa57b3d5eea2c9f": {
     "headline": "CPF LIFE Premiums and Savings Needed for Monthly Payouts",
     "summary": "This chunk is from the document 'CPF LIFE Payout Examples' under the section 'Payout table'. It answers questions about the required CPF LIFE premiums and savings needed at ages 55, 60, and 65 for various desired monthly payouts."
+  },
+  "2297e8fa0ca2aa226644a63a68026ae555570fe0f2e88ec05587d826678f6d0f": {
+    "headline": "Recommended Coverage Amounts for Death and Critical Illness",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '2. Why is the Guide recommending 9x annual income for Death & Total Permanent Disability coverage and 4x annual income for Critical Illness coverage? Can I ...'. It answers questions about the recommended coverage amounts based on LIA\u2019s Protection Gap Study."
   },
   "24314644fe6c8ecc6663eb8aefe3fc48e884d610e60cd68d8c14ae6bd41ad86f": {
     "headline": "Review Date and Source of CPF Contribution Rates",
     "summary": "This chunk comes from the document 'CPF Contribution Rates from 1 January 2026' under the section 'Source and review notes'. It answers questions about the last review date and the source of the contribution rates."
   },
-  "24cbecbee6d0d595158df26037f4a4f9291cce1df734fa13cc1591f80bc5a4df": {
-    "headline": "Importance of Emergency Funds in Financial Planning",
-    "summary": "This chunk is from the Basic Financial Planning Guide FAQs, section on emergency funds. It answers questions about the accessibility of emergency funds, their necessity alongside insurance, and the role of government support in healthcare costs."
+  "24d348fb196cf7a09c37080b8d9a55e3542fa84f9a051bced72546b37f724c6f": {
+    "headline": "Understanding CPF Inaccessibility Before Retirement Age",
+    "summary": "This chunk is from the document 'FIRE in Singapore' in section 4.1, discussing the CPF mandatory savings scheme for Singapore Citizens and PRs. It answers questions about CPF account structures, interest rates, and key ages for CPF access."
+  },
+  "258de3ffff732a6afcba7063f5a90df7d453423b85b55552ef2d210cf4c33bae": {
+    "headline": "Importance of Emergency Funds Beyond Insurance Coverage",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '4. Why should I have emergency funds if I already have insurance?'. It answers why emergency funds are necessary even if one has insurance, highlighting their role in covering non-medical emergencies and ensuring timely healthcare assistance."
   },
   "264fc8bffa23dfd875513f6b38dd00a7bb18f24902761dc77321b17fd3d12aa6": {
     "headline": "Financial Planning: Savings, Insurance, and Investment Guidelines",
     "summary": "This chunk is from the 'Basic Financial Planning Guide' under the section 'Key Needs Rules of Thumb What to Do'. It answers questions about how much to save, insurance protection recommendations, and investment strategies for retirement."
   },
-  "26f1edc8757df4239748078deb47ca81ccfcb0b37115cad6eef23d2742145949": {
-    "headline": "How to Check Your Savings Bonds Holdings and Interest",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about checking the bonds held in CDP and SRS accounts, as well as how to view interest payments."
-  },
-  "27ef164a86fc7ddfce82f33371011290a34ce059b37d3904cc46449240683cbb": {
-    "headline": "Requirements for Opening a CDP Securities Account for Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about the necessity of having an Individual CDP Securities account to apply for Savings Bonds and the role of Direct Crediting Service (DCS) in managing cash entitlements."
-  },
-  "2805df4fadc52bf3a292a43a4c8c561481ab6795bf8fd839a9e65e2e699648ea": {
-    "headline": "Calculating Non-CPF FIRE Number for Early Retirement",
-    "summary": "This chunk is from the document 'Fire', section '13. Practical FIRE Timeline and CPF Gap Analysis'. It answers how much non-CPF assets are needed for FIRE at age 42, detailing a required amount of $1.8M based on a 3.3% withdrawal rate."
-  },
   "28a04ff52fba111eebaa29e7d85e33663c11ef7d8629562ba78933d8f05e4cd1": {
     "headline": "Investment Products Available Under CPF Investment Scheme",
     "summary": "This chunk is from the document 'Cpfis Investment Products' in the section 'Source: cpfis-investment-products.pdf'. It answers questions about the types of investment products available under the CPF Investment Scheme (CPFIS), including Unit Trusts, Investment-linked insurance products, Annuities, Endowment policies, Singapore Government Bonds, Treasury Bills, Exchange Traded Funds, FundManagement"
   },
-  "2936087eb54c87c3750fee6b9849b9005cd123a4d4e1fcb3806766d8b6c95f77": {
-    "headline": "Investment Portfolio Strategies for Singapore FIRE",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'Investment portfolio for FIRE'. It answers questions about how to structure a FIRE portfolio during different phases, including accumulation, transition, and drawdown."
+  "28aee2a1caa64ed8104989481c8e7d86d2eba518b15f791c20b09988784b63ca": {
+    "headline": "Overview of Personal Income Tax Relief Caps",
+    "summary": "This chunk is from the document 'IRAS Individual Income Tax Reliefs' under the section 'Quick answers'. It answers questions about the overall personal income tax relief cap and specific caps for CPF cash top-up relief and SRS contributions."
   },
-  "29677b15c1005fd0d5f14d6d9ac24289bf29edd1041f2886cf686f7e7429f72b": {
-    "headline": "Overview of Singapore Savings Bonds Features and Benefits",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'A. INTRODUCTION AND PRODUCT FEATURES'. It answers questions about the characteristics of Savings Bonds, including their safety, long-term investment potential, flexibility, and the program's permanence."
+  "28c261380b62c1c45c883db0ce091a2b2169a9ff4a562b07b8fa3b387739f20f": {
+    "headline": "Understanding Step-Up Interest for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds, Product Terms' under the section 'How step-up interest works'. It explains how rates are fixed based on SGS yields and the implications of early redemption on returns."
   },
   "2990928ce8e52dac5b9ed25d813ab9c476361a933e948af6aed3af529102a2a8": {
     "headline": "Overview of SG FIRE Planner Repository",
@@ -159,6 +159,10 @@
     "headline": "Investment Products Available Under CPF Investment Scheme",
     "summary": "This chunk is from the document 'Cpfis Investment Products' in the section 'Source: cpfis-investment-products.pdf'. It answers questions about the types of investment products available under the CPF Investment Scheme (CPFIS), including Unit Trusts, Investment-linked insurance products, Annuities, and Treasury Bills."
   },
+  "2ac6a34959b5ecf2adfe37661c81913cf5270c282942c2457dfb2e48886dbb0c": {
+    "headline": "Housing Considerations for FIRE in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Housing in Singapore FIRE'. It addresses the affordability and investment implications of HDB flats versus private property, the impact of CPF on housing costs, and strategies like downsizing for achieving FIRE."
+  },
   "2c812484036144080b49989ea0dd91602ab6a4fb1cc45bbfc63a77e04d0107fc": {
     "headline": "Understanding CPF Nominations for Retirement Savings Distribution",
     "summary": "This chunk is from the 'Retirement Booklet English 2024' under the section discussing CPF nominations. It answers questions about how CPF savings are distributed, the process of making a nomination, and the implications of not having one."
@@ -167,13 +171,17 @@
     "headline": "Understanding CareShield Life and Housing Loan Repayment",
     "summary": "This chunk is from the Retirement Booklet English 2024, under the section discussing retirement planning. It answers questions about CareShield Life coverage and strategies for repaying housing loans before retirement."
   },
-  "2e97aafdc11fcde0e3af3896b12c29ee8ab1b9b035369e50c5f1e1c01b201a07": {
-    "headline": "Three Buckets for Singapore Investors' Money Management",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Core investing frame for Singapore users'. It answers how Singapore investors should categorize their money into near-term cash, medium-term low-risk assets, and long-term growth assets."
-  },
   "2ede4f68ed6229409e5f67f99167f71bf34f0ab50fb407ae9cac665a984be16d": {
     "headline": "Overview of FI Calc as a Retirement Drawdown Tool",
     "summary": "This chunk is from the document 'FI Calc' in the 'Source role' section. It explains that FI Calc is a retirement drawdown backtester that evaluates withdrawal plans based on historical market data, emphasizing its limitations and lack of Monte Carlo simulations."
+  },
+  "2fd8841d5bac43d416a395e915a5f012c075dba6639c3c5eed057ea72228aea7": {
+    "headline": "US Estate Tax Implications for Singaporean Investors",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section 6.2, discussing the US estate tax risks for non-US residents holding US-situs assets. It answers questions about the exemption threshold, tax rates, and the advantages of Ireland-domiciled UCITS ETFs."
+  },
+  "3078b3b24bc6d6b4479eb9733a99a0f92bd470c2229a6368e55d05ea511d168c": {
+    "headline": "Key Tags for Singapore Investing Strategies",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Retrieval tags'. It lists important terms related to investing in Singapore, including CPFIS, SRS, and various investment products."
   },
   "3141869b7572b18238a15dec57929d0d9c55a96f65bfa4c3eef6306ef109d0a5": {
     "headline": "Guided Inputs for Financial Projections in FIRE Planner",
@@ -183,129 +191,133 @@
     "headline": "CPF Contribution Rates by Employee Age from 2026",
     "summary": "This chunk is from the document 'CPF Contribution Rates from 1 January 2026' under the section 'CPF contribution rates from 1 January 2026'. It details the CPF contribution rates for Singapore Citizens and Permanent Residents based on employee age, applicable to those earning more than $750 a month."
   },
+  "3213b302109586f674ca681e572c143516d928a7f1a41ca8af29d60329f52d66": {
+    "headline": "Checking Interest Payments for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'How can I check how much interest I\u2019m receiving from each of the Savings Bonds I hold?'. It answers how to check interest payments and where to find interest rates for Savings Bonds."
+  },
   "3271be7380ed79a5b48943d38c2b579107dd0456628363eec331c35c634df916": {
     "headline": "Overview of the Article's Perspective on Singapore FIRE Planning",
     "summary": "This chunk is from the document 'FinSight SG, How to Calculate Your FIRE Number as a Singaporean' in the 'Source role' section. It discusses the article's nature as a third-party perspective on Singapore FIRE planning, emphasizing local factors and the need for careful qualification of claims."
   },
-  "32e691d4d5ab769d0e54593736242e52bc5be5447dbba28ccaeb7e2b06d3b131": {
-    "headline": "STI ETFs for Local Diversification in Singapore FIRE",
-    "summary": "This chunk is from the document 'Fire' in section 6.3, discussing the Nikko AM STI ETF and SPDR STI ETF. It answers questions about their eligibility for CPFIS, expense ratios, tax benefits, and historical performance compared to global indices."
+  "32af0d1ed6a6bb56750240f049b37a4f4036467ceb2bab3d0fba11ffc245c279": {
+    "headline": "Fixed Deposits and Bonds Under CPF Investment Scheme",
+    "summary": "This chunk is from the document 'Cpfis Investment Products' in the section on investment products. It answers questions about the availability of Fixed Deposits, Statutory Board Bonds, and Bonds Guaranteed by the Singapore Government under the CPF Investment Scheme."
   },
-  "334b1d0e2610769df763614242ed9ed30b9cb0268418478cb91aa4180e202f34": {
-    "headline": "Mitigating Sequence of Returns Risk in Early Retirement",
-    "summary": "This chunk is from the document 'Fire', section '8. Sequence of Returns Risk'. It answers how to mitigate sequence of returns risk through bond allocation, part-time income strategies, and CPF LIFE as a financial safety net."
+  "34c1fbf5b05f08ab5fa1dab8c064c54c4fe83e6d0edf611aa9c38a4150f50607": {
+    "headline": "Purchasing Savings Bonds and Using CPF or SRS Accounts",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section 'B.1 GETTING STARTED'. It answers questions about purchasing Savings Bonds in joint names, using CPF funds, and provides information on the Supplementary Retirement Scheme (SRS) and how to open an SRS account."
   },
-  "352e231a6a229d0c05b29a0d247f72c6b12efb2024ce8b6b22812223720eddd8": {
-    "headline": "Verification Sources for FIRE Planning in Singapore",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'Sources for verification'. It lists various official resources such as MoneySense and CPF Board that provide essential information for financial planning and retirement in Singapore."
+  "350b159b1448ae72d096e0a9c597f5399757096d4c23f0f3c5131b55705a7dd3": {
+    "headline": "Understanding the Basic Healthcare Sum for MediSave Accounts",
+    "summary": "This chunk is from the document 'CPF Basic Healthcare Sum by Year' in the section 'CPF Basic Healthcare Sum (BHS) by year'. It explains that the Basic Healthcare Sum is the maximum amount in the MediSave Account, which increases annually for members under 65 and becomes fixed upon turning 65."
   },
-  "357b848f42abcb31d2ecc6659be2fbe42375553d290c963475dbbfd22c045690": {
-    "headline": "Key Tags for Singapore Investing Strategies",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Retrieval tags'. It lists important terms related to investing in Singapore, including CPFIS, SRS, and various investment products."
+  "38e0f654d08c7a70dc40c814e238a7ec7e259c7b0a36611f94edf25eaae218ae": {
+    "headline": "Interest Rates for CPF Accounts as of 2026",
+    "summary": "This chunk is from the document 'CPF Interest Rates and Extra Interest' under the section 'Floor rates by account'. It details the interest rates for the Ordinary Account, Special Account, MediSave Account, and Retirement Account, including the legislated minimum and the computation methods for these rates."
   },
-  "372d1dd745bfeaf3b6878952d17e785e3b75f8650bfe03865f25061e63c28fb6": {
-    "headline": "Tax Relief for Supporting Handicapped Dependants",
-    "summary": "This chunk is from the document 'Tax Relief Individuals' under the section 'Source: tax-relief-individuals.pdf'. It answers questions about the relief available for taxpayers who support handicapped dependants and how the relief can be shared among multiple claimants."
-  },
-  "397057d77b4753b80a3aca4f3f5fd041acf6f25d767e0b62d385e059c53e54bc": {
-    "headline": "Investment Help: Key Questions for Singapore Investors",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Answering style for the chatbot'. It answers questions about how to approach investment inquiries by emphasizing the importance of understanding goals, time horizons, account types, risk tolerance, and liquidity needs."
-  },
-  "3a0e0cd010c46652247e39115d7b33cbce14ef781ef1caa3ef0689f96ac327fa": {
-    "headline": "Investment Strategies During Late Drawdown Phase",
-    "summary": "This chunk is from the document 'Fire' in the section 'Late Drawdown Phase (55\u201365)'. It answers questions about investment strategies for individuals in the late drawdown phase, including accessing CPF lump sums and adjusting asset allocations."
-  },
-  "3ac753c8476e80f70a7f0f22aea8a2ee1588d9492a7edccf45a5efc77e31ec30": {
-    "headline": "Transfer of Savings Bonds Upon Death",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about the transfer of Savings Bonds to beneficiaries after the bondholder's death."
-  },
-  "3b02e3bb3db80f0d2c5dea4c3697fa3efff3abcbf736ec525f95408d7839591d": {
-    "headline": "Withdrawal Rate Considerations for Singapore FIRE Seekers",
-    "summary": "This chunk is from the document 'Fire' in the section 'Limitations for Singapore FIRE Seekers'. It addresses the challenges of applying the 4% withdrawal rate for Singaporeans aiming for FIRE, highlighting the need for a safer 3.5% rate due to a longer retirement horizon."
-  },
-  "3b4252838d3c62971f13a4339a3b63335eb312a751f9a339e20578d073c97a0d": {
+  "39b19f3f14295471ce1d6984a84e369a5add0d35405483a7b0255865a3691a64": {
     "headline": "Overview of FIRE Variants in Singapore",
-    "summary": "This chunk is from the document 'Fire', section '3. FIRE Variants'. It outlines different FIRE variants such as Lean FIRE, Fat FIRE, and Barista FIRE, detailing their descriptions and rough financial targets in Singapore."
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '3. FIRE Variants'. It outlines different FIRE variants such as Lean FIRE, Fat FIRE, and Barista FIRE, detailing their descriptions and rough financial targets in Singapore."
   },
-  "3b5431068b2237dcf7e7bde520936ae40db2750eacdcd2ae2e8b493c60ab57b6": {
-    "headline": "Changing Nominated Bank Account for DCS",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing account management. It answers the question of whether a nominated bank account for DCS can be changed."
+  "3a1b9aff61b2cc2e75125e281b4293955d80be4eb55d467b3f44001a08a3460d": {
+    "headline": "Guide's Recommendations Are Not Exhaustive for Individual Needs",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '3. Must I follow the Guide\u2019s recommendations when purchasing financial products?'. It answers the question of whether the Guide's recommendations must be followed, clarifying that they are not exhaustive and may not meet every individual's specific needs."
   },
-  "3c48cfbaaa976e9910876aa27cc6d01a703463e9bf4b4a1b39c6a5d1d3621514": {
-    "headline": "Importance of Additional Retirement Savings Beyond CPF Contributions",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section discussing retirement savings. It answers questions about the necessity of setting aside more money for retirement despite existing CPF contributions and suggests tools for planning retirement payouts."
+  "3c0e627208a807f535cc4cc2935a7c846a414524c9d635a7dc8661546b7fa818": {
+    "headline": "Details on CPF Cash Top-up and SRS Contribution Reliefs",
+    "summary": "This chunk is from the document 'IRAS Individual Income Tax Reliefs' under the section 'Retirement-related reliefs'. It answers questions about the maximum relief amounts for CPF Cash Top-up and SRS contributions for different categories of individuals."
+  },
+  "3c556a250f8ad02dcdfa53f9b3493eb2597ca9f644177901193cd2e066c291f8": {
+    "headline": "Calculating the Additional Wage Ceiling for 2026",
+    "summary": "This chunk is from the document 'CPF Wage Ceilings and the CPF Annual Limit' in the section 'How the Additional Wage ceiling works'. It explains how to compute the Additional Wage ceiling for 2026 based on Ordinary Wages."
   },
   "3c99d909f4dcb56f3be3be178686bf837b4fefe030412bc7b9c4b22f5955f82c": {
     "headline": "Understanding the CPF Bridge Concept for Early Retirement",
     "summary": "This chunk is from the document 'FinSight SG, How to Calculate Your FIRE Number as a Singaporean' in the section 'CPF bridge concept'. It explains the need for a two-phase approach for retirees before CPF LIFE starts, detailing how to manage spending gaps."
   },
+  "3dbc9760680003637af71a3bf501f83629686990e2d26dce97635af17abb98e6": {
+    "headline": "Overview of Singapore Savings Bonds (SSBs)",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section '6.5 Singapore Savings Bonds (SSBs)'. It answers questions about the features, benefits, and eligibility of SSBs for Singapore Citizens and PRs."
+  },
+  "3dd13b7fa27488f78afdb909882aafb485a51c224aab50fdf4e1304b7e5ec490": {
+    "headline": "Guidance on Home Purchases in Financial Planning",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '5. Is there guidance on home purchases as well?'. It answers how to budget for a home purchase and suggests setting aside at least 10% of income for retirement and other financial goals."
+  },
+  "3de4bd28a076c229cc034727f941ace4398b45434cd0f2d651e2d20a8b832475": {
+    "headline": "No Amendments or Cancellations for Submitted Applications",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '30. Can I make changes to or cancel submitted applications?'. It answers the question regarding the ability to amend or cancel submitted applications for Savings Bonds."
+  },
   "3eac75eec2ffcac5bfeecf5e11473a3fbb2f20ecc0d92123fa1fe45db3578c2d": {
     "headline": "Retirement Sums for CPF Members Turning 55 in 2026",
     "summary": "This chunk is from the document 'CPF Retirement Sums (BRS, FRS and ERS) by Year' under the section 'CPF retirement sums by year: Basic, Full and Enhanced Retirement Sum'. It answers the question of what the Basic Retirement Sum (BRS), Full Retirement Sum (FRS), and Enhanced Retirement Sum (ERS) are for members turning 55 in 2026."
   },
-  "3f8e6417d82ed7f554944fcffe4a95839499eda60ccd7951b1dcf67e32eb8ae4": {
-    "headline": "Overview of Singapore Savings Bonds (SSBs)",
-    "summary": "This chunk is from the document 'Fire' in section 6.5, discussing Singapore Savings Bonds (SSBs). It answers questions about the features, benefits, and eligibility of SSBs for Singapore Citizens and PRs."
+  "3ed14625b0ceca7853a759f78aa81abe190b13f9c424022a466bc898820b19d1": {
+    "headline": "Investment Limits for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section A.4. It answers questions about the minimum investment amount of $500 and the maximum holding limit of $200,000 for individual investors."
   },
-  "4102ffb072eb0cd717f7d639b9cc32e95e9e94e7b8c7c86ebb2b2565fc7b11e2": {
-    "headline": "Importance of Early Saving and Investment for Retirement",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section discussing investment recommendations. It answers questions about the significance of saving and investing early, the recommended allocation of income for investments, and the balance between competing financial needs."
-  },
-  "41c1092015b58f9b2c4bdf59058dc4f7e3f343289c610547dca9f92062e04d37": {
-    "headline": "Singapore's Core Inflation Trends and Implications for FIRE",
-    "summary": "This chunk is from the document 'FIRE' in section 4.6 'Inflation'. It answers questions about Singapore's core inflation rates, noting an average of 2.8% in 2024 and a moderation to ~0.3\u20130.6% in mid-2025, while highlighting the higher inflation rates in healthcare and education compared to general CPI."
+  "41526f2660babd8580ff35d1e5bfd3c487ba5e63213e1281a2d069c7cc949169": {
+    "headline": "Using SRS for Tax Benefits in FIRE Planning",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'SRS in FIRE'. It answers questions about how SRS can benefit high-income users by reducing taxable income and discusses the tradeoffs and planning needed for withdrawals."
   },
   "42c4fbc69734cbcafa0d7d8f46eb807035083391d9afa87592722c6a37ed2944": {
     "headline": "Understanding the Pre CPF LIFE Gap in Retirement Planning",
     "summary": "This chunk is from the document 'RetireCan.sg Singapore Retirement Calculator' under the section 'Useful concepts for FireBuddy'. It explains the importance of the pre CPF LIFE gap for individuals retiring early and how a phased cash flow model is more effective than a simple withdrawal rate approach."
   },
-  "42dc341667d1fa5763de99b5b9bcc94b9df030078ca1bba4bce3d0559881e650": {
-    "headline": "Setting Up Your CDP Securities Account for Savings Bonds",
-    "summary": "This chunk is from the 'Getting started' section of the Singapore Savings Bonds Factsheet. It explains the requirements for setting up a CDP Securities account and Direct Crediting Service (DCS) to apply for Savings Bonds."
+  "438df3d1572ed239a689bd15d37cf52d5c93b145a28e4075b9221d1fd3ef6dd7": {
+    "headline": "Affordability of Recommended Insurance Coverage in the Guide",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '3. Is the Guide\u2019s recommendation of 9x annual income for Death & Total Permanent Disability coverage and 4x annual income for Critical Illness coverage ...'. It answers questions about the affordability of the recommended insurance coverage and provides examples of term insurance premiums for different age groups."
   },
   "439b46c93d9d791984aeb5ca87d6700c96ae69676771fdcbe3c537def44bbf28": {
     "headline": "2026 and 2027 CPF Retirement Sums Overview",
     "summary": "This chunk is from the document 'CPF Retirement Sums (BRS, FRS and ERS) by Year' in the 'Quick answers' section. It provides the Basic Retirement Sum (BRS), Full Retirement Sum (FRS), and Enhanced Retirement Sum (ERS) for the years 2025, 2026, and 2027."
   },
-  "44e430c2bb761276486a9bbb7638d84e4e0fc7d4d3cb2bf4d7890a7c9bc9febe": {
-    "headline": "Housing Considerations for FIRE in Singapore",
-    "summary": "This chunk is from the document 'Fire' in the section '10. Housing in Singapore FIRE'. It addresses the implications of HDB and private property ownership on financial independence and retirement strategies in Singapore."
-  },
-  "45af816f714b1ce4e8ea7579886645fafc345d019c1669e64e8d1f912c0ad34f": {
-    "headline": "Challenges of CPF Inaccessibility for Early Retirees",
-    "summary": "This chunk is from the document 'Fire' in section 4.1, discussing how early retirees in Singapore must rely on non-CPF investments for 15\u201330 years before accessing CPF LIFE, highlighting a significant challenge for those pursuing FIRE."
-  },
-  "45e8d9d1dc4d7983bad239d19bb9c0141ce244e8e1895bcb74ab1b2dea5d85f7": {
-    "headline": "Chatbot Guidance for Singapore FIRE Planning",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'Common Singapore FIRE answer pattern'. It outlines the steps a chatbot should take to assist users in understanding the phases of FIRE in Singapore and the necessary information to gather for accurate planning."
+  "44fee63893bf30c15085045533cded023e6c31b6b1febeb1271207a71301e6d1": {
+    "headline": "Differences Between Savings Bonds and Conventional SGS Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '18. How are Savings Bonds different from conventional SGS bonds?'. It answers questions about the tradability, investment amounts, and redemption options of Savings Bonds compared to conventional SGS bonds."
   },
   "4646e755149f432de7eeced5600f6f75d2fdb4c91b238c782e658af3cfbbcf00": {
     "headline": "Planning for Emergency Funds and Insurance Coverage",
     "summary": "This chunk is from the 'Basic Financial Planning Guide' under the section discussing key needs. It answers questions about how much to save for emergency funds and the recommended insurance coverage for death, total permanent disability, and critical illness."
   },
+  "4651bb3f49a4b653ff08f9589ba591e26b989833c30977631eb3359783f7d2d2": {
+    "headline": "Understanding the Multi-Phase FIRE Plan in Singapore",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'What FIRE means in Singapore'. It explains the concept of FIRE in Singapore, detailing the three phases of financial planning: Pre-55, Age 55 to 65, and Age 65 and later."
+  },
+  "469f6fbe604aee1c36882002e824e781ee7c9bc62e97c1a172ef8c53d9e878d2": {
+    "headline": "Singapore FIRE Community Norms: Lean, Regular, and Fat FIRE",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Singapore FIRE Community Norms and Benchmarks'. It answers questions about the different FIRE categories in Singapore, typical monthly expenses, retirement age aspirations, and savings rates."
+  },
+  "46dc48f105d068496e72bd564c2bfa9fb17fcbafba40e54bd18320b3dd3d5bf9": {
+    "headline": "Investment Strategies for Singapore FIRE Portfolio",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'Investment portfolio for FIRE'. It answers questions about the necessary strategies for managing a FIRE portfolio during different phases, including accumulation, transition, and drawdown."
+  },
   "470c75a711c3bb5a930b5e77bb47704ab1e2a7d81a5df2ed328375f1e03b930f": {
     "headline": "Contact Information for Financial Education and Scam Prevention",
     "summary": "This chunk is from the 'Retirement Booklet English 2024' under the section 'Source'. It provides contact details for various government agencies and organizations related to financial education and scam prevention."
+  },
+  "47408ecd0f05f6570de03eda181255b678ed0d4181c8d0b9eef3dd6c904cc6cf": {
+    "headline": "Overview of Singapore Savings Bonds Features",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds, Product Terms' under the section 'Singapore Savings Bonds: product terms'. It answers questions about the key features of Singapore Savings Bonds, including their issuance, interest structure, redemption terms, and capital security."
+  },
+  "47e5507d20b99e40dd946a96669c5ffbd6d193509e201ae65c8db6aaf0a5aaec": {
+    "headline": "Partial Redemption Rules for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section 'C.3 SUBMITTING REDEMPTION REQUESTS'. It answers questions about making partial redemptions, minimum amounts, and penalties for early redemption."
+  },
+  "48ca7c70daaa9d5857565a1ba2c0f9677d5c0b2be54a3fa011c8ef7eb88e213d": {
+    "headline": "Understanding the CPF Gap in FIRE Planning",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'CPF gap analysis'. It explains the CPF gap, which is the period between the user's intended FIRE age and when CPF assets can support spending, highlighting the need for non-CPF funding."
   },
   "48d504a23c59d8ecd84085c61ad4c84e979a30d79898ca7630b70126cc2613e1": {
     "headline": "CPF LIFE Monthly Income Requirements at Different Ages",
     "summary": "This chunk is from the document 'CPF LIFE Payout Examples' in the section 'CPF LIFE payout examples: savings needed at 55, 60 and 65'. It answers how much a member needs in their Retirement Account at ages 55, 60, and 65 to receive specific monthly payouts."
   },
+  "49df092e27d42ea41e7b7e295bf4316e8a67cdab2e0168d7c4988521046d1196": {
+    "headline": "Monthly Application Timeline for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section 'B.2 APPLICATION PERIOD'. It provides an overview of the monthly application timeline for Savings Bonds."
+  },
   "4c7d94a930339c46cde47e07bea0bce896d481bacdaa908910c5e0c8c4a58a3d": {
     "headline": "Making an LPA for Retirement Planning",
     "summary": "This chunk is from the Retirement Booklet English 2024, under the section discussing Advance Medical Directive (AMD). It answers questions about the process and benefits of making a Lasting Power of Attorney (LPA) and mentions the fee waiver for Singaporean Citizens."
-  },
-  "4caa7c81a3af6205e65861a9ac48bd6d4b6b4a17092c6cabc643fe080656f4cc": {
-    "headline": "Key Tags for Singapore FIRE Planning",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'Retrieval tags'. It lists important terms related to FIRE planning in Singapore, including 'CPF LIFE', 'safe withdrawal rate', and various FIRE strategies."
-  },
-  "4cd875d7bfa8fcc68a556dd425922a09f96ce7d98f703408748bd764fe3583f5": {
-    "headline": "Healthcare Costs for Early Retirees in Singapore",
-    "summary": "This chunk is from the document 'Fire' in section 4.4 Healthcare Costs. It answers questions about the implications of Singapore's healthcare system for early retirees, including coverage details and financial responsibilities."
-  },
-  "4e6018079dd1edfbb259d4a7d50f0eddbf272886f0fc00a7104fc5437251af9a": {
-    "headline": "Guide Use Not Mandatory for Financial Advisors",
-    "summary": "This chunk is from the 'Source' section of the 'Basic Financial Planning Guide Faqs' document. It clarifies that while the use of the Guide is encouraged by MAS, it is not a regulatory requirement for financial advisors."
   },
   "4e62768407de7ad04873905169140f7494d64837a1c403c4a8be1b5151f761ef": {
     "headline": "Design Choices for FireBuddy Repository",
@@ -319,6 +331,10 @@
     "headline": "Understanding Your Personal FIRE Number and Key Concepts",
     "summary": "This chunk is from the 'Outputs and concepts' section of the 'Dr Wealth Financial Independence Retire Early Guide'. It explains the main output of a personal FIRE number and outlines the conceptual steps for achieving financial independence."
   },
+  "5034b0a349ffcf6f6d0c8cce563dd3a7e79903068cfd36a2f52a4a88d5f7b725": {
+    "headline": "Personal Income Tax Relief Cap of $80,000 Explained",
+    "summary": "This chunk is from the document 'IRAS Individual Income Tax Reliefs' under the section 'Overall relief cap'. It answers questions about the total cap on personal income tax reliefs and its implications."
+  },
   "50475a527ef32bd6ba6efaa11de93586110aa981eb3bf09385c2795143d1bf57": {
     "headline": "CPF Contribution Rates for Second Year SPR Employees",
     "summary": "This chunk is from the document 'CPF Contribution Rates from 1 January 2026', specifically from the section 'Table 5: SPR 2nd year, full employer and graduated employee rates'. It answers questions about the total CPF contribution rates and employee shares for second year SPR employees based on their age and wage brackets."
@@ -331,21 +347,21 @@
     "headline": "Introduction to FIRE and Its Key Concepts",
     "summary": "This chunk is from the 'Source role' section of the 'Dr Wealth, Financial Independence Retire Early Guide'. It explains Dr Wealth's approach to FIRE, emphasizing the connection between the 25 times rule, aggressive saving, increased income, and long-term investing."
   },
-  "519243225f9970d6979344258af3b4315ac9ccd5f8bca3c3d862c401e8abee0b": {
-    "headline": "Impact of Closing CDP or SRS Accounts on Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about the consequences of closing a CDP or SRS account on Savings Bonds and how interest payments are received."
+  "54152b6e253345f05344b6fa8bd775bd5130b0bc6a14241071f5eb2e87cca894": {
+    "headline": "Basic Healthcare Sum for 2026 and Previous Years",
+    "summary": "This chunk is from the document 'CPF Basic Healthcare Sum by Year' under the section 'Quick answers'. It answers questions about the Basic Healthcare Sum (BHS) for 2026, 2025, and 2024, and explains how MediSave savings above the BHS are managed."
   },
-  "527615bd04d80004fcd46067138800667bfd298ee50389349871ae15ab890a2e": {
-    "headline": "Tax Advantages for FIRE Seekers in Singapore",
-    "summary": "This chunk is from the document 'Fire', section '4.5 Tax Advantages (Singapore-Specific Upsides)'. It answers questions about the tax benefits available to FIRE seekers in Singapore, including the absence of capital gains tax, tax-free dividend income from Singapore-listed stocks, and the general non-taxation of foreign-sourced income."
-  },
-  "533846824a73864d5cfe678f48e39ff7322dbaebea00a13c60f82a2e2d547cda": {
-    "headline": "Understanding the Core Concept of FIRE",
-    "summary": "This chunk is from the document 'Fire' in the section '1. What is FIRE?'. It explains the core premise of Financial Independence, Retire Early (FIRE) and emphasizes that it is about making employment optional."
+  "5547c0c6180fc3bd16cd9ed86b2892c64eceea5acc3a4c09cc053bea1f2c5136": {
+    "headline": "Overview of the Basic Financial Planning Guide",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section 'Consumer FAQs on Basic Financial Planning Guide.' It answers questions about the purpose and content of the Guide."
   },
   "55e06141a4cb9de826178120cd0154380f29e11674d162da33ce06d0f4f243d3": {
     "headline": "Input Parameters for the Singapore FIRE Planner",
     "summary": "This chunk is from the 'Inputs' section of the 'Tree of Wealth Singapore FIRE Planner' document. It details the various inputs required for the planner, including age, income, savings rate, and retirement options."
+  },
+  "563834845ce9cdd9832eebfbeaae701268e3b2f5cfdc6970ad49286cd8b8758a": {
+    "headline": "Overview of Personal Income Tax Reliefs and Cap",
+    "summary": "This chunk is from the document 'IRAS Individual Income Tax Reliefs' in the section 'IRAS individual income tax reliefs'. It answers questions about the purpose of tax reliefs and the overall cap of $80,000 per Year of Assessment."
   },
   "57c215dc40ceeddeb7ecfc10f36c34e65afaf86484a90e62ef25932babb9b1fc": {
     "headline": "Definitions of CPF Retirement Sums: BRS, FRS, ERS",
@@ -359,41 +375,45 @@
     "headline": "Understanding CPF Account Structures and Retirement Withdrawals",
     "summary": "This chunk is from the 'Official CPF qualification' section of the 'Dr Wealth, Financial Independence Retire Early Guide'. It answers questions about CPF account separation, retirement withdrawal eligibility, and CPF LIFE payout mechanics."
   },
-  "59d50bf54a523ed7c80f995a2778d07801627f015c2f7f1918001c39aeda53ac": {
-    "headline": "Overview of Singapore Savings Bonds and T-bills",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Product map'. It answers questions about the features and uses of Singapore Savings Bonds and T-bills, including their redemption flexibility and suitability for different investment needs."
-  },
   "5baf40e25c058166cd1c3057f84f3e8db62581476f0db73869ef28a43fa05a66": {
     "headline": "Uncertainty Analysis Methods in FIRE Planning",
     "summary": "This chunk is from the document 'RemarkRemedy fireplanner source repository' under the section 'Simulation and historical methods'. It answers questions about the types of uncertainty analysis methods used, including Monte Carlo simulations, historical backtests, and sequence risk stress tests."
   },
-  "5bf03624641fa7f0fb600f5199b4df0e21798b14e42ed129f6dc8cea6b2c4a54": {
-    "headline": "Individual Limits for Singapore Savings Bonds Explained",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'A.5 ISSUANCE AND REDEMPTION'. It answers questions about the maximum amount of Savings Bonds an investor can hold and the process for redeeming and reapplying for bonds."
+  "5d26fb1593803a36ec0095a4ac3365c032297d1e5f809a6243304006ba590840": {
+    "headline": "Challenges of CPF Inaccessibility for Early Retirees",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '4.1 CPF Inaccessibility Before Retirement Age'. It addresses how early retirees aged 35\u201350 must rely on non-CPF investments for 15\u201330 years before accessing CPF LIFE, highlighting a significant challenge for Singapore FIRE seekers."
   },
-  "5f42f0e558aa555c40fd4effb967dd01be9a333ac29589eefe469f3e84371e57": {
-    "headline": "Overview of FIRE Planning Context in Singapore",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'FIRE Planning in Singapore: RAG Context'. It clarifies that the note is for FireBuddy retrieval context and emphasizes the importance of using official sources for Singapore-specific FIRE planning issues."
+  "5e120157de174fb29c49dc3c1b5f8cc8c94b8e65c26314458c8bc420edd91593": {
+    "headline": "Overview of CPF Savings Interest Rates for 2026",
+    "summary": "This chunk is from the document 'CPF Interest Rates and Extra Interest' under the section 'CPF interest rates: account floor rates and extra interest'. It explains that CPF savings earn a legislated floor interest rate and extra interest on the first $60,000 of combined balances, applicable from 1 July to 30 September 2026."
   },
-  "600137d0cdda37711b0bb22d9317c5abb8bd23bc4a7217bb16478a8682ec1741": {
-    "headline": "Healthcare Costs in Singapore FIRE Planning",
-    "summary": "This chunk is from the document 'Fire', section '9. Healthcare Planning for Singapore FIRE'. It addresses the significant healthcare costs associated with FIRE in Singapore, including MediShield Life premiums, Integrated Shield Plan costs, and the importance of budgeting for these expenses."
+  "5fe617658188d237bcf2191bbd01864ce2d938e3fd7091fe820bc331db3d472a": {
+    "headline": "Overview of CPF Wage Ceilings for 2026",
+    "summary": "This chunk is from the document 'CPF Wage Ceilings and the CPF Annual Limit' in the 'Quick answers' section. It answers questions about the Ordinary Wage ceiling, Additional Wage ceiling, and CPF Annual Limit for 2026."
+  },
+  "6048bead81b5fa7c1d4c160d30a0d1800fc82db63eac0c657183677c6808e682": {
+    "headline": "Application Period for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section 'B.2 APPLICATION PERIOD'. It answers questions about when to apply for Savings Bonds and the restrictions on purchasing past issues."
+  },
+  "613cd47aa64fefe17f1243b6c4e393143c47f0dd3d481499170dca9bd7d908ad": {
+    "headline": "Application Guidelines for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section B.5. It answers questions about applying for larger amounts and reasons for application rejection."
   },
   "61420831bf106cde600f1f3a8fa8190bd60ae9047f6c4ca9e308a08fb65b30f1": {
     "headline": "Transitioning to Retirement: Gradual Shift and Re-employment",
     "summary": "This chunk is from the 'WITHDRAWING YOUR CPF' section of the 'Retirement Booklet English 2024' document. It answers questions about transitioning into retirement, the re-employment age, and assessing savings for retirement income."
   },
-  "61f6e52364ce176aeada8e3da162faa12a35fa46affd81a94d2c106f5deeccdc": {
-    "headline": "Guaranteed Income from CPF LIFE for Retirement Planning",
-    "summary": "This chunk is from the document 'Fire' in the section 'Post-CPF LIFE Phase (65+).' It answers questions about the guaranteed monthly income provided by CPF LIFE and its implications for portfolio drawdown and legacy planning."
-  },
   "62b6e675a0a17e44b8606b0d19160ad88b27357bb78d6492601e73796fb41f3e": {
     "headline": "Key Concepts for Effective Retirement Planning with FireBuddy",
     "summary": "This chunk is from the document 'SG FIRE Planner' under the section 'Useful concepts for FireBuddy'. It answers questions about reusable ideas for cash flow management, liquidity, and the integration of CPF and SRS in retirement planning."
   },
-  "6337e8af301883958976c4fcf6ec1e3f0f0cedbc7ab1cf8d9bbf3dba5b456373": {
-    "headline": "Overview of Singapore Treasury Bills (T-Bills)",
-    "summary": "This chunk is from the document 'Fire' in section '6.6 T-Bills (Singapore Treasury Bills)'. It answers questions about the characteristics, auction process, and yield of Singapore T-Bills."
+  "633abb58b73fef437dbc5f357aa17673a196f3cee8f8e6c24f52cdd0d698a7bb": {
+    "headline": "Maturity Process for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '59. What happens when my Savings Bond matures? What do I need to do?'. It answers the question of what happens at maturity, stating that the principal and last interest payment will be automatically credited to your DCS bank account or SRS account without any fees."
+  },
+  "633fdf81ab4b2edc1e13456636ad07cfc3b1e2247a7b698651814fde63c71088": {
+    "headline": "Reviewing Insurance Policies Based on Financial Planning Guide",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section 'What should I do with my current insurance policies in light of the rules of thumb provided in this Guide?'. It answers questions about how to assess and adjust insurance coverage according to personal needs and the Guide's recommendations."
   },
   "63c24d345d39bcda7b0ec79f310525bdbb6cc62cfd376e84481f3d04caea6a25": {
     "headline": "Using the CPF Planner for Retirement Savings Assessment",
@@ -403,17 +423,13 @@
     "headline": "Creating a Will and Its Implications for HDB Flats",
     "summary": "This chunk is from the 'REVIEW YOUR RETIREMENT PLAN' section of the 'Retirement Booklet English 2024' document. It answers questions about making a Will, its validity, and the consequences for HDB flats if a flat owner passes away without a Will."
   },
-  "6552fb190a5d0ee70b370f4035030c1dd4c1971a3dcdcba7c2cc629ca4ec715f": {
-    "headline": "Mitigating Sequence of Returns Risk in Singapore FIRE",
-    "summary": "This chunk is from the document 'FIRE' in the section '8. Sequence of Returns Risk'. It answers how Singapore FIRE seekers can manage the risk of poor market returns early in retirement through strategies like maintaining a cash buffer and using dynamic withdrawal strategies."
+  "661ee7f91df86c847eab76ce11541d53241e4f60addba7348de801df5ff9343f": {
+    "headline": "Overview of Singapore Savings Bonds and Their Uses",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Product map'. It answers questions about the features and purposes of Singapore Savings Bonds, including their redemption flexibility and limitations as long-term investments."
   },
-  "65b3577f932290067f3d25ff0777a0a4a699f7dedabb38579aa5d296269e8a0b": {
-    "headline": "Understanding FIRE Phases in Singapore",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'What FIRE means in Singapore'. It explains the multi-phase cash-flow plan for achieving Financial Independence, Retire Early (FIRE) in Singapore, detailing the financial strategies for different age groups."
-  },
-  "66e51a7e449236cf9f0e35abb01382460f2d6a44e0bb3b504690f1e5a98cad89": {
-    "headline": "Using CPF Funds for Emergency Needs",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section 'Source: basic-financial-planning-guide-faqs.pdf'. It answers the question of whether CPF funds can be used as emergency funds, clarifying that specific conditions restrict their use for retirement, healthcare, and home ownership."
+  "68101c56520119770133fcd7b38b67468d6d77584f1e5f52f35f56e31831eb00": {
+    "headline": "Key Investment Details for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds, Product Terms' under the section 'Quick answers'. It answers questions about minimum investment, individual limits, redemption terms, transaction fees, interest payment, and funding sources for Singapore Savings Bonds."
   },
   "695ec949dd94a915874b5d795af77126c4826cb4c293cbfccd74f8a0b1ecf82a": {
     "headline": "Limitations of the RemarkRemedy FIRE Planner Repository",
@@ -423,29 +439,45 @@
     "headline": "Inputs and Spending Rules for Retirement Drawdown",
     "summary": "This chunk is from the document 'FI Calc' in the 'Inputs and configuration' section. It answers questions about the observed inputs for the retirement drawdown tool and the various spending rules it supports."
   },
+  "6addd96394c44ebe1b032b2cd1c2e7d8bdf940b9778aa9c7085493a3673a9efb": {
+    "headline": "Authorization for Bank Applications for Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '32. Can I authorize the bank to apply for Savings Bonds on my behalf?'. It answers the question of whether individuals can authorize banks to apply for Savings Bonds, stating that the answer is 'No'."
+  },
   "6ba7cec3bd9e5940dc51e2af8b23c81d85f0f5c3c4aff57c6bbde126bc1c8087": {
     "headline": "CPF Contribution Breakdown for 57-Year-Old Employee",
     "summary": "This chunk is from the document 'CPF Allocation Rates from 1 January 2026' under the section 'Example 2: employee aged 57 with a $100 contribution'. It explains how a $100 contribution is allocated among the Ordinary Account, Retirement Account, and MediSave Account for an employee aged 57."
-  },
-  "6bb4e55b211a8696bc63657b2bd1bdd27ef9a0288f12f5d8b55aae98889d6bc5": {
-    "headline": "Calculating Your FIRE Number in Singapore",
-    "summary": "This chunk is from the document 'FIRE' in the section '5. FIRE Number Calculation for Singapore'. It explains how to calculate the FIRE number based on different withdrawal rates and provides examples for monthly expenses."
   },
   "6bc47c2853d18db254c9a209db8ed0132505cb8b8364d4a56f160e9f8514cb0b": {
     "headline": "Managing Spending and Staying Healthy in Retirement",
     "summary": "This chunk is from the 'Manage Your Spending and Stay Healthy' section of the 'Retirement Booklet English 2024' document. It answers questions about budgeting, tracking expenses, and safeguarding personal information while managing spending during retirement."
   },
-  "6e6ec1528f47a708116a392d6cde1c56bcf049a0424ae8983e3c43328b6da5de": {
-    "headline": "Popular UCITS ETFs for Singapore FIRE Investors",
-    "summary": "This chunk is from the document 'Fire', section '6.1 Ireland-Domiciled UCITS ETFs'. It answers questions about key UCITS ETFs favored by Singapore investors, detailing their characteristics and the difference between accumulating and distributing types."
+  "6d693c958cd843650a613fd705e1c756f2248b560d16b3ffbe9420e17ffc79d3": {
+    "headline": "Source and review notes for Basic Healthcare Sum document",
+    "summary": "This chunk is from the document 'CPF Basic Healthcare Sum by Year' under the section 'Source and review notes'. It provides the last review date and sources for the 2026 BHS announcement."
+  },
+  "6d76745cec946c1465c3825af114bd346faef73f0e14083f9a6d605cc1e4e392": {
+    "headline": "Opening a CDP Securities Account for Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section 'D.2 CDP SECURITIES ACCOUNT OPENING'. It answers how long it takes to open a CDP Securities account and whether banks can assist with the process."
+  },
+  "6db14cfea1938558182dd3500a56802dba0213ec05d48d02241e4a30bf29fa88": {
+    "headline": "Investment Strategies During Late Drawdown Phase",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Late Drawdown Phase (55\u201365)'. It answers questions about investment strategies for individuals in the late drawdown phase, including accessing CPF lump sums and adjusting asset allocations."
+  },
+  "6f184183cd2c38c39b99bc95c4bf0e5169aed072e2599f61788c14a1b7e33aa7": {
+    "headline": "Transfer and Trading Restrictions for Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section 'A.5 ISSUANCE AND REDEMPTION'. It answers questions about the scenarios in which Savings Bonds can be transferred and clarifies that they cannot be traded or pledged as collateral."
   },
   "6f6e7c4856410df18dafb1b2596a63a337a9f2346cc16e1c4c3bb6ba4068ee4f": {
     "headline": "Outputs of FIRE Metrics and Scenario Analysis",
     "summary": "This chunk comes from the document 'RemarkRemedy fireplanner source repository' under the section 'Outputs and scenario workflow'. It answers questions about the types of outputs available, including headline FIRE metrics, risk assessments, and scenario comparisons."
   },
-  "704b93c3b3c8d123a26f82c833df1ab58f7fd6bbea5f53d3b892188a3bf2494c": {
-    "headline": "Overview of Document Review Date and Purpose",
-    "summary": "This chunk comes from the document 'Investing In Singapore' under the section 'Investing in Singapore: RAG Context'. It clarifies that the document was last reviewed on 2026-05-25 and emphasizes that it is for educational purposes, not personal financial advice."
+  "7165d94a527c063e6b13a715813aa205bf984df02b22057efd7c25087110662d": {
+    "headline": "Three Buckets for Singapore Investors' Money Management",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Core investing frame for Singapore users'. It answers how Singapore investors should categorize their money into near-term cash, medium-term low-risk assets, and long-term growth assets."
+  },
+  "724b16f760210241f5cc29dbc013bea904b70f65d2db637dcea2dc31c95f9843": {
+    "headline": "Understanding Redemption of Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'C.1 GENERAL INFORMATION'. It answers questions about the meaning of redemption, the process to redeem Savings Bonds, and the timeline for receiving funds after a redemption request."
   },
   "72874226639dfb337babbed944c63ed188e0bc589543cb5c3ac2d18764d385b5": {
     "headline": "CPF Contribution Allocation for Members Aged 35 and Below",
@@ -455,13 +487,25 @@
     "headline": "Outputs of the Retirement Calculator",
     "summary": "This chunk is from the 'Outputs' section of the 'RetireCan.sg Singapore Retirement Calculator' document. It details the various outputs provided by the calculator, including retirement spending, required nest egg, and the proprietary FIRE Score."
   },
-  "73b0e36d549ced94fcc9bd1d23c480d3c2ca975e986500e9b347086084fbfdc8": {
-    "headline": "Comparison of Savings Bonds and Fixed Deposits",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers how Savings Bonds differ from fixed deposits, highlighting their longer tenor and government backing."
+  "73431fb306838762744f8914587a235402489ca4d54e52f2f912e84a21c8bfda": {
+    "headline": "Key Tags for Singapore FIRE Planning",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'Retrieval tags'. It lists important terms related to Singapore's FIRE planning, including 'CPF LIFE', 'safe withdrawal rate', and various FIRE strategies."
+  },
+  "737d5e7944ee23ef0fd978d076459308d2aabc07d2cd86cb2fb81cfdd8e95707": {
+    "headline": "Investment Limits for Shares, Property Funds, and Corporate Bonds",
+    "summary": "This chunk is from the document 'Cpfis Investment Products' under the section 'Up to 35% of investible savings'. It answers questions about the investment options available under CPFIS, specifically regarding shares, property funds, and corporate bonds."
+  },
+  "73dc901d471377790aabe85e31fd038a489d5191c4f095b8df2c309d648bfea7": {
+    "headline": "Withdrawal Rate Considerations for Singapore FIRE Seekers",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Limitations for Singapore FIRE Seekers'. It addresses the challenges of the 4% withdrawal rate for Singaporeans aiming for early retirement, suggesting a safer rate of 3.5% due to a longer retirement horizon."
   },
   "74ec24e90a0c04c5a6692d1c6af807199e21ef8602588a4b1dd753b2058fd681": {
     "headline": "Accumulation Loop and Retirement Spending Formulas",
     "summary": "This chunk is from the 'Deterministic formulas' section of the 'Tree of Wealth Singapore FIRE Planner' document. It explains the accumulation loop for savings and the calculation of retirement spending and needs using inflation and return assumptions."
+  },
+  "74f07540dca7f6239689c9323e5d2b06c8dc23ac798690da4bd1af8f8a9324c3": {
+    "headline": "Overview of Cash, CPF, and SRS Accounts in Singapore",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Singapore-specific account types'. It answers questions about the flexibility and features of cash, CPF, and SRS accounts, including their investment risks and tax implications."
   },
   "7519c4eb407d4c8f66965c20c73107c2dee193acc901e5a79b5d464551136405": {
     "headline": "Limitations of FI Calc for Singapore Investors",
@@ -471,129 +515,161 @@
     "headline": "Privacy Risks of Local Storage and Shareable URLs",
     "summary": "This chunk comes from the document 'RemarkRemedy fireplanner source repository' under the section 'Privacy and reproducibility'. It answers questions about how the application handles data privacy, the risks of local storage, and the implications of using shareable URLs."
   },
-  "782867deb939ecc16f441d232116cbc1ef32127de4d3e8924fcd4043505ac3ff": {
-    "headline": "Introduction of the 4% Rule in Retirement Planning",
-    "summary": "This chunk is from the document 'Fire', section 'Origin'. It explains the introduction of the 4% rule by William Bengen in 1994 and its basis on a 30-year US retirement horizon."
+  "75db6edc0c07e0c3dacbe16bf2e923f370e7976426f808c7ed3768ea3f27f306": {
+    "headline": "Understanding the Core Concept of FIRE",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '1. What is FIRE?'. It explains the fundamental premise of Financial Independence, Retire Early (FIRE) and the philosophy behind it."
+  },
+  "76a19c4c938f22c29573a3bfd65d6897904a7f21a29747dfae976087f6f06d6b": {
+    "headline": "Calculating Non-CPF FIRE Number for Early Retirement",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Practical FIRE Timeline and CPF Gap Analysis'. It answers how to calculate the non-CPF FIRE number needed for an individual targeting retirement at age 42, considering CPF gaps and potential payouts."
+  },
+  "77bffa29408655dfb93e1804faefdb5ac72fb2ae2dd789d3db9ff0b2c16209b7": {
+    "headline": "Common Misconceptions About FIRE in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '14. Key Facts to Note / Common Misconceptions Corrected'. It addresses misconceptions regarding US tax implications, CPF SA contributions, and the 4% rule for Singapore FIRE seekers."
+  },
+  "7aa736bf1fe4fc42c769eb0da4e61966dd3a84045abbb643a77cb1dc03553ce7": {
+    "headline": "Impact of Interest Rate Changes on Savings Bonds Value",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'What happens to the value of my Savings Bonds when market interest rates change?'. It answers how changes in interest rates affect the value of Savings Bonds and the options available to investors."
+  },
+  "7abf62885bb444242c1e786c3859b19784dcfe81b7be3cc2e182bfe777564d8f": {
+    "headline": "Application Results and Allotment for Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '33. When will I know the results of my Savings Bonds application?'. It answers questions about when results are announced, how to check the amount received, and what happens if the application is unsuccessful or partially filled."
   },
   "7ae6d4d5a683c4483e88e9c0c8c8940fcf4257414c82d1a8ab3141affcd685d4": {
     "headline": "Limitations of CPF and SRS in Retirement Planning",
     "summary": "This chunk is from the 'Limitations and official checks' section of the 'Tree of Wealth Singapore FIRE Planner' document. It addresses the assumptions made by the calculator regarding CPF contributions, payouts, and SRS drawdown rules, highlighting the variability in actual payouts and tax implications."
   },
-  "7b4faabf873f55179f234306c7c49dc4e821184706be708d66f40ef0455226aa": {
-    "headline": "Overview of Singapore Savings Bonds Benefits and Features",
-    "summary": "This chunk is from the 'Singapore Savings Bonds Factsheet' document, specifically discussing the introduction of Savings Bonds. It answers questions about the purpose of the bonds, their safety, flexibility, and the benefits of investing in them."
-  },
-  "7c3fb9c4f3087c92d2c14ccf3528badc1c33e409049a79a56c080723a1563b2c": {
-    "headline": "Impact of Interest Rates on Savings Bonds Value",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about how market interest rate changes affect the value of Savings Bonds and the timing of interest payments."
-  },
-  "7d0b5de1d517d1c65987d4da20c96a2364cd8a967d28f825a250bb3730e360f2": {
-    "headline": "Singapore FIRE Community Norms: Lean, Regular, and Fat FIRE",
-    "summary": "This chunk is from the document 'FIRE' in the section '11. Singapore FIRE Community Norms and Benchmarks'. It answers questions about the different FIRE categories in Singapore, typical monthly expenses, retirement age aspirations, and savings rates."
+  "7c8a08b0847de5fab4729c9629e486a308261f37bb1a30453c3d7eebaa173d2f": {
+    "headline": "Healthcare Costs for Early Retirees in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '4.4 Healthcare Costs'. It addresses the implications of Singapore's healthcare system for early retirees, including MediShield Life, Integrated Shield Plans, and the financial burden of self-funding healthcare insurance."
   },
   "7dee108300568dc6540f796583c59b9ac03a4f6796c927a260e7563c5689f334": {
     "headline": "Overview of SG FIRE Planner's Retirement Planning Features",
     "summary": "This chunk comes from the SG FIRE Planner document, under the 'Source role' section. It answers questions about the application's scope, features, and its comparison to FireBuddy v1."
   },
-  "7f2547a50a0b01e8dffe2e5c531f226702c0cf34762c9cce8d27539ef1fe64e4": {
-    "headline": "Understanding CPF Inaccessibility Before Retirement Age",
-    "summary": "This chunk is from the document 'FIRE in Singapore' under section 4.1, discussing the CPF's structure and access limitations for retirement planning. It answers questions about CPF account types, interest rates, and key ages for withdrawal."
+  "7df7cef17994ab1e5f399fc6d871810d21dfd859ae78c04e1f5a4a71f7f85e5c": {
+    "headline": "Overview of Singapore Savings Bonds Features and Permanence",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'A. INTRODUCTION AND PRODUCT FEATURES: 1. What are Savings Bonds? What are the main features? / 2. Are Savings Bonds going to be a permanent feature?'. It answers questions about the safety, long-term investment potential, flexibility of Savings Bonds, and the permanence of the SSB programme."
+  },
+  "7e536382ae82a4bcf752bb08db6c0909960fc45d73928e1e88ce4d479f81bcb5": {
+    "headline": "How to Check Your Savings Bonds Holdings",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '42. How and where can I check what Savings Bonds I have?'. It answers questions about checking Savings Bonds holdings for both cash and SRS subscriptions."
   },
   "7f4726ea00f919d0a917323050abf3ba832b32676decdd2b6713a381b582fe9d": {
     "headline": "Review Date for CPF LIFE Payout Examples",
     "summary": "This chunk comes from the document 'CPF LIFE Payout Examples' under the section 'Source and review notes'. It indicates that the document was last reviewed on 2026-09-15 and was hand-authored from the official CPF Board payout examples PDF."
   },
-  "8334ea5ef3bfe82f6da34bae9c572166bb027505b12e80fbb174b68ea20878f2": {
-    "headline": "How to Redeem Your Singapore Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'C. REDEEMING YOUR SAVINGS BONDS'. It answers questions about the redemption process, including how to submit requests and when to expect payment."
+  "80554e3c66b1e0b653a779676fdb5722b86cc4918c8128f28c94f4f1122a659c": {
+    "headline": "Robo-Advisors Supporting FIRE in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section '6.9 Robo-Advisors and Digital Platforms'. It answers questions about the robo-advisors available in Singapore that are relevant to FIRE, including Endowus, Syfe, and StashAway."
   },
-  "84235d9a90d9d9e3246e373fa99845ede99533694b3fd3be02a95d9876bde034": {
-    "headline": "Overview of Personal Income Tax Reliefs and Rebates",
-    "summary": "This chunk is from the document 'Tax Relief Individuals' under the section 'Source: tax-relief-individuals.pdf'. It answers questions about the overall cap on personal income tax reliefs, the Personal Income Tax Rebate for YA 2019, and eligibility for course fees relief."
-  },
-  "84b3ef6f3ef2f032a955b6ee9efc53ccc9434d17ae7fae873d0ce2c7410d0c40": {
-    "headline": "Understanding CPF Top-Ups for FIRE in Singapore",
-    "summary": "This chunk is from the document 'Fire' in section 6.7, discussing CPF top-ups. It answers questions about the types of CPF top-ups available, their benefits, and considerations for early retirees."
+  "8535184ac2dc0fba341f7def0857fd95142860c9f5228fb4148094b422bcc521": {
+    "headline": "Singapore's Core Inflation Trends and Implications for FIRE",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '4.6 Inflation'. It discusses Singapore's core inflation rates, noting an average of 2.8% in 2024 and a moderation to ~0.3\u20130.6% year-on-year in mid-2025, highlighting the higher inflation rates in healthcare and education compared to general CPI."
   },
   "8579aacacaa358b25ea80941b5ef1674b1acfa0d7aebfe93d8ded95a50a26b58": {
     "headline": "Understanding the 25 Times Rule for FIRE Calculations",
     "summary": "This chunk is from the 'FireBuddy takeaway' section of the 'Dr Wealth, Financial Independence Retire Early Guide'. It explains the appropriateness of the 25 times rule for FIRE calculations and emphasizes the need for transparency in withdrawal assumptions."
   },
+  "8585a9df68219a14933fee0dc4d8f3b7dc0b9d89f8d69f3b822b057f4829854e": {
+    "headline": "Checking Redemption Results for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '58. How can I check the results of my redemption requests? Will the bank notify me?'. It answers how investors can check their redemption results and the notification process for cash and SRS investments."
+  },
+  "859c5cd9e2195ec0b33baa4ef4524bef17f9fb879f751681752cddb8fd89eac4": {
+    "headline": "Overview of CPF Contribution Caps",
+    "summary": "This chunk is from the document 'CPF Wage Ceilings and the CPF Annual Limit' under the section 'CPF wage ceilings and the CPF Annual Limit'. It explains the three separate caps that limit CPF contributions, including the monthly ceiling on Ordinary Wages, the annual ceiling on Additional Wages, and the overall cap for total contributions."
+  },
+  "8608ef248d5ba5ab9700ac9e1f43e597db1c665097c6b4f5b285deb66955f5cb": {
+    "headline": "Understanding Accrued Interest on Savings Bonds Redemptions",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section C.4. It explains what accrued interest is and how it is calculated when redeeming Savings Bonds before maturity."
+  },
+  "86e8ce7990e1cc95dfe35a908e0f769e0ffa8ba5558fbceb7ba5cf8c7c220c8f": {
+    "headline": "15% Income Rule for Insurance Protection Explained",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '6. How was the rule of thumb of 15% of income for Protection needs derived?'. It explains the recommendation to spend at most 15% of income on pure insurance products for effective financial planning."
+  },
   "886ec8d982a45577f142069a00076f80a20e5cd16015722e0f9143ad5b61a455": {
     "headline": "Managing Expense Categories in FireBuddy for Financial Independence",
     "summary": "This chunk is from 'The Financial Coconut' under the section 'Useful concepts for FireBuddy'. It addresses how FireBuddy categorizes expenses and calculates financial independence (FI) capital while ensuring users can distinguish between core and optional spending."
   },
-  "8898b9b63d9c7c622f21ae12dc57dd5ed060e7e1732999e93b1de52592a12df0": {
-    "headline": "Goal-Based Asset Allocation for Singapore Investors",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Portfolio construction principles'. It answers questions about how to allocate assets based on financial goals and timelines, emphasizing the importance of diversification and rebalancing."
+  "892a96b0d930fc5659413c6ddabd65eadb0f67c017baeddf9ffe071550c2ca50": {
+    "headline": "Tax Benefits of Ireland-Domiciled UCITS ETFs for Singapore Investors",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section 6.1. It addresses the withholding tax issues with US-listed ETFs and explains how Ireland-domiciled UCITS ETFs provide a more tax-efficient investment option for Singapore investors."
   },
-  "8b2c855c90af1b87699859e84c211fe820344d02cbd3fc4d376affdf3b079096": {
-    "headline": "Impact of Housing on FIRE Planning in Singapore",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'Housing in Singapore FIRE'. It answers questions about how housing costs, such as mortgages and property upgrades, affect the FIRE number and planning."
-  },
-  "8c7819f7b4df8359b16a49c1229509ef1ecf18b21b2a3b2e78ffbd74f33f4e8f": {
-    "headline": "Coverage Recommendations for Death and Critical Illness",
-    "summary": "This chunk is from the 'Basic Financial Planning Guide Faqs' document, specifically addressing coverage recommendations for death and total permanent disability, as well as critical illness. It answers questions about the recommended coverage amounts of 9x and 4x annual income and discusses affordability and options for term insurance."
-  },
-  "8d6f9e347d4b5d3416ff1985197b07144610df09ae743614161f636132f6ebc7": {
-    "headline": "Evaluating Your Insurance Portfolio Affordability and Coverage",
-    "summary": "This chunk is from the Basic Financial Planning Guide FAQs, specifically addressing concerns about insurance policy costs and coverage. It answers questions regarding the affordability of insurance portfolios and the steps to take if changes are needed."
+  "8f16721f2781a5f24e3e915b39664627f66627bea79586b134d89e5f61ab30ab": {
+    "headline": "Redemption Process for Singapore Savings Bonds Explained",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '55. Must I redeem Savings Bonds through the same bank that I applied through?'. It answers questions about whether you can redeem Savings Bonds through a different bank and the process for cash and SRS investments."
   },
   "8f49bb1433514095ff1a558b016a496cde29d579ca56f31e1c83cf6bc036f368": {
     "headline": "Retirement Sums from 2017 to 2027",
     "summary": "This chunk is from the document 'CPF Retirement Sums (BRS, FRS and ERS) by Year' under the section 'Retirement sums table'. It provides the Basic Retirement Sum (BRS), Full Retirement Sum (FRS), and Enhanced Retirement Sum (ERS) for each year from 2017 to 2027."
   },
-  "8f8e88b38ae3b504bf567f9c46b7e28c545642e8008458848d7784d5438b9786": {
-    "headline": "Calculating the FIRE Number for Singapore Early Retirees",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'FIRE number calculation'. It explains how to calculate the FIRE number using annual spending and withdrawal rates, highlighting the need for lower withdrawal rates for Singapore early retirees."
+  "90a985cac7aedbb562532a314df7cd84c55b9d1529a5b621a7aa94f166ad2e1f": {
+    "headline": "Interest Payment Schedule for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '8. When is interest paid? When will I receive the interest payments?'. It answers questions about the timing and method of interest payments for Savings Bonds."
   },
-  "904d835574e38e66ffef2b4f98b43985331f35b0e5e09605d4b1100e4452c6c1": {
-    "headline": "How to Apply for a CDP Securities Account Online",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about the online application process for a CDP Securities account, including the use of MyInfo for Singapore Citizens and PRs, and the timeline for account activation."
-  },
-  "9127c7ba0d14a8d3151db5ec323ba10271f095ba7e6869fc87be8fb1c14020ac": {
-    "headline": "Investment Amount and Tax Benefits of Singapore Savings Bonds",
-    "summary": "This chunk is from the 'Singapore Savings Bonds Factsheet' document, specifically discussing the investment amount, non-transferability, and tax benefits of the bonds. It answers questions about the minimum investment, ownership transfer restrictions, and tax exemptions on interest income."
-  },
-  "93fa8177288d0f1280e3eb2655cb112bd770fb7e326df3b05b64fbde38194ceb": {
-    "headline": "Tax Advantages of Ireland-Domiciled UCITS ETFs for Singapore Investors",
-    "summary": "This chunk is from the document 'Fire', section '6.1 Ireland-Domiciled UCITS ETFs'. It explains the withholding tax issues with US-listed ETFs and the benefits of using Ireland-domiciled UCITS ETFs for Singapore investors."
+  "934040bac44ca8f112f4e3afa3e2d9fb3b8e06646b64912180b8dd8713f1abc0": {
+    "headline": "Checking Interest Payments for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section '9. I have not received my interest payment. What should I do?'. It answers questions about how to check for interest payments from cash and SRS subscriptions."
   },
   "9472a4e5da66d04af786c5ecc0ea97116d2ba3091cccc9b22a6aeed117519cd3": {
     "headline": "Limitations of Retirement Expense Planning and Assumptions",
     "summary": "This chunk is from the document 'FIRE Path Lion' in the section 'Limitations and fact checking'. It addresses the limitations of the author's expense amounts and assumptions regarding withdrawal rates, portfolio risks, and the need for updated financial models."
   },
-  "9499a65a02cf4b30286cad37aa8f3f5de7c0d4320cfaed1958867a81b2a32e72": {
-    "headline": "Importance of Insurance in Financial Planning",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section discussing insurance. It answers questions about the role of insurance in protecting against income loss and the implications of switching insurers."
+  "95166725e996b480cea256c827b0cd5b487f1cfa97a671092764fb2235887d82": {
+    "headline": "Transferring Savings Bonds After the Holder's Death",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'What happens to my Savings Bonds when I die?'. It answers questions about the transfer of bonds to beneficiaries and the legal process involved after the bond holder's death."
   },
-  "97595381791f0b271f79e5b65004983494f5552c18932577def64d91f1d036dc": {
-    "headline": "Understanding Accrued Interest on Savings Bonds Redemptions",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'C.4 ACCRUED INTEREST'. It explains what accrued interest is and how it is calculated when redeeming Savings Bonds before maturity."
+  "951b17c8276c578a2e6ef8b5e05d57e71f6eb31eef4a1f179bb8f5aade2269e5": {
+    "headline": "Overview of Singapore Savings Bonds Features and Benefits",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'A. INTRODUCTION AND PRODUCT FEATURES'. It answers questions about the nature, safety, long-term investment potential, and flexibility of Savings Bonds."
   },
-  "9778bd1540cd1d0dd0242004e2dc3862d5aceb82d86dd3a4e9c90ad8d887539a": {
-    "headline": "Redemption Process for Singapore Savings Bonds Explained",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'C.2 REDEMPTION PERIOD'. It answers questions about when and how to redeem Savings Bonds, including the absence of penalties for early redemption."
+  "95343d5b04057a3644ca1f123cb46f91fbf9598586b95e5045a75910594e9236": {
+    "headline": "Different FIRE Variants Explained for Singapore",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'FIRE variants in Singapore'. It answers questions about the characteristics and financial implications of Lean FIRE, Regular FIRE, Fat FIRE, Barista FIRE, and Coast FIRE in the Singapore context."
+  },
+  "9647bd6002a77548894a931b4b701eeca82be38e768fe1ab6f40a03fa62d18cf": {
+    "headline": "Using CPF Funds for Emergency Needs",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '5. Can I use my CPF funds as my emergency funds?'. It answers the question of whether CPF funds can be used as emergency funds, stating that specific conditions restrict their use for retirement, healthcare, and home ownership."
   },
   "987ba386a24588b57afbd953281edb2ed56f8bc9ca6df2b068a0f366eb9166cf": {
     "headline": "Factors Affecting CPF LIFE Payouts and Retirement Calculations",
     "summary": "This chunk is from the document 'RetireCan.sg Singapore Retirement Calculator' under the section 'Limitations and official checks'. It answers questions about the sensitivity of retirement calculations to various factors and the rules governing CPF LIFE payouts."
   },
+  "99417801a408903aca29dd6676d70f0f45668c54f2f7c37afbaa4de70a036308": {
+    "headline": "Investment Options for Gold ETFs and Other Gold Products",
+    "summary": "This chunk is from the document 'Cpfis Investment Products' under the section 'Up to 10% of investible savings'. It answers questions about investing in Gold ETFs and other gold products, specifying that only SPDR Gold Shares is included and that UOB provides a list of other gold products."
+  },
   "9aa8e99f165ce258c04cf6f25c31cf1349d4925caf90053d8960f3d1e91e922e": {
     "headline": "Calculating Required Capital for Retirement Expenses",
     "summary": "This chunk is from 'The Financial Coconut' document, section 'Inputs and formula'. It explains how to calculate the required capital for various retirement expenses using a chosen withdrawal rate and provides specific examples for food and lifestyle increases."
   },
-  "9af331fad76fab87ec12fdd8c644446b213f95d2e3f42de01b0715b4628e055d": {
-    "headline": "Incorporating Healthcare Costs in Singapore FIRE Planning",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'Healthcare and insurance'. It addresses the importance of explicitly including healthcare costs in FIRE calculations, highlighting factors like rising premiums and the impact of early retirement on health benefits."
+  "9ada715ae86c26e87adbf0abbdf528239e7f58bc68ac62598363b7fc5016aca6": {
+    "headline": "Investment Strategies for Short-Term vs. Long-Term Goals",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '4. I am saving up for my short-term goals (e.g., child\u2019s education, first home purchase). Should I manage these monies the same way as my retirement funds?'. It answers questions about how to manage investments based on the time frame for using the funds and the associated risks."
   },
-  "9cc2cce2511965a71a3d679f3a8d131e50973fd8c4428a8c2fda6f98b86cd110": {
-    "headline": "Sources for Verifying Investment Information in Singapore",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Sources for verification'. It provides links to various official resources such as MoneySense and CPF Board for verifying investment portfolio basics, REITs, and tax treatments related to SRS contributions."
+  "9af51b5b5ed6277a83d580073bd0453e3b656a83cd0afdc26db1152885526ca7": {
+    "headline": "Changing Nominated Bank Account for DCS",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '70. Can I change the nominated bank account for DCS later?'. It answers the question of whether individuals can change their nominated bank account for the Direct Credit Service (DCS) and outlines the process involved."
+  },
+  "9b76f648d8fcbe6f64276fdc6130f03b8f6d7beb9fd1be9e89ba0830776b42e8": {
+    "headline": "Evaluating Insurance Coverage Against Guide Recommendations",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '8'. It addresses whether to keep insurance coverage that exceeds the Guide's recommended amounts and suggests reviewing personal needs and preferences."
+  },
+  "9d22932ceba9a51786a0fda33e1e9736d360f02fc44ce3d11c44d9ac45a6edd4": {
+    "headline": "Housing Costs Impacting FIRE in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section '4.3 Housing Costs'. It addresses the high property prices in Singapore and how they affect FIRE calculations, noting that an HDB BTO flat can exceed $600K\u2013$800K and private property ranges from $1.5M\u2013$3M."
+  },
+  "9d68c9051f8fc4137da986a25e886ea40233b863ec3cbdffb9589f8a55a4480f": {
+    "headline": "Fees and Charges for Singapore Savings Bonds Applications",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section 'B.6 FEES & CHARGES'. It answers questions about the $2 transaction fee for applications and redemptions, and confirms that returns from Savings Bonds are tax-exempt."
   },
   "9dc72e39724bac12e5ac1c222d0ce05b0e69ded0182c4e295c64cbf8f9cc8625": {
     "headline": "Monte Carlo Simulation and Deterministic Drawdown Explained",
     "summary": "This chunk is from the 'Monte Carlo and drawdown' section of the 'Tree of Wealth Singapore FIRE Planner' document. It explains how the Monte Carlo simulation runs 1,000 accumulation paths and details the deterministic drawdown process, including the use of CPF LIFE and SRS."
+  },
+  "9efbe69a11ef99696d72571b3254b8144949ccb447707c913ed38b96741500f2": {
+    "headline": "Importance of Early Insurance Coverage for Young Individuals",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '4. I am young and healthy. Why should I purchase insurance coverage for Death/TPD and CI?'. It answers why young and healthy individuals should consider purchasing insurance coverage, emphasizing the benefits of lower premiums and the risks of applying after health issues arise."
   },
   "9fa41046eec798b417e6d4a21a285808aff4d5166766dead8f2fc461e11ea98b": {
     "headline": "Retirement Savings Bonus and Advance Care Planning Details",
@@ -607,81 +683,73 @@
     "headline": "CPF Contribution Breakdown for 30-Year-Old Employee",
     "summary": "This chunk is from the document 'CPF Allocation Rates from 1 January 2026' under the section 'Example 1: employee aged 30 with a $100 contribution'. It explains how a $100 contribution is allocated among the Ordinary Account, Special Account, and MediSave Account for an employee aged 30."
   },
-  "a10406e60250fe9c99155df3139dfad174c3c3cbc18e60c9f7ec07a65f0b0a85": {
-    "headline": "Closure of SA Shielding Strategy for CPF Members",
-    "summary": "This chunk is from the document 'Fire' in section '4.2 SA Shielding Hack \u2014 Now Closed'. It explains the closure of the SA shielding strategy for CPF members, which allowed temporary investment of SA funds, effective from January 2025."
+  "a521a5bd09b478bd2845481f020b91dbd221fbb443d423c666f034a7bd26e2bd": {
+    "headline": "Activation of Direct Crediting Service for Cash Subscriptions",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'D. CENTRAL DEPOSITORY (CDP) SECURITIES ACCOUNT'. It addresses the process of activating the Direct Crediting Service for cash subscriptions."
   },
-  "a1cb94d7211d781240bf48ca8c9e832092139e9b19d43fac057ce56ebc965cca": {
-    "headline": "Understanding CPF LIFE and Its Role in Retirement Planning",
-    "summary": "This chunk is from the document 'Fire', section '7. CPF LIFE \u2014 The Post-65 Annuity Floor'. It answers questions about the CPF LIFE scheme, including retirement sums for 2025 and monthly payouts."
-  },
-  "a550d5f355772bd96068be6fc7b29fff5f373707146ddfb7ebb7efad9b19a028": {
-    "headline": "Interest Payment Process for Singapore Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing interest payments. It answers questions about how and where interest payments are made for cash and SRS subscriptions, and what to do if payments are not received."
+  "a5ca4d52d29c16259ddee851dd3950bad98f191499e11fae7ab30a18f909cbc3": {
+    "headline": "Requirements for Purchasing Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section 'B.1 GETTING STARTED'. It answers questions about what is needed to buy Savings Bonds, including account requirements and age restrictions."
   },
   "a5ed0c4cf2f8099f55c95230e199dd22f9c7488fc5f5058eba98166a66b94461": {
     "headline": "CPF Contribution Rates for First-Year SPR Employees",
     "summary": "This chunk is from the document 'CPF Contribution Rates from 1 January 2026', section 'Table 2: SPR 1st year, graduated employer and graduated employee rates'. It details the default CPF contribution rates for Singapore Permanent Residents during their first year of status, including specific percentages and maximum contributions based on employee age."
   },
-  "a67a733115e79a5e186251222da56e529aeef4215f266086626be13d69d533b5": {
-    "headline": "Robo-Advisors Supporting FIRE in Singapore",
-    "summary": "This chunk is from the document 'Fire', section '6.9 Robo-Advisors and Digital Platforms'. It discusses the robo-advisors available in Singapore, including Endowus, Syfe, and StashAway, and their relevance to FIRE portfolios."
-  },
-  "a74b47fa5eb16aa77bf8a919930035a4e101a967e135c04d96d54c5010c69a29": {
-    "headline": "Taxpayer Obligations and Document Submission Guidelines",
-    "summary": "This chunk is from the document 'Tax Relief Individuals' under the section 'Source: tax-relief-individuals.pdf'. It addresses the importance of keeping supporting documents for tax obligations and clarifies that the guide does not cover all tax issues."
+  "a646164e56df660b64f8a7dbb508beea6198485c4d2662b7dfac1d0f7f728acb": {
+    "headline": "Overview of the Basic Financial Planning Guide's Purpose",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '1. What is the purpose of this Guide?'. It explains the Guide's aim to provide comprehensive rules of thumb for financial planning, highlight government schemes, and offer simple product options."
   },
   "a76df14021d64c92457723d42824ece641715dd98dffe16f2d18ce9508d14f65": {
     "headline": "FIRE Dashboard and Financial Outputs of SG FIRE Planner",
     "summary": "This chunk is from the 'Outputs and presentation' section of the SG FIRE Planner document. It details the various outputs provided by the tool, including year by year charts, cash flow waterfalls, and scenario comparisons."
   },
-  "a90937e2e177a69891c84c21de211b6995fdbbe0f5a553cf9f1f6feadac7daff": {
-    "headline": "Emergency Fund Guidelines and Considerations",
-    "summary": "This chunk is from the 'Basic Financial Planning Guide Faqs' document, specifically addressing the adequacy of emergency funds. It answers questions about the recommended amount for emergency funds and considerations for different personal circumstances."
+  "aac1b1302cc35f689d6d92e0d59ba16e01ee08253a39e22d3c3774f4aaa32286": {
+    "headline": "Budgeting for Insurance: 15% Income Rule Explained",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '6. How was the rule of thumb of 15% of income for Protection needs derived?'. It answers how the 15% rule for insurance spending was derived and discusses the balance of financial needs."
   },
-  "ab0ea9ccfe3ccc3cf0c1295c9cd58edc82c17f8a300dd68936591cb86d02c23b": {
-    "headline": "Understanding Coupon Rates for Singapore Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing coupon rates. It explains how coupon rates are determined, exceptions to interest payments, and where to find interest rate announcements."
+  "acbf04ac9a163c0b502a6b78a3c87e478079b5b27e5e943ca6d8ffba845c259b": {
+    "headline": "Verification Sources for FIRE Planning in Singapore",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'Sources for verification'. It lists various official resources such as MoneySense and CPF Board that provide essential information for financial planning and retirement in Singapore."
   },
-  "ad167adcbc5c4d5e90e451af196914cab7cbfd30ca9258eb202f11613fe1aeee": {
-    "headline": "Application Process for Singapore Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'B.5 APPLICATION RESULTS'. It answers questions about application fees, submission methods, and how to check application results."
+  "ad1f6c1561074fce6af895d0a15ae33175ab9f08409f4c44014db9d48691b612": {
+    "headline": "Emergency Funds Should Not Be Invested in the Stock Market",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '3. Should I put my emergency funds into the stock market where returns could be higher?'. It answers the question of whether emergency funds should be invested in the stock market, emphasizing the need for accessibility."
   },
-  "ad3092c2f6538da4a54579ce39ba3e0840cdf0211e00dc9d3277b5c57a4cea40": {
-    "headline": "Investment Options for Fixed Deposits and Bonds",
-    "summary": "This chunk is from the document 'Cpfis Investment Products' under the section 'Source: cpfis-investment-products.pdf'. It answers questions about the availability of Fixed Deposits, Statutory Board Bonds, and Bonds Guaranteed by the Singapore Government under the CPF Investment Scheme."
+  "ad839f61f57f4353f9a819eb098e9ebdaf30bb46810b90d784f34d43c9d38cbe": {
+    "headline": "Managing Insurance Policies Exceeding 15% of Income",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '7. My representative sold me a portfolio of policies that costs more than 15% of my income'. It addresses concerns about affordability and the appropriateness of insurance policies that exceed the recommended spending limit."
   },
-  "adaf64f9dbba1918045d7a1d088fcd6b3c829d21cb7b56a66a9683a07243f794": {
-    "headline": "Common Mistakes in Singapore Investing Practices",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Common Singapore mistakes to flag'. It addresses common errors investors make, such as investing emergency funds in equities and misunderstanding CPF OA."
-  },
-  "af264e431ddf812ab27e90f7ae01764622a2d60953ac00bd20e1f5752a230bd7": {
-    "headline": "How to Apply for Singapore Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about where to apply for Savings Bonds, the deduction of funds from bank accounts, and the inability to amend or cancel applications."
+  "af9e41ffd06739f36b325046cb3e880dbe8c46a6e57bcb9440860c46183743af": {
+    "headline": "Understanding CPF Top-Ups for FIRE in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section 6.7 CPF Top-Ups (Voluntary). It answers questions about the types of CPF top-ups available, their benefits, and the liquidity considerations for early retirees."
   },
   "afc7c9d98d4fe70893319893c87eb1780465f4678a6ee51453380212c158e3c8": {
     "headline": "RetireCan's Retirement Funding Estimate Methodology",
     "summary": "This chunk is from the 'Source role' section of the 'RetireCan.sg Singapore Retirement Calculator' document. It explains how RetireCan estimates whether savings and contributions can fund retirement spending using a present value calculation."
   },
-  "b0c4f0132002f71a1f1970ee3b9239b469470870f8fc364b7732c45a5d81f708": {
-    "headline": "Overview of the Supplementary Retirement Scheme (SRS)",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about the SRS, highlighting its voluntary nature, tax relief eligibility, and where to find more information."
+  "b1799864ad8667f9a1dc67cd161013d2f974baaa55979f19affe4de86e69ebff": {
+    "headline": "Multiple Redemptions for Savings Bonds Explained",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '54. Can I make multiple redemptions for the same Savings Bond issue through the same and/or different banks?'. It answers questions about making multiple redemption requests and the associated transaction fees."
   },
-  "b1d3f30f04eaa5ad3ded315625f699f95706fc68bcba75b2d2ca0808f1129d9c": {
-    "headline": "Applying for Singapore Savings Bonds via SRS Account",
-    "summary": "This chunk is from the 'Singapore Savings Bonds Factsheet' document, detailing the application process for Savings Bonds through a SRS account. It answers questions about the requirements, transaction fees, and notification process for successful applications and redemptions."
+  "b23fbefea0215ff32a0ac5b9b191cee4c37763f46e47d7b6e0d672fbe41cc343": {
+    "headline": "Importance of Direct Crediting Service for Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Why must I apply for Direct Crediting Service (DCS)? What is DCS activation? Why do I need to do this?'. It explains the function of DCS in crediting cash entitlements and lists participating banks."
   },
   "b3560a87b170b4d5a545cf543f2a9957ad27f153357ff378d4dac9b9fa7a62e4": {
     "headline": "First Year SPR Contribution Rates and Conditions",
     "summary": "This chunk is from the document 'CPF Contribution Rates from 1 January 2026', specifically from the section 'Table 4: SPR 1st year, full employer and graduated employee rates'. It answers questions about the contribution rates for first year SPR employees, including total contributions, employee shares, and conditions for applying for higher rates."
   },
-  "b47d60c40641ed7b3496e5c068f266853effee736e64e0c6cd396222797dcdad": {
-    "headline": "Redemption Process for Savings Bonds Purchased with SRS Funds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'C.2 REDEMPTION PERIOD'. It answers questions about the redemption process for Savings Bonds bought using SRS funds and how to check SSB holdings."
+  "b3a07b1c458f1ab899072caaee377050e4cf036495b6e61a5253164f838d5254": {
+    "headline": "How to Apply for Savings Bonds and Fund Deduction Details",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section B.4. It answers questions about where to apply for Savings Bonds and when funds will be deducted from bank accounts."
   },
-  "b55a32f49138ad7899ecaae0c6f187ee987bc541823784bf65d2c6e93ea3f72c": {
-    "headline": "Returns and redemption options for Singapore Savings Bonds",
-    "summary": "This chunk is from the Singapore Savings Bonds Factsheet under the section 'Setting money aside'. It answers questions about the average returns on Savings Bonds, the impact of early redemption, and compares these returns to 10-year SGS yields."
+  "b517b9ebedebc5b9b920e999b0721fc9dc1d28a361067c20a29b214e2e3a8b2d": {
+    "headline": "Extra Interest Rates for CPF Members by Age",
+    "summary": "This chunk is from the document 'CPF Interest Rates and Extra Interest' under the section 'Extra interest on combined balances'. It answers questions about the extra interest rates applicable to CPF members based on their age and combined balances."
+  },
+  "b5257910dff66ad991fffbcb7df72a183279ac76c5f161d5eeaa5624888941da": {
+    "headline": "Allotment Process for Oversubscribed Savings Bonds Applications",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '34. How are Savings Bonds allotted? Why would I be allotted less than the amount I applied for?'. It explains how the Monetary Authority of Singapore allocates Savings Bonds when applications exceed the total issuance size."
   },
   "b643cae3baf51a92e05ff0dbf51d8453b9727da8996d1b6d64bb48e277d86830": {
     "headline": "Withdrawing CPF Savings After Age 55",
@@ -691,25 +759,25 @@
     "headline": "Understanding Critical Illness Insurance and CareShield Life",
     "summary": "This chunk is from the 'Basic Financial Planning Guide' under the section discussing insurance options. It answers questions about critical illness coverage, including the recommended coverage amount and options for CareShield Life, a national long-term care insurance scheme."
   },
-  "b6f13653daba48698d466383390ffdf536d783b7bfa2ab0c2e8e39b5dcbc823a": {
-    "headline": "Understanding Sequence Risk in Retirement Planning",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'Sequence risk'. It explains sequence risk and offers mitigations such as lower withdrawal rates and part-time work."
-  },
   "b8213176441eac73f5107a0525cfd31fba51eb381e8e9ed1750ddebfbb99075c": {
     "headline": "Closing the Savings Gap for Retirement Planning",
     "summary": "This chunk is from the 'CLOSE THE SAVINGS GAP' section of the 'Retirement Booklet English 2024' document. It addresses how to assess insurance coverage and suggests actions to increase retirement savings through CPF top-ups."
+  },
+  "b9e56c3f9351fdf17959c48596a5fc60e25fb699472b992a8a601cc7ffe4e606": {
+    "headline": "Determining Interest Rates for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '6. How are interest rates for Savings Bonds determined and where can I check the interest rates for each issue?'. It explains how the coupon rates are linked to SGS yields and the conditions affecting interest rates."
   },
   "ba407a39a08eb7b137d17e7e976d9f2447738a785e98b5fef42894c2c1aa8dea": {
     "headline": "Extra Interest Rates on CPF Balances for Different Age Groups",
     "summary": "This chunk is from the document 'Cpfis Instruments And Limits' under the section 'Source: cpfis-instruments-and-limits.pdf'. It answers questions about the extra interest rates applicable to CPF balances for members below and above 55 years old."
   },
+  "bab3465582e699c176d5378c647bad24ef568d08394babd439d75b71633726b4": {
+    "headline": "Overview of FIRE Planning Context in Singapore",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'FIRE Planning in Singapore: RAG Context'. It clarifies that the note is for retrieval context and should be used with official sources, emphasizing it is not personal financial advice."
+  },
   "bbfd9ba7ee948cd0002104b15b3e78797b3b1f17cff3264b277c347bb8633c18": {
     "headline": "Revised Monthly Spending and FIRE Target Calculation",
     "summary": "This chunk is from the document 'FIRE Path Lion' in the 'Inputs and arithmetic' section. It answers questions about the author's initial and revised monthly spending estimates and the resulting FIRE target calculations."
-  },
-  "bc20591b29bc676b0cdb23ac8345511b712140ed39f873fa1adc4addc462c244": {
-    "headline": "Investment Strategy for Accumulation Phase in FIRE",
-    "summary": "This chunk is from the document 'Fire' in the section 'Accumulation Phase (15+ years to FIRE)'. It answers questions about the recommended asset allocation for FIRE seekers, including the use of global equities, bonds, and CPF contributions."
   },
   "bc4e71fa6bae8adcb594e428fce4872b1d5a629f43f695374350d5f4416585dd": {
     "headline": "Lower Wage Bands for CPF Contributions in 2026",
@@ -719,17 +787,49 @@
     "headline": "Overview of the FIRE Spreadsheet's Purpose and Functionality",
     "summary": "This chunk comes from 'The Financial Coconut' document, section 'Source role'. It explains the purpose of the spreadsheet, which breaks down retirement expenses into required capital rather than presenting a single FIRE target."
   },
-  "be0b8275f03e56a8edd597ed822ee67325c9d0e4d96d6b8e937eda5296f73261": {
-    "headline": "Life Insurance Relief Eligibility and Claim Process",
-    "summary": "This chunk is from the document 'Tax Relief Individuals' under the section 'Source: tax-relief-individuals.pdf'. It answers questions about eligibility for life insurance relief and the claim process for individuals supporting dependants."
-  },
   "be5fd1090d5b96272756223fa706334fbb466617cc6fe4ec8a5599d31754c0e4": {
     "headline": "CPF and Retirement Planning Strategies",
     "summary": "This chunk is from the 'Basic Financial Planning Guide' under the section 'CPF and your retirement.' It answers questions about how CPF savings contribute to retirement, options for housing monetisation, and legacy planning."
   },
+  "c030c98e9f3909e011e84fbd4a8a900a3fffb04af7310b0947b8eba2f67bc1c3": {
+    "headline": "Redemption Process for Savings Bonds Purchased with SRS Funds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under section 'C.1 GENERAL INFORMATION'. It answers questions about redeeming Savings Bonds bought with SRS funds and how to check SSB holdings."
+  },
+  "c0f753de6dcb0604f23ea0e676b7ad479889101990cd78be397bf4d7b00ae143": {
+    "headline": "Overview of Singapore Treasury Bills (T-Bills)",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section '6.6 T-Bills (Singapore Treasury Bills)'. It answers questions about the characteristics, auction process, and yield of Singapore T-Bills."
+  },
+  "c11ece3da028637c61d4ecbed74ea7031689ba39329ae07d47c6cf676ceb47fa": {
+    "headline": "Basic Healthcare Sum Values by Year of Turning 65",
+    "summary": "This chunk is from the document 'CPF Basic Healthcare Sum by Year' under the section 'Basic Healthcare Sum by cohort year'. It provides the Basic Healthcare Sum for members based on the year they turn 65, ranging from $49,800 for those turning 65 in 2016 or earlier to $79,000 for those turning 65 in 2026."
+  },
+  "c1214576d2a3759f4231a966a6a11c54cca6f70328f44a15e87b28c694d666cd": {
+    "headline": "Comparison of Savings Bonds and Fixed Deposits",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '19. How do Savings Bonds compare with fixed deposits?'. It answers how Savings Bonds differ from fixed deposits in terms of investment duration and government backing."
+  },
   "c14227fb7ad92fad804ed840cefc817353181e6ec99d1cef99b7854c7dfea1a2": {
     "headline": "Key Inputs for Retirement Calculation",
     "summary": "This chunk is from the 'Inputs' section of the document 'RetireCan.sg Singapore Retirement Calculator'. It details the necessary and optional inputs required for calculating retirement funding, including age, expenses, savings, and various financial factors."
+  },
+  "c2890d8afb1e7ce9522ac6121d7c3757922cd8c40e8d53b0b78fbf8b4f2e9bac": {
+    "headline": "Mitigating Sequence of Returns Risk in Early Retirement",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '8. Sequence of Returns Risk'. It answers how to mitigate sequence of returns risk through bond allocation, part-time income strategies, and the role of CPF LIFE."
+  },
+  "c392bd8f32506ae74802cdd956b753fdbfc59bb3ef8d002be4f84f33c72a9683": {
+    "headline": "Key Product Terms for Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds, Product Terms' under the section 'Product terms'. It answers questions about eligibility, investment limits, interest payments, redemption options, and tax implications for Singapore Savings Bonds."
+  },
+  "c567b37801bcf92b77f57371eca1c9e1feacb9a71ee9e019f4f0adf0280e7e85": {
+    "headline": "Calculating Your FIRE Number in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '5. FIRE Number Calculation for Singapore'. It explains how to calculate the FIRE number based on different withdrawal rates and provides examples for monthly expenses."
+  },
+  "c5cbacabd60f2bb1752bbcadc943adcceb4e5ea12d20c0dddff9ed792fb80102": {
+    "headline": "Impact of Closing CDP or SRS Accounts on Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section B.5. It answers questions about the consequences of closing a CDP or SRS account before bonds are credited and explains how interest payments are received."
+  },
+  "c647f57084ba5bb58eacf53957c48b31405d0fed59324b42468ca5110b30d0ff": {
+    "headline": "Sources for Verifying Investment Information in Singapore",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Sources for verification'. It provides links to various official resources such as MoneySense and CPF Board for verifying investment portfolio basics, REITs, and tax treatments related to SRS contributions."
   },
   "c76d3aed59c3daaf1d4816a489f313483dd00362c57eb865a9895ad965505b60": {
     "headline": "Maximizing CPF Payouts for Retirement Income",
@@ -743,18 +843,6 @@
     "headline": "Overview of Document's Purpose and Approach",
     "summary": "This chunk comes from the document 'FIRE Path Lion' in the 'Source role' section. It explains the article's focus on transitioning from a rough spending estimate to a detailed retirement budget."
   },
-  "c81f6e58f806006dcb3efaa7427587a140087582ab6b0404228677c3e0abd08f": {
-    "headline": "Allotment Process for Oversubscribed Savings Bonds Applications",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It explains how the allotment of Savings Bonds works in cases of oversubscription, detailing the distribution among applicants and the process for partial fills."
-  },
-  "c82b29f404ad7d7e47268c82037b61acc0321ef013a389e45e00507e2841d955": {
-    "headline": "Overview of Cash, CPF, and SRS Accounts in Singapore",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Singapore-specific account types'. It answers questions about the flexibility and features of cash, CPF, and SRS accounts for investors in Singapore."
-  },
-  "c9986df94297e584f18785696c7033489f0dc45c86e3d33681845c55592cf16d": {
-    "headline": "Requirements for Opening a CDP Securities Account for Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing account requirements. It answers questions about the necessity of a CDP Securities account for purchasing Savings Bonds and the age requirement for account holders."
-  },
   "caeb1e17c9511e4457acc85256dbd1e20013f44706c909309f595e769934530f": {
     "headline": "CPF Contribution Rates for Singapore Citizens and PRs",
     "summary": "This chunk is from the document 'CPF Contribution Rates from 1 January 2026', specifically from the section 'Table 1: Singapore Citizens and Permanent Residents from the 3rd year (full rates)'. It details the full employer and employee contribution rates for Singapore Citizens and Permanent Residents from the third year of SPR status, including specific percentages and maximum contributions based "
@@ -763,9 +851,9 @@
     "headline": "Understanding MediShield Life and Integrated Shield Plans",
     "summary": "This chunk is from the 'Basic Financial Planning Guide' under the section 'Source: basic-financial-planning-guide.pdf'. It answers questions about the coverage of MediShield Life, the role of Integrated Shield Plans (IPs), and the implications of choosing IPs on financial assistance for premiums."
   },
-  "cb7385f6b021899d827e5ccb83ca78054a64388d6dfac8e2b2c72833864ab4ab": {
-    "headline": "Comparing VWRA and CSPX for Singapore FIRE Investors",
-    "summary": "This chunk is from the document 'Fire', section '6.1 Ireland-Domiciled UCITS ETFs'. It answers questions about the differences between VWRA and CSPX for Singapore FIRE investors, including tax implications and investment strategies."
+  "cc0eace59aef6a472ff3f947b8179eb94c3c013efff5b0b007ca1811136403d4": {
+    "headline": "CPF Interest Rates and Extra Interest Explained",
+    "summary": "This chunk is from the document 'CPF Interest Rates and Extra Interest' under the section 'Quick answers'. It answers questions about the floor rates for different CPF accounts and the extra interest earned based on age and account balances."
   },
   "cc261fa8d1136be567d41faab174ee7a3bf55ccc84cf2fba5ffe3cff30b3d134": {
     "headline": "Contribution Timing and Portfolio Separation in FireBuddy",
@@ -775,77 +863,121 @@
     "headline": "Calculation Method for Retirement Nest Egg Estimation",
     "summary": "This chunk is from the document 'RetireCan.sg Singapore Retirement Calculator' under the section 'Observed calculation method'. It explains how the calculator estimates the retirement nest egg by inflating current spending, calculating annual gaps, and applying discount factors."
   },
-  "cfad9a1cdc2014a7fc11f15b68c3806e1509968c03c2aa79438024090e444ec5": {
-    "headline": "Investment Options Under CPFIS: Shares, Property Funds, and Gold ETFs",
-    "summary": "This chunk is from the document 'Cpfis Investment Products' under the section 'Source: cpfis-investment-products.pdf'. It answers questions about the types of investment products available under CPFIS, specifically shares, property funds, corporate bonds, and gold ETFs."
-  },
-  "d1c12f78f549f09cb77b55b0ace0e0bf95ee2fdd1e8628ed8490c1fe2e2b4a01": {
-    "headline": "Overview of FIRE Variants in Singapore",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'FIRE variants in Singapore'. It explains different FIRE variants such as Lean FIRE, Regular FIRE, Fat FIRE, Barista FIRE, and Coast FIRE, detailing their characteristics and financial implications."
-  },
   "d1c29f87db19cb451aca8974f12f790d627b51529e4e21ea97f720971172ac74": {
     "headline": "Progress Bars for Retirement Expense Categories in FIRE Spreadsheet",
     "summary": "This chunk is from 'The Financial Coconut' document, section 'Outputs and interaction'. It explains how the spreadsheet presents progress bars for various retirement expense categories and how they can be prioritized based on capital requirements."
+  },
+  "d2b9f73105d9c69ccb5606d159f9be376d245bb6d8fd5f4c9dc8e7b7ab4561f1": {
+    "headline": "Applying for New Savings Bonds After Redemption Request",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '12. If I have reached my Individual Limit but have submitted a redemption request, will I be able to apply for new Savings Bonds within the same month to bring my ...'. It answers whether individuals can apply for new Savings Bonds after reaching their Individual Limit and submitting a redemption request."
+  },
+  "d2ba348bd705166cad58339283b64140ae74a52f5731e28cca3e540b46b0757e": {
+    "headline": "STI ETFs for Local Diversification in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section 6.3 'STI ETF (Singapore Local Equities)'. It answers questions about the Nikko AM STI ETF and SPDR STI ETF, including their expense ratios, tax benefits, and historical performance compared to global indices."
+  },
+  "d45ab8719ffa1f9eb25a8372191c745035efc97fe202fee079c42d2302bdeebf": {
+    "headline": "Issuance and Redemption of Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'A.5 ISSUANCE AND REDEMPTION'. It answers how often Savings Bonds are issued and the conditions for redeeming them."
+  },
+  "d4848a863e4c37e4d94c5f7bd190cf0a486242deef4c590f63fadd361f35e4b7": {
+    "headline": "Document Update and Fact-Checking Sources",
+    "summary": "This chunk comes from the document 'FIRE in Singapore' in the section 'FIRE in Singapore: Comprehensive Knowledge Base'. It indicates the last update date and lists the sources used for fact-checking."
   },
   "d50a776bf4b90858a5542deea755980f8b0e7f0b6b1d7947ab11054e97567f0d": {
     "headline": "Investing and Creating a Lasting Power of Attorney",
     "summary": "This chunk is from the Retirement Booklet English 2024, under the section 'PLAN YOUR LEGACY'. It answers questions about investing for retirement and the importance of establishing a Lasting Power of Attorney (LPA) to manage personal and financial matters."
   },
-  "d5c135dcf4f7beb918661c8986902222e062b18f7a3a5c0619d253fec017e5c1": {
-    "headline": "Fees and Charges for Savings Bonds Applications",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about transaction fees for applications and redemptions, stating that a $2 fee applies per request and is non-refundable."
+  "d50ec3e0623df1b1b7dadb828579c74e8369da413c898b69cf991ec8d8469b9d": {
+    "headline": "CDP Securities Account Requirements for Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'D.1 GENERAL INFORMATION'. It answers questions about the necessity of an Individual CDP Securities account for purchasing Savings Bonds and the restrictions on joint accounts."
   },
-  "d6f268be5efd7c5d167404b406a359e6d962196aef4985398023bad99bfbecab": {
-    "headline": "Insurance Spending Recommendations in Financial Planning Guide",
-    "summary": "This chunk is from the Basic Financial Planning Guide FAQs, under the section discussing insurance. It answers questions about recommended spending on insurance products, including specific coverage amounts and premiums."
+  "d6db9ae7cc9d7384f41a1e39a6758cf30c39498becd3268a4d35c47a7040f855": {
+    "headline": "Importance of Saving 10% of Income for Investments",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '1. Why is the Guide recommending one to set aside at least 10% of income for investments?'. It answers why consumers should save and invest early, emphasizing the need to balance competing financial priorities."
+  },
+  "d76094829ec2a59e831c8e06324d5470e2de215b32a06c897afc687a445383af": {
+    "headline": "Investment Strategy for Accumulation Phase in FIRE",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Accumulation Phase (15+ years to FIRE)'. It answers questions about the recommended asset allocation for accumulating wealth towards achieving FIRE, including the use of global equities, bonds, and CPF contributions."
   },
   "d860b6246f788dd289092248f05106367deb8a83d51949cc96efca499dca9717": {
     "headline": "Outputs of the Singapore FIRE Planner",
     "summary": "This chunk is from the 'Outputs' section of the 'Tree of Wealth Singapore FIRE Planner' document. It details the outputs generated by the planner, including projected investable portfolio, retirement need, and suggested withdrawal sequence."
   },
-  "daca1a70a2d6b6a448a106968e0ed573d84204f2b228a67ece5a3a1cce794735": {
-    "headline": "Purpose and Features of the Basic Financial Planning Guide",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section 'Source: basic-financial-planning-guide-faqs.pdf'. It answers questions about the Guide's purpose, its comprehensive features, and the regulatory context regarding its use by financial advisors."
+  "d8a0b06561949be0469c3a15974a9a89a2d62ae908c96b8e5b1d82d86742dcd6": {
+    "headline": "Eligibility Criteria for Purchasing Singapore Savings Bonds",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'A. INTRODUCTION AND PRODUCT FEATURES'. It answers questions about who can purchase Savings Bonds, including age requirements and eligibility for foreigners."
   },
-  "dbbf078d41116b8374fe7094cf9ec4c7f900d3b5eed7efb524ad777c11540d2b": {
-    "headline": "Broad-Market ETFs for Long-Term Growth in Singapore",
-    "summary": "This chunk is from the document 'Investing In Singapore' under the section 'Product map'. It answers questions regarding the use of broad-market ETFs for long-term growth, focusing on factors like domicile, tax treatment, and risk tolerance."
+  "d9aeaa45bba9bf3bcfd8e84504be0ad4c1d158b4cce61f46024f1c353e449cca": {
+    "headline": "The Role of CPF in FIRE Planning",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'CPF role in FIRE'. It explains how CPF accounts function, their implications for early retirement funding, and the importance of liquidity in FIRE planning."
   },
-  "dd4827745bdc2fea8832af503405fd21b6b36307bbb35080587c070f11548286": {
-    "headline": "Direct Crediting Service (DCS) Application Process",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'D.3 DIRECT CREDITING SERVICE (DCS) ACTIVATION'. It answers questions about how to apply for DCS, check for a designated DCS bank account, and change the nominated bank account."
+  "dbd3c4fe686d6cf1b4919b9832cbe83197e77b8b0cfba0686bc39e8677f57d18": {
+    "headline": "Multiple Applications for Savings Bonds Explained",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '31. Can I make multiple applications through different banks for the same Savings Bond issue?'. It answers questions about making multiple applications, transaction fees, and the handling of submitted applications."
   },
-  "ded82cca349ce04596d5d0d61e842ac1b8e989a8350d67141a2ee6b7c1b4be35": {
-    "headline": "Housing Costs Impacting FIRE in Singapore",
-    "summary": "This chunk is from the document 'Fire', section '4.3 Housing Costs'. It addresses the high property prices in Singapore, noting that an HDB BTO flat can exceed $600K\u2013$800K and private property ranges from $1.5M\u2013$3M, affecting FIRE calculations."
+  "dbfba821992d0a0ae97b46409083f36272c9a88f6e5e3f2f7b6093651c2e2dcb": {
+    "headline": "Popular UCITS ETFs for Singapore Investors",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section '6.1 Ireland-Domiciled UCITS ETFs (Strongly Preferred over US-Listed ETFs)'. It answers questions about key UCITS ETFs favored by Singapore investors, detailing their tickers, names, underlying assets, total expense ratios (TER), and the differences between accumulating and distributing ETFs."
+  },
+  "dcb24f74fc27ed024ca4e96c4ca4ee57bc0fc22e09b47c17fa22dc10d1898322": {
+    "headline": "Withdrawal Rates for Singapore FIRE Planners",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'What Singapore FIRE Planners Typically Use'. It answers what withdrawal rates are commonly used by Singapore FIRE community members, highlighting the preference for a 3\u20133.5% rate due to longer retirement horizons."
+  },
+  "deb1c5262f4e77b5f51a4e557c532b4c095cd0045ffee3514b0fd39e366a11ea": {
+    "headline": "Allotment Process for Singapore Savings Bonds Applications",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section '34. How are Savings Bonds allotted? Why would I be allotted less than the amount I applied for?'. It explains how applications are filled, the allotment of bonds in different rounds, and the first-come-first-served basis for partial fills."
   },
   "dfc41940782a8ceac3684748d65f123b1a81d23ebc930bcc32a8f8edd3081d5b": {
     "headline": "Outputs of Historical Simulations in FI Calc",
     "summary": "This chunk comes from the 'Outputs' section of the document 'FI Calc'. It answers questions about how the calculator reports historical simulation results, including the number and share of successful plans, and the ability to export results."
   },
-  "e19d15af164b07bc5761a09c9f0450628cb9609c47e028d0de5c269bdc558357": {
-    "headline": "Redemption Process for Singapore Savings Bonds Explained",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'Source: singapore-savings-bonds-faqs.pdf'. It answers questions about redeeming Savings Bonds, including penalties, multiple requests, and bank options."
-  },
   "e3007f0efd03a4bba5d6f264bc47b3d7860a640cac4a7829dbd140737f535fcc": {
     "headline": "CPF Contribution Allocation Ratios by Age",
     "summary": "This chunk is from the document 'CPF Allocation Rates from 1 January 2026' under the section 'Allocation ratios by age'. It details how contributions are split across the Ordinary Account, Special Account, and MediSave Account for members aged 55 and below, and how the allocation changes for members above 55."
+  },
+  "e32ffb99480a837403ce64e96917bcefab68e0e19611e6a9168aca438cea8952": {
+    "headline": "Discussing Insurance Exclusions and Coverage Options",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '5. My insurer has placed many exclusions on my current coverage. What should I do?'. It answers questions about approaching insurance providers regarding exclusions and the implications of switching insurers."
+  },
+  "e3bf94ee23cb9bdc5379751adc864e98a04475be992083349658f9388b519603": {
+    "headline": "Top Brokers for Singapore FIRE Investors",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '12. Brokers for Singapore FIRE Investors'. It answers questions about the best brokers for FIRE investors in Singapore, detailing their specialties and fee structures."
+  },
+  "e3c8c00ba8754e6a744eb2086b2d0ab412e95867e4b890a1714fcc0bed35d1db": {
+    "headline": "Applying for Direct Crediting Service (DCS) with CDP",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section 'D.3 DIRECT CREDITING SERVICE (DCS) ACTIVATION'. It answers how to apply for DCS if you have a CDP Securities Account and how to check if you have a designated DCS bank account."
+  },
+  "e4dd88112c09f096a9ce968c53f6c8b190072f9e330e08ad3de4e3f00df0d588": {
+    "headline": "Understanding Sequence Risk in Retirement Planning",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'Sequence risk'. It explains sequence risk and offers mitigations such as lower withdrawal rates and part-time work during early retirement."
+  },
+  "e4eb27d825639c47a5f506dcd992f6fa219c7e8dc918b4f0bbb6bc72bee1b2f6": {
+    "headline": "Redemption Process for Singapore Savings Bonds Explained",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'When can I apply to redeem my Savings Bonds? Will I lose money if I redeem before it matures?'. It answers questions about the redemption timeline and penalties for early redemption."
   },
   "e63f882f706405e627fc3ec50f6f9557660f81b668c0358dc9a58f3ff29159a7": {
     "headline": "CPF Contribution Rates for 2nd Year SPR Employees",
     "summary": "This chunk is from the document 'CPF Contribution Rates from 1 January 2026', specifically from the section 'Table 3: SPR 2nd year, graduated employer and graduated employee rates'. It details the default CPF contribution rates for Singapore Permanent Residents during their second year of SPR status, including percentages and maximum contributions based on employee age."
   },
-  "e76ecaa99fd75e839a002f4994f45869b4a81768628fb04f445e1184d8bbe641": {
-    "headline": "US Estate Tax Implications for Singaporean Investors",
-    "summary": "This chunk is from the document 'Fire', section '6.2 US Estate Tax \u2014 Critical Risk for Direct US Stock/ETF Holders'. It answers questions about the US estate tax for non-residents, including exemption thresholds and tax rates on US-situs assets."
-  },
   "e786a3e5803f6345d4e1a943905d63240aaace7cdf13fef12de0a5f972fc5768": {
     "headline": "Monte Carlo Analysis and Historical Backtesting Methods",
     "summary": "This chunk is from the SG FIRE Planner document, section 'Probabilistic and historical analysis'. It answers questions about the Monte Carlo analysis methods, historical backtesting, and how these techniques assess financial planning outcomes."
   },
+  "e90951316bdabcafa1f621a37f19f1254b5e5cbed30a787cdd0be0986a7e3146": {
+    "headline": "Importance of Additional CPF Contributions for Retirement Planning",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs', section '3. I already contribute to my CPF. Why should I set aside more money for retirement?'. It answers questions about the necessity of additional CPF contributions and tools for planning retirement income."
+  },
   "e975df2674333e54f39cac4aa6ab56f728ad2852c8702f0c6135efafe97de433": {
     "headline": "Investment Options Under CPFIS for Ordinary Account Savings",
     "summary": "This chunk is from the document 'Cpfis Instruments And Limits' in the section 'Source: cpfis-instruments-and-limits.pdf'. It details the various instruments that can be invested under CPFIS, including fixed deposits, government bonds, and shares."
+  },
+  "e9a0387ca0db11788c9ac16f88879cc39c7dd9ee0c333a5c5f67cd5c9c57b4d8": {
+    "headline": "Overview of CPF Contribution Caps for 2026",
+    "summary": "This chunk is from the document 'CPF Wage Ceilings and the CPF Annual Limit' under the section 'The three caps'. It answers questions about the Ordinary Wage ceiling, Additional Wage ceiling, and CPF Annual Limit for 2026."
+  },
+  "eb6a0a458aa2152b7f96fa298f5d853b40561b2c5201e6e2f418641a406d635d": {
+    "headline": "Tax Advantages for FIRE Seekers in Singapore",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section '4.5 Tax Advantages (Singapore-Specific Upsides).' It answers questions about the tax benefits available to investors in Singapore, including the absence of capital gains tax and the tax treatment of dividend and foreign-sourced income."
   },
   "eba23263cdba5e1ebed637fb7dc8e449cb8f24b81ca74b22750b7da86443e7b0": {
     "headline": "Understanding CPF LIFE Payouts and Retirement Sums",
@@ -855,56 +987,68 @@
     "headline": "Review Date and Source of CPF Allocation Rates",
     "summary": "This chunk is from the document 'CPF Allocation Rates from 1 January 2026' under the section 'Source and review notes'. It answers questions about the review date and the source of the allocation table."
   },
-  "ed63078e7cf2eeb18f4a2553eda71f02ec667d431f747d2eeef12364db9d0cff": {
-    "headline": "Tax Relief for CPF Cash Top-Ups and Deductions",
-    "summary": "This chunk is from the document 'Tax Relief Individuals' under the section 'Source: tax-relief-individuals.pdf'. It answers questions about tax relief amounts for cash top-ups to CPF accounts based on age and eligibility for Singapore Citizens and Permanent Residents."
+  "edd8c54147534fde68aaae701656616d679b7ce5b209e0b828519c1b5f67ff5c": {
+    "headline": "Overview of Singapore REITs for FIRE Portfolios",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section 6.4 'Singapore REITs (S-REITs)'. It answers questions about the characteristics of S-REITs, their tax treatment, and their role in income-focused FIRE portfolios."
   },
-  "ef07fa28eb3ffad671b2c44c44fe355c256c30af46ac077884145a4bd4709d6f": {
-    "headline": "Common Misconceptions About FIRE in Singapore",
-    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Key Facts to Note / Common Misconceptions Corrected'. It addresses misconceptions regarding US tax implications, CPF SA contributions, and the 4% rule for early retirees."
+  "ef2f3e816c4208ff599354a4030b6de6cb4c38bbb30d5eab59500edd14bd68a3": {
+    "headline": "Understanding Emergency Fund Requirements for Financial Planning",
+    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section 'Emergency funds'. It answers questions about the adequacy of a 3 to 6 months emergency fund and the implications of not having sufficient emergency funds when purchasing insurance or investment products."
+  },
+  "f03f61d3cbd1935ac866ea930588ee7706db9e18ad4f0e5fddcec2d8035f41c6": {
+    "headline": "Review Notes on IRAS Tax Relief Document Updates",
+    "summary": "This chunk is from the document 'IRAS Individual Income Tax Reliefs' under the section 'Source and review notes'. It answers questions about the last review date, changes in relief amounts, and which reliefs are not covered due to unverified values."
+  },
+  "f21307841d487cced64d4904657d55680dcb74f5b1fea8108e9c246113f5d14e": {
+    "headline": "Common Mistakes in Singapore Investing",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Common Singapore mistakes to flag'. It addresses common errors investors make, such as investing emergency funds in equities and misunderstanding CPF OA."
+  },
+  "f2757546aa4824c8360d637d46c3bb29b28169f9b0971531a43a2c9bcadbfd0c": {
+    "headline": "Overview of the Supplementary Retirement Scheme (SRS)",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under section 6.8, discussing the SRS. It answers questions about contribution limits, tax benefits, and investment options within the SRS."
+  },
+  "f2e53dd038cb387d3cfea0ecc9019d06fe672f1d43d2e73fb4663b9292c0c9ed": {
+    "headline": "Impact of Housing on FIRE Planning in Singapore",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'Housing in Singapore FIRE'. It answers questions about how housing variables like mortgage, rent, and property upgrades affect the FIRE number and planning."
   },
   "f357b89e131efb9017d01fca675c636c099ae312a8daf847d373888203181c92": {
     "headline": "Investment Options Under CPFIS for Savings",
     "summary": "This chunk is from the document 'Cpfis Instruments And Limits' under the section 'Source: cpfis-instruments-and-limits.pdf'. It details the types of investments allowed under CPFIS, including government bonds, annuities, and shares, as well as the percentage limits for different asset classes."
   },
-  "f3f7314c0de0efa16034f03f7b448e420d3fdf65ff65baafd6b14c588906f866": {
-    "headline": "Investment Strategy for Early Drawdown Phase in FIRE",
-    "summary": "This chunk is from the document 'Fire', section 'Early Drawdown Phase (FIRE to age 55)'. It outlines an investment strategy consisting of 60\u201370% global equities, 15\u201320% S-REITs, and 10\u201315% SSBs/T-bills/cash for individuals in the early drawdown phase of FIRE."
-  },
-  "f4aa3fd4ed36b80d83a7582c7af25be21d98ad0a0f0b4eac2e38fffc8fe3067a": {
-    "headline": "Understanding Savings Bonds Issue Codes and Identification",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'B.3 UNDERSTANDING ISSUE CODES'. It explains how Savings Bonds are identified by their issue codes, including examples of how these codes appear in various statements and applications."
-  },
-  "f5cb7a6e5039c9499162d4e59d17df20fa3144afc68963ae99b83cdae7acff42": {
-    "headline": "Document Update and Fact-Checking Sources",
-    "summary": "This chunk comes from the document 'FIRE in Singapore: Comprehensive Knowledge Base' in the section 'FIRE in Singapore: Comprehensive Knowledge Base'. It provides the last update date and mentions the sources used for fact-checking."
-  },
-  "f69688b10d49aa47ec95489e05546168225a52bbc233907fec5749555eedebef": {
-    "headline": "Checking Redemption Status for Singapore Savings Bonds",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs', section 'C.5 REDEMPTION STATUS'. It answers how to check the results of redemption requests for cash and SRS investments."
-  },
-  "f6d5959f7a5cd05a7179cd6ea7d103c91f1c378ad87841f4ec5b8cde023a656e": {
-    "headline": "Role of CPF in Singapore FIRE Planning",
-    "summary": "This chunk is from the document 'Fire Planning Singapore' under the section 'CPF role in FIRE'. It explains how CPF accounts function, their implications for early retirement, and the importance of liquidity in FIRE planning."
-  },
-  "f73958b9f56a93496af5ef854f2366fd432fc6984957f2e4338b93fc45333a24": {
-    "headline": "Understanding Savings Bonds Allotment and Application Rejections",
-    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section discussing application processes. It answers questions about the allotment method for Savings Bonds and reasons for application rejections."
+  "f5f250b5b4564b28441591a85785724869e01da884841fd1e87bdca53f33d3fe": {
+    "headline": "Review Notes on CPF Interest Rates and Extra Interest",
+    "summary": "This chunk is from the document 'CPF Interest Rates and Extra Interest' under the section 'Source and review notes'. It answers questions about the review date, sources of information, and the need for quarterly updates on CPF interest rates."
   },
   "f7dbc7b4d00070b30b9044306f5a2afd0960197b99d4c2b01d166483074255e1": {
     "headline": "Outputs and Tools for Calculating Your FIRE Number",
     "summary": "This chunk is from the document 'FinSight SG, How to Calculate Your FIRE Number as a Singaporean' in the section 'Outputs and presentation ideas'. It discusses the outputs of the FIRE calculation process, including current spending and the use of a free FinSight SG calculator."
   },
-  "f8ce90c51869b3ad6c6e3856fdd74ddc4eb058911f6f03f894ccd60219d22343": {
-    "headline": "Investment Planning for Short and Long-Term Goals",
-    "summary": "This chunk is from the document 'Basic Financial Planning Guide Faqs' under the section 'Source: basic-financial-planning-guide-faqs.pdf'. It answers questions about how to plan investments based on the timeline for using funds and the associated risks."
+  "f918509f375c468ecd0f4295106b2cdaaeb2d14832c400eca021c7e78ff841f6": {
+    "headline": "Introduction of the 4% Rule in Retirement Planning",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Origin'. It explains the introduction of the 4% rule by William Bengen in 1994 and its basis on a 30-year US retirement horizon."
   },
-  "ff50e084736944398db68d502875a2bbd0186e8af166119ace5704bd0751f069": {
-    "headline": "Overview of the Supplementary Retirement Scheme (SRS) in Singapore",
-    "summary": "This chunk is from the document 'Fire' in section 6.8, discussing the SRS. It answers questions about contribution limits, tax benefits, and investment options within the SRS."
+  "faf7edaf5581cc6170ec16b7b335ee7939336dc766f8b0146d40b8a71800e090": {
+    "headline": "Guaranteed Income from CPF LIFE for Retirement Planning",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Post-CPF LIFE Phase (65+).' It answers questions about the guaranteed monthly income provided by CPF LIFE and its implications for portfolio drawdown and legacy planning."
+  },
+  "fce607775adec3fa251f5f8ad77895ce62f35ac6ef20bff92fded48c22fef0bb": {
+    "headline": "Investment Help: Key Questions for Singapore Investors",
+    "summary": "This chunk is from the document 'Investing in Singapore' under the section 'Answering style for the chatbot'. It answers questions about how to approach investment inquiries by emphasizing the importance of understanding goals, time horizons, account types, risk tolerance, and liquidity needs."
+  },
+  "fdf55079f56a13fa4a0c7e7fa5afa94cc30c5366569e4f6c84c7bbc93919328d": {
+    "headline": "Calculating the FIRE Number for Singapore Early Retirees",
+    "summary": "This chunk is from the document 'FIRE Planning in Singapore' under the section 'FIRE number calculation'. It explains how to calculate the FIRE number using annual spending and withdrawal rates, highlighting the need for lower withdrawal rates for Singapore early retirees."
+  },
+  "fed6dfac0a2fdd9b61b64089158b0de241a0813269c67e4058e7e8318e647ca0": {
+    "headline": "Refund Process for Unsuccessful Savings Bonds Applications",
+    "summary": "This chunk is from the document 'Singapore Savings Bonds Faqs' under the section 'When will I know the results of my Savings Bonds application?'. It answers questions about the refund process for unsuccessful or partially filled applications."
   },
   "ff8a12a5f98868426f43259464ae94faf02dfdd5d3861850eaf69463e81d22c6": {
     "headline": "Historical Simulation Method for Retirement Drawdown Testing",
     "summary": "This chunk is from the document 'FI Calc' under the section 'Historical simulation method'. It explains how FI Calc uses historical data to simulate retirement starts and test sequence risk."
+  },
+  "ffcdedf54d3ba30b3768c5e44e74a3c8de7a6ab99c341a425954f492887cd8c3": {
+    "headline": "Investment Strategy for Early Drawdown Phase in FIRE",
+    "summary": "This chunk is from the document 'FIRE in Singapore' under the section 'Early Drawdown Phase (FIRE to age 55)'. It outlines an investment strategy consisting of 60\u201370% global equities, 15\u201320% S-REITs, and 10\u201315% SSBs/T-bills/cash for individuals pursuing FIRE."
   }
 }

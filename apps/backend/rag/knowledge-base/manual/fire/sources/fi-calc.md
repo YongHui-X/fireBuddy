@@ -4,6 +4,7 @@ source_url: https://ficalc.app/
 agency: FI Calc
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # FI Calc

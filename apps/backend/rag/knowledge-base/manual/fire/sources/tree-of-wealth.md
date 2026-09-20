@@ -4,6 +4,7 @@ source_url: https://treeofwealth.sg/singapore-fire-planner/
 agency: Tree of Wealth
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # Tree of Wealth Singapore FIRE Planner

@@ -28,6 +28,7 @@ import {
   Flag,
   Grid2X2,
   Home,
+  Landmark,
   LogOut,
   Menu,
   Pencil,
@@ -35,6 +36,7 @@ import {
   Search,
   Trash2,
   Tags as TagsIcon,
+  TrendingUp,
   User,
   Wallet,
   X,
@@ -61,6 +63,13 @@ import { AscentMark, EmberMark, FireBuddyMark } from '../app/BrandMarks';
 import { AppUtilityActions } from '../components/AppUtilityActions';
 import { CategorySheet } from '../components/CategorySheet';
 import { EmberFloatingAssistant } from '../components/EmberFloatingAssistant';
+import { MoreSheet } from '../components/MoreSheet';
+import { ActionSheet, type SheetAction } from '../components/ActionSheet';
+import { BottomSheet } from '../components/BottomSheet';
+import { SlidersHorizontal } from 'lucide-react';
+import { mq } from '../app/breakpoints';
+import { useMediaQuery } from '../app/useMediaQuery';
+import { useVisualViewportInset } from '../app/useVisualViewportInset';
 import { PageToolbar } from '../components/PageToolbar';
 import { TagManagerDialog } from '../components/TagManagerDialog';
 import { TransactionExportDialog, type TransactionExportScope } from '../components/TransactionExportDialog';
@@ -91,6 +100,16 @@ const mobileNavItems = desktopNavItems.filter((item) => ['/', '/transactions', '
 const secondaryNavItems = [
   { path: '/ember', icon: EmberNavIcon, label: 'Ask Ember', indicator: 'AI' },
 ] as const;
+/** Everything that is not one of the four tabs, in the order the phone More sheet lists it. */
+const moreNavItems = [
+  secondaryNavItems[0],
+  { path: '/insights', icon: TrendingUp, label: 'Insights' },
+  { path: '/accounts', icon: Wallet, label: 'Accounts' },
+  { path: '/wealth', icon: Landmark, label: 'Wealth' },
+  { path: '/fire', icon: AscentMark, label: 'FIRE Planner' },
+  { path: '/plan', icon: ClipboardList, label: 'Plan' },
+  { path: '/goals', icon: Flag, label: 'Goals' },
+] as const;
 
 /** Adapt Ember's custom brand mark to the shared navigation icon contract. */
 function EmberNavIcon({ size = 18 }: { size?: number; strokeWidth?: number }) {
@@ -101,6 +120,10 @@ function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session, signOut, notify } = useFireBuddy();
+  const isDesktop = useMediaQuery(mq.xl);
+
+  // Keeps the composer, sticky footers and the add sheet above the on-screen keyboard.
+  useVisualViewportInset();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -202,7 +225,7 @@ function Layout() {
 
       <div className={`app-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="content-wrapper">
-          <MobileTopbar />
+          <MobileTopbar onRequestLogout={() => setShowLogoutDialog(true)} />
           <div className="scroll-area">
             <Routes>
               <Route index element={<DashboardRoute />} />
@@ -232,7 +255,11 @@ function Layout() {
         </div>
       </div>
       <CrudToast />
-      <EmberFloatingAssistant pathname={location.pathname} onOpenFullEmber={() => navigate('/ember')} />
+      {/* Below the shell switch the bottom edge belongs to the tab bar and the Add tile, and Ember
+          is one tap away in the More sheet, so the launcher does not mount at all on phones. */}
+      {isDesktop && (
+        <EmberFloatingAssistant pathname={location.pathname} onOpenFullEmber={() => navigate('/ember')} />
+      )}
       <LogoutConfirmationDialog
         isOpen={showLogoutDialog}
         isSigningOut={isSigningOut}
@@ -417,7 +444,7 @@ function MobileNav() {
   }
 
   return (
-    <nav className="mobile-nav" aria-label="Primary mobile">
+    <nav className="mobile-nav" aria-label="Main">
       <div className="mobile-nav-group">
         {mobileNavItems.slice(0, 2).map((item) => (
           <MobileTabItem key={item.path} {...item} />
@@ -437,7 +464,9 @@ function MobileNav() {
   );
 }
 
-function MobileTopbar() {
+function MobileTopbar({ onRequestLogout }: { onRequestLogout: () => void }) {
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+
   return (
     <header className="mobile-topbar">
       <NavLink className="mobile-brand" to="/" aria-label="FireBuddy home">
@@ -446,23 +475,26 @@ function MobileTopbar() {
       </NavLink>
       <div className="mobile-topbar-actions">
         <AppUtilityActions className="app-utility-actions-mobile" />
-        <details className="mobile-more-menu">
-          <summary><Menu size={18} /><span>More</span></summary>
-          <nav aria-label="More FireBuddy pages">
-            <NavLink className="mobile-ember-link" to="/ember" title="AI-powered financial assistant">
-              <EmberMark className="ember-nav-mark" size={20} />
-              <span>Ask Ember</span>
-              <span className="nav-ai-indicator" aria-hidden="true">AI</span>
-            </NavLink>
-            <NavLink to="/insights">Insights</NavLink>
-            <NavLink to="/accounts">Accounts</NavLink>
-            <NavLink to="/wealth">Wealth</NavLink>
-            <NavLink to="/fire">FIRE Planner</NavLink>
-            <NavLink to="/plan">Plan</NavLink>
-            <NavLink to="/goals">Goals</NavLink>
-          </nav>
-        </details>
+        <button
+          type="button"
+          className="mobile-more-trigger"
+          onClick={() => setIsMoreOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={isMoreOpen}
+        >
+          <Menu size={18} />
+          <span>More</span>
+        </button>
       </div>
+      <MoreSheet
+        isOpen={isMoreOpen}
+        items={moreNavItems}
+        onClose={() => setIsMoreOpen(false)}
+        onLogout={() => {
+          setIsMoreOpen(false);
+          onRequestLogout();
+        }}
+      />
     </header>
   );
 }
@@ -480,7 +512,12 @@ function MobileTabItem({
   const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
-    <NavLink to={path} className={`mobile-tab ${isActive ? 'mobile-tab-active' : ''}`} end={path === '/'}>
+    <NavLink
+      to={path}
+      className={`mobile-tab ${isActive ? 'mobile-tab-active' : ''}`}
+      end={path === '/'}
+      aria-current={isActive ? 'page' : undefined}
+    >
       <Icon size={19} strokeWidth={isActive ? 2.2 : 1.6} />
       <span>{label}</span>
     </NavLink>
@@ -656,6 +693,10 @@ function Transactions() {
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
   const [showTagManager, setShowTagManager] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
+  // Below 768px the four selects and the date range would push the ledger off the screen, so they
+  // move into a sheet behind a trigger that reports how many are actually set.
+  const isWideLayout = useMediaQuery(mq.lg);
   const dismissedRequestedTransactionId = useRef<string | null>(null);
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
   const [transactionDeleteError, setTransactionDeleteError] = useState<string | null>(null);
@@ -708,7 +749,7 @@ function Transactions() {
   }, [location.pathname, location.search, navigate, notify, requestedTransactionId, session, syncStatus, transactions]);
 
   useEffect(() => {
-    if (!openTransactionMenu) {
+    if (!openTransactionMenu || !isWideLayout) {
       return undefined;
     }
 
@@ -748,7 +789,7 @@ function Transactions() {
       window.removeEventListener('resize', closeMenuOnViewportChange);
       window.removeEventListener('scroll', closeMenuOnViewportChange, true);
     };
-  }, [openTransactionMenu]);
+  }, [openTransactionMenu, isWideLayout]);
 
   const filteredTransactionRows = useMemo(() => {
     const rows = transactions
@@ -862,10 +903,37 @@ function Transactions() {
     }));
   }
 
+  /** The actions a ledger row offers, in one place for both the desktop popover and the touch sheet. */
+  function transactionRowActions(transaction: Transaction): SheetAction[] {
+    return [
+      { label: 'Edit', icon: Pencil, onSelect: () => setEditingTransaction(transaction) },
+      {
+        label: 'Duplicate',
+        icon: Copy,
+        disabled: duplicatingTransactionId === transaction.id,
+        onSelect: () => void duplicateTransaction(transaction),
+      },
+      {
+        label: 'Delete',
+        icon: Trash2,
+        tone: 'danger',
+        onSelect: () => {
+          setTransactionDeleteError(null);
+          setDeletingTransaction(transaction);
+        },
+      },
+    ];
+  }
+
   /** Position the row action menu in the viewport so table overflow cannot clip it. */
   function toggleTransactionActionMenu(event: ReactMouseEvent<HTMLButtonElement>, transaction: Transaction) {
     if (openTransactionMenu?.transaction.id === transaction.id) {
       setOpenTransactionMenu(null);
+      return;
+    }
+
+    if (!isWideLayout) {
+      setOpenTransactionMenu({ transaction, top: 0, left: 0 });
       return;
     }
 
@@ -934,11 +1002,82 @@ function Transactions() {
     }
   }
 
+  const activeFilterCount = [selectedType, selectedCategory, selectedAccount, selectedTag].filter(Boolean).length
+    + (customStartDate || customEndDate ? 1 : 0);
+
+  const dateRangeControls = (
+    <div className="transaction-date-range" aria-label="Custom date range">
+      <label>
+        <span>Start date</span>
+        <input type="date" value={customStartDate} onChange={(event) => setCustomStartDate(event.target.value)} />
+      </label>
+      <label>
+        <span>End date</span>
+        <input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} />
+      </label>
+      {isCustomRangeMode ? (
+        <button className="secondary-button" type="button" onClick={() => {
+          setCustomStartDate('');
+          setCustomEndDate('');
+        }}>
+          Clear dates
+        </button>
+      ) : null}
+    </div>
+  );
+
+  const selectFilterControls = (
+    <div className="select-filter-grid">
+      <label>
+        <span>Type</span>
+        <select value={selectedType ?? ''} onChange={(event) => setSelectedType((event.target.value || null) as TransactionType | null)}>
+          <option value="">All types</option>
+          <option value="expense">Expenses</option>
+          <option value="income">Income</option>
+        </select>
+      </label>
+      <label>
+        <span>Category</span>
+        <select value={selectedCategory ?? ''} onChange={(event) => setSelectedCategory(event.target.value || null)}>
+          <option value="">All categories</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span>Account</span>
+        <select value={selectedAccount ?? ''} onChange={(event) => setSelectedAccount(event.target.value || null)}>
+          <option value="">All accounts</option>
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.name} - {accountTypeLabel(account.type)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span>Tag</span>
+        <select value={selectedTag ?? ''} onChange={(event) => setSelectedTag(event.target.value || null)}>
+          <option value="">All tags</option>
+          {tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
+        </select>
+      </label>
+    </div>
+  );
+
   return (
     <main className="page page-transactions">
       <PageToolbar
         title="Transactions"
         description="Review income and expenses across your accounts."
+        overflowActions={[
+          { label: 'Manage tags', icon: TagsIcon, onSelect: () => setShowTagManager(true) },
+          { label: 'Export CSV', icon: Download, onSelect: () => setShowExportDialog(true) },
+          { label: 'Accounts', icon: Wallet, onSelect: () => navigate('/accounts') },
+        ]}
         actions={<>
           <button className="secondary-button" type="button" onClick={() => setShowTagManager(true)}>
             <TagsIcon size={15} /> Manage tags
@@ -1012,24 +1151,19 @@ function Transactions() {
             ) : null}
           </label>
 
-          <div className="transaction-date-range" aria-label="Custom date range">
-            <label>
-              <span>Start date</span>
-              <input type="date" value={customStartDate} onChange={(event) => setCustomStartDate(event.target.value)} />
-            </label>
-            <label>
-              <span>End date</span>
-              <input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} />
-            </label>
-            {isCustomRangeMode ? (
-              <button className="secondary-button" type="button" onClick={() => {
-                setCustomStartDate('');
-                setCustomEndDate('');
-              }}>
-                Clear dates
-              </button>
-            ) : null}
-          </div>
+          {isWideLayout ? dateRangeControls : (
+            <button
+              type="button"
+              className="filter-trigger"
+              onClick={() => setShowFilterSheet(true)}
+              aria-haspopup="dialog"
+              aria-expanded={showFilterSheet}
+            >
+              <SlidersHorizontal size={16} />
+              <span>Filters</span>
+              {activeFilterCount ? <span className="filter-trigger-count">{activeFilterCount}</span> : null}
+            </button>
+          )}
         </div>
         <article className="summary-strip">
           <div className="summary-expense">
@@ -1042,45 +1176,7 @@ function Transactions() {
           </div>
         </article>
 
-        <div className="select-filter-grid">
-          <label>
-            <span>Type</span>
-            <select value={selectedType ?? ''} onChange={(event) => setSelectedType((event.target.value || null) as TransactionType | null)}>
-              <option value="">All types</option>
-              <option value="expense">Expenses</option>
-              <option value="income">Income</option>
-            </select>
-          </label>
-          <label>
-            <span>Category</span>
-            <select value={selectedCategory ?? ''} onChange={(event) => setSelectedCategory(event.target.value || null)}>
-              <option value="">All categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Account</span>
-            <select value={selectedAccount ?? ''} onChange={(event) => setSelectedAccount(event.target.value || null)}>
-              <option value="">All accounts</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name} - {accountTypeLabel(account.type)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Tag</span>
-            <select value={selectedTag ?? ''} onChange={(event) => setSelectedTag(event.target.value || null)}>
-              <option value="">All tags</option>
-              {tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
-            </select>
-          </label>
-        </div>
+        {isWideLayout ? selectFilterControls : null}
 
         <div className="transactions-table-shell">
           {filteredTransactionRows.length ? (
@@ -1187,9 +1283,9 @@ function Transactions() {
                             className="transaction-action-trigger"
                             type="button"
                             aria-label={`Actions for ${transaction.description}`}
-                            aria-haspopup="menu"
+                            aria-haspopup={isWideLayout ? 'menu' : 'dialog'}
                             aria-expanded={openTransactionMenu?.transaction.id === transaction.id}
-                            aria-controls={openTransactionMenu?.transaction.id === transaction.id
+                            aria-controls={isWideLayout && openTransactionMenu?.transaction.id === transaction.id
                               ? `transaction-action-menu-${transaction.id}`
                               : undefined}
                             onClick={(event) => toggleTransactionActionMenu(event, transaction)}
@@ -1225,7 +1321,17 @@ function Transactions() {
         </div>
       </section>
 
-      {openTransactionMenu ? createPortal(
+      {openTransactionMenu && !isWideLayout ? (
+        <ActionSheet
+          isOpen
+          title={openTransactionMenu.transaction.description}
+          description={`${formatDateLabel(openTransactionMenu.transaction.date)} · ${formatSGD(Math.abs(openTransactionMenu.transaction.amount))}`}
+          onClose={() => setOpenTransactionMenu(null)}
+          actions={transactionRowActions(openTransactionMenu.transaction)}
+        />
+      ) : null}
+
+      {openTransactionMenu && isWideLayout ? createPortal(
         <div
           id={`transaction-action-menu-${openTransactionMenu.transaction.id}`}
           className="transaction-action-menu"
@@ -1349,6 +1455,18 @@ function Transactions() {
             </div>
           </aside>
         </div>
+      ) : null}
+      {!isWideLayout ? (
+        <BottomSheet
+          isOpen={showFilterSheet}
+          title="Filters"
+          description="Narrow the ledger by date, type, category, account or tag."
+          onClose={() => setShowFilterSheet(false)}
+          className="filter-sheet"
+        >
+          {dateRangeControls}
+          {selectFilterControls}
+        </BottomSheet>
       ) : null}
       {showTagManager ? <TagManagerDialog tags={tags} usageCounts={tagUsageCounts} onCreate={addTag} onRename={updateTag} onDelete={deleteTag} onClose={() => setShowTagManager(false)} /> : null}
       {showExportDialog ? <TransactionExportDialog onExport={exportTransactionHistory} onClose={() => setShowExportDialog(false)} /> : null}
@@ -1602,6 +1720,7 @@ function Categories() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [categoryType, setCategoryType] = useState<TransactionType>('expense');
+  const isWideShell = useMediaQuery(mq.xl);
   const visibleCategories = categories.filter((category) => category.categoryType === categoryType);
   const totalSpend = transactions
     .filter((transaction) => transaction.transactionType === 'expense')
@@ -1614,9 +1733,17 @@ function Categories() {
         description={categoryType === 'expense'
           ? 'Manage your spend categories and monthly budgets.'
           : 'Manage the sources used to classify income.'}
-        actions={<button className="primary-button" type="button" onClick={() => setIsAdding(true)}>
-          <Plus size={15} /> Add category
-        </button>}
+        actions={
+          // One Lime Rule: below the shell switch the lime belongs to the Add tile in the tab bar,
+          // so this demotes rather than competing with it.
+          <button
+            className={isWideShell ? 'primary-button' : 'secondary-button'}
+            type="button"
+            onClick={() => setIsAdding(true)}
+          >
+            <Plus size={15} /> Add category
+          </button>
+        }
       />
 
       <section className="screen-content">

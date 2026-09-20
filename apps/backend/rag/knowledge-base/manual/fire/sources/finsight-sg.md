@@ -4,6 +4,7 @@ source_url: https://finsight.sg/article-fire-number-singapore
 agency: FinSight SG
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # FinSight SG on a Singapore FIRE number

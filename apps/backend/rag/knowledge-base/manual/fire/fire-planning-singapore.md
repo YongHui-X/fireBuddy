@@ -1,3 +1,10 @@
+---
+source_title: FIRE Planning in Singapore
+agency: FireBuddy
+topic: fire
+ingest: true
+last_reviewed: 2026-05-25
+---
 # FIRE Planning in Singapore: RAG Context
 
 Last reviewed: 2026-05-25

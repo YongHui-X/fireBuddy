@@ -43,7 +43,7 @@ The web app is the current public product and portfolio surface. The Expo mobile
 - FIRE projections use structured records and explicit assumptions, distinguish facts from estimates, and remain unavailable when required inputs are incomplete.
 - Temporary FIRE scenarios do not save records.
 - Expense category suggestions require an explicit user action, remain reviewable and overridable, and never save a transaction automatically.
-- Ember provides cited educational answers from curated Singapore finance sources. It does not inspect personal accounts or transactions, calculate authoritative personal FIRE results, retrieve live prices, change records, or provide regulated financial advice.
+- Ember provides cited educational answers from curated Singapore finance sources and can explain the deterministic FireBuddy aggregates for the signed-in user (spending, savings rate, emergency runway, net worth, FIRE projection), tailoring curated guidance to those numbers. The backend computes every figure; Ember only explains them. It does not retrieve live prices, change records, see raw transactions, or provide regulated financial advice.
 - Explicit demo mode may use versioned browser local state. Normal signed in app data must not silently fall back to local storage.
 - Plan and Goals are later product areas. They must not be represented as completed functionality until implemented.
 - Direct bank connections, stored banking credentials, payment execution, investment execution, live market feeds, and recurring payment execution are outside the current scope.

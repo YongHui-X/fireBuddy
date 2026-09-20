@@ -12,6 +12,7 @@ VERSION_FILE_PATTERN = re.compile(r"^v(?P<version>\d+)\.json$")
 SUITE_TITLES = {
     "retrieval": "Retrieval evaluations",
     "answer": "Answer-quality evaluations",
+    "personal": "Personal-data evaluations",
 }
 
 

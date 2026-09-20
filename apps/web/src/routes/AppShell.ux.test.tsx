@@ -3,6 +3,7 @@ import { MemoryRouter, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AppShell from './AppShell';
+import { setViewportWidth, viewports } from '../test/viewport';
 
 
 const mocks = vi.hoisted(() => ({
@@ -155,15 +156,20 @@ describe('App shell UX', () => {
     expect(screen.queryByText('Guide')).toBeNull();
     expect(screen.getByRole('heading', { name: 'FireBuddy' })).toBeTruthy();
     expect(document.querySelector('.sidebar-brand-mark')).not.toBeNull();
-    const mobileNavigation = screen.getByRole('navigation', { name: 'Primary mobile' });
+    const mobileNavigation = screen.getByRole('navigation', { name: 'Main' });
     expect(within(mobileNavigation).getAllByRole('link')).toHaveLength(4);
     expect(within(mobileNavigation).getByRole('button', { name: 'Add transaction' })).toBeTruthy();
+    // The secondary destinations now live in a sheet rather than an always-rendered menu.
+    expect(screen.queryByRole('navigation', { name: 'More FireBuddy pages' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
     const mobileMoreNavigation = screen.getByRole('navigation', { name: 'More FireBuddy pages' });
     const mobileEmberLink = within(mobileMoreNavigation).getByRole('link', { name: 'Ask Ember' });
     expect(within(mobileEmberLink).getByText('AI')).toBeTruthy();
     expect(mobileEmberLink.querySelector('.ember-nav-mark')).not.toBeNull();
     expect(within(mobileMoreNavigation).getByRole('link', { name: 'Plan' })).toBeTruthy();
     expect(within(mobileMoreNavigation).getByRole('link', { name: 'Goals' })).toBeTruthy();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('navigation', { name: 'More FireBuddy pages' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Open FireBuddy chat' })).toBeNull();
 
     expect(screen.queryByRole('button', { name: 'Open Ember' })).toBeNull();
@@ -211,7 +217,7 @@ describe('App shell UX', () => {
     expect(screen.getByRole('heading', { name: 'FI progress' })).toBeTruthy();
     expect(screen.queryByText('Emergency runway')).toBeNull();
     expect(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'FIRE Planner' }).getAttribute('href')).toBe('/fire');
-    expect(within(screen.getByRole('navigation', { name: 'Primary mobile' })).queryByRole('link', { name: 'FIRE Planner' })).toBeNull();
+    expect(within(screen.getByRole('navigation', { name: 'Main' })).queryByRole('link', { name: 'FIRE Planner' })).toBeNull();
     expect(screen.getByRole('button', { name: /View More, .* spending details/ })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Profile' })).toBeNull();
   });
@@ -797,5 +803,156 @@ describe('App shell UX', () => {
 
     fireEvent.keyDown(row, { key: ' ' });
     expect(screen.getByRole('dialog', { name: 'Keyboard purchase' })).toBeTruthy();
+  });
+});
+
+
+describe('App shell on a phone', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    mocks.notify.mockReset();
+    mocks.signOut.mockReset().mockResolvedValue(undefined);
+    mocks.transactions.length = 0;
+    mocks.accounts.length = 0;
+    mocks.categories.length = 0;
+    mocks.tags.length = 0;
+  });
+
+  it('marks the current tab for screen readers', () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
+
+    const tabBar = screen.getByRole('navigation', { name: 'Main' });
+    const current = within(tabBar).getByRole('link', { current: 'page' });
+
+    expect(current.textContent).toContain('Transactions');
+    // Exactly one tab may claim the current page.
+    expect(within(tabBar).getAllByRole('link').filter((link) => link.getAttribute('aria-current'))).toHaveLength(1);
+  });
+
+  it('leaves the bottom of the screen to the tab bar by not mounting the floating assistant', () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
+
+    expect(screen.queryByRole('button', { name: 'Ask Ember about Home dashboard' })).toBeNull();
+    expect(document.querySelector('.ember-floating-root')).toBeNull();
+  });
+
+  it('reaches Log out from the More sheet, which the desktop sidebar otherwise owns alone', async () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    const sheet = screen.getByRole('dialog', { name: 'More' });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Log out' }));
+
+    // The sheet hands over to the shared confirmation dialog rather than signing out directly.
+    expect(screen.queryByRole('dialog', { name: 'More' })).toBeNull();
+    const confirm = screen.getByRole('dialog', { name: 'Log out?' });
+    expect(mocks.signOut).not.toHaveBeenCalled();
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Log out' }));
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalledOnce());
+  });
+
+  it('closes the More sheet once a destination is chosen', async () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'More' })).getByRole('link', { name: 'Accounts' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'More' })).toBeNull());
+  });
+
+  it('holds the page still behind an open sheet and releases it afterwards', () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
+
+    expect(document.body.style.position).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(document.body.style.position).toBe('fixed');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(document.body.style.position).toBe('');
+  });
+
+  it('moves the transactions toolbar actions behind one overflow button', () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
+
+    // The toolbar buttons are gone; Add transaction is dropped entirely since the tab bar has it.
+    expect(screen.queryByRole('button', { name: /Manage tags/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Export CSV/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'More Transactions actions' }));
+    const sheet = screen.getByRole('dialog', { name: 'Transactions' });
+    expect(within(sheet).getByRole('button', { name: 'Manage tags' })).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Export CSV' })).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Accounts' })).toBeTruthy();
+    expect(within(sheet).queryByRole('button', { name: 'Add transaction' })).toBeNull();
+  });
+
+  it('collapses the ledger filters into a sheet that reports how many are set', () => {
+    setViewportWidth(viewports.phone);
+    render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
+
+    // Inline on a desktop, behind a trigger here.
+    expect(screen.queryByLabelText('Custom date range')).toBeNull();
+    const trigger = screen.getByRole('button', { name: /Filters/ });
+    expect(trigger.querySelector('.filter-trigger-count')).toBeNull();
+
+    fireEvent.click(trigger);
+    const sheet = screen.getByRole('dialog', { name: 'Filters' });
+    expect(within(sheet).getByLabelText('Custom date range')).toBeTruthy();
+    fireEvent.change(within(sheet).getByRole('combobox', { name: 'Type' }), { target: { value: 'income' } });
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.getByRole('button', { name: /Filters/ }).querySelector('.filter-trigger-count')?.textContent).toBe('1');
+  });
+
+  it('offers ledger row actions as a sheet on touch and as a menu on a desktop', () => {
+    // The ledger opens on the current reporting month, so the row has to land in it.
+    const today = new Date();
+    const thisMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-05`;
+    mocks.transactions.push({
+      id: 'row-id',
+      description: 'Hawker lunch',
+      amount: -8.5,
+      category: 'food',
+      account: 'cash',
+      date: thisMonth,
+      transactionType: 'expense',
+    });
+
+    setViewportWidth(viewports.phone);
+    const phone = render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /Actions for Hawker lunch/ }));
+    expect(screen.getByRole('dialog', { name: 'Hawker lunch' })).toBeTruthy();
+    // A full-width sheet announced as a menu reads wrongly in TalkBack.
+    expect(screen.queryByRole('menu')).toBeNull();
+    phone.unmount();
+
+    setViewportWidth(viewports.desktop);
+    render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /Actions for Hawker lunch/ }));
+    expect(screen.getByRole('menu', { name: 'Actions for Hawker lunch' })).toBeTruthy();
+  });
+
+  it('keeps lime for the Add tile alone by demoting the Categories toolbar button', () => {
+    setViewportWidth(viewports.phone);
+    const phone = render(<MemoryRouter initialEntries={['/categories']}><AppShell /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: /Add category/ }).className).toContain('secondary-button');
+    phone.unmount();
+
+    setViewportWidth(viewports.desktop);
+    render(<MemoryRouter initialEntries={['/categories']}><AppShell /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: /Add category/ }).className).toContain('primary-button');
+  });
+
+  it('still mounts the floating assistant on the desktop shell', () => {
+    setViewportWidth(viewports.desktop);
+    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
+
+    expect(screen.getByRole('button', { name: 'Ask Ember about Home dashboard' })).toBeTruthy();
   });
 });

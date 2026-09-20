@@ -1,3 +1,5 @@
+import type { RagDataEvidence, RagDataTool } from '@firebuddy/shared';
+
 import type { EmberMessage, EmberSource } from './emberState';
 
 export const EMBER_STARTER_QUESTIONS = [
@@ -6,6 +8,39 @@ export const EMBER_STARTER_QUESTIONS = [
   'How do Singapore Savings Bonds work, and what should I understand before applying?',
   'What should a Singapore FIRE plan consider before age 55?',
 ] as const;
+
+/** Follow ups that build on the deterministic data tool behind the last answer. */
+const DATA_FOLLOW_UPS: Record<RagDataTool, string[]> = {
+  expense_summary: [
+    'How does this month compare with last month?',
+    'Which of my categories grew the most?',
+  ],
+  spending_comparison: [
+    'Which categories explain most of the change?',
+    'What is my savings rate this month?',
+  ],
+  financial_summary: [
+    'Is my emergency fund large enough compared with MoneySense guidance?',
+    'What is FireBuddy\'s suggested next step for me?',
+  ],
+  fire_projection: [
+    'What assumptions drive my FIRE estimate?',
+    'How should CPF be reflected in my FIRE plan?',
+  ],
+  financial_health_review: [
+    'Why is that my recommended next action?',
+    'How many months of expenses should my emergency fund cover?',
+  ],
+  figure_lookup: [
+    'How does that figure affect my own retirement planning?',
+    'How has this figure changed over the past few years?',
+  ],
+  personal_context: [
+    'Is my emergency fund large enough compared with MoneySense guidance?',
+    'What is FireBuddy\'s suggested next step for me?',
+    'Am I saving enough each month to stay on track?',
+  ],
+};
 
 type SuggestionTopic = {
   keywords: string[];
@@ -88,15 +123,20 @@ function countMatches(content: string, keywords: readonly string[]): number {
   return keywords.reduce((total, keyword) => total + (content.includes(keyword) ? 1 : 0), 0);
 }
 
-/** Return up to three relevant, unasked follow ups using deterministic topic scores. */
+/**
+ * Return up to three relevant, unasked follow ups using deterministic topic scores.
+ * Data-aware follow ups come first when the answer was calculated from the user's data.
+ */
 export function getEmberSuggestedQuestions({
   question,
   history,
   sources,
+  dataEvidence,
 }: {
   question: string;
   history: readonly EmberMessage[];
   sources: readonly EmberSource[];
+  dataEvidence?: RagDataEvidence | null;
 }): string[] {
   const normalizedQuestion = normalizeQuestion(question);
   const sourceContent = normalizeQuestion(sources
@@ -116,10 +156,11 @@ export function getEmberSuggestedQuestions({
     .filter(({ score }) => score > 0)
     .sort((left, right) => right.score - left.score || left.index - right.index);
 
+  const dataCandidates = dataEvidence ? (DATA_FOLLOW_UPS[dataEvidence.tool] ?? []) : [];
   const candidates = rankedTopics.flatMap(({ topic }) => topic.questions);
   const fallbacks = [...EMBER_STARTER_QUESTIONS];
 
-  return [...candidates, ...fallbacks]
+  return [...dataCandidates, ...candidates, ...fallbacks]
     .filter((candidate, index, allCandidates) => allCandidates.indexOf(candidate) === index)
     .filter((candidate) => !askedQuestions.has(normalizeQuestion(candidate)))
     .slice(0, 3);

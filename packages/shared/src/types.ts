@@ -205,7 +205,9 @@ export type RagDataTool =
   | 'spending_comparison'
   | 'financial_summary'
   | 'fire_projection'
-  | 'financial_health_review';
+  | 'financial_health_review'
+  | 'figure_lookup'
+  | 'personal_context';
 
 export interface RagDataEvidence {
   tool: RagDataTool;

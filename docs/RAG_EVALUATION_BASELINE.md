@@ -496,6 +496,123 @@ answerable questions. The thresholds stay at 0.45 and 0.35; those four are
 refused by the answer model's sentinel sentence instead, which is why the
 answer eval, not the retrieval eval, is the guard for that behaviour.
 
+### Second pass, 2026-09-16: structure recovery and personalised answers
+
+Retrieval case set grew from 45 to 50 (five FAQ-specific cases; 28 cases now
+carry `required_substrings`). Answer set unchanged at 23. New personal-data
+suite of 10 cases over the Jen demo account.
+
+| Retrieval metric | v9 (45 cases, before) | v10 (50, generated headline only) | v11 (50, final) |
+|---|---:|---:|---:|
+| MRR | 0.8841 | 0.8600 | 0.8947 |
+| Hit@1 | 0.8000 | 0.7600 | 0.8200 |
+| Hit@3 | 0.9556 | 0.9400 | 0.9600 |
+| Hit@5 | 1.0000 | 0.9800 | 1.0000 |
+| Recall@5 | 0.9481 | 0.9333 | 0.9400 |
+| MAP@5 | 0.8276 | n/a | 0.8404 |
+| nDCG@5 | 0.8756 | 0.8579 | 0.8814 |
+| substring_hit_rate | 1.0000 | 0.9286 | 1.0000 |
+
+v10 shows what happens when the FAQ question lists are replaced by the
+generated headline: the weight-A keyword field loses the words users search
+for. v11 keeps the real heading in front of the generated headline. The
+candidate count (20, 30, 40) made no difference to v10, which ruled out
+crowding by the larger chunk count.
+
+Two substring labels were relaxed after v10: "basics of applying for SSBs"
+now expects `CDP` and `$500` instead of the eligibility-specific phrases
+(which have their own dedicated cases), and "basic MoneySense steps" expects
+`3 to 6 months`, `15%` and `10%`.
+
+| Answer metric | v8 (before) | v10 (final) |
+|---|---:|---:|
+| Overall pass rate | 1.0000 | 1.0000 |
+| Refusal accuracy | 1.0000 | 1.0000 |
+| Citation recall | 0.9722 | 0.9722 |
+| Judge groundedness | 1.0000 | 1.0000 |
+
+| Personal metric | v1 | v3 (final) |
+|---|---:|---:|
+| Overall pass rate | 0.7000 | 1.0000 |
+| Mode accuracy | 1.0000 | 1.0000 |
+| Fact accuracy | 0.8000 | 1.0000 |
+| Leak-free rate | 1.0000 | 1.0000 |
+| Missing-data handling | 1.0000 | 1.0000 |
+| Judge groundedness | 0.7333 | 1.0000 |
+
+The first personal run exposed two defects that unit tests had not: a data
+plan that asked the model for an explanation used the model's
+insufficient-evidence sentinel as the answer instead of the deterministic
+sentence (fixed in `ember_service._execute_data_plan`), and the comparison
+check assumed the tool's default month-to-date window while the planner had
+chosen a full calendar month (the eval now recomputes expected facts for the
+period named in the evidence). v3 also exempts answers that equal the tool's
+own deterministic sentence from the groundedness judge.
+
+### Semantic chunking: measured A/B (2026-09-16)
+
+Semantic chunking was implemented as an experiment (not merged) and run
+head-to-head against the structured chunker on the same documents and the
+same retrieval cases (53 at the time of the run), through the real
+`hybrid_match_rag_chunks` function via a temporary side table in the local
+database. The semantic variant used the standard recipe: sentence split,
+each sentence embedded with a one-sentence buffer on either side, a
+breakpoint wherever the cosine distance between neighbours exceeded the 90th
+percentile for the document, then a 300 to 1,500 character size clamp. Both
+variants received the same generated headline and summary, the same
+embedding model, and the same ranking.
+
+| Metric (real RPC) | Structured (current) | Semantic |
+|---|---:|---:|
+| Chunks | 252 | 232 |
+| Hit@1 | 0.8302 | 0.8302 |
+| Hit@3 | 0.9623 | 0.9623 |
+| Hit@5 | 1.0000 | 1.0000 |
+| Recall@5 | 0.9528 | 0.9308 |
+| MAP@5 | 0.8547 | 0.8429 |
+| nDCG@5 | 0.8943 | 0.8807 |
+| MRR | 0.9038 | 0.8953 |
+| substring_hit_rate | 1.0000 | 0.9355 |
+
+Per document type, semantic was marginally better on PDF-backed cases
+(Hit@1 1.00 against 0.95) and marginally worse on manual notes (0.85 against
+0.88); it lost ground mainly on the FIRE source notes and on two figure-bearing
+chunks whose numbers ended up split across a breakpoint. Structured wins on
+every ranking metric except the tied hit rates, keeps chunk identity
+deterministic (no dependence on the embedding model for boundaries), and
+costs nothing extra at ingest. Decision: keep structured chunking. Revisit
+semantic chunking only for a new long-prose PDF with no recoverable headings.
+An in-process Python replica of the ranker was also tried first and proved
+unreliable as a referee (it scored the structured variant 0.06 nDCG below the
+real function), so only the real-RPC numbers count.
+
+### Always-on personalisation (2026-09-17)
+
+"How can I improve on my spending expenses?" had returned generic advice
+because the planner treated it as a knowledge question without the user's
+data. Two changes: the aggregate snapshot is now attached to every knowledge
+answer (`EMBER_PERSONALISE_MODE=always`), and it carries a spending block
+(this month to date and last month: totals and top categories) so spending
+advice can name the user's own categories and amounts. The same question now
+answers with the user's largest categories and their figures.
+
+Two regressions surfaced on the first run and were fixed the same day. With
+the data block always present, the model answered a car-loan question from
+general knowledge; the prompt now states that the block is evidence about the
+user only and that the insufficient-evidence sentence must still be the whole
+reply when the sources lack the rule. And a correct CPFIS answer was scored
+as a refusal because it quoted the refusal sentence mid-reply; the answer
+eval's refusal check is now anchored at the start of the reply, matching
+production.
+
+| Suite | Cases | Result |
+|---|---:|---:|
+| Answer v12 | 29 | pass rate 1.0000, refusal accuracy 1.0000 |
+| Personal v9 | 11 | pass rate 1.0000, leak-free 1.0000 |
+
+The web composer no longer locks while a reply streams; a follow-up sent
+mid-stream excludes the still-streaming reply from its history.
+
 ### Where the remaining headroom is
 
 - Hit@1 at 0.80 is now dominated by the FIRE source notes (ten short
@@ -506,3 +623,250 @@ answer eval, not the retrieval eval, is the guard for that behaviour.
   and cites two.
 - A cross-encoder reranker over the 20 candidates is the next algorithmic
   lever; measure nDCG@3 before keeping it.
+
+---
+
+## 7. Source dating and metadata pass (recorded 2026-09-16)
+
+This pass targeted recency: the store held no date metadata of any kind, and
+the answer prompt never told the model what today's date was. It deliberately
+made no schema, migration or RPC change.
+
+### What changed
+
+1. **Source currency, without new columns.** `last_reviewed` joins the manual
+   front-matter whitelist and `published` joins the `check_pdfs.py` registry.
+   `ingest.py` writes both into a generated `rag/source-metadata.json`, which
+   `services/source_metadata.py` reads at answer time. Currency is a property
+   of a document, not of a chunk, so three `rag_chunks` columns behind a
+   migration would have been the wrong shape for 24 documents.
+   `format_retrieved_context` emits one `As of:` line per source block, and the
+   prompt tells the model to prefer the later-dated source when two disagree.
+   `pdf_hashes.json` entries now carry `fetched_at` alongside the hash; the
+   loader still accepts the old plain-string form.
+2. **Front matter for the three bare manual documents.** `FIRE.md`,
+   `fire-planning-singapore.md` and `investing-in-singapore.md` had none, so
+   they entered the store with `agency = NULL` and a folder-derived topic. The
+   existing folder-derived `topic` values were preserved deliberately, because
+   `rag_questions.json` asserts them.
+3. **Date-aware answering, scoped to curated sources.** The answer prompt now
+   states today's Singapore date and how to choose a year.
+
+### Results
+
+| Metric | v11 (50 cases) | v12 (53) | v13 (53, final) |
+|---|---:|---:|---:|
+| MRR | 0.8947 | 0.8896 | 0.9038 |
+| Hit@1 | 0.8200 | 0.8113 | 0.8302 |
+| Hit@3 | 0.9600 | 0.9434 | 0.9623 |
+| Hit@5 | 1.0000 | 1.0000 | 1.0000 |
+| Recall@5 | 0.9400 | 0.9434 | 0.9528 |
+| nDCG@3 | 0.8484 | 0.8465 | 0.8639 |
+| nDCG@5 | 0.8814 | 0.8827 | 0.8951 |
+| substring_hit_rate | 1.0000 | 1.0000 | 1.0000 |
+
+Answers went from v10 (23 cases) to v14 (26 cases) at 1.0000 on every metric,
+including citation recall, which was 0.9722. Personal is at v5, 1.0000
+throughout.
+
+### Three findings worth keeping
+
+**v12 regressed Hit@3 below its own gate, and the cause was the new titles.**
+Giving the bare documents `source_title` values of "FIRE in Singapore,
+Comprehensive Knowledge Base" and "FIRE Planning in Singapore, Retrieval
+Context" pushed `fire_expense_tracking` from rank 3 to 4. `source_title` is
+weight A in the tsvector, so scaffolding words dilute the match. Cutting the
+titles back to their bare subject produced v13, which beats v11 on every gated
+metric. **A source title should name the subject and nothing else.**
+
+**An unconditional year instruction makes the model invent dates.** The first
+wording was "always state the year the value applies to". The CPF LIFE payout
+case then answered "$319,400 ... This figure applies to the year 2026", when
+the source says the table is computed as of 2025 for members turning 65 in
+2035. The instruction is now conditional: name a year only when the evidence
+ties the value to one, and otherwise report the source's own stated basis.
+
+**Knowledge-path guidance must not leak into data answers.** With the dating
+guidance applied to every answer, the personal `next_action` case stopped
+returning the backend's deterministic sentence and started hedging
+("FireBuddy's suggested next step ... is not explicitly stated"), scoring 3/5
+on groundedness. The guidance is now added only when the context contains
+curated `[Source N]` blocks. A data answer has no dated sources to reason about.
+
+### Where the remaining headroom is now
+
+- Hit@1 at 0.8302 is still dominated by the FIRE source notes.
+- The IRAS relief leaflet has no recoverable publication date anywhere, so it
+  reports `As of: Date unknown` — the one stale document the `As of` line
+  cannot yet rank against a fresher source.
+- The two new exact-figure year cases both resolve through `figure_lookup`, so
+  they do not exercise retrieval's year handling at all.
+  `cpf_life_payout_states_its_year_basis` is the case that does.
+- A reranker over the candidate pool remains the next algorithmic lever;
+  measure nDCG@3, now 0.8639.
+
+---
+
+## 8. Figure coverage and IRAS currency pass (recorded 2026-09-16)
+
+An audit of what the corpus could support as deterministic lookups found a
+correctness bug that mattered more than the missing figures.
+
+### The IRAS document was seven years stale and ingested
+
+`markdown-cache/iras/tax-relief-individuals.md` dates itself "correct as at
+18 Feb 2019" and covers YA 2019. It was being retrieved and quoted as current.
+Two lines were actively wrong:
+
+- a Bicentennial Bonus personal income tax rebate of 50% capped at $200, which
+  applied to YA 2019 only and has expired;
+- CPF cash top-up relief of "$7,000 for self, $7,000 for family members", which
+  contradicted the corpus's own MoneySense 2024 booklet and `FIRE.md`, both of
+  which say $8,000 and $8,000.
+
+Its two-column infographic layout also flattened into prose that separated
+relief names from their amounts, so parent relief and NSman relief appeared as
+bare numbers with no labels.
+
+It is now `superseded_by` a hand-authored `manual/iras/tax-reliefs.md` carrying
+only figures verified against current IRAS pages. The PDF is still downloaded
+and hash-checked, so a change still alerts; it is no longer ingested. A new
+answer case, `iras_bicentennial_rebate_is_not_current`, asserts that Ember does
+not offer the expired rebate.
+
+`FIRE.md` also carried "BHS, fixed at $75,500 for those turning 65 in 2025" as
+if current; the 2026 BHS is $79,000. Both occurrences were corrected.
+
+### New figures, and one deliberately excluded
+
+Five keys added, each backed by a new hand-authored table citing the official
+source: `cpf_basic_healthcare_sum` (2016-2026), `cpf_annual_limit`,
+`cpf_interest_rates`, `cpf_extra_interest`, and
+`iras_cpf_cash_topup_relief_cap`.
+
+The Additional Wage ceiling was **not** made a figure key. It is a formula
+($102,000 minus the year's Ordinary Wages subject to CPF), not one number, and
+the planner's own rule routes anything that is not a single figure to the
+knowledge path. `manual/cpf/cpf-wage-ceilings-and-limits.md` covers it there.
+
+Also worth recording: the obvious source for CPF interest rates,
+`InterestRate.pdf` on cpf.gov.sg, looks canonical but its last row is Jul-Sep
+2024. Wiring it into the registry would have made the app cite two-year-old
+rates. The live figures are only in the quarterly news releases, which are HTML,
+so they were hand-authored instead.
+
+### Results
+
+| Metric | v13 (53 cases) | v14 (58) | v15 (58, final) |
+|---|---:|---:|---:|
+| MRR | 0.9038 | 0.9034 | 0.9034 |
+| Hit@1 | 0.8302 | 0.8276 | 0.8276 |
+| Hit@3 | 0.9623 | 0.9655 | 0.9655 |
+| Hit@5 | 1.0000 | 1.0000 | 1.0000 |
+| Recall@5 | 0.9528 | 0.9569 | 0.9569 |
+| nDCG@3 | 0.8639 | 0.8693 | 0.8693 |
+| nDCG@5 | 0.8951 | 0.8977 | 0.8977 |
+| substring_hit_rate | 1.0000 | 0.9722 | 1.0000 |
+
+v14 lost a substring: the vague case `iras_tax_relief_individuals` retrieved the
+new IRAS document but not the section holding `$80,000`. Moving the cap into the
+document's opening paragraph restored it, which is the same lesson as v9 in the
+September pass — **a document should lead with its own answer**. Answers went to
+v15, 29 cases, 1.0000 throughout; personal to v6, 1.0000 throughout.
+
+### Drift detection
+
+`fetchAndConvert/check_figure_drift.py` compares the hand-maintained
+`annual-figures.json` with the `annual-figures.extracted.json` that
+`fetch_figures.py` already produced and nothing ever read. It maps the flat
+extraction schema onto the curated figure-and-year shape, compares only the
+figures present in both, and fails the monthly workflow on a mismatch. It
+deliberately does not copy the extracted value, which comes from a model
+reading a PDF and can itself be wrong.
+
+### Where the remaining headroom is now
+
+- Hit@1 at 0.8276 is still the FIRE source notes.
+- Still absent from the corpus and needing new official sources: IRAS resident
+  income tax rate bands, MediSave contribution rates for the self-employed, HDB
+  housing grants (HDB is not a registry publisher at all), and the SSB
+  maximum-per-issue figure.
+- Several ingested caches still have no `published` date, so they report
+  `As of: Date unknown`: the two CPFIS documents and the MoneySense basic
+  planning guide.
+- A reranker remains the next algorithmic lever; nDCG@3 is now 0.8693.
+
+---
+
+## 9. Source currency cleanup (recorded 2026-09-17)
+
+Prompted by a request to remove outdated documents. Sorting every ingested
+document by date against the eval cases that depend on it showed that deletion
+was the wrong tool in every case:
+
+- **Already inert (6 files).** The YA 2019 IRAS leaflet and the four superseded
+  CPF caches are not ingested. Deleting them from disk achieves nothing, because
+  `pdf_to_md.py` regenerates them from the PDFs on the next monthly run.
+  `superseded_by` is the retirement mechanism in this repo.
+- **Old but not superseded (the two MAS documents).** The 2019 factsheet and
+  2022 FAQs are the newest versions MAS publishes, and 18 eval cases depend on
+  them. Deleting them would drop Hit@5 below its 1.0 gate.
+- **Undated (3 files).** Not stale, just missing `published` in the registry, so
+  they reported `As of: Date unknown` and could not take part in the freshness
+  comparison.
+
+### What changed instead
+
+`published` dates were added for the two CPFIS caches, both read from the
+documents' own footers (Sep 2025 and Dec 2022). The MoneySense basic planning
+guide states no date anywhere and was left unknown rather than guessed.
+
+The MAS factsheet was superseded by a hand-authored
+`manual/mas/singapore-savings-bonds.md`. Its product terms were still accurate,
+but its step-up worked example (0.9% first-year, 2.4% effective, from a 2015
+bond) and its "10-year SGS yield has generally been between 2% to 3%" line
+describe the decade to 2019. The replacement carries the terms and deliberately
+reproduces no example rate, since rates are set per issue. Every fact in it was
+re-verified against MAS; the MAS product pages were erroring, so the term,
+interest frequency, step-up mechanics, tax treatment and CPF ineligibility came
+from the 2022 FAQs, which remain ingested.
+
+### One label was changed, which deserves scrutiny
+
+Superseding the factsheet flipped `fire_with_safe_assets` from rank 1 to 2 and
+took Hit@1 to 0.8103, under its gate. The fix was not a threshold change: it was
+adding `manual/fire/FIRE.md` to that case's expected documents. `FIRE.md` has
+sections 6.5 and 6.6 on Savings Bonds and T-bills, line 186 calls them "the
+low-risk tranche in a FIRE portfolio", and line 364 gives a 10-15% allocation —
+it answers "how might lower-risk assets fit into a FIRE portfolio" directly, and
+the original label omitted it. This is the labelling-versus-ranking question
+section 6 flagged for the FIRE cluster, resolved as labelling on the evidence.
+It is recorded here because relabelling a case after a metric drops is exactly
+what gaming an evaluation looks like; the justification is the document text,
+and the change is easy to revert.
+
+### Results
+
+| Metric | v15 (58 cases) | v16 (58) | v17 (58, final) |
+|---|---:|---:|---:|
+| MRR | 0.9034 | 0.8948 | 0.9034 |
+| Hit@1 | 0.8276 | 0.8103 | 0.8276 |
+| Hit@3 | 0.9655 | 0.9655 | 0.9655 |
+| Hit@5 | 1.0000 | 1.0000 | 1.0000 |
+| Recall@5 | 0.9569 | 0.9569 | 0.9598 |
+| nDCG@3 | 0.8693 | 0.8654 | 0.8719 |
+| nDCG@5 | 0.8977 | 0.8938 | 0.9004 |
+| substring_hit_rate | 1.0000 | 1.0000 | 1.0000 |
+
+nDCG@5 crosses 0.90 for the first time. Answers are at v16 and personal at v7,
+both 1.0000 throughout.
+
+### Still outstanding
+
+- `markdown-cache/moneysense/basic-financial-planning-guide.md` has no
+  recoverable publication date.
+- The CPFIS instruments document (Dec 2022) still describes the Special Account
+  as investable, which reads oddly after the January 2025 SA closure for members
+  aged 55 and above. Its extra-interest table is current and is why it stays.
+- Corpus gaps needing new publishers: IRAS income tax bands, MediSave rates for
+  the self-employed, HDB housing grants.

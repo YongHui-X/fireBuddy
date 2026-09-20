@@ -4,6 +4,7 @@ source_url: https://drwealth.com/fire-movement/
 agency: Dr Wealth
 topic: fire_calculators
 ingest: true
+last_reviewed: 2026-09-04
 ---
 
 # Dr Wealth FIRE guide

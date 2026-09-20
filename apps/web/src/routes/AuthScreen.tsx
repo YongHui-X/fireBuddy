@@ -84,7 +84,9 @@ function AuthScreen() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               type="email"
+              inputMode="email"
               autoComplete="email"
+              enterKeyHint="next"
               placeholder="you@example.com"
               required
               autoFocus
@@ -111,6 +113,7 @@ function AuthScreen() {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 placeholder="Enter your password"
+                enterKeyHint="go"
                 minLength={6}
                 required
               />

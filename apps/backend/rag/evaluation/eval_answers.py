@@ -36,19 +36,21 @@ from services.rag_service import (
     is_clearly_out_of_scope,
 )
 
-# The planner path never reads user records for knowledge, figure, or refusal
-# cases, so a fixed placeholder id is enough to exercise it.
-EVAL_USER_ID = "rag-eval-user"
+# The planner path never reads meaningful user records for knowledge, figure,
+# or refusal cases. A fixed UUID that owns no rows keeps owner-scoped queries
+# valid and returns empty aggregates for any personalised question.
+EVAL_USER_ID = "00000000-0000-4000-8000-00000000e0a1"
 
 # Refusal detection reuses the service's own refusal texts so the eval cannot
 # silently drift from the production wording again.
+# Matched at the start of the reply only, like production's sentinel check.
 REFUSAL_PHRASES = (
     OUT_OF_SCOPE_ANSWER.lower(),
     LOW_CONFIDENCE_ANSWER.lower(),
-    "can only help with",
+    "ember can only help with",
+    "i can only help with",
     "i do not have enough reliable context",
     "i could not find relevant information",
-    "outside the firebuddy knowledge base",
 )
 
 
@@ -130,10 +132,16 @@ def citation_recall(source_paths: tuple[str, ...], expected_paths: tuple[str, ..
 
 
 def looks_like_refusal(answer: str) -> bool:
-    """Detect the advisor's controlled refusal responses."""
+    """
+    Detect the advisor's controlled refusal responses.
 
-    normalized = answer.lower()
-    return any(phrase in normalized for phrase in REFUSAL_PHRASES)
+    Mirrors production: a refusal is the whole reply, so the check is anchored
+    at the start. A refusal phrase quoted inside a substantive answer does not
+    count.
+    """
+
+    normalized = " ".join(answer.strip().strip('"').split()).lower()
+    return any(normalized.startswith(phrase) for phrase in REFUSAL_PHRASES)
 
 
 def get_judge_model() -> str:

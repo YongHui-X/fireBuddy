@@ -41,9 +41,11 @@
   transform: translateY(-50%);
 }
 
-.dashboard-search button:hover {
-  background: var(--surface-2);
-  color: var(--ink);
+@media (hover: hover) {
+  .dashboard-search button:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
 }
 
 .dashboard-search button:active:not(:disabled) {
@@ -70,7 +72,7 @@
   margin-bottom: 0;
 }
 
-@media (min-width: 760px) {
+@media (min-width: 768px) {
   .dashboard-workspace-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     align-items: stretch;
@@ -101,13 +103,14 @@
     grid-column: 5 / -1;
   }
 
-  /* Budgets and the breakdown share row two evenly so the budget rows get real width. */
+  /* The breakdown takes the larger share of row two: the pie and its outside callout labels need the
+     width, while the budget rows are short bars that read fine in a narrow column. */
   .dashboard-workspace-grid > .dashboard-budget-card {
-    grid-column: 1 / span 6;
+    grid-column: 1 / span 4;
   }
 
   .dashboard-workspace-grid > .foundation-spending-card {
-    grid-column: 7 / -1;
+    grid-column: 5 / -1;
   }
 
   /* The ledger needs width for four labelled columns; FI progress is a compact stat card. */
@@ -151,8 +154,10 @@
   pointer-events: none;
 }
 
-.foundation-summary-card:hover {
-  background: color-mix(in srgb, var(--hero-bg) 92%, #fff);
+@media (hover: hover) {
+  .foundation-summary-card:hover {
+    background: color-mix(in srgb, var(--hero-bg) 92%, #fff);
+  }
 }
 
 .foundation-summary-card:focus-visible {
@@ -266,8 +271,10 @@
   text-underline-offset: 4px;
 }
 
-.foundation-summary-card:hover .foundation-summary-link {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  .foundation-summary-card:hover .foundation-summary-link {
+    text-decoration-color: currentColor;
+  }
 }
 
 .dashboard-loading-card {
@@ -491,9 +498,11 @@ button.recommended-action > span::after {
   line-height: 1.45;
 }
 
-button.recommended-action:hover {
-  border-color: var(--lime-600);
-  background: color-mix(in srgb, var(--lime-500) 34%, var(--surface));
+@media (hover: hover) {
+  button.recommended-action:hover {
+    border-color: var(--lime-600);
+    background: color-mix(in srgb, var(--lime-500) 34%, var(--surface));
+  }
 }
 
 .monthly-observation {
@@ -614,7 +623,7 @@ button.recommended-action:hover {
 
 @container (min-width: 430px) {
   .spending-chart-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(170px, 0.7fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.6fr);
   }
 }
 
@@ -796,9 +805,11 @@ button.recommended-action:hover {
   border-bottom: 0;
 }
 
-.foundation-transaction:hover {
-  background: var(--surface-2);
-  border-radius: 10px;
+@media (hover: hover) {
+  .foundation-transaction:hover {
+    background: var(--surface-2);
+    border-radius: 10px;
+  }
 }
 
 .foundation-transaction-copy {
@@ -962,5 +973,39 @@ button.recommended-action:hover {
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* Phones -------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  /* dashboard.css raises the greeting above the shell's 1.4rem page title, so the phone size has
+     to be restated here rather than inherited. */
+  .dashboard-toolbar .page-toolbar-copy h2 {
+    font-size: 1.45rem;
+  }
+
+  /* The search belongs on its own row once the toolbar stacks. */
+  .dashboard-search {
+    width: 100%;
+  }
+
+  .dashboard-search input {
+    min-height: var(--touch-target);
+  }
+
+  /* A progress track is a 7px detail on a desktop and a squint on a phone. */
+  .dashboard-budget-row .progress-bar {
+    height: 8px;
+  }
+}
+
+@media (max-width: 379.98px) {
+  .foundation-summary-card {
+    min-height: 240px;
+  }
+
+  .dashboard-toolbar .page-toolbar-copy h2 {
+    font-size: 1.35rem;
   }
 }

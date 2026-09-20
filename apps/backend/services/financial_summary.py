@@ -177,10 +177,7 @@ def build_financial_summary(*, positions: list[dict], snapshots: list[dict], con
             plan["monthlyContribution"] = float(scenario_contribution)
         if scenario_spending is not None:
             plan["monthlySpending"] = float(scenario_spending)
-    eligible = [row for row in active if row["position_kind"] == "asset"
-                and row["position_type"] not in ["cpf", "property"]
-                and row["restriction_type"] == "none" and row["liquidity_class"] != "restricted"
-                and not row["is_emergency_fund"] and plan and str(row["id"]) in plan["assetIds"]]
+    eligible = [row for row in active if row["position_kind"] == "asset" and plan and str(row["id"]) in plan["assetIds"]]
     selected_ids = set(plan["assetIds"]) if plan else set()
     complete_portfolio = selected_ids == {str(row["id"]) for row in eligible} and all(str(row["id"]) in latest for row in eligible)
     spendable = sum((float(latest[str(row["id"])]["amount"]) for row in eligible), 0.0) if complete_portfolio else None

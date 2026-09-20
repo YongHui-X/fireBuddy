@@ -3,6 +3,7 @@ source_title: FIRE calculator research source registry
 agency: FireBuddy
 topic: fire_calculators
 ingest: false
+last_reviewed: 2026-09-04
 ---
 
 # FIRE calculator research source registry

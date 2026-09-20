@@ -2,6 +2,7 @@ import sys
 import unittest
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -71,8 +72,8 @@ class EmberServiceTests(unittest.TestCase):
             retrieval_query="What are the CPF contribution rates for employees above 60 in 2026?",
         )
         with patch.object(ember_service, "plan_ember_question", return_value=planned), patch.object(
-            ember_service, "answer_financial_advisor_question",
-        ) as answer:
+            ember_service, "build_personal_context", return_value=SimpleNamespace(facts={}),
+        ), patch.object(ember_service, "answer_financial_advisor_question") as answer:
             ember_service.answer_ember_question("user-a", "And above 60?")
 
         self.assertEqual(answer.call_args.kwargs["retrieval_query"], planned.retrieval_query)
@@ -91,6 +92,100 @@ class EmberServiceTests(unittest.TestCase):
         self.assertIn("S$220,400", response.answer)
         self.assertEqual(response.source_details[0].path, "manual/cpf/cpf-retirement-sums.md")
         self.assertEqual(response.data_evidence.tool, "figure_lookup")
+
+    def _knowledge_plan(self, personalise: bool) -> EmberPlan:
+        return EmberPlan(
+            mode="knowledge", tool=None, start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=True, clarification_question=None,
+            retrieval_query="Is my emergency fund large enough?", personalise=personalise,
+        )
+
+    def test_personalised_knowledge_plan_attaches_the_users_snapshot(self):
+        snapshot = SimpleNamespace(facts={"netWorth": "1.00"})
+        with patch.object(ember_service, "plan_ember_question", return_value=self._knowledge_plan(True)), patch.object(
+            ember_service, "build_personal_context", return_value=snapshot,
+        ) as build, patch.object(ember_service, "answer_financial_advisor_question") as answer:
+            ember_service.answer_ember_question("user-a", "Is my emergency fund large enough?")
+
+        build.assert_called_once_with("user-a")
+        self.assertIs(answer.call_args.kwargs["personal_context"], snapshot)
+
+    def test_snapshot_failure_degrades_to_plain_knowledge(self):
+        with patch.object(ember_service, "plan_ember_question", return_value=self._knowledge_plan(True)), patch.object(
+            ember_service, "build_personal_context", side_effect=RuntimeError("db down"),
+        ), patch.object(ember_service, "answer_financial_advisor_question") as answer:
+            ember_service.answer_ember_question("user-a", "Is my emergency fund large enough?")
+
+        self.assertIsNone(answer.call_args.kwargs["personal_context"])
+
+    def test_every_knowledge_answer_is_personalised_by_default(self):
+        with patch.object(ember_service, "plan_ember_question", return_value=self._knowledge_plan(False)), patch.object(
+            ember_service, "build_personal_context", return_value=SimpleNamespace(facts={}),
+        ) as build, patch.object(ember_service, "answer_financial_advisor_question"):
+            ember_service.answer_ember_question("user-a", "What are the CPF contribution rates for 2026?")
+
+        build.assert_called_once_with("user-a")
+
+    def test_auto_mode_uses_the_keyword_fallback_only(self):
+        with patch.object(ember_service, "PERSONALISE_MODE", "auto"), patch.object(
+            ember_service, "plan_ember_question", return_value=self._knowledge_plan(False),
+        ), patch.object(
+            ember_service, "build_personal_context", return_value=SimpleNamespace(facts={}),
+        ) as build, patch.object(ember_service, "answer_financial_advisor_question"):
+            ember_service.answer_ember_question("user-a", "Is my emergency fund large enough?")
+            build.assert_called_once()
+            build.reset_mock()
+            ember_service.answer_ember_question("user-a", "What are the CPF contribution rates for 2026?")
+            build.assert_not_called()
+
+    def test_hybrid_plan_explains_when_curated_context_was_retrieved(self):
+        planned = EmberPlan(
+            mode="hybrid", tool="financial_summary", start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=False, clarification_question=None,
+        )
+        result = EmberDataResult("financial_summary", "Financial summary", "2026-08-23", None, "/", {"netWorth": "1.00"}, "Net worth S$1.00.")
+        with patch.object(ember_service, "plan_ember_question", return_value=planned), patch.object(
+            ember_service, "run_ember_data_tool", return_value=result,
+        ), patch.object(
+            ember_service, "_retrieve_hybrid_context", return_value=("Curated text", []),
+        ), patch.object(ember_service, "generate_grounded_answer", return_value="Explained") as generate:
+            response = ember_service.answer_ember_question("user-a", "How is my net worth?")
+
+        generate.assert_called_once()
+        self.assertIn("Curated educational context", generate.call_args.args[1])
+        self.assertEqual(response.answer, "Explained")
+
+    def test_data_plan_keeps_the_exact_answer_when_the_model_declines(self):
+        from services.rag_service import INSUFFICIENT_EVIDENCE_SENTINEL
+
+        planned = EmberPlan(
+            mode="data", tool="fire_projection", start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=True, clarification_question=None,
+        )
+        result = EmberDataResult("fire_projection", "FIRE projection", "2026-09-16", None, "/fire", {"fundingStatus": "review_required"}, "Review required: confirm the five FIRE Planner setup steps.")
+        with patch.object(ember_service, "plan_ember_question", return_value=planned), patch.object(
+            ember_service, "run_ember_data_tool", return_value=result,
+        ), patch.object(ember_service, "generate_grounded_answer", return_value=INSUFFICIENT_EVIDENCE_SENTINEL):
+            response = ember_service.answer_ember_question("user-a", "How long more to FIRE?")
+
+        self.assertEqual(response.answer, result.exact_answer)
+        self.assertEqual(response.mode, "data")
+
+    def test_stream_personalised_knowledge_emits_status_then_delegates(self):
+        snapshot = SimpleNamespace(facts={})
+        with patch.object(ember_service, "plan_ember_question", return_value=self._knowledge_plan(True)), patch.object(
+            ember_service, "build_personal_context", return_value=snapshot,
+        ), patch.object(
+            ember_service, "stream_financial_advisor_question", return_value=iter([{"event": "done", "data": {}}]),
+        ) as stream:
+            events = list(ember_service.stream_ember_question("user-a", "Is my emergency fund large enough?"))
+
+        self.assertEqual([e["event"] for e in events], ["status", "status", "done"])
+        self.assertEqual(events[1]["data"]["message"], "Reading your FireBuddy data")
+        self.assertIs(stream.call_args.kwargs["personal_context"], snapshot)
 
     def test_stream_includes_aggregate_evidence_without_identity(self):
         planned = EmberPlan(

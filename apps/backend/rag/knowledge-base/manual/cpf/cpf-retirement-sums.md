@@ -4,6 +4,7 @@ source_url: https://www.cpf.gov.sg/service/article/how-much-is-my-full-retiremen
 agency: CPF Board
 topic: cpf-retirement-sums
 ingest: true
+last_reviewed: 2026-09-15
 ---
 
 # CPF retirement sums by year: Basic, Full and Enhanced Retirement Sum

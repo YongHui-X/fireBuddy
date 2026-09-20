@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "last_reviewed": "2026-09-15",
+  "last_reviewed": "2026-09-16",
   "note": "Curated exact figures for Ember's figure_lookup tool. Every figure names the knowledge-base document it was taken from so answers can cite it. Values are keyed by year; a question without a year receives the latest year listed. Update this file by hand when the source documents change; fetch_figures.py writes its LLM extraction to annual-figures.extracted.json for comparison only.",
   "figures": {
     "cpf_basic_retirement_sum": {
@@ -11,9 +11,17 @@
       "source_title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
       "source_url": "https://www.cpf.gov.sg/service/article/how-much-is-my-basic-retirement-sum",
       "values": {
-        "2017": 83000, "2018": 85500, "2019": 88000, "2020": 90500,
-        "2021": 93000, "2022": 96000, "2023": 99400, "2024": 102900,
-        "2025": 106500, "2026": 110200, "2027": 114100
+        "2017": 83000,
+        "2018": 85500,
+        "2019": 88000,
+        "2020": 90500,
+        "2021": 93000,
+        "2022": 96000,
+        "2023": 99400,
+        "2024": 102900,
+        "2025": 106500,
+        "2026": 110200,
+        "2027": 114100
       }
     },
     "cpf_full_retirement_sum": {
@@ -24,9 +32,17 @@
       "source_title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
       "source_url": "https://www.cpf.gov.sg/service/article/how-much-is-my-full-retirement-sum",
       "values": {
-        "2017": 166000, "2018": 171000, "2019": 176000, "2020": 181000,
-        "2021": 186000, "2022": 192000, "2023": 198800, "2024": 205800,
-        "2025": 213000, "2026": 220400, "2027": 228200
+        "2017": 166000,
+        "2018": 171000,
+        "2019": 176000,
+        "2020": 181000,
+        "2021": 186000,
+        "2022": 192000,
+        "2023": 198800,
+        "2024": 205800,
+        "2025": 213000,
+        "2026": 220400,
+        "2027": 228200
       }
     },
     "cpf_enhanced_retirement_sum": {
@@ -37,9 +53,17 @@
       "source_title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
       "source_url": "https://www.cpf.gov.sg/service/article/what-is-the-current-enhanced-retirement-sum",
       "values": {
-        "2017": 249000, "2018": 256500, "2019": 264000, "2020": 271500,
-        "2021": 279000, "2022": 288000, "2023": 298200, "2024": 308700,
-        "2025": 426000, "2026": 440800, "2027": 456400
+        "2017": 249000,
+        "2018": 256500,
+        "2019": 264000,
+        "2020": 271500,
+        "2021": 279000,
+        "2022": 288000,
+        "2023": 298200,
+        "2024": 308700,
+        "2025": 426000,
+        "2026": 440800,
+        "2027": 456400
       }
     },
     "cpf_ordinary_wage_ceiling": {
@@ -49,7 +73,9 @@
       "source_path": "manual/cpf/cpf-contribution-rates-2026.md",
       "source_title": "CPF Contribution Rates from 1 January 2026",
       "source_url": "https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFcontributionratesfrom1Jan2026.pdf",
-      "values": {"2026": 8000}
+      "values": {
+        "2026": 8000
+      }
     },
     "cpf_contribution_rates": {
       "label": "CPF contribution rates for Singapore Citizens and PRs from the 3rd year, wages above $750",
@@ -60,11 +86,31 @@
       "source_url": "https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFcontributionratesfrom1Jan2026.pdf",
       "values": {
         "2026": {
-          "55 and below": {"total": 37, "employee": 20, "employer": 17},
-          "Above 55 to 60": {"total": 34, "employee": 18, "employer": 16},
-          "Above 60 to 65": {"total": 25, "employee": 12.5, "employer": 12.5},
-          "Above 65 to 70": {"total": 16.5, "employee": 7.5, "employer": 9},
-          "Above 70": {"total": 12.5, "employee": 5, "employer": 7.5}
+          "55 and below": {
+            "total": 37,
+            "employee": 20,
+            "employer": 17
+          },
+          "Above 55 to 60": {
+            "total": 34,
+            "employee": 18,
+            "employer": 16
+          },
+          "Above 60 to 65": {
+            "total": 25,
+            "employee": 12.5,
+            "employer": 12.5
+          },
+          "Above 65 to 70": {
+            "total": 16.5,
+            "employee": 7.5,
+            "employer": 9
+          },
+          "Above 70": {
+            "total": 12.5,
+            "employee": 5,
+            "employer": 7.5
+          }
         }
       }
     },
@@ -77,14 +123,46 @@
       "source_url": "https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFAllocationRatesfromJanuary2026.pdf",
       "values": {
         "2026": {
-          "35 and below": {"Ordinary Account": 0.6217, "Special Account": 0.1621, "MediSave Account": 0.2162},
-          "Above 35 to 45": {"Ordinary Account": 0.5677, "Special Account": 0.1891, "MediSave Account": 0.2432},
-          "Above 45 to 50": {"Ordinary Account": 0.5136, "Special Account": 0.2162, "MediSave Account": 0.2702},
-          "Above 50 to 55": {"Ordinary Account": 0.4055, "Special Account": 0.3108, "MediSave Account": 0.2837},
-          "Above 55 to 60": {"Ordinary Account": 0.353, "Retirement Account": 0.3382, "MediSave Account": 0.3088},
-          "Above 60 to 65": {"Ordinary Account": 0.14, "Retirement Account": 0.44, "MediSave Account": 0.42},
-          "Above 65 to 70": {"Ordinary Account": 0.0607, "Retirement Account": 0.303, "MediSave Account": 0.6363},
-          "Above 70": {"Ordinary Account": 0.08, "Retirement Account": 0.08, "MediSave Account": 0.84}
+          "35 and below": {
+            "Ordinary Account": 0.6217,
+            "Special Account": 0.1621,
+            "MediSave Account": 0.2162
+          },
+          "Above 35 to 45": {
+            "Ordinary Account": 0.5677,
+            "Special Account": 0.1891,
+            "MediSave Account": 0.2432
+          },
+          "Above 45 to 50": {
+            "Ordinary Account": 0.5136,
+            "Special Account": 0.2162,
+            "MediSave Account": 0.2702
+          },
+          "Above 50 to 55": {
+            "Ordinary Account": 0.4055,
+            "Special Account": 0.3108,
+            "MediSave Account": 0.2837
+          },
+          "Above 55 to 60": {
+            "Ordinary Account": 0.353,
+            "Retirement Account": 0.3382,
+            "MediSave Account": 0.3088
+          },
+          "Above 60 to 65": {
+            "Ordinary Account": 0.14,
+            "Retirement Account": 0.44,
+            "MediSave Account": 0.42
+          },
+          "Above 65 to 70": {
+            "Ordinary Account": 0.0607,
+            "Retirement Account": 0.303,
+            "MediSave Account": 0.6363
+          },
+          "Above 70": {
+            "Ordinary Account": 0.08,
+            "Retirement Account": 0.08,
+            "MediSave Account": 0.84
+          }
         }
       }
     },
@@ -96,17 +174,22 @@
       "source_title": "Investing In Singapore",
       "source_url": null,
       "values": {
-        "2026": {"Singapore Citizens and Permanent Residents": 15300, "Foreigners": 35700}
+        "2026": {
+          "Singapore Citizens and Permanent Residents": 15300,
+          "Foreigners": 35700
+        }
       }
     },
     "iras_personal_relief_cap": {
       "label": "IRAS overall cap on personal income tax reliefs per Year of Assessment",
       "unit": "SGD",
       "applies_to": "total personal reliefs claimable in one Year of Assessment",
-      "source_path": "markdown-cache/iras/tax-relief-individuals.md",
-      "source_title": "Tax Relief Individuals",
+      "source_path": "manual/iras/tax-reliefs.md",
+      "source_title": "IRAS Individual Income Tax Reliefs",
       "source_url": "https://www.iras.gov.sg/media/docs/default-source/uploadedfiles/pdf/tax-relief_individuals-fa-%28edited%29.pdf?sfvrsn=4fb8ebd5_2",
-      "values": {"2026": 80000}
+      "values": {
+        "2026": 80000
+      }
     },
     "ssb_individual_holding_limit": {
       "label": "Singapore Savings Bonds individual holding limit",
@@ -115,7 +198,9 @@
       "source_path": "markdown-cache/mas/singapore-savings-bonds-faqs.md",
       "source_title": "Singapore Savings Bonds Faqs",
       "source_url": "https://www.mas.gov.sg/-/media/mas/sgs/sgs-announcements-pdf/ssb-pdf/faq/2022-06-13-ssb-faqs.pdf",
-      "values": {"2026": 200000}
+      "values": {
+        "2026": 200000
+      }
     },
     "cpfis_protected_balances": {
       "label": "CPF balances that cannot be invested under CPFIS",
@@ -125,7 +210,88 @@
       "source_title": "Investing In Singapore",
       "source_url": null,
       "values": {
-        "2026": {"Ordinary Account": 20000, "Special Account": 40000}
+        "2026": {
+          "Ordinary Account": 20000,
+          "Special Account": 40000
+        }
+      }
+    },
+    "cpf_basic_healthcare_sum": {
+      "label": "CPF Basic Healthcare Sum (BHS)",
+      "unit": "SGD",
+      "applies_to": "year the member turns 65; fixed for life from that year",
+      "source_path": "manual/cpf/cpf-healthcare-sums.md",
+      "source_title": "CPF Basic Healthcare Sum by Year",
+      "source_url": "https://www.cpf.gov.sg/service/article/what-is-the-basic-healthcare-sum",
+      "values": {
+        "2016": 49800,
+        "2017": 52000,
+        "2018": 54500,
+        "2019": 57200,
+        "2020": 60000,
+        "2021": 63000,
+        "2022": 66000,
+        "2023": 68500,
+        "2024": 71500,
+        "2025": 75500,
+        "2026": 79000
+      }
+    },
+    "cpf_annual_limit": {
+      "label": "CPF Annual Limit on total mandatory and voluntary contributions",
+      "unit": "SGD",
+      "applies_to": "total CPF contributions to one member in a calendar year",
+      "source_path": "manual/cpf/cpf-wage-ceilings-and-limits.md",
+      "source_title": "CPF Wage Ceilings and the CPF Annual Limit",
+      "source_url": "https://www.cpf.gov.sg/service/article/what-is-the-cpf-annual-limit",
+      "values": {
+        "2026": 37740
+      }
+    },
+    "cpf_interest_rates": {
+      "label": "CPF floor interest rates by account",
+      "unit": "percent per annum",
+      "applies_to": "account type; floor rates reviewed quarterly",
+      "source_path": "manual/cpf/cpf-interest-rates.md",
+      "source_title": "CPF Interest Rates and Extra Interest",
+      "source_url": "https://www.cpf.gov.sg/member/growing-your-savings/earning-higher-returns/earning-attractive-interest",
+      "values": {
+        "2026": {
+          "Ordinary Account": 2.5,
+          "Special Account": 4,
+          "MediSave Account": 4,
+          "Retirement Account": 4
+        }
+      }
+    },
+    "cpf_extra_interest": {
+      "label": "CPF extra interest on combined balances",
+      "unit": "percent per annum",
+      "applies_to": "age band; at most $20,000 of the Ordinary Account counts",
+      "source_path": "manual/cpf/cpf-interest-rates.md",
+      "source_title": "CPF Interest Rates and Extra Interest",
+      "source_url": "https://www.cpf.gov.sg/member/growing-your-savings/earning-higher-returns/earning-attractive-interest",
+      "values": {
+        "2026": {
+          "below 55, first $60,000": 1,
+          "55 and above, first $30,000": 2,
+          "55 and above, next $30,000": 1
+        }
+      }
+    },
+    "iras_cpf_cash_topup_relief_cap": {
+      "label": "IRAS CPF Cash Top-up Relief cap",
+      "unit": "SGD",
+      "applies_to": "per Year of Assessment; self and family caps are separate",
+      "source_path": "manual/iras/tax-reliefs.md",
+      "source_title": "IRAS Individual Income Tax Reliefs",
+      "source_url": "https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-reliefs-rebates-and-deductions/tax-reliefs/central-provident-fund-(cpf)-cash-top-up-relief",
+      "values": {
+        "2026": {
+          "own account": 8000,
+          "family members": 8000,
+          "combined": 16000
+        }
       }
     }
   }

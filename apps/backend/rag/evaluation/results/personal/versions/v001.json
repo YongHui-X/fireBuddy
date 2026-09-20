@@ -1,0 +1,392 @@
+{
+  "generated_at": "2026-09-16T06:41:03.411607+00:00",
+  "case_count": 10,
+  "account_email": "jen@demo.com",
+  "judge_enabled": true,
+  "summary": {
+    "overall_pass_rate": 0.7,
+    "mode_accuracy": 1.0,
+    "fact_accuracy": 0.8,
+    "leak_free_rate": 1.0,
+    "missing_data_refusal_accuracy": 1.0,
+    "judge_groundedness": 0.7333333333333333
+  },
+  "cases": [
+    {
+      "id": "spending_this_month",
+      "question": "How much have I spent this month?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "You spent S$3011.15 across 11 expenses from 2026-09-01 to 2026-09-30. Top categories were Housing (S$1650.00), Food & Drink (S$605.75), Bills & Utilities (S$178.60).",
+      "data_evidence": {
+        "tool": "expense_summary",
+        "label": "Expense summary",
+        "period": "2026-09-01 to 2026-09-30",
+        "record_count": 11,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "expense.total",
+          "expected": "3011.15",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects the total spending of S$3011.15 for the month of September 2026, supported by the retrieved context which details the breakdown of expenses across various categories. All figures are consistent with the provided data, ensuring high scores in all criteria."
+      },
+      "passed": true
+    },
+    {
+      "id": "top_categories_this_month",
+      "question": "Which categories have I spent the most on this month?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "You spent S$3011.15 across 11 expenses from 2026-09-01 to 2026-09-30. Top categories were Housing (S$1650.00), Food & Drink (S$605.75), Bills & Utilities (S$178.60).",
+      "data_evidence": {
+        "tool": "expense_summary",
+        "label": "Expense summary",
+        "period": "2026-09-01 to 2026-09-30",
+        "record_count": 11,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "expense.categoryTotals.0.category",
+          "expected": "Housing",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects the spending categories and amounts as provided in the retrieved context. It correctly identifies the top categories of spending for the specified period, and all numerical values match those in the context."
+      },
+      "passed": true
+    },
+    {
+      "id": "compare_with_last_month",
+      "question": "How does my spending this month compare with last month?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "This month, your total spending is $5,000.00, which is an increase of $1,988.85 compared to last month\u2019s total of $3,011.15. This represents a percentage change of 66.05%. \n\nHere\u2019s a breakdown of your spending by category for both months:\n\n**Current Month:**\n- Housing: $1,650.00\n- Travel: $1,530.00\n- Food & Drink: $805.00\n- Transport: $240.00\n- Bills & Utilities: $215.00\n- Shopping: $210.00\n- Insurance: $145.00\n- Entertainment: $120.00\n- Others: $85.00\n\n**Last Month:**\n- Housing: $1,650.00\n- Food & Drink: $605.75\n- Bills & Utilities: $178.60\n- Insurance: $145.00\n- Transport: $132.80\n- Shopping: $96.40\n- Travel: $75.00\n- Entertainment: $48.90\n- Healthcare: $42.50\n- Others: $36.20\n\nThis comparison shows significant increases in categories such as Travel and Food & Drink.",
+      "data_evidence": {
+        "tool": "spending_comparison",
+        "label": "Spending comparison",
+        "period": "2026-08-01 to 2026-08-31 vs 2026-09-01 to 2026-09-16",
+        "record_count": 22,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "comparison.currentPeriod.total",
+          "expected": "3011.15",
+          "present": true
+        },
+        {
+          "path": "comparison.comparisonPeriod.total",
+          "expected": "1970.00",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer provided is not supported by the retrieved context. The total spending for the current month is incorrectly stated as $5,000.00, while the context indicates it is $3,011.15. Additionally, the percentage change of 66.05% is incorrect based on the provided figures. The breakdown of spending categories does not match the context either, leading to a complete lack of accuracy and support."
+      },
+      "passed": false
+    },
+    {
+      "id": "net_worth_explained",
+      "question": "What is my net worth right now and how is it made up?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "As of 2026-09-16, your net worth is S$493640.00. For 2026-09, recorded income is S$6200.00, spending is S$3011.15, and savings are S$3188.85.",
+      "data_evidence": {
+        "tool": "financial_summary",
+        "label": "Financial summary",
+        "period": "2026-09-16",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.netWorth",
+          "expected": "493640.00",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects the net worth, income, spending, and savings as provided in the retrieved context. All figures match the data, and the context is fully utilized to support the claims made in the answer."
+      },
+      "passed": true
+    },
+    {
+      "id": "emergency_fund_vs_moneysense",
+      "question": "Is my emergency fund large enough compared with MoneySense guidance?",
+      "user": "primary",
+      "mode": "hybrid",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "According to MoneySense guidance, it is recommended to set aside at least 3 to 6 months' worth of expenses for an emergency fund. Your average monthly essential spending is S$2,999.67, which means you should aim for an emergency fund of approximately S$8,999.01 to S$17,998.02.\n\nYour current emergency runway is about 10.41 months, which translates to approximately S$31,227.20 (10.41 months x S$2,999.67). This amount exceeds the recommended range of S$8,999.01 to S$17,998.02, indicating that your emergency fund is more than sufficient according to MoneySense guidance.",
+      "data_evidence": {
+        "tool": "personal_context",
+        "label": "Your FireBuddy snapshot",
+        "period": "2026-09-16",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.emergencyRunwayMonths",
+          "expected": "10.414490",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects MoneySense guidance on emergency funds, stating the recommended amount of 3 to 6 months' worth of expenses. It correctly calculates the emergency fund needed based on the provided average monthly essential spending and confirms that the user's current emergency fund exceeds this recommendation. All numerical calculations are consistent with the retrieved context, and the answer is well-supported by the cited MoneySense sources."
+      },
+      "passed": true
+    },
+    {
+      "id": "savings_rate_vs_guidance",
+      "question": "Am I saving enough each month compared with the MoneySense 10 percent guideline?",
+      "user": "primary",
+      "mode": "hybrid",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "According to the MoneySense guideline, it is recommended to save at least 10% of your income for investments. \n\nYour recorded monthly income is S$6,200. Therefore, the minimum amount you should aim to save each month is:\n\n10% of S$6,200 = S$620.\n\nYou are currently saving S$3,188.85 each month, which is significantly higher than the recommended S$620. This means you are saving approximately 51.43% of your income, which exceeds the guideline. \n\nOverall, you are saving enough each month compared to the MoneySense 10% guideline.",
+      "data_evidence": {
+        "tool": "personal_context",
+        "label": "Your FireBuddy snapshot",
+        "period": "2026-09-16",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.monthlyPulse.savingsRate",
+          "expected": "0.514331",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately reflects the MoneySense guideline of saving at least 10% of income, correctly calculates the savings amount based on the provided income, and compares it to the actual savings. All numerical calculations are correct, and the answer is well-supported by the retrieved context, which confirms the guideline and the importance of saving for investments."
+      },
+      "passed": true
+    },
+    {
+      "id": "fire_timeline",
+      "question": "How long more to FIRE based on my current FireBuddy data?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that.",
+      "data_evidence": {
+        "tool": "fire_projection",
+        "label": "FIRE projection",
+        "period": "2026-09-16",
+        "record_count": null,
+        "destination": "/fire"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.fire.fundingStatus",
+          "expected": "review_required",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer states a lack of reliable context in the FireBuddy knowledge base, which is incorrect as the retrieved context provides sufficient data to evaluate the user's FIRE status. Therefore, the answer is unsupported and materially wrong."
+      },
+      "passed": false
+    },
+    {
+      "id": "cpf_adequacy_personalised",
+      "question": "Given my savings rate and runway, how should I think about CPF and retirement adequacy?",
+      "user": "primary",
+      "mode": "hybrid",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "To assess your retirement adequacy considering your savings rate and runway, it's important to understand how your CPF savings will contribute to your retirement income.\n\nYour current savings rate is approximately 51.43%, and you have an emergency runway of about 10.41 months, which indicates a solid financial buffer. Your average monthly essential spending is S$2,999.67, and your monthly income is S$6,200. \n\nThe CPF system is designed to provide lifelong monthly payouts in retirement, starting from age 65. To ensure you have adequate retirement savings, it's recommended to assess how much you will need for your desired lifestyle during retirement. The CPF Planner can help you estimate your future payouts based on your current savings.\n\nGiven your current investable assets of S$224,090 and net worth of S$493,640, you should consider whether these amounts, combined with your CPF savings, will meet your retirement income needs. If there is a shortfall, you may want to explore options such as making additional CPF top-ups or adjusting your savings strategy.\n\nFireBuddy suggests reviewing your financial plan to ensure you are on track for your retirement goals.",
+      "data_evidence": {
+        "tool": "personal_context",
+        "label": "Your FireBuddy snapshot",
+        "period": "2026-09-16",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.monthlyPulse.savingsRate",
+          "expected": "0.514331",
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 4,
+        "numerical_accuracy": 5,
+        "rationale": "The answer is well-grounded in the context provided, accurately reflecting the user's financial situation and the role of CPF in retirement planning. It correctly mentions the CPF system's structure, the importance of assessing retirement needs, and suggests using the CPF Planner, which is supported by the retrieved context. The numerical values for savings rate, emergency runway, and monthly spending are consistent with the context. However, while the answer references the CPF Planner, it could have included more direct citations from the retrieved context to enhance citation support."
+      },
+      "passed": true
+    },
+    {
+      "id": "next_action",
+      "question": "What is FireBuddy's suggested next step for my finances?",
+      "user": "primary",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that.",
+      "data_evidence": {
+        "tool": "financial_health_review",
+        "label": "Financial health review",
+        "period": "2026-09-16",
+        "record_count": null,
+        "destination": "/"
+      },
+      "mode_ok": true,
+      "facts": [
+        {
+          "path": "personal.recommendedAction.title",
+          "expected": null,
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer states that there is not enough reliable context in the FireBuddy knowledge base to provide a suggested next step for finances. However, the retrieved context contains detailed financial information, including spending categories, total expenses, and personal financial metrics. Therefore, the answer is unsupported and incorrect as it fails to utilize the available data."
+      },
+      "passed": false
+    },
+    {
+      "id": "missing_data_user",
+      "question": "How much have I spent this month?",
+      "user": "missing",
+      "mode": "data",
+      "expected_modes": [
+        "data",
+        "hybrid",
+        "knowledge"
+      ],
+      "answer": "I found no matching expenses from 2026-09-01 to 2026-09-30.",
+      "data_evidence": {
+        "tool": "expense_summary",
+        "label": "Expense summary",
+        "period": "2026-09-01 to 2026-09-30",
+        "record_count": 0,
+        "destination": "/insights"
+      },
+      "mode_ok": true,
+      "facts": [],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "judge": null,
+      "passed": true
+    }
+  ],
+  "report_version": 1,
+  "report_label": "Personal context over Jen demo, first run"
+}

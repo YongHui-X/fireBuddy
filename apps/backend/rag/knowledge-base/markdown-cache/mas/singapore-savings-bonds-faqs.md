@@ -1,24 +1,14 @@
 # Source: singapore-savings-bonds-faqs.pdf
 
-MONETARY AUTHORITY OF SINGAPORE
-
 SINGAPORE SAVINGS BONDS
 
 Updated as of June 2022
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
 SUMMARY OF APPLICATION AND
 
-MONETARY AUTHORITY OF SINGAPORE
+## A. INTRODUCTION AND PRODUCT FEATURES
 
-MONETARY AUTHORITY OF SINGAPORE
-
-A. INTRODUCTION AND PRODUCT FEATURES
-
-1. What are Savings Bonds? What are the main features?
+#### 1. What are Savings Bonds? What are the main features?
 
 • Savings Bonds are a special type of Singapore Government Securities (SGS) with features that make them suitable for Safe: Savings Bonds are backed by the Singapore Government.
 
@@ -28,7 +18,7 @@ Long-term: You can invest for up to 10 years and earn interest that increases ov
 
 Flexible: You don’t have to decide at the start how long you want to hold your Savings Bonds. You can get your funds back within a month, with no penalty.
 
-2. Are Savings Bonds going to be a permanent feature?
+#### 2. Are Savings Bonds going to be a permanent feature?
 
 • The SSB programme was launched in 2015 to offer individuals a safe, long-term and flexible product to meet their savings needs.
 
@@ -36,25 +26,21 @@ Flexible: You don’t have to decide at the start how long you want to hold your
 
 • Given the positive reception, MAS will maintain the SSB programme to meet the savings needs of individual investors.
 
-3. Can corporates purchase Savings Bonds?
+#### 3. Can corporates purchase Savings Bonds?
 
 • No, only individual investors can purchase Savings Bonds.
 
-4. Is there a minimum age requirement?
+#### 4. Is there a minimum age requirement?
 
 • You need to be at least 18 years old to open an individual CDP Securities account or Supplementary Retirement Scheme (SRS)
 
 account to hold Savings Bonds.
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
-5. I am a foreigner/I am not a Singapore resident. Am I eligible to purchase Savings Bonds?
+#### 5. I am a foreigner/I am not a Singapore resident. Am I eligible to purchase Savings Bonds?
 
 • Yes. Please refer to Question 20 for what you will need in order to buy Savings Bonds.
 
-6. How are interest rates for Savings Bonds determined and where can I check the interest rates for each issue?
+#### 6. How are interest rates for Savings Bonds determined and where can I check the interest rates for each issue?
 
 • Savings Bonds offer you a return that increases the longer you hold them for. This “step up” feature of the SSB reflects the objective of the Savings Bond programme, which is to facilitate long-term savings and investment.
 
@@ -66,11 +52,7 @@ o The second exception is due to very small rounding differences of up to +/-0.0
 
 • MAS will announce the interest rates for each Savings Bond, as well as the returns over different holding periods, upon opening applications for that Savings Bond issue. The information will be published on the Savings Bonds website (www.mas.gov.sg/ssb) and in local newspapers.
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
-7. What happens to the value of my Savings Bonds when market interest
+#### 7. What happens to the value of my Savings Bonds when market interest rates change?
 
 • Once a Savings Bond is issued, changes in the interest rate environment will have no effect on the bond’s value. Unlike conventional bonds whose values fluctuate with interest rate movements, Savings Bonds are always redeemable at the amount originally invested with no capital losses.
 
@@ -78,7 +60,7 @@ MONETARY AUTHORITY OF SINGAPORE
 
 than the interest rates you receive from your Savings Bond holdings. You have the option to redeem your Savings Bond for the original invested capital with no penalty, and apply for new Savings Bond issues with higher interest rates, if you find that the latter is more attractive. Before you do this, you should consider whether a new Savings Bond with lower initial interest payments outweighs the stepped-up coupons you will be receiving on an existing Savings Bond that you may have held for some years.
 
-8. When is interest paid? When will I receive the interest payments?
+#### 8. When is interest paid? When will I receive the interest payments?
 
 • Interest is paid every 6 months, on the 1st business day of the month. The first interest payment will be made 6 months after you receive your Savings Bonds. As an example, for a Savings Bond that is issued on 1 Oct, the interest payments will be made on 1 Apr and 1 Oct (assuming they are business days) of each subsequent year for the next 10 years as long as you continue to hold the Savings
 
@@ -88,13 +70,9 @@ For cash subscriptions: your designated Direct Crediting Service (DCS) bank acco
 
 For SRS subscriptions: your SRS account.
 
-9. I have not received my interest payment. What should I do?
+#### 9. I have not received my interest payment. What should I do?
 
 • For cash subscriptions, check your designated DCS-linked bank account for the interest payments. If you cannot remember which bank account is linked to your CDP account, you can check using the CDP internet service or refer to the header section in your monthly CDP account statement to find out.
-
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
 
 • For SRS subscriptions, interest will be paid into your SRS account.
 
@@ -102,37 +80,35 @@ Check your SRS account for interest payments.
 
 • Please note that interest payments are made every 6 months from the issue date (and not the application month) of the SSB. Check the exact SSB issue which you hold (i.e. through CDP statements, online CDP account, or SSB’s My Savings Bonds portal) and look out for interest payments in the correct month.
 
-A.4 INVESTMENT AMOUNTS
+### A.4 INVESTMENT AMOUNTS
 
-10. How much can I invest in Savings Bonds?
+#### 10. How much can I invest in Savings Bonds?
 
 • You can start from as low as of $500. This is the minimum investment amount. Subsequent investment amounts must be made in multiples of $500.
 
 • The maximum amount of Savings Bonds that each investor may hold at any one time is $200,000 (the “Individual Limit”).
 
-11. Are there separate Individual Limits for cash and SRS purchases?
+#### 11. Are there separate Individual Limits for cash and SRS purchases?
 
 • No, there are no separate limits for cash and SRS purchases. The maximum amount of Savings Bonds you can hold, across both cash and SRS accounts, is $200,000 (the “Individual Limit”).
 
-12. If I have reached my Individual Limit but have submitted a redemption request, will I be able to apply for new Savings Bonds within the same month to bring my total holdings back to the
+#### 12. If I have reached my Individual Limit but have submitted a redemption request, will I be able to apply for new Savings Bonds within the same month to bring my ...
+
+If I have reached my Individual Limit but have submitted a redemption request, will I be able to apply for new Savings Bonds within the same month to bring my total holdings back to the Individual Limit?
 
 • Yes. You can redeem your holdings in SSB and apply for a new bond in the same month, provided you are within your total Individual Limit of S$200,000. However, you must ensure that there is sufficient money in your bank account at the point of application as your redemption proceeds will only be returned to you by the end of the second business day of the following month from when you submitted the redemption application.
 
-MONETARY AUTHORITY OF SINGAPORE
+### A.5 ISSUANCE AND REDEMPTION
 
-MONETARY AUTHORITY OF SINGAPORE
-
-A.5 ISSUANCE AND REDEMPTION
-
-13. How often are Savings Bonds issued? When can I redeem my Savings
+#### 13. How often are Savings Bonds issued? When can I redeem my Savings Bonds?
 
 • Savings Bonds are issued every month. Each Savings Bond has a tenor of 10 years, and you will be able to redeem your Savings Bonds in any month before the bond matures with no penalty.
 
-14. Is there a minimum holding period?
+#### 14. Is there a minimum holding period?
 
 • You can apply to redeem your Savings Bonds as early as the month in which the bond is issued. Redemption proceeds will be paid out by the 2nd business day of the following month.
 
-15. Is there any scenario under which I am allowed to transfer my Savings
+#### 15. Is there any scenario under which I am allowed to transfer my Savings Bonds?
 
 • Savings Bonds cannot be transferred except in specific situations such as the death of the bondholder, or transfers between your own SRS/CDP accounts if SSB were purchased with SRS funds as follows:
 
@@ -142,39 +118,35 @@ Please reach out to your SRS Operator for more information.
 
 • In the case of death, the bonds can be transferred to the rightful beneficiaries according to the deceased person’s will or under the intestacy law. Such authorised transfers are not subject to the Individual Limit (see Question 10).
 
-16. Can I trade Savings Bonds or pledge them as collateral?
+#### 16. Can I trade Savings Bonds or pledge them as collateral?
 
 • No. Savings Bonds cannot be bought or sold in the open market, or traded on SGX like shares. They also cannot be pledged as collateral.
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
-17. What happens to my Savings Bonds when I die?
+#### 17. What happens to my Savings Bonds when I die?
 
 • In the case of death, the bonds will be transferred to the rightful beneficiaries according to the deceased person’s will or according to the applicable intestacy laws. Such authorised transfers are not subject to the Individual Limit.
 
 • You should seek legal advice or help from the public trustee office with regard to the exact process of transferring or redeeming SSBs upon death of the bond holder.
 
-A.7 COMPARISON WITH SINGAPORE GOVERNMENT SECURITIES (SGS) BONDS AND FIXED DEPOSITS
+### A.7 COMPARISON WITH SINGAPORE GOVERNMENT SECURITIES (SGS) BONDS AND FIXED DEPOSITS
 
-18. How are Savings Bonds different from conventional SGS bonds?
+#### 18. How are Savings Bonds different from conventional SGS bonds?
 
 • Conventional SGS bonds can be traded on SGX. The prices of conventional SGS bonds can also change depending on market interest rates movements. This means that if you sell your conventional SGS before maturity, you may receive more or less than your invested capital. In contrast, Savings Bonds are not tradable, so you cannot sell them on SGX. You can, however, choose to redeem them from the Government in any month, and receive all your invested capital back.
 
 • Savings Bonds have a lower minimum investment amount and unit size of $500 compared to $1,000 for conventional SGS. Individuals can hold up to $200,000 of Savings Bonds at any point, but there are no investment limits on conventional SGS.
 
-19. How do Savings Bonds compare with fixed deposits?
+#### 19. How do Savings Bonds compare with fixed deposits?
 
 • Savings Bonds offer individual investors another way to save for the long term. Most fixed deposits have tenors of up to 2 or 3 years, while Savings Bonds allow you to save for up to 10 years. In addition, Savings Bonds are backed by the Government, rather than
 
-• As there are many banks offering fixed-deposit products with differing terms and conditions (e.g. minimum investment sums, penalties for early withdrawal, promotional rates), you may wish to get more information on the products offered by banks and compare these against the Savings Bonds to see which better suits MONETARY AUTHORITY OF SINGAPORE MONETARY AUTHORITY OF SINGAPORE
+• As there are many banks offering fixed-deposit products with differing terms and conditions (e.g. minimum investment sums, penalties for early withdrawal, promotional rates), you may wish to get more information on the products offered by banks and compare these against the Savings Bonds to see which better suits
 
-B. APPLYING FOR SAVINGS BONDS
+## B. APPLYING FOR SAVINGS BONDS
 
-B.1 GETTING STARTED
+### B.1 GETTING STARTED
 
-20. What do I need in order to buy Savings Bonds?
+#### 20. What do I need in order to buy Savings Bonds?
 
 • For cash applications, you will need:
 
@@ -190,27 +162,23 @@ DBS/POSB, OCBC or UOB) and internet banking access with the
 
 • It is not necessary to have a trading account with a securities broker to purchase Savings Bonds.
 
-21. Why do I need to open a CDP Securities account to buy Savings Bonds using cash? Can I use my joint CDP Securities account to buy Savings
+#### 21. Why do I need to open a CDP Securities account to buy Savings Bonds using cash? Can I use my joint CDP Securities account to buy Savings Bonds?
 
 • CDP is the custodian for Savings Bonds. You will need to have an individual CDP Securities account to hold your Savings Bonds if you are applying with cash.
 
 • Savings Bonds may not be held in any other types of CDP accounts (such as joint accounts).
 
-22. Can I purchase Savings Bonds in joint name or under a trust account?
+#### 22. Can I purchase Savings Bonds in joint name or under a trust account?
 
 • You need to have a CDP Securities account in your own name in order to purchase Savings Bonds.
 
 • However, you can pay for the Savings Bonds from a joint bank account tagged to your personal ATM card.
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
-23. Can I use Central Provident Fund (CPF) funds to buy Savings Bonds?
+#### 23. Can I use Central Provident Fund (CPF) funds to buy Savings Bonds?
 
 • No, CPF funds cannot be used to invest in Savings Bonds.
 
-24. What is SRS? I do not have a SRS account. How do I open a SRS
+#### 24. What is SRS? I do not have a SRS account. How do I open a SRS account?
 
 • The Supplementary Retirement Scheme is a voluntary scheme to encourage individuals to save for retirement, over and above their CPF savings. Contributions to SRS are eligible for tax relief. For more information on SRS, please refer to the Ministry of Finance’s website
 
@@ -222,15 +190,11 @@ MONETARY AUTHORITY OF SINGAPORE
 
 - UOB: https://www.uob.com.sg/personal/invest/financial/srs-
 
-B.2 APPLICATION PERIOD
+### B.2 APPLICATION PERIOD
 
 Overview of the monthly application timeline
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
-25. When can I apply for Savings Bonds?
+#### 25. When can I apply for Savings Bonds?
 
 • A new Savings Bond will be issued every month. MAS will announce (www.mas.gov.sg/ssb) details of the upcoming Savings Bond issue (such as the amount available and interest rates) on the 1st business day of each month.
 
@@ -240,13 +204,13 @@ MONETARY AUTHORITY OF SINGAPORE
 
 7am-9pm, Mon-Sat (excluding Public Holidays)
 
-26. Can I apply for past SSB issues or buy more of an SSB issue that I own?
+#### 26. Can I apply for past SSB issues or buy more of an SSB issue that I own?
 
 • No. SSBs are only available for purchase during the bond’s application period. Older SSB issues are not for sale once the application period is over.
 
-B.3 UNDERSTANDING ISSUE CODES
+### B.3 UNDERSTANDING ISSUE CODES
 
-27. Can you help me understand the names and the issue codes for
+#### 27. Can you help me understand the names and the issue codes for Savings Bonds?
 
 • Savings Bonds are issued monthly and are thus identified by the year and month they were issued. This means that the bond’s issuance year and month will be shown when you apply for or redeem Savings Bonds at ATMs or via internet banking portals. The bond’s issuance year and month will also be shown in CDP and SRS statements which state your Savings Bonds investments. Lastly, bank statement and SRS accounts would reflect the name of the Savings Bonds when you receive your coupons and principal.
 
@@ -254,17 +218,13 @@ B.3 UNDERSTANDING ISSUE CODES
 
 • GX15100F is the unique issue code assigned by MAS. The first two letters, “GX”, denote that this is a Savings Bond. The next four numbers show the year and month the bond was issued, e.g.
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
 “GX15100F” is the bond issued in Oct 2015. The last digit (“0”) and alphabet (“F”) are for MAS’ internal reference.
 
 • Finally, SGX assigns each Savings Bond an ISIN (“International Securities Identification Number”), in line with international practices for securities.
 
-B.4 SUBMITTING APPLICATIONS
+### B.4 SUBMITTING APPLICATIONS
 
-28. Where can I apply for Savings Bonds?
+#### 28. Where can I apply for Savings Bonds?
 
 • For applications using cash, apply via DBS/POSB, OCBC and UOB ATMs or internet banking portals, and OCBC’s mobile application.
 
@@ -274,7 +234,7 @@ Have your CDP account number ready when you apply.
 
 • Please note that you cannot apply for Savings Bonds at the bank counters in person.
 
-29. When will the monies be deducted from my bank account? Do I receive interest on the monies that are deducted from my bank account when I make the application?
+#### 29. When will the monies be deducted from my bank account? Do I receive interest on the monies that are deducted from my bank account when I make the application?
 
 • For applications using cash, the money will be deducted from your bank account at the point of application.
 
@@ -282,15 +242,13 @@ Have your CDP account number ready when you apply.
 
 • You will receive interest only after the Savings Bond is issued.
 
-30. Can I make changes to or cancel submitted applications?
+#### 30. Can I make changes to or cancel submitted applications?
 
 • No. You will not be able to amend or cancel submitted applications.
 
-31. Can I make multiple applications through different banks for the same Savings Bond issue? What will happen to my earlier requests? Will they be overwritten or superseded?
+#### 31. Can I make multiple applications through different banks for the same Savings Bond issue? What will happen to my earlier requests? Will they be overwritten or ...
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
+Can I make multiple applications through different banks for the same Savings Bond issue? What will happen to my earlier requests? Will they be overwritten or superseded?
 
 • For applications using cash, you can make multiple applications through either the same or different banks. However, each application will be charged a $2 transaction fee by the bank.
 
@@ -302,13 +260,15 @@ Submitted applications will not be overwritten or superseded. We will compile al
 
 • Please note that you cannot submit a redemption request for the same bond in order to reduce the application amount. Redemption requests can only be made for securities that you already hold.
 
-32. Can I authorize the bank to apply for Savings Bonds on my behalf?
+#### 32. Can I authorize the bank to apply for Savings Bonds on my behalf?
 
 • No.
 
-B.5 APPLICATION RESULTS
+### B.5 APPLICATION RESULTS
 
-33. When will I know the results of my Savings Bonds application? How do I know how much Savings Bonds I have received? What happens if my application is unsuccessful or partially filled?
+#### 33. When will I know the results of my Savings Bonds application? How do I know how much Savings Bonds I have received? What happens if my application is ...
+
+When will I know the results of my Savings Bonds application? How do I know how much Savings Bonds I have received? What happens if my application is unsuccessful or partially filled?
 
 • MAS will perform the allotment (please refer to Question 34) and announce the overall application results on the 3rd last business day of the month. You will be able to view the results on the Savings Bonds website (www.mas.gov.sg/ssb).
 
@@ -318,15 +278,11 @@ o The cutoff amount: if the amount of Savings Bonds you have applied for is equa
 
 (i) the cutoff amount, or (ii) $500 more than the cutoff o Random allotment %: this is the chance that you will receive an additional $500 of Savings Bonds if your application is above the cutoff amount.
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
 • If your application is successful, the Savings Bonds will be credited into your CDP account (for cash subscriptions) or SRS account (for SRS subscriptions) on the issuance date. This information will also be updated on the Savings Bonds portal one day after the issuance date (please refer to Question 42 for information on how to check your Savings Bond holdings).
 
 • If your application is unsuccessful or partially filled, For cash applications, any excess money will be refunded by the next business day after allotment day. You can check the amount refunded with the bank through which you applied for For SRS applications, banks will release the earmarked SRS funds back to your SRS account by the next business day after
 
-34. How are Savings Bonds allotted? Why would I be allotted less than the amount I applied for?
+#### 34. How are Savings Bonds allotted? Why would I be allotted less than the amount I applied for?
 
 • After the close of the application period, MAS’ allocation system will sum up all applications received using cash and SRS funds, check that these applications do not exceed the Individual Limit and distribute the bond to applicants.
 
@@ -335,10 +291,6 @@ MONETARY AUTHORITY OF SINGAPORE
 • If the number of applicants is so large that issuing $500 per applicant will exceed the total issuance size, the bonds will be allocated among applicants on a random basis, at $500 each.
 
 • This means that, in the event a particular issue is oversubscribed, you may not get the full amount that you have applied for.
-
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
 
 Allotment in an oversubscription – an illustration
 
@@ -360,11 +312,11 @@ o Example: Applicant makes three applications (1st application - $6k cash; 2nd a
 
 and was allotted $15k of SSB based on the Quantity Ceiling format. In this case, his 1st, 2nd and $3k of his 3rd application will be filled (i.e. overall, the applicant is allotted $9k of SSB from cash applications and $6k of SSB from the SRS
 
-35. Should I apply for a larger amount so I have a higher chance of getting more Savings Bonds?
+#### 35. Should I apply for a larger amount so I have a higher chance of getting more Savings Bonds?
 
-• No, applying for a larger amount does not give you a higher chance of getting more bonds. The allotment method aims to distribute MONETARY AUTHORITY OF SINGAPORE MONETARY AUTHORITY OF SINGAPORE Savings Bonds as evenly as possible. Hence, you should only apply for the amount you wish to buy.
+• No, applying for a larger amount does not give you a higher chance of getting more bonds. The allotment method aims to distribute Savings Bonds as evenly as possible. Hence, you should only apply for the amount you wish to buy.
 
-36. My application was rejected. Why did this happen?
+#### 36. My application was rejected. Why did this happen?
 
 • To know the reason for the rejection of your application, you will have to contact the bank through which you submitted your
 
@@ -374,41 +326,37 @@ o Your CDP account does not have Direct Crediting Services (DCS). To check wheth
 
 o The Individual Limit of S$200,000 has been exceeded. To check whether the individual limits have been exceeded, you can access My Saving Bonds portal via the SSB website (www.mas.gov.sg/ssb) using your SingPass. The portal will allow you to view your total SSB holdings purchased using both cash and SRS funds.
 
-37. What happens if I close my CDP or SRS account before the bonds are
+#### 37. What happens if I close my CDP or SRS account before the bonds are credited?
 
 • If you close your CDP account, CDP will be unable to credit the Savings Bonds into your account. The Savings Bonds will be automatically redeemed and the principal and accrued interest of the redeemed Savings Bonds will be held in trust by CDP. The monies will be returned to you once you have re-opened a CDP account with a DCS-linked bank account.
 
 • If you close your SRS account, your SRS Operator will be unable to credit the Savings Bonds into your account. Therefore, your SRS Operator may not allow you to close your account if you have a
 
-38. How will I receive interest payments?
+#### 38. How will I receive interest payments?
 
 • Interest will be automatically credited into the following accounts:
 
 For cash subscriptions: your designated DCS bank account. This is the bank account that is linked to your individual CDP For SRS subscriptions: your SRS account.
 
-MONETARY AUTHORITY OF SINGAPORE
+### B.6 FEES & CHARGES
 
-MONETARY AUTHORITY OF SINGAPORE
-
-B.6 FEES & CHARGES
-
-39. What are the fees and charges involved? Does the bank charge an administration fee as well?
+#### 39. What are the fees and charges involved? Does the bank charge an administration fee as well?
 
 • The bank will charge a transaction fee of $2 for each Savings Bond application and each Savings Bond redemption request. For applications using cash, the transaction fee is deducted directly from your bank account. For applications using SRS funds, the transaction fee is deducted directly from your SRS balance. For other fees and charges which may arise from your participating bank account, kindly refer to the bank’s Terms and Conditions.
 
 • Transaction fees are non-refundable and will apply even if your application requests were unsuccessful.
 
-40. Is the $2 fee chargeable per application or per individual?
+#### 40. Is the $2 fee chargeable per application or per individual?
 
 • The $2 transaction fee will apply for each Savings Bond application request and each Savings Bond redemption request.
 
-41. Are returns from Savings Bonds taxable?
+#### 41. Are returns from Savings Bonds taxable?
 
 • No. The interest which you earn from the purchase of Savings Bonds is tax-exempted and does not have to be included in the chargeable income for your tax return.
 
-B.7 CHECKING YOUR SAVINGS BOND HOLDINGS
+### B.7 CHECKING YOUR SAVINGS BOND HOLDINGS
 
-42. How and where can I check what Savings Bonds I have?
+#### 42. How and where can I check what Savings Bonds I have?
 
 For cash subscriptions
 
@@ -417,10 +365,6 @@ For cash subscriptions
 • You can check the bonds held in your CDP Securities account through the following methods:
 
 View the CDP Securities account holdings online through the CDP Internet service (www.sgx.com/cdp).
-
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
 
 Contact the CDP Call Centre (6535-7511) and select option 2 to retrieve your CDP securities balance.
 
@@ -436,7 +380,7 @@ For cash and SRS subscriptions
 
 • NRIC holders may log in to the My Savings Bonds portal using your Singpass ID. Please note that logins via FIN are currently not
 
-43. How can I check how much interest I’m receiving from each of the Savings Bonds I hold?
+#### 43. How can I check how much interest I’m receiving from each of the Savings Bonds I hold?
 
 • Your interest payments will be reflected in the CDP account statement or SRS account statement for the month when the interest is paid.
 
@@ -444,19 +388,15 @@ For cash and SRS subscriptions
 
 • You may also visit the SGS website (www.mas.gov.sg/sgs) to view the interest rates of all Savings Bond issues.
 
-MONETARY AUTHORITY OF SINGAPORE
+## C. REDEEMING YOUR SAVINGS BONDS
 
-MONETARY AUTHORITY OF SINGAPORE
+### C.1 GENERAL INFORMATION
 
-C. REDEEMING YOUR SAVINGS BONDS
-
-C.1 GENERAL INFORMATION
-
-44. What does “redemption” mean?
+#### 44. What does “redemption” mean?
 
 • It means that you return your Savings Bond to the Government before it matures in exchange for your principal and any accrued
 
-45. Can you guide me on how to redeem my Savings Bonds?
+#### 45. Can you guide me on how to redeem my Savings Bonds?
 
 • For cash investments, submit redemption requests through DBS/POSB, OCBC and UOB ATMs or internet banking portals, or OCBC’s mobile application.
 
@@ -466,15 +406,15 @@ C.1 GENERAL INFORMATION
 
 • The bank will charge a transaction fee of $2 for each Savings Bond
 
-46. I have submitted a redemption request. When will I get my money
+#### 46. I have submitted a redemption request. When will I get my money back?
 
 • You will get your redemption amount back (along with any accrued interest) by the 2nd business day of the following month. The redemption amount and accrued interest will be paid to the bank account that is linked to your individual CDP Securities account, or the SRS account.
 
-47. Must I redeem the Savings Bonds that I purchased using SRS funds through the SRS Operator? Can I submit the redemption request through other banks?
+#### 47. Must I redeem the Savings Bonds that I purchased using SRS funds through the SRS Operator? Can I submit the redemption request through other banks?
 
-• You must redeem Savings Bonds bought using SRS funds via the SRS Operator. You cannot submit redemption request through other MONETARY AUTHORITY OF SINGAPORE MONETARY AUTHORITY OF SINGAPORE
+• You must redeem Savings Bonds bought using SRS funds via the SRS Operator. You cannot submit redemption request through other
 
-48. I cannot remember which Savings Bonds were bought using SRS funds and which were bought using cash. What should I do?
+#### 48. I cannot remember which Savings Bonds were bought using SRS funds and which were bought using cash. What should I do?
 
 • You can check your SSB holdings by logging in to the My Savings Bonds portal, accessible via the SSB website (www.mas.gov.sg/ssb).
 
@@ -488,55 +428,51 @@ View your CDP account statement sent to your mailing address if you have subscri
 
 • You can also check the bonds held in your SRS account through the internet banking portal of your SRS Operator.
 
-C.2 REDEMPTION PERIOD
+### C.2 REDEMPTION PERIOD
 
-49. When can I apply to redeem my Savings Bonds? Will I lose money if I redeem before it matures?
+#### 49. When can I apply to redeem my Savings Bonds? Will I lose money if I redeem before it matures?
 
 • You can redeem your Savings Bonds in any given month before the bond matures, with no penalty for exiting your investment early.
 
 • The redemption period opens on the 1st business day of each month and closes on the 4th last business day of the month. You will receive your redemption proceeds along with any accrued interest by the 2nd business day of the following month. For example, if you submit a redemption request of $1,000 in May, you will receive the $1,000 and any accrued interest by the end of the 2nd business day in June.
 
-MONETARY AUTHORITY OF SINGAPORE
+### C.3 SUBMITTING REDEMPTION REQUESTS
 
-MONETARY AUTHORITY OF SINGAPORE
-
-C.3 SUBMITTING REDEMPTION REQUESTS
-
-50. Can I make a partial redemption? Is there a minimum redemption amount? Must I redeem in blocks of $500?
+#### 50. Can I make a partial redemption? Is there a minimum redemption amount? Must I redeem in blocks of $500?
 
 • Partial redemptions are allowed. The minimum redemption amount for each issue is $500. You can redeem in multiples of $500 up to the amount you invested. You will receive the amount you requested in full, along with any accrued interest.
 
-51. Can I authorize the bank to redeem Savings Bonds on my behalf?
+#### 51. Can I authorize the bank to redeem Savings Bonds on my behalf?
 
 • No.
 
-52. Will there be any penalty for exiting my investment early?
+#### 52. Will there be any penalty for exiting my investment early?
 
 • No, there will not be any penalty for redeeming your bond before it matures. You will receive your investment amount back in full along with any accrued interest. A transaction fee of $2 will apply for each
 
-53. Can I make changes to or withdraw submitted redemptions? Do I do that through my bank?
+#### 53. Can I make changes to or withdraw submitted redemptions? Do I do that through my bank?
 
 • You will not be able to amend or cancel submitted redemption
 
-54. Can I make multiple redemptions for the same Savings Bond issue through the same and/or different banks? What will happen to my earlier requests? Will they be overwritten or superseded?
+#### 54. Can I make multiple redemptions for the same Savings Bond issue through the same and/or different banks? What will happen to my earlier requests? Will they be ...
+
+Can I make multiple redemptions for the same Savings Bond issue through the same and/or different banks? What will happen to my earlier requests? Will they be overwritten or superseded?
 
 • Yes. You can submit multiple redemption requests through either the same or different banks. Your earlier redemption requests will not be overwritten or superseded. The multiple requests will be processed, so long as you have that amount of Savings Bonds.
 
 • Please note that a transaction fee of $2 will apply for each redemption request. You will not be able to amend or cancel submitted redemption requests.
 
-MONETARY AUTHORITY OF SINGAPORE
+#### 55. Must I redeem Savings Bonds through the same bank that I applied through? If I made my Savings Bonds application via Bank A, can I redeem my Savings Bonds via ...
 
-MONETARY AUTHORITY OF SINGAPORE
-
-55. Must I redeem Savings Bonds through the same bank that I applied through? If I made my Savings Bonds application via Bank A, can I redeem my Savings Bonds via another Bank (e.g. Bank B)?
+Must I redeem Savings Bonds through the same bank that I applied through? If I made my Savings Bonds application via Bank A, can I redeem my Savings Bonds via another Bank (e.g. Bank B)?
 
 • For cash investments, you do not need to submit redemption requests through Bank A. You may redeem your Savings Bond via Bank B. Bank B’s transaction fees will apply. Redemption proceeds will be credited to your designated DCS bank account with CDP.
 
 • For SRS investments, your redemption request must be submitted via your SRS Operator. Redemption proceeds will be credited back to your SRS account with the operators.
 
-C.4 ACCRUED INTEREST
+### C.4 ACCRUED INTEREST
 
-56. What is accrued interest? How is the accrued interest calculated if I redeem my Savings Bond before it matures?
+#### 56. What is accrued interest? How is the accrued interest calculated if I redeem my Savings Bond before it matures?
 
 • Accrued interest is interest that you have earned on your bond since the last interest payment was made. When you redeem part or all of your Savings Bonds in between scheduled interest payments (which occur every 6 months), you will receive accrued interest together with the redemption amount.
 
@@ -546,15 +482,15 @@ If you submit a request in March to redeem the full $1,000 of your January bond,
 
 Your redemption amount of $1,000; and
 
-3 months' worth of accrued interest (Jan to Mar), which is MONETARY AUTHORITY OF SINGAPORE MONETARY AUTHORITY OF SINGAPORE
+3 months' worth of accrued interest (Jan to Mar), which is
 
-57. How is accrued interest calculated?
+#### 57. How is accrued interest calculated?
 
 • The actual amount of accrued interest paid out on each redemption date is calculated according to this formula:
 
-C.5 REDEMPTION STATUS
+### C.5 REDEMPTION STATUS
 
-58. How can I check the results of my redemption requests? Will the bank
+#### 58. How can I check the results of my redemption requests? Will the bank notify me?
 
 • For cash investments, CDP will send you an email when the notification is available online in CDP internet or by mail if you have subscribed to the paper statement service. The combined principal and accrued interest will be credited as a single amount to your designated DCS bank account by the 2nd business day of the
 
@@ -562,47 +498,39 @@ C.5 REDEMPTION STATUS
 
 The principal and accrued interest will be credited to your SRS account by the 2nd business day of the following month.
 
-C.6 AT MATURITY
+### C.6 AT MATURITY
 
-59. What happens when my Savings Bond matures? What do I need to
+#### 59. What happens when my Savings Bond matures? What do I need to do?
 
 • You do not need to take any action. Your principal and the last interest payment will be automatically credited to your DCS bank account or SRS account. No fees will be incurred.
 
-MONETARY AUTHORITY OF SINGAPORE
-
-MONETARY AUTHORITY OF SINGAPORE
-
-D. CENTRAL DEPOSITORY (CDP) SECURITIES ACCOUNT
+## D. CENTRAL DEPOSITORY (CDP) SECURITIES ACCOUNT
 
 OPENING AND DIRECT CREDITING SERVICE (DCS)
 
 ACTIVATION (FOR CASH SUBSCRIPTIONS)
 
-D.1 GENERAL INFORMATION
+### D.1 GENERAL INFORMATION
 
-60. Why do I need to open a CDP Securities account to buy Savings
+#### 60. Why do I need to open a CDP Securities account to buy Savings Bonds?
 
 • You will need to have an Individual CDP Securities account as a holding account to deposit your Savings Bonds. Savings Bonds may not be held in any other types of CDP accounts (such as joint accounts) or in accounts outside CDP.
 
-61. Can Savings Bonds be placed into a joint CDP Securities account?
+#### 61. Can Savings Bonds be placed into a joint CDP Securities account?
 
 • You will require an Individual CDP Securities account in order to apply for Savings Bonds. Applications through other types of CDP accounts, including joint CDP Securities accounts, will be rejected.
 
 • Transfers of Savings Bonds from individual CDP Securities accounts to other types of CDP Securities accounts will also not be allowed.
 
-62. Why must I apply for Direct Crediting Service (DCS)? What is DCS activation? Why do I need to do this?
+#### 62. Why must I apply for Direct Crediting Service (DCS)? What is DCS activation? Why do I need to do this?
 
 • DCS allows CDP to credit your Singapore-dollar cash entitlements such as dividends and interest payments into your designated bank account. Your CDP Securities account must already have a DCS bank account linked up before you can apply for the Savings Bonds.
 
 • Participating DCS banks in Singapore are currently: Citibank, DBS/POSB, HSBC, Maybank, OCBC, Standard Chartered Bank and UOB. There are no DCS banks outside Singapore.
 
-MONETARY AUTHORITY OF SINGAPORE
+### D.2 CDP SECURITIES ACCOUNT OPENING
 
-MONETARY AUTHORITY OF SINGAPORE
-
-D.2 CDP SECURITIES ACCOUNT OPENING
-
-63. How do I set up a CDP Securities account?
+#### 63. How do I set up a CDP Securities account?
 
 • Apply online at the SGX website here.
 
@@ -614,11 +542,11 @@ D.2 CDP SECURITIES ACCOUNT OPENING
 
 • It takes an average of 5 business days from the time you submit the full application to the time that you receive notifications from CDP on the opening of the CDP Securities account and the activation of
 
-64. I’ve forgotten if I have a CDP Securities account. How do I check if I
+#### 64. I’ve forgotten if I have a CDP Securities account. How do I check if I have one?
 
 • You can contact the CDP Call Centre (6535-7511) and select option 1 to retrieve your CDP Securities account number.
 
-65. How long does it take to open a CDP Securities account and to
+#### 65. How long does it take to open a CDP Securities account and to activate DCS?
 
 • It takes an average of 5 business days from the time you submit the account application form to the time that you receive notifications from CDP on (i) the opening of the CDP Securities account; and (ii)
 
@@ -626,17 +554,17 @@ activation of DCS.
 
 • Please note that you will not be able to apply to buy Savings Bonds until you have received both of these notifications.
 
-66. Can my bank assist with the opening of CDP account and same day investment of Savings Bonds at any of its bank branches?
+#### 66. Can my bank assist with the opening of CDP account and same day investment of Savings Bonds at any of its bank branches?
 
-• No, the opening of CDP Securities accounts is not available at the MONETARY AUTHORITY OF SINGAPORE MONETARY AUTHORITY OF SINGAPORE
+• No, the opening of CDP Securities accounts is not available at the
 
-67. Are there any charges for opening a CDP Securities account?
+#### 67. Are there any charges for opening a CDP Securities account?
 
 • No.
 
-D.3 DIRECT CREDITING SERVICE (DCS) ACTIVATION
+### D.3 DIRECT CREDITING SERVICE (DCS) ACTIVATION
 
-68. I have CDP Securities Account but do not have a designated DCS bank account. How do I apply for DCS?
+#### 68. I have CDP Securities Account but do not have a designated DCS bank account. How do I apply for DCS?
 
 1. Online through the CDP Internet service
 
@@ -658,7 +586,7 @@ D.3 DIRECT CREDITING SERVICE (DCS) ACTIVATION
 
 - Enter the designated bank name and bank account number
 
-69. I’ve forgotten if I have a designated DCS bank account. How do I check if I have one?
+#### 69. I’ve forgotten if I have a designated DCS bank account. How do I check if I have one?
 
 • You can check your DCS bank account number through the following a. Refer to the header section in your monthly CDP statement.
 
@@ -668,10 +596,8 @@ Click on “CDP Internet Service/Login”
 
 Click on “Customer Service/Direct Crediting Service”
 
-70. Can I change the nominated bank account for DCS later?
+#### 70. Can I change the nominated bank account for DCS later?
 
 • Yes, you can change the nominated bank account for DCS.
 
 • The process for changing the nominated account is the same as for DCS application. (Please refer to Question 68.)
-
-MONETARY AUTHORITY OF SINGAPORE

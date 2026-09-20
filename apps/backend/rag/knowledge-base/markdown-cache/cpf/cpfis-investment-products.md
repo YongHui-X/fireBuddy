@@ -70,7 +70,7 @@ Singapore Government currently available
 
 | Bonds Guaranteed by Singapore Government | No products currently available |  |  |  |  | • Brokers (PDF, 0.1MB) |
 
-Up to 35% of investible savings (PDF, 0.1MB) can be invested in:
+## Up to 35% of investible savings (PDF, 0.1MB) can be invested in:
 
 Shares ✔ ✘ • List of Shares, Property Funds • Brokers (PDF, 0.1MB)
 
@@ -86,7 +86,7 @@ Corporate Bonds ✔ ✘
 
 • Corporate Bonds (PDF, 0.1MB)
 
-Up to 10% of investible savings (PDF, 0.1MB) can be invested in:
+## Up to 10% of investible savings (PDF, 0.1MB) can be invested in:
 
 Gold ETFs ✔ ✘ • Only SPDR Gold Shares is • Brokers (PDF, 0.1MB)
 
