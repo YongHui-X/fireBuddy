@@ -112,10 +112,16 @@ def update_category(category_id: UUID, payload: UpdateCategoryRequest, current_u
         )
 
     category = response.data[0]
-    if category["is_default"] or category.get("user_id") != current_user.id:
+    if category["is_default"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only user-owned categories can be edited",
+        )
+    # Another user's category is reported exactly like a missing one so ids cannot be probed.
+    if category.get("user_id") != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found",
         )
 
     try:
@@ -169,10 +175,16 @@ def delete_category(category_id: UUID, current_user: CurrentUser):
         )
 
     category = response.data[0]
-    if category["is_default"] or category.get("user_id") != current_user.id:
+    if category["is_default"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only user-owned categories can be deleted",
+        )
+    # Another user's category is reported exactly like a missing one so ids cannot be probed.
+    if category.get("user_id") != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found",
         )
 
     (

@@ -1,6 +1,6 @@
 import type { TransactionExportFilters } from '@firebuddy/shared';
 
-import type { Account, Category, Tag, Transaction } from './FireBuddyProvider';
+import type { Account, Category, Tag, Transaction } from './fireBuddyModel';
 
 export const transactionCsvColumns = [
   'Transaction ID', 'Date', 'Type', 'Description', 'Amount (SGD)',

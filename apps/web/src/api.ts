@@ -37,6 +37,7 @@ import {
   type WealthPositionSnapshot,
 } from '@firebuddy/shared';
 import { selectRecentChatHistory } from './app/chatHistory';
+import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -61,10 +62,29 @@ export class ApiRequestError extends Error {
   }
 }
 
+/**
+ * Recover once from an expired access token. Supabase refreshes sessions in the background, but
+ * a request can race the rotation; when the refresh yields nothing new the session is over and
+ * signing out returns the person to the auth screen instead of leaving every screen in an error state.
+ */
+async function recoverFromUnauthorized(staleToken: string): Promise<string | null> {
+  if (!supabase) return null;
+  try {
+    const { data } = await supabase.auth.refreshSession();
+    const freshToken = data.session?.access_token ?? null;
+    if (freshToken && freshToken !== staleToken) return freshToken;
+    await supabase.auth.signOut();
+  } catch {
+    // Fall through: the original 401 is reported to the caller.
+  }
+  return null;
+}
+
 async function request<T>(
   path: string,
   token: string,
   options: RequestInit = {},
+  retried = false,
 ): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -75,20 +95,13 @@ async function request<T>(
     },
   });
 
+  if (response.status === 401 && !retried) {
+    const freshToken = await recoverFromUnauthorized(token);
+    if (freshToken) return request<T>(path, freshToken, options, true);
+  }
+
   if (!response.ok) {
-    const message = await response.text();
-    let errorMessage = message || `Request failed with ${response.status}`;
-
-    try {
-      const parsed = JSON.parse(message) as { detail?: unknown };
-      if (typeof parsed.detail === 'string') {
-        errorMessage = parsed.detail;
-      }
-    } catch {
-      // Keep the raw message when the response is not JSON.
-    }
-
-    throw new ApiRequestError(errorMessage, response.status);
+    throw await readApiError(response);
   }
 
   if (response.status === 204) {

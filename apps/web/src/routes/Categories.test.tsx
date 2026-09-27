@@ -11,8 +11,8 @@ const categories = [
   { id: 'salary-id', name: 'Salary', color: '#3C8A61', icon: 'salary', monthlyBudget: 0, categoryType: 'income' as const, isDefault: true },
 ];
 
-vi.mock('../app/FireBuddyProvider', async () => {
-  const actual = await vi.importActual<typeof import('../app/FireBuddyProvider')>('../app/FireBuddyProvider');
+vi.mock('../app/fireBuddyContext', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
   return {
     ...actual,
     useFireBuddy: () => ({

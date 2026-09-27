@@ -1,5 +1,6 @@
 import sys
 import unittest
+from decimal import Decimal
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
@@ -98,6 +99,36 @@ class FinancialRouteTests(unittest.TestCase):
         scenario = self.client.post("/fire/scenario", json={"asOf": "2026-08-23", "monthlyContribution": "3000"})
         self.assertEqual(scenario.status_code, 200)
         self.assertEqual(scenario.json()["status"], "insufficient_data")
+
+    def test_debt_terms_persist_on_liabilities_and_are_rejected_on_assets(self):
+        created = self.client.post("/wealth/positions", json={
+            "name": "Visa", "positionKind": "liability", "positionType": "credit_card", "liquidityClass": "liquid",
+            "interestRate": "0.26", "monthlyPayment": "400", "nextPaymentDate": "2026-10-01",
+        })
+        self.assertEqual(created.status_code, 201, created.text)
+        body = created.json()
+        # The fake store echoes values as sent; Postgres would return "400.00", so compare numerically.
+        self.assertEqual(Decimal(body["interestRate"]), Decimal("0.26"))
+        self.assertEqual(Decimal(body["monthlyPayment"]), Decimal("400"))
+        self.assertEqual(body["nextPaymentDate"], "2026-10-01")
+        self.assertIsNone(body["originalPrincipal"])
+
+        edited = self.client.put(f"/wealth/positions/{body['id']}", json={"monthlyPayment": "450"})
+        self.assertEqual(edited.status_code, 200, edited.text)
+        self.assertEqual(Decimal(edited.json()["monthlyPayment"]), Decimal("450"))
+        self.assertEqual(Decimal(edited.json()["interestRate"]), Decimal("0.26"))
+
+        listed = self.client.get("/wealth/positions").json()
+        self.assertEqual(Decimal(next(item for item in listed if item["id"] == body["id"])["monthlyPayment"]), Decimal("450"))
+
+        asset = self.client.post("/wealth/positions", json={
+            "name": "Brokerage 2", "positionKind": "asset", "positionType": "investment", "liquidityClass": "less_liquid", "interestRate": "0.05",
+        })
+        self.assertEqual(asset.status_code, 422)
+        self.assertEqual(self.client.put(f"/wealth/positions/{POSITION_ID}", json={"monthlyPayment": "10"}).status_code, 422)
+        self.assertEqual(self.client.post("/wealth/positions", json={
+            "name": "Loan shark", "positionKind": "liability", "positionType": "loan", "liquidityClass": "liquid", "interestRate": "1.5",
+        }).status_code, 422)
 
     def test_rejects_future_actual_records(self):
         response = self.client.post(f"/wealth/positions/{POSITION_ID}/snapshots", json={"valueDate": "2200-01-01", "amount": "1"})

@@ -133,7 +133,7 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
     category_lookup = {str(category.id): category for category in categories}
     category_list = "\n".join(f"- {category.id}: {category.name}" for category in categories)
     try:
-        client = OpenAI(api_key=settings.openai_api_key)
+        client = OpenAI(api_key=settings.openai_api_key, **settings.openai_client_options)
         response = client.chat.completions.create(
             model=settings.openai_model,
             temperature=0,

@@ -1,0 +1,14 @@
+{
+  "asOf": "2026-01-15",
+  "cases": [
+    { "name": "zero balance is already paid off", "balance": 0, "rate": 0.05, "payment": 200 },
+    { "name": "five year car loan", "balance": 30000, "rate": 0.035, "payment": 546.5 },
+    { "name": "mortgage at 2.6 percent over about 25 years", "balance": 400000, "rate": 0.026, "payment": 1815 },
+    { "name": "credit card where the payment is below monthly interest", "balance": 12000, "rate": 0.26, "payment": 250 },
+    { "name": "payment exactly equal to monthly interest", "balance": 12000, "rate": 0.12, "payment": 120 },
+    { "name": "payment one cent above interest hits the 600 month cap", "balance": 12000, "rate": 0.12, "payment": 120.01 },
+    { "name": "zero interest loan", "balance": 1000, "rate": 0, "payment": 300 },
+    { "name": "rounding ties on odd cents", "balance": 1234.56, "rate": 0.0725, "payment": 101.01 },
+    { "name": "missing payment", "balance": 5000, "rate": 0.05, "payment": 0 }
+  ]
+}

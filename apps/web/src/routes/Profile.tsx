@@ -3,7 +3,7 @@ import { Database, Flame, Landmark, LogOut, Moon, Sun, User } from 'lucide-react
 import { useNavigate } from 'react-router';
 
 import { clearDemoStorage } from '../app/demoStorage';
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { getDisplayName } from '../app/displayName';
 import { PageToolbar } from '../components/PageToolbar';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';

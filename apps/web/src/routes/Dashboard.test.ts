@@ -1,7 +1,7 @@
 import type { FinancialSummary } from '@firebuddy/shared';
 import { describe, expect, it } from 'vitest';
 
-import type { Category, Transaction } from '../app/FireBuddyProvider';
+import type { Category, Transaction } from '../app/fireBuddyModel';
 import {
   getSpendingLabelLines,
   getSpendingLineEndpoint,
@@ -133,10 +133,12 @@ describe('Dashboard monthly spending breakdown', () => {
 const baseSummary: FinancialSummary = {
   effectiveDate: '2026-09-14', dataMode: 'demo', netWorth: '120000', assetTotal: '130000', liabilityTotal: '10000',
   priorMonthNetWorth: '118000', monthlyNetWorthChange: '2000', investableAssets: '90000', emergencyEligibleAssets: '20000',
-  averageMonthlyEssentialSpending: '2500', emergencyRunwayMonths: '8.000000', latestSnapshotDate: '2026-09-01', snapshotStatus: 'current',
+  averageMonthlyEssentialSpending: '2500', emergencyRunwayMonths: '8.000000', averageMonthlyDebtService: null, emergencyRunwayMonthsWithDebt: null,
+  debt: { totalMonthlyDebtService: '0.00', highestInterestRate: null, debtToIncome: null, liabilities: [] },
+  latestSnapshotDate: '2026-09-01', snapshotStatus: 'current',
   pulse: {
     month: '2026-09', income: '6200', spending: '3011', savingsAmount: '3189', savingsRate: '0.514',
-    savingsRateStatus: 'available', investedAmount: '1000', completeness: 'complete',
+    savingsRateStatus: 'available', investedAmount: '1000', debtService: '0.00', completeness: 'complete',
   },
   fire: {
     status: 'projected', effectiveDate: '2026-09-14', currentInvestableAssets: '90000', fiTarget: '1500000',

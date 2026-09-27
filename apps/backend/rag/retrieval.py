@@ -11,8 +11,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 from supabase import create_client
-from tenacity import retry, stop_after_attempt, wait_exponential
 
+from config import settings
 from rag.query_terms import expand_query_acronyms
 
 
@@ -27,7 +27,6 @@ INTERNAL_CANDIDATE_COUNT = 20
 FULL_TEXT_RRF_WEIGHT = 0.6
 SEMANTIC_RRF_WEIGHT = 1.0
 RRF_SMOOTHING = 50
-wait = wait_exponential(multiplier=1, min=10, max=240)
 _rag_store_ready = False
 
 
@@ -105,13 +104,14 @@ def ensure_rag_store_ready(supabase_client) -> None:
     _rag_store_ready = True
 
 
-@retry(wait=wait, stop=stop_after_attempt(5))
 def embed_question(client: OpenAI, question: str) -> list[float]:
     """
     Convert a question into a vector for similarity search.
 
     This must use the same embedding model as ingestion because the database
     stores `text-embedding-3-small` vectors in a 1,536-dimension pgvector column.
+    Transient failures are retried by the OpenAI client's own bounded policy; the
+    previous minutes-long exponential backoff could hold a request worker hostage.
     """
 
     response = client.embeddings.create(
@@ -136,7 +136,7 @@ def retrieve_chunks(question: str, match_count: int = 5) -> list[dict]:
     ensure_rag_store_ready(supabase_client)
 
     retrieval_query = expand_query_acronyms(question)
-    openai_client = OpenAI()
+    openai_client = OpenAI(**settings.openai_client_options)
     embedding = embed_question(openai_client, retrieval_query)
 
     response = supabase_client.rpc(

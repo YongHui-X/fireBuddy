@@ -1,51 +1,14 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useMemo,
   useState,
-  type ComponentType,
   type ReactNode,
 } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
-  Award,
-  Banknote,
-  Briefcase,
-  Bus,
-  Camera,
-  Car,
-  CircleHelp,
-  Clapperboard,
-  FileText,
-  Coffee,
-  Dumbbell,
-  Fuel,
-  Gamepad2,
-  Gift,
-  GraduationCap,
-  HeartPulse,
-  House,
-  Landmark,
-  Laptop,
-  MapPin,
-  Plane,
-  Percent,
-  Shapes,
-  Shirt,
-  ShoppingBag,
-  Smartphone,
-  Train,
-  TrendingUp,
-  Utensils,
-} from 'lucide-react';
-import {
   type Account as ApiAccount,
-  type AccountType as ApiAccountType,
   type Category as ApiCategory,
   type Transaction as ApiTransaction,
-  type TransactionType,
-  type Tag as ApiTag,
 } from '@firebuddy/shared';
 
 import {
@@ -74,193 +37,20 @@ import {
   TAGS_STORAGE_KEY,
 } from './demoStorage';
 import { clearEmberAppActions, recordEmberAppAction } from './emberAppContext';
-type AccountType = ApiAccountType;
-type IconComponent = ComponentType<{ size?: number; strokeWidth?: number }>;
-
-interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  category: string;
-  date: string;
-  account: string;
-  transactionType: TransactionType;
-  tagIds?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-type Tag = ApiTag;
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  icon: string;
-  monthlyBudget: number;
-  categoryType: TransactionType;
-  isDefault?: boolean;
-}
-
-interface Account {
-  id: string;
-  name: string;
-  type: AccountType;
-  color: string;
-  lastFour?: string;
-  isDefault?: boolean;
-}
-
-interface AppNotification {
-  id: number;
-  message: string;
-}
-
-interface AppContextValue {
-  transactions: Transaction[];
-  categories: Category[];
-  accounts: Account[];
-  tags: Tag[];
-  themeMode: ThemeMode;
-  notification: AppNotification | null;
-  session: Session | null;
-  authLoading: boolean;
-  authError: string | null;
-  syncStatus: 'idle' | 'loading' | 'ready' | 'error';
-  syncError: string | null;
-  demoMode: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  clearAuthError: () => void;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<Transaction>;
-  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
-  deleteTransaction: (id: string) => Promise<void>;
-  addTag: (name: string) => Promise<Tag>;
-  updateTag: (id: string, name: string) => Promise<void>;
-  deleteTag: (id: string) => Promise<void>;
-  addCategory: (category: Omit<Category, 'id'>) => Promise<Category>;
-  updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
-  deleteCategory: (id: string) => Promise<void>;
-  addAccount: (account: Omit<Account, 'id'>) => Promise<Account>;
-  updateAccount: (id: string, updates: Partial<Account>) => Promise<void>;
-  deleteAccount: (id: string) => Promise<void>;
-  getCategoryById: (id: string) => Category | undefined;
-  getAccountById: (id: string) => Account | undefined;
-  getMonthlySpend: (categoryId: string, month?: string) => number;
-  toggleTheme: () => void;
-  setThemeMode: (mode: ThemeMode) => void;
-  notify: (message: string) => void;
-  dismissNotification: () => void;
-}
-
-type ThemeMode = 'light' | 'dark';
-
-function getDeviceDateKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function getDeviceMonthKey(dateKey = getDeviceDateKey()) {
-  return dateKey.slice(0, 7);
-}
-
-const colors = {
-  primary: '#25543D',
-  primaryDark: '#25543D',
-  primarySoft: '#E7EFE8',
-  secondary: '#46684F',
-  background: '#F7F8F5',
-  card: '#FFFFFF',
-  muted: '#F0F3EE',
-  border: '#D8DFD7',
-  text: '#202820',
-  textMuted: '#626B63',
-  danger: '#B42318',
-  gold: '#855509',
-};
-
-const fireData = {
-  currentNetWorth: 124850,
-  targetNetWorth: 1800000,
-  invested: 98400,
-  cash: 26450,
-  projectedFireYear: 2043,
-  emergencyMonths: 8.2,
-};
-
-const categoryColors = [
-  '#3C8A61',
-  '#67B47C',
-  '#E5B24A',
-  '#7BAA90',
-  '#2E9B57',
-  '#8BB89D',
-  '#25543D',
-  '#A8D3B7',
-  '#2A9D8F',
-  '#3A86A8',
-  '#4F6DB8',
-  '#7B61A8',
-  '#B85C8A',
-  '#D65A5A',
-  '#D97745',
-  '#7A869A',
-];
-
-const categoryIconOptions = [
-  { id: 'food', label: 'Food & Drink', icon: Utensils },
-  { id: 'coffee', label: 'Coffee', icon: Coffee },
-  { id: 'transport', label: 'Transport', icon: Train },
-  { id: 'bus', label: 'Bus', icon: Bus },
-  { id: 'car', label: 'Car', icon: Car },
-  { id: 'fuel', label: 'Fuel', icon: Fuel },
-  { id: 'shopping', label: 'Shopping', icon: ShoppingBag },
-  { id: 'clothing', label: 'Clothing', icon: Shirt },
-  { id: 'utilities', label: 'Bills & Utilities', icon: FileText },
-  { id: 'housing', label: 'Housing', icon: House },
-  { id: 'phone', label: 'Phone & Internet', icon: Smartphone },
-  { id: 'health', label: 'Healthcare', icon: HeartPulse },
-  { id: 'fitness', label: 'Fitness', icon: Dumbbell },
-  { id: 'entertainment', label: 'Entertainment', icon: Clapperboard },
-  { id: 'gaming', label: 'Gaming', icon: Gamepad2 },
-  { id: 'camera', label: 'Camera', icon: Camera },
-  { id: 'travel', label: 'Travel', icon: Plane },
-  { id: 'places', label: 'Places', icon: MapPin },
-  { id: 'education', label: 'Education', icon: GraduationCap },
-  { id: 'gifts', label: 'Gifts', icon: Gift },
-  { id: 'tech', label: 'Tech', icon: Laptop },
-  { id: 'banking', label: 'Banking', icon: Landmark },
-  { id: 'others', label: 'Others', icon: CircleHelp },
-  { id: 'shapes', label: 'Others', icon: Shapes },
-  { id: 'salary', label: 'Salary', icon: Briefcase },
-  { id: 'bonus', label: 'Bonus', icon: Award },
-  { id: 'dividends', label: 'Dividends', icon: TrendingUp },
-  { id: 'interest', label: 'Interest', icon: Percent },
-  { id: 'income', label: 'Other income', icon: Banknote },
-] as const satisfies readonly { id: string; label: string; icon: IconComponent }[];
-
-const categoryIconsById = new Map<string, IconComponent>(
-  categoryIconOptions.map((option) => [option.id, option.icon]),
-);
-
-const legacyCategoryIconIds: Record<string, string> = {
-  FD: 'food',
-  TR: 'transport',
-  SH: 'shopping',
-  BU: 'utilities',
-  HC: 'health',
-  EN: 'entertainment',
-  TV: 'travel',
-  OT: 'shapes',
-  NW: 'others',
-};
-
+import { AppContext } from './fireBuddyContext';
+import {
+  colors,
+  getDeviceDateKey,
+  getDeviceMonthKey,
+  sortTransactionsNewestFirst,
+  type Account,
+  type AppContextValue,
+  type AppNotification,
+  type Category,
+  type Tag,
+  type ThemeMode,
+  type Transaction,
+} from './fireBuddyModel';
 const demoCategoryIds = {
   food: '00000000-0000-4000-8000-000000000001',
   transport: '00000000-0000-4000-8000-000000000002',
@@ -361,54 +151,11 @@ function mapApiAccount(account: ApiAccount): Account {
   };
 }
 
-function resolveCategoryIconId(category?: Category) {
-  if (!category?.icon) {
-    return category?.id ?? 'others';
-  }
-
-  return legacyCategoryIconIds[category.icon] ?? category.icon;
-}
-
-function getCategoryIcon(category?: Category): IconComponent {
-  return categoryIconsById.get(resolveCategoryIconId(category)) ?? CircleHelp;
-}
-
-function sortTransactionsNewestFirst(items: Transaction[]) {
-  return [...items].sort((left, right) => {
-    const dateOrder = right.date.localeCompare(left.date);
-
-    if (dateOrder !== 0) {
-      return dateOrder;
-    }
-
-    return right.id.localeCompare(left.id);
-  });
-}
-
-function getAccountMeta(account?: Account) {
-  if (!account) {
-    return 'Account';
-  }
-
-  return `${account.name} \u00B7 ${accountTypeLabel(account.type)}`;
-}
-
-const netWorthHistory = [
-  { month: 'Nov', netWorth: 113800, invested: 89300, cash: 24500 },
-  { month: 'Dec', netWorth: 117200, invested: 91800, cash: 25400 },
-  { month: 'Jan', netWorth: 119600, invested: 93600, cash: 26000 },
-  { month: 'Feb', netWorth: 121300, invested: 95400, cash: 25900 },
-  { month: 'Mar', netWorth: 123100, invested: 96900, cash: 26200 },
-  { month: 'Apr', netWorth: 124850, invested: 98400, cash: 26450 },
-];
-
 const THEME_STORAGE_KEY = 'firebuddy_theme_v1';
 const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true';
 const missingSupabaseConfigMessage =
   'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY. Add them to apps/web/.env.local, or set VITE_SKIP_AUTH=true for local demo mode.';
 const demoAccountResetMessage = 'Password resets are disabled for the FireBuddy demo account.';
-
-const AppContext = createContext<AppContextValue | null>(null);
 
 function loadStored<T>(key: string, fallback: T): T {
   try {
@@ -459,38 +206,6 @@ function normalizeStoredCategories(items: Category[]): Category[] {
   }));
 }
 
-function formatSGD(value: number, digits = 2) {
-  return `S$${Math.abs(value).toLocaleString('en-SG', {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })}`;
-}
-
-function formatTooltipValue(value: unknown) {
-  return typeof value === 'number' ? formatSGD(value, 0) : String(value ?? '');
-}
-
-function formatDateLabel(value: string) {
-  const parsed = new Date(`${value}T00:00:00`);
-  const today = new Date(`${getDeviceDateKey()}T00:00:00`);
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-
-  if (parsed.toDateString() === today.toDateString()) {
-    return 'Today';
-  }
-
-  if (parsed.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  }
-
-  return parsed.toLocaleDateString('en-SG', {
-    day: 'numeric',
-    month: 'short',
-    weekday: 'short',
-  });
-}
-
 // Converts Supabase and browser network errors into safe, actionable auth messages.
 function getAuthErrorMessage(error: unknown) {
   const message = typeof error === 'string'
@@ -536,51 +251,7 @@ function getAuthErrorMessage(error: unknown) {
   return message;
 }
 
-function polarPoint(centerX: number, centerY: number, radius: number, angle: number) {
-  const radians = ((angle - 90) * Math.PI) / 180;
-
-  return {
-    x: centerX + radius * Math.cos(radians),
-    y: centerY + radius * Math.sin(radians),
-  };
-}
-
-function describeDonutSegment(
-  centerX: number,
-  centerY: number,
-  innerRadius: number,
-  outerRadius: number,
-  startAngle: number,
-  endAngle: number,
-) {
-  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-  const outerStart = polarPoint(centerX, centerY, outerRadius, endAngle);
-  const outerEnd = polarPoint(centerX, centerY, outerRadius, startAngle);
-  const innerStart = polarPoint(centerX, centerY, innerRadius, startAngle);
-  const innerEnd = polarPoint(centerX, centerY, innerRadius, endAngle);
-
-  return [
-    `M ${outerStart.x} ${outerStart.y}`,
-    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 0 ${outerEnd.x} ${outerEnd.y}`,
-    `L ${innerStart.x} ${innerStart.y}`,
-    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 1 ${innerEnd.x} ${innerEnd.y}`,
-    'Z',
-  ].join(' ');
-}
-
-function accountTypeLabel(type: AccountType) {
-  const labels: Record<AccountType, string> = {
-    bank: 'Bank',
-    credit_card: 'Credit card',
-    debit_card: 'Debit card',
-    cash: 'Cash',
-    ewallet: 'E-wallet',
-  };
-
-  return labels[type];
-}
-
-function AppProvider({ children }: { children: ReactNode }) {
+export function AppProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>(() =>
     skipAuth
       ? sortTransactionsNewestFirst(normalizeStoredTransactions(loadStored(TRANSACTIONS_STORAGE_KEY, initialTransactions)))
@@ -702,7 +373,10 @@ function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, [session]);
+    // Keyed on the owner rather than the session object: Supabase replaces the session on every
+    // token refresh, which used to re-run this four-request sync about once an hour.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticatedUserId]);
 
   useEffect(() => {
     if (skipAuth) {
@@ -1097,38 +771,3 @@ function AppProvider({ children }: { children: ReactNode }) {
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
-
-function useFireBuddy() {
-  const context = useContext(AppContext);
-
-  if (!context) {
-    throw new Error('useFireBuddy must be used within AppProvider');
-  }
-
-  return context;
-}
-
-
-export {
-  AppProvider,
-  accountTypeLabel,
-  categoryColors,
-  categoryIconOptions,
-  colors,
-  describeDonutSegment,
-  fireData,
-  formatDateLabel,
-  formatSGD,
-  formatTooltipValue,
-  getAccountMeta,
-  getCategoryIcon,
-  getDeviceDateKey,
-  getDeviceMonthKey,
-  netWorthHistory,
-  polarPoint,
-  legacyCategoryIconIds,
-  sortTransactionsNewestFirst,
-  useFireBuddy,
-};
-
-export type { Account, AccountType, AppContextValue, AppNotification, Category, IconComponent, Tag, ThemeMode, Transaction };

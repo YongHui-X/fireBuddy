@@ -9,7 +9,7 @@ import {
   type Category,
   type Tag,
   type Transaction,
-} from '../app/FireBuddyProvider';
+} from '../app/fireBuddyModel';
 import { useAccessibleDialog } from './useAccessibleDialog';
 
 type TransactionDetailsDialogProps = {

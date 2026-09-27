@@ -238,7 +238,7 @@ export type RagStreamEvent =
   | { type: 'error'; code: string; message: string; retryable: boolean; status?: number };
 
 export type WealthPositionKind = 'asset' | 'liability';
-export type WealthPositionType = 'cash' | 'investment' | 'property' | 'mortgage' | 'loan' | 'cpf' | 'other';
+export type WealthPositionType = 'cash' | 'investment' | 'property' | 'mortgage' | 'loan' | 'credit_card' | 'cpf' | 'other';
 export type LiquidityClass = 'liquid' | 'less_liquid' | 'restricted';
 export type WealthRestrictionType = 'none' | 'cpf' | 'other_restricted';
 
@@ -253,11 +253,38 @@ export interface WealthPosition {
   isEmergencyFund: boolean;
   restrictionType: WealthRestrictionType;
   currency: 'SGD';
+  /** Annual rate as a fraction string such as '0.0650'. Liabilities only. */
+  interestRate: string | null;
+  /** Regular monthly repayment in SGD. Liabilities only. */
+  monthlyPayment: string | null;
+  nextPaymentDate: string | null;
+  originalPrincipal: string | null;
   isArchived: boolean;
   archivedAt: string | null;
   latestSnapshot: WealthPositionSnapshot | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export type DebtPayoffStatus = 'projected' | 'payment_below_interest' | 'missing_terms' | 'paid_off';
+
+export interface DebtPayoffSummary {
+  positionId: UUID;
+  name: string;
+  balance: string | null;
+  interestRate: string | null;
+  monthlyPayment: string | null;
+  payoffMonth: string | null;
+  monthsRemaining: number | null;
+  totalInterest: string | null;
+  status: DebtPayoffStatus;
+}
+
+export interface DebtSummary {
+  totalMonthlyDebtService: string;
+  highestInterestRate: string | null;
+  debtToIncome: string | null;
+  liabilities: DebtPayoffSummary[];
 }
 
 export interface WealthPositionSnapshot {
@@ -281,10 +308,11 @@ export interface WealthContribution {
   updatedAt: string;
 }
 
+type DebtTermFields = 'interestRate' | 'monthlyPayment' | 'nextPaymentDate' | 'originalPrincipal';
 export type CreateWealthPositionInput = Omit<
   WealthPosition,
-  'id' | 'userId' | 'isArchived' | 'archivedAt' | 'latestSnapshot' | 'createdAt' | 'updatedAt'
->;
+  'id' | 'userId' | 'isArchived' | 'archivedAt' | 'latestSnapshot' | 'createdAt' | 'updatedAt' | DebtTermFields
+> & Partial<Pick<WealthPosition, DebtTermFields>>;
 export type UpdateWealthPositionInput = Partial<CreateWealthPositionInput>;
 export type CreateWealthSnapshotInput = Pick<WealthPositionSnapshot, 'valueDate' | 'amount'>;
 export type UpdateWealthSnapshotInput = CreateWealthSnapshotInput;
@@ -426,6 +454,8 @@ export interface MonthlyMoneyPulse {
   savingsRate: string | null;
   savingsRateStatus: 'available' | 'unavailable';
   investedAmount: string;
+  /** Sum of the monthly payments on active liabilities. */
+  debtService: string;
   completeness: 'complete' | 'limited';
 }
 
@@ -451,6 +481,10 @@ export interface FinancialSummary {
   emergencyEligibleAssets: string | null;
   averageMonthlyEssentialSpending: string | null;
   emergencyRunwayMonths: string | null;
+  averageMonthlyDebtService: string | null;
+  /** Emergency fund divided by essentials plus debt service; null when either input is missing. */
+  emergencyRunwayMonthsWithDebt: string | null;
+  debt: DebtSummary;
   latestSnapshotDate: string | null;
   snapshotStatus: 'missing' | 'current' | 'stale' | 'mixed';
   pulse: MonthlyMoneyPulse;

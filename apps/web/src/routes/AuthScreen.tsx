@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
 import { useLocation } from 'react-router';
 
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import AuthShell from './AuthShell';
 
 type AuthMode = 'sign-in' | 'sign-up' | 'forgot-password';

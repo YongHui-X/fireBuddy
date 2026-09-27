@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildCategorySpendingData, buildExpenseCsv, buildExpenseSeries, filterExpensesForMonth, filterExpensesForRange, getInsightDateBounds } from './Insights';
-import type { Account, Category, Transaction } from '../app/FireBuddyProvider';
+import type { Account, Category, Transaction } from '../app/fireBuddyModel';
 
 
 const transactions: Transaction[] = [

@@ -1,7 +1,7 @@
 import { Check, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
-import type { Tag } from '../app/FireBuddyProvider';
+import type { Tag } from '../app/fireBuddyModel';
 
 interface TransactionTagSelectorProps {
   tags: Tag[];
@@ -58,7 +58,19 @@ export function TransactionTagSelector({ tags, selectedTagIds, disabled, onChang
         </div>
       ) : <p className="field-help">No tags yet. Create one below.</p>}
       <div className="inline-tag-form">
-        <input value={newTagName} onChange={(event) => setNewTagName(event.target.value)} maxLength={40} placeholder="New tag name" aria-label="New tag name" />
+        <input
+          value={newTagName}
+          onChange={(event) => setNewTagName(event.target.value)}
+          onKeyDown={(event) => {
+            // Enter adds the tag; it must never submit the transaction form around this field.
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            void createInlineTag();
+          }}
+          maxLength={40}
+          placeholder="New tag name"
+          aria-label="New tag name"
+        />
         <button className="secondary-button" type="button" onClick={() => void createInlineTag()} disabled={!newTagName.trim() || isCreating || selectedTagIds.length >= 10}>
           <Plus size={14} /> {isCreating ? 'Adding...' : 'Add tag'}
         </button>

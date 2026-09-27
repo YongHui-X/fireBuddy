@@ -2,7 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AppProvider, useFireBuddy } from './FireBuddyProvider';
+import { AppProvider } from './FireBuddyProvider';
+import { useFireBuddy } from './fireBuddyContext';
 import {
   ACCOUNTS_STORAGE_KEY,
   CATEGORIES_STORAGE_KEY,

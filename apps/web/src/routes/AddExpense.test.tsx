@@ -25,12 +25,14 @@ const accounts = [
   { id: 'cash-account', name: 'Cash', type: 'cash' as const, color: '#E5B24A', isDefault: true },
 ];
 
-vi.mock('../app/FireBuddyProvider', async () => {
-  const actual = await vi.importActual<typeof import('../app/FireBuddyProvider')>('../app/FireBuddyProvider');
+vi.mock('../app/fireBuddyModel', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyModel')>('../app/fireBuddyModel');
+  return { ...actual, accountTypeLabel: () => 'Cash', getDeviceDateKey: () => '2026-08-14' };
+});
+vi.mock('../app/fireBuddyContext', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
   return {
     ...actual,
-    accountTypeLabel: () => 'Cash',
-    getDeviceDateKey: () => '2026-08-14',
     useFireBuddy: () => ({
       addAccount: mocks.addAccount,
       addCategory: mocks.addCategory,
@@ -198,6 +200,36 @@ describe('AddExpense', () => {
     expect(screen.getByRole('heading', { name: 'New account' })).toBeTruthy();
     expect((screen.getByPlaceholderText('Netflix') as HTMLInputElement).value).toBe('Preserved draft');
     expect((screen.getByPlaceholderText('0.00') as HTMLInputElement).value).toBe('42');
+  });
+
+  it('keeps Enter inside the nested category sheet instead of submitting the transaction', async () => {
+    mocks.addCategory.mockImplementation(async (values) => ({ ...values, id: 'coffee-id', isDefault: false }));
+    render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '12' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add category' }));
+    fireEvent.change(screen.getByPlaceholderText('Dining out'), { target: { value: 'Coffee' } });
+    const budget = screen.getByLabelText('Monthly budget');
+    fireEvent.change(budget, { target: { value: '0250' } });
+    expect((budget as HTMLInputElement).value).toBe('250');
+    fireEvent.keyDown(budget, { key: 'Enter' });
+
+    await waitFor(() => expect(mocks.addCategory).toHaveBeenCalledTimes(1));
+    expect(mocks.addCategory.mock.calls[0][0]).toMatchObject({ name: 'Coffee', monthlyBudget: 250 });
+    expect(mocks.addTransaction).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Add transaction' })).toBeTruthy();
+  });
+
+  it('adds an inline tag on Enter without submitting the transaction', async () => {
+    mocks.addTag.mockResolvedValue({ id: 'tag-id', name: 'Weekend' });
+    render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '12' } });
+    const tagInput = screen.getByLabelText('New tag name');
+    fireEvent.change(tagInput, { target: { value: 'Weekend' } });
+    fireEvent.keyDown(tagInput, { key: 'Enter' });
+
+    await waitFor(() => expect(mocks.addTag).toHaveBeenCalledWith('Weekend'));
+    expect(mocks.addTransaction).not.toHaveBeenCalled();
   });
 
   it('selects a newly created category and account from nested forms', async () => {

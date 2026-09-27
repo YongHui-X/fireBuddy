@@ -153,7 +153,8 @@ The **Current** implementation stores wealth positions separately from existing 
 | `id`, `userId` | UUID identity and owner |
 | `name` | User facing name |
 | `positionKind` | `asset` or `liability`; liabilities store positive outstanding amounts |
-| `positionType` | Extensible type such as cash, investment, property, mortgage, loan, CPF, or other |
+| `positionType` | Extensible type such as cash, investment, property, mortgage, loan, credit card, CPF, or other |
+| `interestRate`, `monthlyPayment`, `nextPaymentDate`, `originalPrincipal` | Optional debt terms, liabilities only. Rate is an annual fraction. They drive a deterministic payoff projection (payoff month, remaining interest, or a warning when the payment does not cover interest) and the monthly debt service counted in runway. Balance reductions are recorded as snapshots, never as contributions |
 | `liquidityClass` | `liquid`, `less_liquid`, or `restricted` |
 | `includeInFi` | Whether value contributes to investable FI assets |
 | `isEmergencyFund` | Whether eligible liquid value contributes to emergency runway |
@@ -169,6 +170,8 @@ The **Current** implementation stores wealth positions separately from existing 
 `WealthContribution` is a **Current** dedicated record with `id`, `userId`, `wealthPositionId`, `contributionDate`, `amount`, optional `note`, `createdAt`, and `updatedAt`.
 
 Contributions are not expenses and are not generic transfers. This prevents invested totals from inflating spending. A later reconciliation may connect them to transaction evidence, but the first implementation must avoid double counting.
+
+Contributions are never debt repayments. A repayment already appears as an expense transaction; the liability's falling balance is captured with a dated snapshot, and the payoff projection reads from that latest balance. The financial summary exposes a `debt` block (total monthly debt service, highest interest rate, debt-to-income, and a per-liability payoff summary), a `debtService` line in the Money Pulse, and `emergencyRunwayMonthsWithDebt`. The recommended action `pay_down_high_interest_debt` fires after emergency-fund rules when a liability charges more than 6% a year.
 
 ### 6.6 FIRE profile and current contracts
 

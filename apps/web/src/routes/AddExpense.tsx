@@ -3,14 +3,8 @@ import { useLocation, useNavigate } from 'react-router';
 import { Plus, Sparkles, X } from 'lucide-react';
 import type { TransactionType } from '@firebuddy/shared';
 
-import {
-  accountTypeLabel,
-  categoryColors,
-  getDeviceDateKey,
-  useFireBuddy,
-  type Account,
-  type Category,
-} from '../app/FireBuddyProvider';
+import { accountTypeLabel, categoryColors, getDeviceDateKey, type Account, type Category } from '../app/fireBuddyModel';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { suggestExpenseCategory } from '../api';
 import { AccountSheet } from '../components/AccountSheet';
 import { CategorySheet } from '../components/CategorySheet';
@@ -130,7 +124,8 @@ function AddExpense() {
         transactionType,
         tagIds: selectedTagIds,
       });
-      closeAddTransaction();
+      // Land on the ledger for the saved month so the new entry is the first thing on screen.
+      navigate(`/transactions?month=${date.slice(0, 7)}`);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Unable to save transaction.');
     } finally {

@@ -18,15 +18,25 @@ class FinancialModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
+PositionType = Literal["cash", "investment", "property", "mortgage", "loan", "credit_card", "cpf", "other"]
+InterestRate = Annotated[Decimal, Field(ge=0, le=1, max_digits=6, decimal_places=4)]
+DEBT_TERM_FIELDS = ("interest_rate", "monthly_payment", "next_payment_date", "original_principal")
+
+
 class CreateWealthPositionRequest(FinancialModel):
     name: Annotated[str, Field(min_length=1, max_length=80)]
     position_kind: Literal["asset", "liability"]
-    position_type: Literal["cash", "investment", "property", "mortgage", "loan", "cpf", "other"]
+    position_type: PositionType
     liquidity_class: Literal["liquid", "less_liquid", "restricted"]
     include_in_fi: bool = False
     is_emergency_fund: bool = False
     restriction_type: Literal["none", "cpf", "other_restricted"] = "none"
     currency: Literal["SGD"] = "SGD"
+    # Debt terms drive the payoff projection and are only meaningful on liabilities.
+    interest_rate: InterestRate | None = None
+    monthly_payment: Money | None = None
+    next_payment_date: date | None = None
+    original_principal: Money | None = None
 
     @field_validator("name")
     @classmethod
@@ -41,6 +51,12 @@ class CreateWealthPositionRequest(FinancialModel):
 
         if self.position_kind == "liability" and (self.include_in_fi or self.is_emergency_fund):
             raise ValueError("Liabilities cannot be included in FI or designated as emergency funds")
+        if self.position_kind == "asset" and any(getattr(self, name) is not None for name in DEBT_TERM_FIELDS):
+            raise ValueError("Debt terms are only valid for liabilities")
+        if self.monthly_payment is not None and self.monthly_payment < 0:
+            raise ValueError("Monthly payment cannot be negative")
+        if self.original_principal is not None and self.original_principal < 0:
+            raise ValueError("Original principal cannot be negative")
         if self.is_emergency_fund and (
             self.position_kind != "asset"
             or self.liquidity_class != "liquid"
@@ -63,12 +79,16 @@ class CreateWealthPositionRequest(FinancialModel):
 class UpdateWealthPositionRequest(FinancialModel):
     name: Annotated[str | None, Field(min_length=1, max_length=80)] = None
     position_kind: Literal["asset", "liability"] | None = None
-    position_type: Literal["cash", "investment", "property", "mortgage", "loan", "cpf", "other"] | None = None
+    position_type: PositionType | None = None
     liquidity_class: Literal["liquid", "less_liquid", "restricted"] | None = None
     include_in_fi: bool | None = None
     is_emergency_fund: bool | None = None
     restriction_type: Literal["none", "cpf", "other_restricted"] | None = None
     currency: Literal["SGD"] | None = None
+    interest_rate: InterestRate | None = None
+    monthly_payment: Money | None = None
+    next_payment_date: date | None = None
+    original_principal: Money | None = None
 
     @field_validator("name")
     @classmethod
@@ -292,7 +312,27 @@ class MonthlyMoneyPulseResponse(FinancialModel):
     savings_rate: Rate | None
     savings_rate_status: Literal["available", "unavailable"]
     invested_amount: Money
+    debt_service: Money
     completeness: Literal["complete", "limited"]
+
+
+class DebtPayoffResponse(FinancialModel):
+    position_id: UUID
+    name: str
+    balance: Money | None
+    interest_rate: InterestRate | None
+    monthly_payment: Money | None
+    payoff_month: str | None
+    months_remaining: int | None
+    total_interest: Money | None
+    status: Literal["projected", "payment_below_interest", "missing_terms", "paid_off"]
+
+
+class DebtSummaryResponse(FinancialModel):
+    total_monthly_debt_service: Money
+    highest_interest_rate: InterestRate | None
+    debt_to_income: Rate | None
+    liabilities: list[DebtPayoffResponse]
 
 
 class RecommendedActionResponse(FinancialModel):
@@ -324,6 +364,9 @@ class FinancialSummaryResponse(FinancialModel):
     emergency_eligible_assets: Money | None
     average_monthly_essential_spending: Money | None
     emergency_runway_months: Rate | None
+    average_monthly_debt_service: Money | None
+    emergency_runway_months_with_debt: Rate | None
+    debt: DebtSummaryResponse
     latest_snapshot_date: date | None
     snapshot_status: Literal["missing", "current", "stale", "mixed"]
     pulse: MonthlyMoneyPulseResponse

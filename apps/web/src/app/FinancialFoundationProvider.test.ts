@@ -3,7 +3,7 @@ import type { FireProfile, RetirementPlan, WealthPosition, WealthPositionSnapsho
 import fixtures from '../../../../packages/shared/fixtures/retirement.json';
 import { eligibleRetirementAsset } from './retirementSetup';
 
-import { buildDemoFinancialSummary } from './FinancialFoundationProvider';
+import { buildDemoFinancialSummary } from './demoFinancialSummary';
 
 const userId = '00000000-0000-4000-8000-000000000001';
 const now = '2026-08-23T00:00:00.000Z';
@@ -11,8 +11,8 @@ const now = '2026-08-23T00:00:00.000Z';
 function position(id: string, kind: 'asset' | 'liability', includeInFi: boolean, emergency = false): WealthPosition {
   return { id, userId, name: id, positionKind: kind, positionType: kind === 'liability' ? 'loan' : 'cash',
     liquidityClass: emergency ? 'liquid' : 'less_liquid', includeInFi, isEmergencyFund: emergency,
-    restrictionType: 'none', currency: 'SGD', isArchived: false, archivedAt: null, latestSnapshot: null,
-    createdAt: now, updatedAt: now };
+    restrictionType: 'none', currency: 'SGD', interestRate: null, monthlyPayment: null, nextPaymentDate: null, originalPrincipal: null,
+    isArchived: false, archivedAt: null, latestSnapshot: null, createdAt: now, updatedAt: now };
 }
 
 describe('demo financial summary', () => {
@@ -46,5 +46,32 @@ describe('demo financial summary', () => {
     expect(result.fire.fiTarget).toBeNull();
     expect(result.fire.fundingStatus).toBe('review_required');
     expect(result.pulse.savingsRateStatus).toBe('unavailable');
+    expect(result.debt.liabilities.map(item => item.status)).toEqual(['missing_terms']);
+    expect(result.pulse.debtService).toBe('0.00');
+  });
+  it('projects debt payoff, counts payments in runway, and recommends clearing expensive borrowing', () => {
+    const positions = [position('cash', 'asset', true, true),
+      { ...position('card', 'liability', false), positionType: 'credit_card' as const, interestRate: '0.2600', monthlyPayment: '600.00' },
+      { ...position('car', 'liability', false), interestRate: '0.0350', monthlyPayment: '546.50' }];
+    const amounts = { cash: '31200', card: '12000', car: '30000' };
+    const snapshots: WealthPositionSnapshot[] = positions.map((item) => ({ id: `${item.id}-snapshot`, userId,
+      wealthPositionId: item.id, valueDate: '2026-08-23', amount: amounts[item.id as keyof typeof amounts], createdAt: now, updatedAt: now }));
+    const transactions = [
+      { id: 't1', date: '2026-07-10', amount: 3000, transactionType: 'expense' as const, category: 'essential' },
+      { id: 't2', date: '2026-08-02', amount: 6200, transactionType: 'income' as const, category: 'income' },
+    ] as Parameters<typeof buildDemoFinancialSummary>[4];
+
+    const result = buildDemoFinancialSummary(positions, snapshots, [], null, transactions, ['essential'], '2026-08-23');
+
+    expect(result.liabilityTotal).toBe('42000.00');
+    expect(result.pulse.debtService).toBe('1146.50');
+    expect(result.averageMonthlyDebtService).toBe('1146.50');
+    expect(result.debt.highestInterestRate).toBe('0.2600');
+    expect(result.debt.debtToIncome).toBe('0.184919');
+    expect(result.debt.liabilities.find(item => item.positionId === 'car')?.payoffMonth).toBe('2031-08');
+    expect(result.emergencyRunwayMonths).toBe('10.400000');
+    expect(result.emergencyRunwayMonthsWithDebt).toBe('7.524418');
+    expect(result.recommendedAction?.actionType).toBe('pay_down_high_interest_debt');
+    expect(result.recommendedAction?.title).toBe('Pay down card first');
   });
 });

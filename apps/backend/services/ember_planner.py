@@ -8,6 +8,7 @@ from typing import Literal
 from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from config import settings
 from lib.clock import singapore_today
 from schemas.rag import ChatMessage
 from services.ember_figure_tools import FIGURE_KEYS, FigureKey
@@ -201,7 +202,7 @@ def plan_ember_question(
     """Use one structured-output call to choose one bounded execution path."""
 
     current_date = today or singapore_today()
-    client = OpenAI()
+    client = OpenAI(**settings.openai_client_options)
     completion = client.chat.completions.parse(
         model=PLANNER_MODEL,
         temperature=0,

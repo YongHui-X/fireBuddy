@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Moon, Sun } from 'lucide-react';
 
 import { FireBuddyMark } from '../app/BrandMarks';
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFireBuddy } from '../app/fireBuddyContext';
 
 interface AuthShellProps {
   children: ReactNode;

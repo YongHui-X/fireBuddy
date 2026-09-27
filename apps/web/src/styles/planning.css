@@ -762,6 +762,153 @@ details.foundation-form[open] > summary {
   font-size: 0.95rem;
 }
 
+/* Step 5 outcome preview: the tinted insight panel carrying the headline result of the draft. */
+.retirement-preview strong {
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.retirement-preview-shortfall {
+  border-left-color: var(--expense);
+  background: var(--expense-soft);
+}
+
+.foundation-form > .retirement-preview-shortfall[role='status'] {
+  background: var(--expense-soft);
+}
+
+/* One fact per line, label left and figure right, so the numbers line up under the headline. */
+.foundation-form .retirement-preview-facts {
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+  margin: 4px 0 2px;
+}
+
+.foundation-form .retirement-preview-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.875rem;
+}
+
+.foundation-form .retirement-preview-facts dt {
+  color: var(--ink-2);
+  text-transform: none;
+}
+
+.foundation-form .retirement-preview-facts dd {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* What the projection was fed: a quieter second block under the outcome figures. */
+.foundation-form .retirement-preview-inputs {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.foundation-form .retirement-preview-inputs dd {
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+
+.foundation-form .retirement-preview-inputs .text-button {
+  color: var(--accent-text);
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.foundation-form .retirement-preview-warnings {
+  margin-top: 4px;
+  padding-left: 18px;
+  font-size: 0.8125rem;
+}
+
+/* Step 5 review: one bordered card per earlier step, each with its own way back. */
+.retirement-review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 700px) {
+  .retirement-review-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.retirement-review-card {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+}
+
+.retirement-review-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.retirement-review-card h4 {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.retirement-review-card .text-button {
+  color: var(--accent-text);
+  font-size: 0.85rem;
+}
+
+.retirement-review-card strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.retirement-review-card span {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.retirement-provenance {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.retirement-provenance-user {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+@media (pointer: coarse) {
+  .retirement-review-card .text-button {
+    min-height: 44px;
+  }
+}
+
 .retirement-setup-actions {
   margin-top: 6px;
   padding-top: 16px;
@@ -1136,13 +1283,137 @@ details.foundation-form[open] > summary {
   flex: 1 1 auto;
 }
 
-/* The sheet header already carries the form's title. */
+/* Wealth add and edit sheets: the sheet header carries the title, the body holds one form. */
 .wealth-form-sheet .foundation-form {
   border: 0;
   box-shadow: none;
   padding: 4px 18px 8px;
 }
 
-.wealth-form-sheet .foundation-form > h3 {
-  display: none;
+.wealth-form-sheet .foundation-error {
+  margin: 4px 18px 0;
+}
+
+.wealth-add-tabs {
+  display: flex;
+  width: auto;
+  margin: 4px 18px 12px;
+}
+
+.wealth-add-tabs button {
+  flex: 1 1 0;
+  padding: 0 8px;
+}
+
+.wealth-value-fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--surface-2);
+}
+
+.wealth-value-fieldset legend {
+  padding: 0 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.wealth-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* A checkbox's one-line explanation sits under its label, not beside it. */
+.foundation-form .check-stack label > span {
+  display: grid;
+  gap: 2px;
+}
+
+.foundation-form .check-stack label > span small {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Wealth page: three headline figures, then assets and debts side by side. */
+.wealth-headlines {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .wealth-headlines,
+  .wealth-headlines.retirement-headlines {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.wealth-intro {
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.wealth-intro strong {
+  color: var(--ink);
+}
+
+@media (min-width: 960px) {
+  .wealth-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.position-list .form-help .text-button {
+  font-size: inherit;
+}
+
+/* Row tags are already written as sentences; the capitalised liquidity class no longer appears. */
+.position-row > span:nth-child(2) small {
+  text-transform: none;
+}
+
+/* Liabilities section: signed balances, subtotals and payoff projection lines. */
+.position-row .payoff-line {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.position-row .payoff-warning {
+  color: var(--expense, #b4452b);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.position-row .position-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.position-row .position-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--forest, #25543d);
+}
+
+.management-list-card .section-subtotal {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+}
+
+.foundation-form .form-help-inline {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  margin: -6px 0 8px;
 }

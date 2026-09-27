@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import AuthShell from './AuthShell';
 
 function ResetPassword() {

@@ -16,7 +16,9 @@ import type { Session } from '@supabase/supabase-js';
 import { type TransactionExportFilters, type TransactionType } from '@firebuddy/shared';
 import {
   ArrowLeftRight,
+  CalendarDays,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
@@ -50,12 +52,12 @@ import {
   getCategoryIcon,
   getDeviceMonthKey,
   getDeviceDateKey,
-  useFireBuddy,
   type Account,
   type Category,
   type Transaction,
   type Tag,
-} from '../app/FireBuddyProvider';
+} from '../app/fireBuddyModel';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { exportTransactions as exportApiTransactions } from '../api';
 import { buildTransactionCsv, downloadCsvBlob, filterLocalExportTransactions, getTransactionExportFilename } from '../app/transactionExport';
 import { AscentMark, EmberMark, FireBuddyMark } from '../app/BrandMarks';
@@ -598,18 +600,38 @@ function getAdjacentTransactionMonth(
   return months[nextIndex] ?? selectedMonth;
 }
 
-/** Match a transaction against the selected month or inclusive custom date range. */
-function matchesTransactionDateRange(
-  transaction: Transaction,
-  selectedMonth: string,
-  startDate: string,
-  endDate: string,
-) {
-  if (!startDate && !endDate) {
-    return transaction.date.startsWith(selectedMonth);
+/** The ledger shows one calendar month, or an inclusive custom range where an empty bound is open-ended. */
+type TransactionPeriod =
+  | { mode: 'month'; month: string }
+  | { mode: 'custom'; startDate: string; endDate: string };
+
+/** Match a transaction against the active reporting period. */
+function matchesTransactionPeriod(transaction: Transaction, period: TransactionPeriod) {
+  if (period.mode === 'month') {
+    return transaction.date.startsWith(period.month);
   }
 
-  return (!startDate || transaction.date >= startDate) && (!endDate || transaction.date <= endDate);
+  return (!period.startDate || transaction.date >= period.startDate) && (!period.endDate || transaction.date <= period.endDate);
+}
+
+/** First and last calendar day of a YYYY-MM month. */
+function getMonthBounds(month: string) {
+  const year = Number(month.slice(0, 4));
+  const monthIndex = Number(month.slice(5, 7));
+  return { startDate: `${month}-01`, endDate: getDeviceDateKey(new Date(year, monthIndex, 0)) };
+}
+
+function formatPeriodDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Describe the active period for the panel heading and table caption. */
+function formatPeriodLabel(period: TransactionPeriod) {
+  if (period.mode === 'month') return formatMonthOptionLabel(period.month);
+  if (period.startDate && period.endDate) return `${formatPeriodDate(period.startDate)} – ${formatPeriodDate(period.endDate)}`;
+  if (period.startDate) return `From ${formatPeriodDate(period.startDate)}`;
+  if (period.endDate) return `Until ${formatPeriodDate(period.endDate)}`;
+  return 'All dates';
 }
 
 /** Sort table rows by the selected display column using resolved category and account labels. */
@@ -683,6 +705,9 @@ function Transactions() {
   const latestMonth = getDeviceMonthKey();
   const requestedMonth = initialParams.get('month');
   const [selectedMonth, setSelectedMonth] = useState(requestedMonth && /^\d{4}-\d{2}$/.test(requestedMonth) ? requestedMonth : latestMonth);
+  // One period control drives the ledger: a calendar month by default, or a custom range chosen
+  // from the same dropdown. The two never compete, so stepping months always changes the list.
+  const [periodMode, setPeriodMode] = useState<TransactionPeriod['mode']>('month');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [sort, setSort] = useState<TransactionSort>({ key: 'date', direction: 'desc' });
@@ -710,7 +735,28 @@ function Transactions() {
     [latestMonth, transactions],
   );
   const selectedMonthIndex = transactionMonthOptions.indexOf(selectedMonth);
-  const isCustomRangeMode = Boolean(customStartDate || customEndDate);
+  const isCustomRangeMode = periodMode === 'custom';
+  const activePeriod = useMemo<TransactionPeriod>(
+    () => (isCustomRangeMode
+      ? { mode: 'custom', startDate: customStartDate, endDate: customEndDate }
+      : { mode: 'month', month: selectedMonth }),
+    [customEndDate, customStartDate, isCustomRangeMode, selectedMonth],
+  );
+  const activePeriodLabel = formatPeriodLabel(activePeriod);
+
+  /** Show one calendar month and leave custom-range mode. */
+  function selectPeriodMonth(month: string) {
+    setSelectedMonth(month);
+    setPeriodMode('month');
+  }
+
+  /** Switch to a custom range that starts as the month on screen so the ledger does not jump. */
+  function selectCustomPeriod() {
+    const bounds = getMonthBounds(selectedMonth);
+    setCustomStartDate(bounds.startDate);
+    setCustomEndDate(bounds.endDate);
+    setPeriodMode('custom');
+  }
   const requestedTransactionId = new URLSearchParams(location.search).get('transactionId');
 
   /** Close transaction details and keep the remaining transaction filters in the URL. */
@@ -737,6 +783,7 @@ function Transactions() {
     const requestedTransaction = transactions.find((transaction) => transaction.id === requestedTransactionId);
     if (requestedTransaction) {
       setSelectedMonth(requestedTransaction.date.slice(0, 7));
+      setPeriodMode('month');
       setViewingTransaction((current) => current?.id === requestedTransaction.id ? current : requestedTransaction);
       return;
     }
@@ -810,13 +857,13 @@ function Transactions() {
         const matchesAccount = !selectedAccount || transaction.account === selectedAccount;
         const matchesType = !selectedType || transaction.transactionType === selectedType;
         const matchesTag = !selectedTag || (transaction.tagIds ?? []).includes(selectedTag);
-        const matchesDate = matchesTransactionDateRange(transaction, selectedMonth, customStartDate, customEndDate);
+        const matchesDate = matchesTransactionPeriod(transaction, activePeriod);
 
         return matchesSearch && matchesCategory && matchesAccount && matchesType && matchesTag && matchesDate;
       });
 
     return sortTransactionTableRows(rows, sort);
-  }, [customEndDate, customStartDate, getAccountById, getCategoryById, searchQuery, selectedAccount, selectedCategory, selectedMonth, selectedTag, selectedType, sort, transactions]);
+  }, [activePeriod, getAccountById, getCategoryById, searchQuery, selectedAccount, selectedCategory, selectedTag, selectedType, sort, transactions]);
 
   const tagUsageCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -867,7 +914,7 @@ function Transactions() {
     setSelectedTag(null);
     setCustomStartDate('');
     setCustomEndDate('');
-    setSelectedMonth(latestMonth);
+    selectPeriodMonth(latestMonth);
     setSort({ key: 'date', direction: 'desc' });
   }
 
@@ -875,10 +922,7 @@ function Transactions() {
   async function exportTransactionHistory(scope: TransactionExportScope) {
     const filteredDates = isCustomRangeMode
       ? { ...(customStartDate ? { startDate: customStartDate } : {}), ...(customEndDate ? { endDate: customEndDate } : {}) }
-      : {
-          startDate: `${selectedMonth}-01`,
-          endDate: getDeviceDateKey(new Date(Number(selectedMonth.slice(0, 4)), Number(selectedMonth.slice(5, 7)), 0)),
-        };
+      : getMonthBounds(selectedMonth);
     const filters: TransactionExportFilters = scope === 'filtered' ? {
       ...filteredDates,
       ...(selectedType ? { transactionType: selectedType } : {}),
@@ -1002,29 +1046,7 @@ function Transactions() {
     }
   }
 
-  const activeFilterCount = [selectedType, selectedCategory, selectedAccount, selectedTag].filter(Boolean).length
-    + (customStartDate || customEndDate ? 1 : 0);
-
-  const dateRangeControls = (
-    <div className="transaction-date-range" aria-label="Custom date range">
-      <label>
-        <span>Start date</span>
-        <input type="date" value={customStartDate} onChange={(event) => setCustomStartDate(event.target.value)} />
-      </label>
-      <label>
-        <span>End date</span>
-        <input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} />
-      </label>
-      {isCustomRangeMode ? (
-        <button className="secondary-button" type="button" onClick={() => {
-          setCustomStartDate('');
-          setCustomEndDate('');
-        }}>
-          Clear dates
-        </button>
-      ) : null}
-    </div>
-  );
+  const activeFilterCount = [selectedType, selectedCategory, selectedAccount, selectedTag].filter(Boolean).length;
 
   const selectFilterControls = (
     <div className="select-filter-grid">
@@ -1099,42 +1121,6 @@ function Transactions() {
       />
 
       <section className="screen-content">
-        <div className="transactions-period-panel">
-          <div>
-            <span>Reporting period</span>
-            <strong>{isCustomRangeMode ? 'Custom range' : formatMonthOptionLabel(selectedMonth)}</strong>
-          </div>
-          <div className="dashboard-period transactions-period" role="group" aria-label="Transaction reporting period controls">
-            <button
-              type="button"
-              aria-label="Show previous month"
-              disabled={selectedMonthIndex === transactionMonthOptions.length - 1}
-              onClick={() => setSelectedMonth(getAdjacentTransactionMonth(transactionMonthOptions, selectedMonth, 'older'))}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <label className="dashboard-period-picker">
-              <select
-                aria-label="Transaction reporting period"
-                value={selectedMonth}
-                onChange={(event) => setSelectedMonth(event.target.value)}
-              >
-                {transactionMonthOptions.map((month) => (
-                  <option key={month} value={month}>{formatMonthOptionLabel(month)}</option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              aria-label="Show next month"
-              disabled={selectedMonthIndex <= 0}
-              onClick={() => setSelectedMonth(getAdjacentTransactionMonth(transactionMonthOptions, selectedMonth, 'newer'))}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-
         <div className="page-filter-toolbar">
           <label className="search-field">
             <Search size={18} />
@@ -1151,7 +1137,57 @@ function Transactions() {
             ) : null}
           </label>
 
-          {isWideLayout ? dateRangeControls : (
+          {/* One pill: previous, the month (a native select under a display-font label), next. */}
+          <div className="transactions-period" role="group" aria-label="Transaction reporting period controls">
+            <button
+              type="button"
+              aria-label="Show previous month"
+              disabled={isCustomRangeMode || selectedMonthIndex === transactionMonthOptions.length - 1}
+              onClick={() => selectPeriodMonth(getAdjacentTransactionMonth(transactionMonthOptions, selectedMonth, 'older'))}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <label className="transactions-period-picker">
+              <CalendarDays size={16} aria-hidden="true" />
+              <select
+                aria-label="Transaction reporting period"
+                value={isCustomRangeMode ? 'custom' : selectedMonth}
+                onChange={(event) => (event.target.value === 'custom' ? selectCustomPeriod() : selectPeriodMonth(event.target.value))}
+              >
+                {transactionMonthOptions.map((month) => (
+                  <option key={month} value={month}>{formatMonthOptionLabel(month)}</option>
+                ))}
+                <option value="custom">Custom range…</option>
+              </select>
+              <ChevronDown size={15} aria-hidden="true" />
+            </label>
+            <button
+              type="button"
+              aria-label="Show next month"
+              disabled={isCustomRangeMode || selectedMonthIndex <= 0}
+              onClick={() => selectPeriodMonth(getAdjacentTransactionMonth(transactionMonthOptions, selectedMonth, 'newer'))}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          {isCustomRangeMode ? (
+            <div className="transaction-date-range" role="group" aria-label="Custom date range">
+              <label>
+                <span>Start date</span>
+                <input type="date" value={customStartDate} max={customEndDate || undefined} onChange={(event) => setCustomStartDate(event.target.value)} />
+              </label>
+              <label>
+                <span>End date</span>
+                <input type="date" value={customEndDate} min={customStartDate || undefined} onChange={(event) => setCustomEndDate(event.target.value)} />
+              </label>
+              <button className="secondary-button" type="button" onClick={() => selectPeriodMonth(selectedMonth)}>
+                Back to months
+              </button>
+            </div>
+          ) : null}
+
+          {isWideLayout ? null : (
             <button
               type="button"
               className="filter-trigger"
@@ -1181,7 +1217,7 @@ function Transactions() {
         <div className="transactions-table-shell">
           {filteredTransactionRows.length ? (
             <table className="transactions-table">
-              <caption>Transactions for {isCustomRangeMode ? 'the selected date range' : formatMonthOptionLabel(selectedMonth)}</caption>
+              <caption>Transactions for {activePeriodLabel}</caption>
               <colgroup>
                 <col className="transaction-column-date" />
                 <col className="transaction-column-description" />
@@ -1460,11 +1496,10 @@ function Transactions() {
         <BottomSheet
           isOpen={showFilterSheet}
           title="Filters"
-          description="Narrow the ledger by date, type, category, account or tag."
+          description="Narrow the ledger by type, category, account or tag."
           onClose={() => setShowFilterSheet(false)}
           className="filter-sheet"
         >
-          {dateRangeControls}
           {selectFilterControls}
         </BottomSheet>
       ) : null}

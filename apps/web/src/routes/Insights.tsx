@@ -19,12 +19,12 @@ import {
   getCategoryIcon,
   getDeviceMonthKey,
   getDeviceDateKey,
-  useFireBuddy,
   type Account,
   type Category,
   type Transaction,
   type Tag,
-} from '../app/FireBuddyProvider';
+} from '../app/fireBuddyModel';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { exportTransactions as exportApiTransactions } from '../api';
 import { buildTransactionCsv, downloadCsvBlob, getTransactionExportFilename } from '../app/transactionExport';
 import { PageToolbar } from '../components/PageToolbar';

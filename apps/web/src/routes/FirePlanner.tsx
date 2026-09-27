@@ -1,11 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Landmark } from 'lucide-react';
 import { AscentMark } from '../app/BrandMarks';
 import { Legend, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { calendarMonth, monthIndex, type FireCalculationResult, type FireScenarioRequest, type RetirementPlan } from '@firebuddy/shared';
-import { useFinancialFoundation } from '../app/FinancialFoundationProvider';
-import { formatSGD } from '../app/FireBuddyProvider';
+import { useFinancialFoundation } from '../app/financialFoundationContext';
+import { formatSGD } from '../app/fireBuddyModel';
+import { useFireBuddy } from '../app/fireBuddyContext';
+import { clearScenarioSessionDraft, readScenarioSessionDraft, writeScenarioSessionDraft } from '../app/plannerSessionStorage';
 import { PageToolbar } from '../components/PageToolbar';
 import { mq } from '../app/breakpoints';
 import { useMediaQuery } from '../app/useMediaQuery';
@@ -131,7 +133,10 @@ function Results({ fire }: { fire: FireCalculationResult }) {
           </ul>
         ) : null}
       </div>
-      <p>Nominal SGD, smooth returns. The gold dot is the capital required in {monthLabel(plan.retirementMonth)}; balances below zero are unfunded months, not borrowing. {depletion ? 'Compare a later retirement date or a higher contribution below.' : 'Review assumptions and refresh asset values regularly.'} <Link to="/wealth">Manage wealth separately</Link>.</p>
+      <p>Nominal SGD, smooth returns. The gold dot is the capital required in {monthLabel(plan.retirementMonth)}; balances below zero are unfunded months, not borrowing. {depletion ? 'Compare a later retirement date or a higher contribution below.' : 'Review assumptions and refresh asset values regularly.'}</p>
+      <p role="status" className="retirement-portfolio-source">{plan.portfolioOverride
+        ? <>Starting portfolio is the {formatSGD(plan.portfolioOverride.amount, 0)} you typed, dated {plan.portfolioOverride.date}. Values in <Link to="/wealth">Wealth</Link> do not change it until you <Link to="/fire/setup?step=3">pick assets in setup</Link>.</>
+        : <>Starting portfolio is {amount(fire.currentInvestableAssets)} from {plan.assetIds.length} asset{plan.assetIds.length === 1 ? '' : 's'} ticked in setup, at their latest values in <Link to="/wealth">Wealth</Link>. Edit a value there, or in <Link to="/fire/setup?step=3">setup</Link>, and this projection follows.</>}</p>
     </section>
 
     <section className="white-card foundation-form"><h2>Spending and retirement income</h2>{!cpfIncluded && <p role="status">CPF income not included{plan.cpfPlan === 'basic' ? ': Basic declining payouts are not modelled.' : ': payout is not yet known.'}</p>}<div className="retirement-facts">{[firstRetirement, firstCpf].map((row, i) => <div key={i}><h3>{i === 0 ? 'At retirement' : `From CPF LIFE payout age ${plan.cpfStartAge}`}</h3>{row ? <><p>{monthLabel(row.month)}, nominal SGD per month</p><dl><div><dt>Expenses</dt><dd>{amount(row.expenses)}</dd></div><div><dt>CPF LIFE</dt><dd>{amount(row.cpf)}</dd></div><div><dt>Other net income</dt><dd>{amount(row.otherIncome)}</dd></div><div><dt>Drawn from portfolio</dt><dd>{formatSGD(Math.max(0, Number(row.expenses) - Number(row.cpf) - Number(row.otherIncome)), 0)}</dd></div></dl></> : <p>Outside this planning horizon.</p>}</div>)}</div></section>
@@ -168,13 +173,22 @@ const isRate = (key: keyof Overrides) => key === 'beforeReturn' || key === 'afte
 /** Compare a single unsaved scenario against the authoritative baseline. */
 function Scenario({ baseline }: { baseline: FireCalculationResult }) {
   const { runScenario } = useFinancialFoundation();
+  const { session } = useFireBuddy();
   const plan = baseline.plan!;
   const initial: Overrides = { retirementMonth: plan.retirementMonth, monthlyContribution: plan.monthlyContribution, monthlySpending: plan.monthlySpending, beforeReturn: plan.beforeReturn, afterReturn: plan.afterReturn, inflation: plan.inflation };
-  const [overrides, setOverrides] = useState<Overrides>(initial);
-  const [result, setResult] = useState<FireCalculationResult | null>(null);
+  // The scenario is deliberately unsaved, but leaving the tab should not throw the comparison away.
+  const ownerId = session?.user.id ?? 'demo';
+  const baselineKey = JSON.stringify(initial);
+  const [restored] = useState(() => readScenarioSessionDraft(ownerId, baselineKey));
+  const [overrides, setOverrides] = useState<Overrides>(restored?.overrides ?? initial);
+  const [result, setResult] = useState<FireCalculationResult | null>(restored?.result ?? null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const changed = (Object.keys(scenarioLabels) as (keyof Overrides)[]).filter(key => overrides[key] !== initial[key]);
+  useEffect(() => {
+    if (changed.length === 0 && !result) clearScenarioSessionDraft(ownerId);
+    else writeScenarioSessionDraft(ownerId, { overrides, result, baselineKey });
+  }, [baselineKey, changed.length, overrides, ownerId, result]);
   async function calculate(event: FormEvent) {
     event.preventDefault(); setError(''); setBusy(true); setResult(null);
     try { setResult(await runScenario({ planOverrides: overrides })); }

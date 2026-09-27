@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Account, Category, Tag, Transaction } from './FireBuddyProvider';
+import type { Account, Category, Tag, Transaction } from './fireBuddyModel';
 import { buildTransactionCsv, filterLocalExportTransactions, getTransactionExportFilename, transactionCsvColumns } from './transactionExport';
 
 const categories: Category[] = [{ id: 'food', name: 'Food, dining', color: '#3C8A61', icon: 'food', monthlyBudget: 0, categoryType: 'expense' }];

@@ -1,6 +1,6 @@
 import { Bell, Moon, Sun } from 'lucide-react';
 
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFireBuddy } from '../app/fireBuddyContext';
 
 export interface AppUtilityActionsProps {
   className?: string;

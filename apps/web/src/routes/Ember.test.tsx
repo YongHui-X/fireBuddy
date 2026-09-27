@@ -21,8 +21,8 @@ vi.mock('../api', async () => {
   return { ...actual, streamFinancialAdvisor: mocks.streamFinancialAdvisor };
 });
 
-vi.mock('../app/FireBuddyProvider', async () => {
-  const actual = await vi.importActual<typeof import('../app/FireBuddyProvider')>('../app/FireBuddyProvider');
+vi.mock('../app/fireBuddyContext', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
   return { ...actual, useFireBuddy: () => ({ session: mocks.session }) };
 });
 
@@ -78,6 +78,9 @@ describe('Ember page', () => {
     expect(screen.getByText(/explain your FireBuddy spending and FIRE results/i)).toBeTruthy();
     expect(screen.getByText(/uses read only calculations, cannot change records/i)).toBeTruthy();
     expect(screen.queryByText('Ember', { selector: '.ember-message-author' })).toBeNull();
+    const composerHelp = screen.getByText('Enter to send. Shift+Enter for a new line.');
+    expect(composerHelp.nextElementSibling?.textContent).toContain('Educational information only');
+    expect(composerHelp.nextElementSibling?.tagName).toBe('SMALL');
   });
 
   it('opens and closes chat history as a compact drawer', async () => {
@@ -193,7 +196,7 @@ describe('Ember page', () => {
     );
   });
 
-  it('renders a tailored-data link when the answer used the personal snapshot', async () => {
+  it('shows concise personalisation copy without snapshot details', async () => {
     mocks.streamFinancialAdvisor.mockImplementationOnce(async (_token, _input, handlers: RagStreamHandlers) => {
       handlers.onDelta('Your runway is 5.2 months.');
       handlers.onEvidence?.('hybrid', {
@@ -208,9 +211,11 @@ describe('Ember page', () => {
     askQuestion('Is my emergency fund large enough?');
     expect((await screen.findAllByText('Your runway is 5.2 months.')).length).toBeGreaterThan(0);
 
-    const link = await screen.findByText('Tailored to your FireBuddy data');
-    expect(link.closest('a')?.getAttribute('href')).toBe('/');
-    expect(screen.getByText('Your FireBuddy snapshot')).toBeTruthy();
+    const note = await screen.findByText("Ember's response is customised to your existing data");
+    expect(note.tagName).toBe('EM');
+    expect(note.closest('a')).toBeNull();
+    expect(screen.queryByText('Your FireBuddy snapshot')).toBeNull();
+    expect(screen.queryByText('2026-09-16')).toBeNull();
   });
 
   it('scrolls once to a new answer start and not for streamed updates', async () => {

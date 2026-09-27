@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router';
 
-import { AppProvider, useFireBuddy } from './app/FireBuddyProvider';
+import { AppProvider } from './app/FireBuddyProvider';
+import { useFireBuddy } from './app/fireBuddyContext';
 import { FinancialFoundationProvider } from './app/FinancialFoundationProvider';
 import AuthShell from './routes/AuthShell';
 

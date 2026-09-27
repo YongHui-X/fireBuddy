@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
-import { useFinancialFoundation } from '../app/FinancialFoundationProvider';
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFinancialFoundation } from '../app/financialFoundationContext';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { PageToolbar } from '../components/PageToolbar';
 
 /** Keep emergency spending setup alongside everyday category budgets. */

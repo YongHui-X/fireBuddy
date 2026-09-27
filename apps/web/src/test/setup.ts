@@ -26,6 +26,9 @@ beforeAll(() => {
   if (!Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = vi.fn();
   }
+
+  // jsdom logs "Not implemented: Window's scrollTo()" for every call; the app scrolls after saves.
+  Object.defineProperty(window, 'scrollTo', { configurable: true, writable: true, value: vi.fn() });
 });
 
 afterEach(() => {
@@ -33,4 +36,6 @@ afterEach(() => {
   vi.restoreAllMocks();
   resetViewport();
   clearMediaQueryRegistry();
+  // Planner drafts live in tab storage; keep them from leaking between tests.
+  window.sessionStorage.clear();
 });

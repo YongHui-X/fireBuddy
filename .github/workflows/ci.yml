@@ -95,6 +95,8 @@ jobs:
           apps/backend/routers/expenses.py
           apps/backend/routers/rag.py
           apps/backend/services/rag_service.py
+          apps/backend/services/category_visibility.py
+          apps/backend/services/debt_calculator.py
           apps/backend/services/ember_figure_tools.py
           apps/backend/services/source_metadata.py
           apps/backend/services/rate_limiter.py

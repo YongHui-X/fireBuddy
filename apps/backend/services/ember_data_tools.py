@@ -9,6 +9,7 @@ from lib.clock import singapore_today
 from lib.repository import fetch_all
 from lib.supabase import supabase
 from schemas.rag import AdvisorSource
+from services.category_visibility import load_visible_expense_categories
 from services.ember_figure_tools import lookup_figure
 from services.ember_personal_context import trusted_data_block
 from services.ember_planner import EmberPlan, EmberToolName
@@ -81,36 +82,11 @@ def _load_expenses(user_id: str, start: date, end: date) -> list[dict]:
     )
 
 
-def _load_visible_expense_categories(user_id: str) -> dict[str, str]:
-    """Map system and owner-scoped expense category IDs to display names."""
-
-    default_rows = fetch_all(
-        lambda: (
-            supabase.table("categories")
-            .select(CATEGORY_COLUMNS)
-            .eq("is_default", True)
-            .eq("category_type", "expense")
-            .order("id")
-        )
-    )
-    user_rows = fetch_all(
-        lambda: (
-            supabase.table("categories")
-            .select(CATEGORY_COLUMNS)
-            .eq("user_id", user_id)
-            .eq("category_type", "expense")
-            .order("id")
-        )
-    )
-    safe_defaults = [row for row in default_rows if row.get("user_id") is None]
-    return {str(row["id"]): str(row["name"]) for row in [*safe_defaults, *user_rows]}
-
-
 def _expense_totals(user_id: str, start: date, end: date, category_name: str | None) -> dict:
     """Calculate an expense total and category breakdown from owner-scoped rows."""
 
     rows = _load_expenses(user_id, start, end)
-    categories = _load_visible_expense_categories(user_id)
+    categories = load_visible_expense_categories(user_id, supabase)
     selected = rows
     if category_name:
         matching_ids = {
@@ -222,6 +198,8 @@ def _financial_summary(user_id: str, plan: EmberPlan, today: date) -> EmberDataR
     facts = {
         "effectiveDate": summary["effectiveDate"],
         "netWorth": summary["netWorth"],
+        "liabilityTotal": summary["liabilityTotal"],
+        "monthlyDebtService": summary["debt"]["totalMonthlyDebtService"],
         "investableAssets": summary["investableAssets"],
         "emergencyRunwayMonths": summary["emergencyRunwayMonths"],
         "monthlyPulse": pulse,

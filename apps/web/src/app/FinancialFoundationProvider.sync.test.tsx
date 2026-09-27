@@ -2,8 +2,9 @@ import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FinancialSummary, WealthPosition } from '@firebuddy/shared';
-import { FinancialFoundationProvider, useFinancialFoundation } from './FinancialFoundationProvider';
-import type { useFireBuddy } from './FireBuddyProvider';
+import { FinancialFoundationProvider } from './FinancialFoundationProvider';
+import { useFinancialFoundation } from './financialFoundationContext';
+import type { useFireBuddy } from './fireBuddyContext';
 
 const mocks = vi.hoisted(() => ({
   useFireBuddy: vi.fn(),
@@ -14,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   getFinancialSummary: vi.fn(),
   getWealthSnapshotHistory: vi.fn(),
 }));
-vi.mock('./FireBuddyProvider', () => ({ useFireBuddy: mocks.useFireBuddy }));
+vi.mock('./fireBuddyContext', () => ({ useFireBuddy: mocks.useFireBuddy }));
 vi.mock('../api', () => ({
   ...mocks,
   calculateFireScenario: vi.fn(), createWealthContribution: vi.fn(), createWealthPosition: vi.fn(),

@@ -25,6 +25,32 @@ def read_positive_int(name: str, default: int) -> int:
     return value
 
 
+def read_positive_float(name: str, default: float) -> float:
+    """Read a positive decimal setting such as a timeout in seconds."""
+
+    raw_value = os.getenv(name, str(default)).strip()
+    try:
+        value = float(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a positive number") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive number")
+    return value
+
+
+def read_non_negative_int(name: str, default: int) -> int:
+    """Read a zero-or-more integer setting such as a retry count."""
+
+    raw_value = os.getenv(name, str(default)).strip()
+    try:
+        value = int(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a non-negative integer") from exc
+    if value < 0:
+        raise ValueError(f"{name} must be a non-negative integer")
+    return value
+
+
 def read_cors_origins() -> tuple[str, ...]:
     """Read the explicit browser-origin allowlist used by FastAPI CORS."""
 
@@ -66,6 +92,11 @@ class Settings:
         self.openai_model = (
             os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
         )
+        # Every OpenAI call runs inside a threadpool worker, so an unbounded wait during
+        # an outage would pin the pool. The SDK retries transient errors itself.
+        self.openai_timeout_seconds = read_positive_float("OPENAI_TIMEOUT_SECONDS", 30.0)
+        self.openai_max_retries = read_non_negative_int("OPENAI_MAX_RETRIES", 2)
+        self.log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper() or "INFO"
         self.cors_allowed_origins = read_cors_origins()
         self.advisor_rate_limit_requests = read_positive_int(
             "ADVISOR_RATE_LIMIT_REQUESTS",
@@ -83,6 +114,15 @@ class Settings:
             "AI_SUGGESTION_RATE_LIMIT_WINDOW_SECONDS",
             60,
         )
+
+    @property
+    def openai_client_options(self) -> dict:
+        """Keyword arguments every OpenAI client in the request path must use."""
+
+        return {
+            "timeout": self.openai_timeout_seconds,
+            "max_retries": self.openai_max_retries,
+        }
 
 
 settings = Settings()

@@ -1,62 +1,24 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from 'expo-router';
-import React from 'react';
 
-import { FirebuddyPalette } from '@/constants/theme';
+import { TabBar } from '@/components/navigation/TabBar';
+import { useTheme } from '@/lib/theme';
 
+/** The four fixed tabs; the custom bar draws the lime Add tile between them and owns the safe-area inset. */
 export default function TabLayout() {
+  const { theme } = useTheme();
+
   return (
     <Tabs
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: FirebuddyPalette.accent,
-        tabBarInactiveTintColor: FirebuddyPalette.muted,
-        tabBarStyle: {
-          height: 70,
-          paddingTop: 8,
-          paddingBottom: 8,
-          backgroundColor: '#FFFFFF',
-          borderTopColor: FirebuddyPalette.border,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-        },
+        sceneStyle: { backgroundColor: theme.bg },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons color={color} size={size} name="home-filled" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="transactions"
-        options={{
-          title: 'Transactions',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons color={color} size={size} name="receipt-long" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="categories"
-        options={{
-          title: 'Categories',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons color={color} size={size} name="grid-view" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <MaterialIcons color={color} size={size} name="person" />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="transactions" options={{ title: 'Transactions' }} />
+      <Tabs.Screen name="categories" options={{ title: 'Categories' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   );
 }

@@ -1,0 +1,12 @@
+# Normalise line endings so Windows checkouts stop producing CRLF churn in diffs.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

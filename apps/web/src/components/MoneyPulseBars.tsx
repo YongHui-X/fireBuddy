@@ -1,4 +1,4 @@
-import { formatSGD } from '../app/FireBuddyProvider';
+import { formatSGD } from '../app/fireBuddyModel';
 
 interface MoneyPulseBarsProps {
   income: number | null;

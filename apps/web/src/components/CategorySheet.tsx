@@ -2,13 +2,9 @@ import { useState } from 'react';
 import type { TransactionType } from '@firebuddy/shared';
 import { Check, Trash2, X } from 'lucide-react';
 
-import {
-  categoryColors,
-  categoryIconOptions,
-  legacyCategoryIconIds,
-  type Category,
-} from '../app/FireBuddyProvider';
+import { categoryColors, categoryIconOptions, legacyCategoryIconIds, type Category } from '../app/fireBuddyModel';
 import { useAccessibleDialog } from './useAccessibleDialog';
+import { onEnterInInput } from './useEnterKey';
 
 const categoryBudgetInputPattern = /^\d{0,8}(?:\.\d{0,2})?$/;
 
@@ -103,6 +99,7 @@ export function CategorySheet({
         aria-labelledby="category-sheet-title"
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
+        onKeyDown={onEnterInInput(() => void save())}
       >
         <div className="sheet-header">
           <h3 id="category-sheet-title">{mode === 'add' ? 'New category' : 'Edit category'}</h3>
@@ -150,7 +147,9 @@ export function CategorySheet({
               <input
                 value={monthlyBudget}
                 onChange={(event) => {
-                  const nextValue = event.target.value.startsWith('.') ? `0${event.target.value}` : event.target.value;
+                  const typed = event.target.value.startsWith('.') ? `0${event.target.value}` : event.target.value;
+                  // Drop a placeholder leading zero so typing over the default "0" yields "250", not "0250".
+                  const nextValue = typed.replace(/^0+(?=\d)/, '');
                   if (categoryBudgetInputPattern.test(nextValue)) {
                     setMonthlyBudget(nextValue);
                     setBudgetError(null);

@@ -32,7 +32,7 @@ function LocationProbe() {
   return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
 }
 
-vi.mock('../app/FinancialFoundationProvider', () => ({
+vi.mock('../app/financialFoundationContext', () => ({
   useFinancialFoundation: () => ({
     positions: [], snapshots: [], contributions: [], profile: null, essentialCategoryIds: mocks.essentialCategoryIds,
     status: mocks.foundationStatus, error: mocks.foundationError, demoMode: true,
@@ -57,8 +57,8 @@ vi.mock('../app/FinancialFoundationProvider', () => ({
   }),
 }));
 
-vi.mock('../app/FireBuddyProvider', async () => {
-  const actual = await vi.importActual<typeof import('../app/FireBuddyProvider')>('../app/FireBuddyProvider');
+vi.mock('../app/fireBuddyContext', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
   return {
     ...actual,
     useFireBuddy: () => ({
@@ -345,7 +345,7 @@ describe('App shell UX', () => {
     expect(pulse.queryByText('Invested')).toBeNull();
   });
 
-  it('opens Transactions with a dashboard search applied to the selected month', async () => {
+  it('applies a search and month from the Transactions URL', async () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     mocks.transactions.push({
       id: 'older-lunch', description: 'Team lunch', amount: -42, category: 'food', account: 'cash',
@@ -355,11 +355,7 @@ describe('App shell UX', () => {
       date: `${currentMonth}-10`, transactionType: 'expense',
     });
 
-    render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
-
-    const dashboardSearch = screen.getByRole('searchbox', { name: 'Search transactions' });
-    fireEvent.change(dashboardSearch, { target: { value: 'Team lunch' } });
-    fireEvent.submit(dashboardSearch.closest('form')!);
+    render(<MemoryRouter initialEntries={[`/transactions?month=${currentMonth}&search=Team+lunch`]}><AppShell /></MemoryRouter>);
 
     expect(await screen.findByRole('heading', { name: 'Transactions' })).toBeTruthy();
     expect((screen.getByPlaceholderText('Search transactions...') as HTMLInputElement).value).toBe('Team lunch');
@@ -406,6 +402,16 @@ describe('App shell UX', () => {
     render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
 
     expect(screen.getByText('Current groceries')).toBeTruthy();
+    expect(screen.queryByLabelText('Start date')).toBeNull();
+
+    const periodSelect = screen.getByRole('combobox', { name: 'Transaction reporting period' }) as HTMLSelectElement;
+    fireEvent.change(periodSelect, { target: { value: 'custom' } });
+
+    expect(periodSelect.value).toBe('custom');
+    expect((screen.getByLabelText('Start date') as HTMLInputElement).value).toBe(`${currentMonth}-01`);
+    expect((screen.getByRole('button', { name: 'Show previous month' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText('Current groceries')).toBeTruthy();
+
     fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2025-01-01' } });
     fireEvent.change(screen.getByLabelText('End date'), { target: { value: '2025-01-31' } });
 
@@ -413,6 +419,13 @@ describe('App shell UX', () => {
     expect(screen.queryByText('December groceries')).toBeNull();
     expect(screen.getByText('January coffee')).toBeTruthy();
     expect(screen.getByText('January salary')).toBeTruthy();
+    expect(screen.getByText('Transactions for 1 Jan 2025 – 31 Jan 2025')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to months' }));
+
+    expect(periodSelect.value).toBe(currentMonth);
+    expect(screen.queryByLabelText('Start date')).toBeNull();
+    expect(screen.getByText('Current groceries')).toBeTruthy();
   });
 
   it('filters the transaction table by type and reusable tag', () => {
@@ -454,6 +467,8 @@ describe('App shell UX', () => {
     render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
 
     fireEvent.change(screen.getByPlaceholderText('Search transactions...'), { target: { value: 'Archive' } });
+    const periodSelect = screen.getByRole('combobox', { name: 'Transaction reporting period' }) as HTMLSelectElement;
+    fireEvent.change(periodSelect, { target: { value: 'custom' } });
     fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2025-01-01' } });
     fireEvent.change(screen.getByLabelText('End date'), { target: { value: '2025-01-31' } });
     fireEvent.change(screen.getByDisplayValue('All categories'), { target: { value: 'travel' } });
@@ -467,8 +482,8 @@ describe('App shell UX', () => {
 
     fireEvent.click(within(emptyState).getByRole('button', { name: 'Clear filters' }));
     expect((screen.getByPlaceholderText('Search transactions...') as HTMLInputElement).value).toBe('');
-    expect((screen.getByLabelText('Start date') as HTMLInputElement).value).toBe('');
-    expect((screen.getByLabelText('End date') as HTMLInputElement).value).toBe('');
+    expect(periodSelect.value).toBe(currentMonth);
+    expect(screen.queryByLabelText('Start date')).toBeNull();
     expect(screen.getByText('Current lunch')).toBeTruthy();
     expect(screen.queryByText('Archive flight')).toBeNull();
   });
@@ -896,14 +911,15 @@ describe('App shell on a phone', () => {
     setViewportWidth(viewports.phone);
     render(<MemoryRouter initialEntries={['/transactions']}><AppShell /></MemoryRouter>);
 
-    // Inline on a desktop, behind a trigger here.
-    expect(screen.queryByLabelText('Custom date range')).toBeNull();
+    // Inline on a desktop, behind a trigger here. The reporting period stays outside the sheet.
+    expect(screen.queryByRole('combobox', { name: 'Type' })).toBeNull();
+    expect(screen.getByRole('combobox', { name: 'Transaction reporting period' })).toBeTruthy();
     const trigger = screen.getByRole('button', { name: /Filters/ });
     expect(trigger.querySelector('.filter-trigger-count')).toBeNull();
 
     fireEvent.click(trigger);
     const sheet = screen.getByRole('dialog', { name: 'Filters' });
-    expect(within(sheet).getByLabelText('Custom date range')).toBeTruthy();
+    expect(within(sheet).queryByLabelText('Custom date range')).toBeNull();
     fireEvent.change(within(sheet).getByRole('combobox', { name: 'Type' }), { target: { value: 'income' } });
     fireEvent.keyDown(document, { key: 'Escape' });
 

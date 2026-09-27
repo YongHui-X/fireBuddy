@@ -13,8 +13,8 @@ Current repo state:
 - `apps/web/` is the active React and Vite frontend.
 - `apps/web/` includes Supabase auth, typed income and expense transactions, read-only system categories, custom category management, persisted accounts, expense-only insights, optional AI category suggestions, financial advisor chat history, and explicit demo-only local state.
 - `apps/backend/` is the FastAPI backend with mounted health, accounts, transactions, compatibility expenses, categories, AI suggestion, and financial advisor RAG routes.
-- `apps/mobile/` contains the earlier Expo implementation and is currently deferred.
-- `packages/shared/` contains shared TypeScript contracts for accounts, categories, transactions, expenses, AI, and RAG, plus category data, add-expense helpers, and API route constants.
+- `apps/mobile/` contains the Expo app with the web design system ported (`constants/tokens.ts`), a safe-area-aware shell, the four tabs and the Add transaction sheet on local demo data from `packages/shared`. Supabase and backend wiring are still pending.
+- `packages/shared/` contains shared TypeScript contracts for accounts, categories, transactions, expenses, AI, and RAG, plus category data, add-expense helpers, API route constants, and the modules both frontends share: formatters (`format.ts`), the demo dataset (`demo-data.ts`), ledger maths (`ledger.ts`), donut geometry (`charts.ts`), category icon ids (`category-icons.ts`) and the transaction draft (`transaction-draft.ts`).
 - `supabase/` contains timestamped SQL migrations for UUID alignment, profiles, typed categories, persisted accounts, income and expense transactions, security, and private hybrid RAG storage.
 
 Ongoing repo direction:

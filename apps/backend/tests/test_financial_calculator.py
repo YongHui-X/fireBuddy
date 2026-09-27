@@ -68,6 +68,45 @@ class FinancialCalculatorTests(unittest.TestCase):
         self.assertEqual(summary["investableAssets"], "223200.00")
         self.assertEqual(summary["pulse"]["savingsRate"], "0.487097")
         self.assertEqual(summary["emergencyRunwayMonths"], "5.200000")
+        # A liability without terms contributes no debt service and cannot be projected.
+        self.assertEqual(summary["pulse"]["debtService"], "0.00")
+        self.assertEqual(summary["debt"]["liabilities"][0]["status"], "missing_terms")
+        self.assertEqual(summary["emergencyRunwayMonthsWithDebt"], "5.200000")
+
+    def test_summary_projects_debt_and_recommends_paying_expensive_borrowing(self):
+        positions = [
+            {"id": "cash", "name": "Cash reserve", "position_kind": "asset", "include_in_fi": True, "is_emergency_fund": True, "is_archived": False, "position_type": "cash", "restriction_type": "none", "liquidity_class": "liquid"},
+            {"id": "card", "name": "Visa", "position_kind": "liability", "include_in_fi": False, "is_emergency_fund": False, "is_archived": False, "position_type": "credit_card", "restriction_type": "none", "liquidity_class": "liquid", "interest_rate": "0.2600", "monthly_payment": "600"},
+            {"id": "car", "name": "Car loan", "position_kind": "liability", "include_in_fi": False, "is_emergency_fund": False, "is_archived": False, "position_type": "loan", "restriction_type": "none", "liquidity_class": "less_liquid", "interest_rate": "0.0350", "monthly_payment": "546.50"},
+        ]
+        snapshots = [
+            {"wealth_position_id": "cash", "value_date": "2026-08-20", "amount": "31200"},
+            {"wealth_position_id": "card", "value_date": "2026-08-20", "amount": "12000"},
+            {"wealth_position_id": "car", "value_date": "2026-08-20", "amount": "30000"},
+        ]
+        transactions = [
+            {"id": "old", "date": "2026-07-10", "amount": "3000", "transaction_type": "expense", "category_id": "essential"},
+            {"id": "salary", "date": "2026-08-02", "amount": "6200", "transaction_type": "income", "category_id": "income"},
+        ]
+        summary = build_financial_summary(
+            positions=positions, snapshots=snapshots, contributions=[], transactions=transactions,
+            selected_essentials=["essential"], profile=None, as_of=date(2026, 8, 23),
+        )
+        self.assertEqual(summary["liabilityTotal"], "42000.00")
+        self.assertEqual(summary["pulse"]["debtService"], "1146.50")
+        self.assertEqual(summary["averageMonthlyDebtService"], "1146.50")
+        self.assertEqual(summary["debt"]["highestInterestRate"], "0.2600")
+        self.assertEqual(summary["debt"]["debtToIncome"], "0.184919")
+        by_id = {item["positionId"]: item for item in summary["debt"]["liabilities"]}
+        self.assertEqual(by_id["car"]["status"], "projected")
+        self.assertEqual(by_id["car"]["payoffMonth"], "2031-08")
+        self.assertEqual(by_id["card"]["status"], "projected")
+        # Runway with debt service: 31200 / (3000 + 1146.50).
+        self.assertEqual(summary["emergencyRunwayMonths"], "10.400000")
+        self.assertEqual(summary["emergencyRunwayMonthsWithDebt"], "7.524418")
+        self.assertEqual(summary["recommendedAction"]["actionType"], "pay_down_high_interest_debt")
+        self.assertEqual(summary["recommendedAction"]["title"], "Pay down Visa first")
+        self.assertEqual(summary["recommendedAction"]["evidence"], "26.00% on S$12000.00")
 
     def test_duplicate_indicator_takes_precedence(self):
         rows = [

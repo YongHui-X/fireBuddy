@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import LegalPage from './LegalPage';
 
-vi.mock('../app/FireBuddyProvider', async () => {
-  const actual = await vi.importActual<typeof import('../app/FireBuddyProvider')>('../app/FireBuddyProvider');
+vi.mock('../app/fireBuddyContext', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
   return {
     ...actual,
     useFireBuddy: () => ({ themeMode: 'light', toggleTheme: vi.fn() }),

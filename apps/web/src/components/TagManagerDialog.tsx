@@ -1,8 +1,9 @@
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
-import type { Tag } from '../app/FireBuddyProvider';
+import type { Tag } from '../app/fireBuddyModel';
 import { useAccessibleDialog } from './useAccessibleDialog';
+import { onEnterInInput } from './useEnterKey';
 
 interface TagManagerDialogProps {
   tags: Tag[];
@@ -39,7 +40,7 @@ export function TagManagerDialog({ tags, usageCounts, onCreate, onRename, onDele
 
   return (
     <div className="sheet-backdrop" onClick={busyId ? undefined : onClose}>
-      <aside ref={dialogRef} className="center-sheet tag-manager-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-manager-title" tabIndex={-1} onClick={(event) => event.stopPropagation()}>
+      <aside ref={dialogRef} className="center-sheet tag-manager-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-manager-title" tabIndex={-1} onClick={(event) => event.stopPropagation()} onKeyDown={onEnterInInput(() => { if (draftName.trim() && !busyId) void run('new', async () => { await onCreate(draftName); setDraftName(''); }); })}>
         <div className="sheet-header">
           <div><h3 id="tag-manager-title">Manage tags</h3><p>Reusable labels for transaction records.</p></div>
           <button className="plain-icon-button" type="button" onClick={onClose} disabled={Boolean(busyId)} aria-label="Close tag manager"><X size={18} /></button>

@@ -57,11 +57,13 @@ class EmberPersonalContextTests(unittest.TestCase):
         context = personal_context_from_summary(self.summary)
 
         self.assertEqual(set(context.facts), {
-            "effectiveDate", "snapshotStatus", "netWorth", "investableAssets",
+            "effectiveDate", "snapshotStatus", "netWorth", "liabilityTotal", "monthlyDebtService", "investableAssets",
             "emergencyRunwayMonths", "averageMonthlyEssentialSpending", "monthlyPulse",
             "fire", "recommendedAction", "anomalyCounts", "warningCodes", "spending",
         })
         self.assertEqual(context.facts["netWorth"], "286400.00")
+        self.assertEqual(context.facts["liabilityTotal"], "56800.00")
+        self.assertEqual(context.facts["monthlyDebtService"], "0.00")
         self.assertEqual(context.facts["emergencyRunwayMonths"], "5.200000")
         self.assertEqual(context.facts["monthlyPulse"]["savingsRate"], "0.487097")
         self.assertEqual(set(context.facts["fire"]), {
@@ -131,6 +133,17 @@ class EmberPersonalContextTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "Authenticated user id"):
             build_personal_context("")
+
+    def test_category_names_use_the_owner_scoped_loader(self):
+        """The service-role client must never read another tenant's categories."""
+
+        with patch.object(
+            ember_personal_context, "load_visible_expense_categories", return_value={"c": "Food"},
+        ) as loader:
+            names = ember_personal_context._category_names("user-a")
+
+        loader.assert_called_once_with("user-a")
+        self.assertEqual(names, {"c": "Food"})
 
 
 if __name__ == "__main__":

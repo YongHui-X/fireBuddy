@@ -10,7 +10,7 @@ import {
 } from '../app/emberAppContext';
 import { EmberMark } from '../app/BrandMarks';
 import { EmberRichText } from '../app/emberRichText';
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import {
   EMBER_ACTIVE_TOPIC_STORAGE_KEY,
   createEmberMessage,
@@ -288,7 +288,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
           aria-labelledby="ember-floating-title"
         >
           <header>
-            <div><EmberMark size={24} /><span><strong id="ember-floating-title">Ask Ember</strong><small>Singapore finance guide</small></span></div>
+            <div><EmberMark size={24} /><span><strong id="ember-floating-title">Ask Ember</strong></span></div>
             <button type="button" onClick={closeAssistant} aria-label="Close Ember"><X size={18} /></button>
           </header>
           <details className="ember-floating-context">

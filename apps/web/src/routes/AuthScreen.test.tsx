@@ -12,8 +12,8 @@ const mocks = vi.hoisted(() => ({
   toggleTheme: vi.fn(),
 }));
 
-vi.mock('../app/FireBuddyProvider', async () => {
-  const actual = await vi.importActual<typeof import('../app/FireBuddyProvider')>('../app/FireBuddyProvider');
+vi.mock('../app/fireBuddyContext', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
   return {
     ...actual,
     useFireBuddy: () => ({

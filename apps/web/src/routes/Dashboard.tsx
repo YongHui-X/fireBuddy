@@ -1,13 +1,19 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, Landmark, Search } from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Landmark } from 'lucide-react';
 import type { FinancialSummary } from '@firebuddy/shared';
 
-import { useFinancialFoundation } from '../app/FinancialFoundationProvider';
+import { useFinancialFoundation } from '../app/financialFoundationContext';
 import {
-  colors, formatDateLabel, formatSGD, getCategoryIcon, getDeviceMonthKey, sortTransactionsNewestFirst, useFireBuddy,
+  colors,
+  formatDateLabel,
+  formatSGD,
+  getCategoryIcon,
+  getDeviceMonthKey,
+  sortTransactionsNewestFirst,
   type Transaction,
-} from '../app/FireBuddyProvider';
+} from '../app/fireBuddyModel';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { getDisplayName } from '../app/displayName';
 import { useMediaQuery } from '../app/useMediaQuery';
 import { mq } from '../app/breakpoints';
@@ -152,7 +158,12 @@ export function buildFireProgressSummary(summary: FinancialSummary | null): Fire
   if (fire.requiredMonthlyInvestment !== null && fire.requiredMonthlyInvestment !== undefined) {
     facts.push({ label: 'Required monthly', value: formatSGD(Number(fire.requiredMonthlyInvestment), 0) });
   }
-  if (summary.emergencyRunwayMonths !== null && summary.emergencyRunwayMonths !== undefined) {
+  // Prefer the runway that keeps loan payments flowing; fall back to essentials-only when no debt terms exist.
+  const runwayWithDebt = summary.emergencyRunwayMonthsWithDebt;
+  const hasDebtService = summary.debt !== undefined && Number(summary.debt.totalMonthlyDebtService) > 0;
+  if (hasDebtService && runwayWithDebt !== null && runwayWithDebt !== undefined) {
+    facts.push({ label: 'Emergency runway', value: `${Number(runwayWithDebt).toFixed(1)} months`, detail: 'of essentials and debt payments' });
+  } else if (summary.emergencyRunwayMonths !== null && summary.emergencyRunwayMonths !== undefined) {
     facts.push({ label: 'Emergency runway', value: `${Number(summary.emergencyRunwayMonths).toFixed(1)} months`, detail: 'of essentials' });
   }
   return {
@@ -205,7 +216,6 @@ type DashboardProps = {
 /** Render historical facts and projections with distinct labels and direct setup actions. */
 export default function Dashboard({ onSelectTransaction }: DashboardProps) {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
   /* Row two hands the breakdown eight of twelve columns from 1280px up. That is the only width where the
      pie can grow without crowding the callout labels that sit outside it. */
   const hasWideSpendingCard = useMediaQuery(mq.wide);
@@ -263,15 +273,6 @@ export default function Dashboard({ onSelectTransaction }: DashboardProps) {
     largestPulseCategory,
   );
 
-  /** Open Transactions with the submitted dashboard search applied. */
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const query = searchQuery.trim();
-    const params = new URLSearchParams({ month: latestMonth });
-    if (query) params.set('search', query);
-    navigate(`/transactions?${params.toString()}`);
-  }
-
   const netWorthDetail = netWorthChange !== null
     ? (
       <span className={`foundation-summary-change ${netWorthChange >= 0 ? 'foundation-summary-change-positive' : 'foundation-summary-change-negative'}`}>
@@ -288,15 +289,6 @@ export default function Dashboard({ onSelectTransaction }: DashboardProps) {
         title={`${getGreeting(new Date().getHours())}, ${getDisplayName(session?.user)}`}
         description={`Here’s your financial position for ${monthName}.`}
         metadata={demoMode ? <span className="demo-data-label">Local demo data</span> : null}
-        actions={(
-          <div className="dashboard-search-context">
-            <span className="visually-hidden">Search {monthName}</span>
-            <form className="dashboard-search" role="search" aria-label={`Search ${monthName} transactions`} onSubmit={submitSearch}>
-              <input aria-label="Search transactions" type="search" placeholder={`Search ${monthName}`} value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
-              <button type="submit" aria-label="Submit search"><Search size={18} /></button>
-            </form>
-          </div>
-        )}
       />
 
       <section className="dashboard-content foundation-dashboard-content">
@@ -320,6 +312,9 @@ export default function Dashboard({ onSelectTransaction }: DashboardProps) {
                   ? [
                     { label: 'Assets', value: formatSGD(Number(summary.assetTotal), 0) },
                     { label: 'Liabilities', value: formatSGD(Number(summary.liabilityTotal), 0) },
+                    ...(summary.debt && Number(summary.debt.totalMonthlyDebtService) > 0
+                      ? [{ label: 'Debt payments /month', value: formatSGD(Number(summary.debt.totalMonthlyDebtService), 0) }]
+                      : []),
                   ]
                   : undefined}
                 prompt="Add wealth values"

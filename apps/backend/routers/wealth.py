@@ -25,7 +25,8 @@ from schemas.financial import (
 
 router = APIRouter(prefix="/wealth", tags=["wealth"])
 CurrentUser = Annotated[AuthenticatedUser, Depends(get_current_user)]
-POSITION_COLUMNS = "id,user_id,name,position_kind,position_type,liquidity_class,include_in_fi,is_emergency_fund,restriction_type,currency,is_archived,archived_at,created_at,updated_at"
+POSITION_COLUMNS = ("id,user_id,name,position_kind,position_type,liquidity_class,include_in_fi,is_emergency_fund,restriction_type,currency,"
+                    "interest_rate,monthly_payment,next_payment_date,original_principal,is_archived,archived_at,created_at,updated_at")
 SNAPSHOT_COLUMNS = "id,user_id,wealth_position_id,value_date,amount,created_at,updated_at"
 CONTRIBUTION_COLUMNS = "id,user_id,wealth_position_id,contribution_date,amount,note,created_at,updated_at"
 
@@ -66,8 +67,10 @@ def owned_contribution(contribution_id: UUID, user_id: str) -> dict:
 def raise_financial_conflict(error: APIError) -> None:
     """Map database classification and uniqueness errors to an actionable response."""
 
-    if error.code in {"23505", "23514", "P0001"}:
-        raise HTTPException(status_code=409, detail=str(error.message)) from error
+    if error.code == "23505":
+        raise HTTPException(status_code=409, detail="A record with the same date already exists for this position") from error
+    if error.code in {"23514", "P0001"}:
+        raise HTTPException(status_code=409, detail="The record conflicts with a wealth classification rule") from error
     raise error
 
 
@@ -126,8 +129,9 @@ def update_position(position_id: UUID, payload: UpdateWealthPositionRequest, cur
     editable_fields = {
         "name", "position_kind", "position_type", "liquidity_class", "include_in_fi",
         "is_emergency_fund", "restriction_type", "currency",
+        "interest_rate", "monthly_payment", "next_payment_date", "original_principal",
     }
-    merged = {field: existing[field] for field in editable_fields}
+    merged = {field: existing.get(field) for field in editable_fields}
     merged.update(payload.model_dump(exclude_unset=True))
     try:
         validated = CreateWealthPositionRequest.model_validate(merged)

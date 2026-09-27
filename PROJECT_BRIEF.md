@@ -30,7 +30,7 @@ Current repo state:
 - `apps/web/` is the active React and Vite frontend
 - `apps/web/` includes Supabase auth, income and expense tracking, read-only system categories, persisted accounts, expense-only insights, wealth and FIRE setup, a real data dashboard, optional expense category suggestions, Ember with streamed cited answers and a page-aware quick-chat launcher, and versioned demo-only local state
 - `apps/backend/` is a FastAPI backend with mounted accounts, typed transactions, compatibility expenses, categories, wealth, FIRE, analytics, AI suggestion, health, and Ember JSON and SSE RAG routes
-- `apps/mobile/` contains the earlier Expo implementation and is currently deferred
+- `apps/mobile/` contains the Expo app: the design-system shell (forest topbar, four tabs with the lime Add tile, bottom sheets), Home, Transactions, Categories, Profile and Add transaction on local demo data, with Supabase and the backend still to wire
 - `packages/shared/` contains shared TypeScript contracts, deterministic demo FIRE calculations, category data, add-expense helpers, and API route constants
 - `supabase/` contains timestamped SQL migrations for the UUID-aligned app schema, persisted accounts, typed transactions, wealth and FIRE records, security, HNSW indexing, and private hybrid RAG retrieval
 - `docs/Figmamake/` remains a visual reference, not production source code
@@ -123,6 +123,7 @@ Current core tables:
 Current dashboard data boundary:
 - Keep payment accounts unchanged and separate from balance sheet values
 - Asset and liability wealth positions store liquidity, FI inclusion, emergency fund, and CPF or restricted classifications
+- Liabilities (mortgage, loan, credit card, other) may carry optional debt terms: annual `interest_rate`, `monthly_payment`, `next_payment_date`, and `original_principal`. A check constraint keeps these null on assets. The shared `debt` helper in `packages/shared` and `services/debt_calculator.py` project the payoff month and remaining interest from the latest snapshot; the financial summary adds a `debt` block, pulse `debtService`, and `emergencyRunwayMonthsWithDebt`
 - Dated wealth snapshots support current values and historical paths
 - Dedicated wealth contributions never count as expenses
 - Current investable assets derive from eligible wealth positions instead of a duplicated `FireProfile` value
@@ -327,7 +328,7 @@ npm run test:web
 python -m unittest discover apps/backend/tests -v
 ```
 
-The web app is now ahead of mobile for current product direction. Treat `apps/mobile/` as preserved implementation reference unless the user explicitly asks for mobile work.
+The web app remains ahead of mobile on feature coverage (Insights, Wealth, FIRE Planner and Ember are web-only). `apps/mobile/` now shares the web design system and the shared demo dataset, so mobile work builds on that shell rather than on a preserved reference.
 
 ## Deployment Direction
 - Web: Vercel Hobby, built from the repository root using `vercel.json`

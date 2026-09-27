@@ -113,7 +113,7 @@ class CategoryRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
 
-    def test_rejects_editing_another_users_category(self):
+    def test_hides_another_users_category_as_not_found(self):
         response = self.client.put(
             f"/categories/{OTHER_CATEGORY_ID}",
             json={
@@ -125,7 +125,7 @@ class CategoryRouteTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_filters_and_creates_zero_budget_income_categories(self):
         list_response = self.client.get("/categories?categoryType=income")

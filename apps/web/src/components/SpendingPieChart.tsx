@@ -9,7 +9,7 @@ import {
   type PieSectorShapeProps,
 } from 'recharts';
 
-import { formatSGD } from '../app/FireBuddyProvider';
+import { formatSGD } from '../app/fireBuddyModel';
 
 export interface SpendingPieDatum {
   name: string;

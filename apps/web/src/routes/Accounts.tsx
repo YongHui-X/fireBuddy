@@ -4,12 +4,8 @@ import { useNavigate } from 'react-router';
 
 import { AccountSheet, accountTypeOptions } from '../components/AccountSheet';
 import { PageToolbar } from '../components/PageToolbar';
-import {
-  accountTypeLabel,
-  categoryColors,
-  useFireBuddy,
-  type Account,
-} from '../app/FireBuddyProvider';
+import { accountTypeLabel, categoryColors, type Account } from '../app/fireBuddyModel';
+import { useFireBuddy } from '../app/fireBuddyContext';
 
 /** Manage payment account metadata without implying stored balances. */
 export default function Accounts() {

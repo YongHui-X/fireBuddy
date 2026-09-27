@@ -2,9 +2,22 @@
 
 FireBuddy helps Singapore users understand their everyday finances and turn them into an explainable path toward financial independence. The current priority is the web app, with the Expo mobile app preserved for a later phase.
 
+# Terminal 1
+.\.venv\Scripts\Activate.ps1
+npm run dev:backend
+
+# Terminal 2
+npm run dev:web
+
+## License
+
+FireBuddy is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may read, run, modify, and share the code for personal, educational, research, and other non-commercial purposes. Commercial use, including publishing a competing app or offering the software as a paid service, requires written permission from the copyright holder. The FireBuddy app itself is a separate commercial product built from this code.
+
+Earlier commits were published under the MIT License. That grant still applies to those snapshots only.
+
 ## Current Repo State
 
-- `apps/web` is the active React and Vite frontend. Signed-in accounts, typed income and expense transactions, and custom categories synchronise through FastAPI. It also includes optional expense category suggestions, expense-only insights, a dashboard composed from current records, and Ember, a source-backed Singapore finance guide with browser-local topic history and streamed answers. App data uses local storage only in explicit demo mode.
+- `apps/web` is the active React and Vite frontend. Signed-in accounts, typed income and expense transactions, and custom categories synchronise through FastAPI. It also includes optional expense category suggestions, expense-only insights, a dashboard composed from current records, a Wealth page with separate asset and liability sections where debts carry an interest rate and monthly payment and show a projected payoff month, and Ember, a source-backed Singapore finance guide with browser-local topic history and streamed answers. App data uses local storage only in explicit demo mode.
 - `apps/backend` is the FastAPI backend. It mounts health, account, transaction, compatibility expense, category, AI suggestion, and Ember JSON and SSE routes.
 - `apps/mobile` contains the earlier Expo and React Native implementation with tabs and add-expense work. It is not the current primary surface.
 - `packages/shared` contains reusable TypeScript contracts, category data, add-expense helpers, and API route constants.

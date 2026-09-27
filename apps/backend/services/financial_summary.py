@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from statistics import median
 
+from services.debt_calculator import build_debt_summary, highest_interest_liability
 from services.retirement_calculator import calculate_retirement
 
 from services.financial_calculator import (
@@ -99,7 +100,8 @@ def detect_transaction_anomalies(transactions: list[dict], as_of: date) -> list[
 
 
 def recommend_action(*, positions: list[dict], selected_essentials: list[str], profile: dict | None,
-                     latest: dict[str, dict], runway: Decimal | None, pulse: dict, fire: dict, as_of: date) -> dict | None:
+                     latest: dict[str, dict], runway: Decimal | None, pulse: dict, fire: dict, as_of: date,
+                     debt: dict | None = None) -> dict | None:
     """Choose at most one future-oriented action using versioned deterministic precedence."""
 
     if not positions:
@@ -118,6 +120,13 @@ def recommend_action(*, positions: list[dict], selected_essentials: list[str], p
         return _action("review_cashflow", "Review this month's negative cash flow", "Spending is currently higher than income.", pulse["month"], "/transactions", "foundation.v1.negative_cashflow")
     if runway is not None and runway < 3:
         return _action("build_runway", "Build emergency runway toward 3 months", "Your confirmed emergency fund covers fewer than 3 months of essential spending.", f"{rate(runway)} months", "/wealth", "foundation.v1.low_runway")
+    # Emergency cover comes first; after that, expensive borrowing beats further investing.
+    expensive = highest_interest_liability(debt) if debt else None
+    if expensive:
+        percent = f"{(_decimal(expensive['interestRate']) * 100).quantize(Decimal('0.01'))}%"
+        return _action("pay_down_high_interest_debt", f"Pay down {expensive['name']} first",
+                       "This liability charges more than 6% a year, above typical long-run investment returns.",
+                       f"{percent} on S${expensive['balance']}", "/wealth", "foundation.v1.high_interest_debt")
     return None
 
 
@@ -155,10 +164,13 @@ def build_financial_summary(*, positions: list[dict], snapshots: list[dict], con
     savings = income - spending
     savings_rate = calculate_savings_rate(income, spending)
     invested = sum((_decimal(row["amount"]) for row in contributions if month_start <= date.fromisoformat(str(row["contribution_date"])[:10]) <= as_of), Decimal("0"))
+    debt = build_debt_summary(active, latest, income if current_rows else None, as_of)
+    debt_service = _decimal(debt["totalMonthlyDebtService"])
     pulse = {"month": month_start.strftime("%Y-%m"), "income": money(income), "spending": money(spending),
              "savingsAmount": money(savings), "savingsRate": rate(savings_rate) if savings_rate is not None else None,
              "savingsRateStatus": "available" if savings_rate is not None else "unavailable",
-             "investedAmount": money(invested), "completeness": "complete" if current_rows else "limited"}
+             "investedAmount": money(invested), "debtService": money(debt_service),
+             "completeness": "complete" if current_rows else "limited"}
 
     baseline = build_spending_baseline(transactions, as_of)
     essential_rows = [row for row in transactions if row.get("transaction_type", "expense") == "expense"
@@ -169,6 +181,8 @@ def build_financial_summary(*, positions: list[dict], snapshots: list[dict], con
     if selected_essentials and baseline["completedMonths"] > 0:
         essential_average = sum((_decimal(row["amount"]) for row in essential_rows), Decimal("0")) / Decimal(baseline["completedMonths"])
     runway = emergency / essential_average if emergency is not None and essential_average and essential_average > 0 else None
+    # Debt service must keep flowing during an emergency, so a second runway figure includes it.
+    runway_with_debt = emergency / (essential_average + debt_service) if runway is not None else None
 
     plan = profile.get("active_plan") if profile else None
     if plan:
@@ -202,7 +216,7 @@ def build_financial_summary(*, positions: list[dict], snapshots: list[dict], con
         warnings.append({"code": "stale_snapshot", "message": "At least one wealth value is older than 35 days."})
         fire["warnings"].extend(warnings)
     action = recommend_action(positions=active, selected_essentials=selected_essentials, profile=profile,
-                              latest=latest, runway=runway, pulse=pulse, fire=fire, as_of=as_of)
+                              latest=latest, runway=runway, pulse=pulse, fire=fire, as_of=as_of, debt=debt)
     return {
         "effectiveDate": as_of.isoformat(), "netWorth": money(net_worth) if net_worth is not None else None,
         "assetTotal": money(assets) if has_complete_wealth else None, "liabilityTotal": money(liabilities) if has_complete_wealth else None,
@@ -212,6 +226,9 @@ def build_financial_summary(*, positions: list[dict], snapshots: list[dict], con
         "emergencyEligibleAssets": money(emergency) if emergency is not None else None,
         "averageMonthlyEssentialSpending": money(essential_average) if essential_average is not None else None,
         "emergencyRunwayMonths": rate(runway) if runway is not None else None,
+        "averageMonthlyDebtService": money(debt_service) if debt["liabilities"] else None,
+        "emergencyRunwayMonthsWithDebt": rate(runway_with_debt) if runway_with_debt is not None else None,
+        "debt": debt,
         "latestSnapshotDate": latest_date.isoformat() if latest_date else None, "snapshotStatus": snapshot_status,
         "pulse": pulse, "fire": fire, "recommendedAction": action,
         "transactionAnomalies": detect_transaction_anomalies(transactions, as_of), "warnings": warnings,

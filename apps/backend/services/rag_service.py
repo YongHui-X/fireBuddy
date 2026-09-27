@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 from openai import OpenAI
 
+from config import settings
 from lib.clock import singapore_today
 from rag.retrieval import RagStoreUnavailableError, retrieve_chunks
 from schemas.rag import AdvisorAppContext, AdvisorResponse, AdvisorSource, ChatMessage
@@ -526,7 +527,7 @@ def generate_grounded_answer(
     personalized financial advice, and admit when the context is insufficient.
     """
 
-    client = OpenAI()
+    client = OpenAI(**settings.openai_client_options)
     response = client.chat.completions.create(
         model=ANSWER_MODEL,
         temperature=0.2,
@@ -554,7 +555,7 @@ def stream_grounded_answer(
 ) -> Iterator[str]:
     """Yield grounded OpenAI answer tokens as they become available."""
 
-    client = OpenAI()
+    client = OpenAI(**settings.openai_client_options)
     response = client.chat.completions.create(
         model=ANSWER_MODEL,
         temperature=0.2,

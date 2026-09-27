@@ -13,7 +13,9 @@ import {
   Copy,
   Download,
   ExternalLink,
-  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
   PanelRightOpen,
   Plus,
   Search,
@@ -24,11 +26,12 @@ import {
 import type { RagChatSource, RagDataEvidence } from '@firebuddy/shared';
 
 import { ApiRequestError, streamFinancialAdvisor } from '../api';
+import { classifyEmberFailure } from '../app/emberFailure';
 import { EmberMark } from '../app/BrandMarks';
 import { formatEmberConversationMarkdown, getEmberExportFilename } from '../app/emberExport';
 import { buildEmberAppContext } from '../app/emberAppContext';
 import { EmberRichText } from '../app/emberRichText';
-import { useFireBuddy } from '../app/FireBuddyProvider';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { mq } from '../app/breakpoints';
 import { useMediaQuery } from '../app/useMediaQuery';
 import { getEmberSuggestedQuestions } from '../app/emberSuggestions';
@@ -100,30 +103,6 @@ function normalizeResponseSources(sources: RagChatSource[]): EmberSource[] {
       ...(source.path ? { path: source.path } : {}),
     }];
   });
-}
-
-/** Turn API and session failures into concise Ember-facing recovery guidance. */
-export function classifyEmberFailure(error: unknown): Pick<EmberMessageError, 'kind' | 'message' | 'retryable'> {
-  if (error instanceof ApiRequestError && error.code === 'knowledge_base_unavailable') {
-    return { kind: 'unavailable', message: 'Ember’s curated sources are temporarily unavailable. Please try again later.', retryable: true };
-  }
-  if (error instanceof ApiRequestError && error.status === 401) {
-    return { kind: 'authentication', message: 'Your session is no longer available. Sign in again, then retry this question.', retryable: true };
-  }
-  if (error instanceof ApiRequestError && error.status === 429) {
-    return { kind: 'rate_limit', message: 'Ember has reached the request limit. Wait a moment, then try again.', retryable: true };
-  }
-  if (error instanceof ApiRequestError && error.status === 503) {
-    return { kind: 'unavailable', message: 'Ember is temporarily unavailable. Your question is saved here so you can retry.', retryable: true };
-  }
-  if (error instanceof ApiRequestError && error.status === 204) {
-    return { kind: 'empty_response', message: 'Ember returned an empty answer. Please retry this question.', retryable: true };
-  }
-  if (error instanceof ApiRequestError && error.status === 502) {
-    return { kind: 'retrieval', message: 'Ember could not search the curated sources. Please retry this question.', retryable: true };
-  }
-
-  return { kind: 'unknown', message: 'Ember could not answer right now. Your question is saved here so you can retry.', retryable: true };
 }
 
 function formatTopicDate(value: string): string {
@@ -198,18 +177,23 @@ function SourceList({ sources }: { sources: EmberSource[] }) {
   );
 }
 
+/** Show concise personalisation copy or detailed provenance for calculated answers. */
 function DataEvidence({ message }: { message: EmberMessage }) {
   const evidence = message.dataEvidence;
   if (!evidence) return null;
+  if (evidence.tool === 'personal_context') {
+    return (
+      <p className="ember-data-personalisation">
+        <em>Ember's response is customised to your existing data</em>
+      </p>
+    );
+  }
   const recordCopy = evidence.record_count === null
     ? ''
     : ` | ${evidence.record_count} matching ${evidence.record_count === 1 ? 'record' : 'records'}`;
-  const evidenceCopy = evidence.tool === 'personal_context'
-    ? 'Tailored to your FireBuddy data'
-    : 'Calculated from your FireBuddy data';
   return (
     <a className="ember-data-evidence" href={evidence.destination}>
-      <span>{evidenceCopy}</span>
+      <span>Calculated from your FireBuddy data</span>
       <strong>{evidence.label}</strong>
       <small>{evidence.period}{recordCopy}</small>
     </a>
@@ -691,12 +675,11 @@ export default function Ember({
                 aria-label={isMainSidebarOpen ? 'Hide main navigation' : 'Show main navigation'}
                 title={isMainSidebarOpen ? 'Hide main navigation' : 'Show main navigation'}
               >
-                <Menu size={19} />
+                {isMainSidebarOpen ? <PanelLeftClose size={19} /> : <PanelLeftOpen size={19} />}
               </button>
               <span className="ember-header-mark"><EmberMark size={26} /></span>
               <div>
                 <h2>Ember</h2>
-                <p>Singapore finance guide</p>
               </div>
             </div>
             <div className="ember-conversation-header-actions">
@@ -746,7 +729,7 @@ export default function Ember({
                 aria-label={isHistoryOpen ? 'Hide chat history' : 'Show chat history'}
                 title={isHistoryOpen ? 'Hide chat history' : 'Show chat history'}
               >
-                <PanelRightOpen size={18} />
+                {isHistoryOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
               </button>
             </div>
           </header>
@@ -800,7 +783,6 @@ export default function Ember({
           </div>
 
           <form className="ember-composer" onSubmit={handleSubmit}>
-            <p className="ember-education-note">Educational information only. Ember uses read only FireBuddy calculations and curated sources.</p>
             <label className="visually-hidden" htmlFor="ember-question">Ask Ember</label>
             <div className="ember-composer-field">
               <textarea
@@ -817,7 +799,10 @@ export default function Ember({
               <button type="submit" disabled={!canSend} aria-label="Send question to Ember"><ArrowUp size={18} /></button>
             </div>
             <div className="ember-composer-meta">
-              <span id="ember-composer-help">Enter to send. Shift+Enter for a new line.</span>
+              <div className="ember-composer-guidance">
+                <span id="ember-composer-help">Enter to send. Shift+Enter for a new line.</span>
+                <small className="ember-education-note">Educational information only, not financial advice. Ember provides customised experiences according to your existing data and public data.</small>
+              </div>
               <span id="ember-character-count">{question.length.toLocaleString('en-SG')} / {MAX_QUESTION_LENGTH.toLocaleString('en-SG')}</span>
             </div>
           </form>

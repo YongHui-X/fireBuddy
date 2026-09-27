@@ -14,8 +14,8 @@ vi.mock('../api', async () => {
   return { ...actual, streamFinancialAdvisor: mocks.streamFinancialAdvisor };
 });
 
-vi.mock('../app/FireBuddyProvider', async () => {
-  const actual = await vi.importActual<typeof import('../app/FireBuddyProvider')>('../app/FireBuddyProvider');
+vi.mock('../app/fireBuddyContext', async () => {
+  const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
   return { ...actual, useFireBuddy: () => ({ session: { access_token: 'access-token' } }) };
 });
 

@@ -15,9 +15,8 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from lib.clock import singapore_today
-from lib.repository import fetch_all
-from lib.supabase import supabase
 from schemas.rag import AdvisorDataEvidence
+from services.category_visibility import load_visible_expense_categories
 from services.financial_repository import load_financial_records
 from services.financial_summary import build_financial_summary
 
@@ -92,21 +91,13 @@ def _month_bounds(as_of: date) -> tuple[date, date, date, date]:
 
 
 def _category_names(user_id: str) -> dict[str, str]:
-    """Map system-default and owner-scoped expense category ids to names."""
+    """Map system-default and owner-scoped expense category ids to names.
 
-    rows = fetch_all(
-        lambda: (
-            supabase.table("categories")
-            .select("id,user_id,name,category_type,is_default")
-            .eq("category_type", "expense")
-            .order("id")
-        )
-    )
-    return {
-        str(row["id"]): str(row["name"])
-        for row in rows
-        if (row.get("is_default") and row.get("user_id") is None) or row.get("user_id") == user_id
-    }
+    Delegates to the same two owner-scoped queries the Ember data tools use, so the
+    service-role client never reads another tenant's categories.
+    """
+
+    return load_visible_expense_categories(user_id)
 
 
 def spending_block(transactions: list[dict], categories: dict[str, str], as_of: date) -> dict:
@@ -177,6 +168,8 @@ def personal_context_from_summary(summary: dict, *, spending: dict | None = None
         "effectiveDate": summary.get("effectiveDate"),
         "snapshotStatus": summary.get("snapshotStatus"),
         "netWorth": summary.get("netWorth"),
+        "liabilityTotal": summary.get("liabilityTotal"),
+        "monthlyDebtService": (summary.get("debt") or {}).get("totalMonthlyDebtService"),
         "investableAssets": summary.get("investableAssets"),
         "emergencyRunwayMonths": summary.get("emergencyRunwayMonths"),
         "averageMonthlyEssentialSpending": summary.get("averageMonthlyEssentialSpending"),

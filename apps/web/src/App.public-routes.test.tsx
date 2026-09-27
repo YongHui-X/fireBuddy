@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('./app/FireBuddyProvider', () => ({
   AppProvider: ({ children }: { children: ReactNode }) => children,
+}));
+vi.mock('./app/fireBuddyContext', () => ({
   useFireBuddy: () => ({
     authError: null,
     authLoading: false,

@@ -2,18 +2,27 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Check } from 'lucide-react';
 import { monthIndex, validateRetirementPlan, type RetirementPlan } from '@firebuddy/shared';
-import { useFinancialFoundation } from '../app/FinancialFoundationProvider';
-import { formatSGD, useFireBuddy } from '../app/FireBuddyProvider';
+import { useFinancialFoundation } from '../app/financialFoundationContext';
+import { formatSGD } from '../app/fireBuddyModel';
+import { useFireBuddy } from '../app/fireBuddyContext';
 import { eligibleRetirementAsset, initialRetirementPlan, legacyProfileValues, retirementAssetNote, retirementAtAge } from '../app/retirementSetup';
+import { clearSetupSessionDraft, readSetupSessionDraft, writeSetupSessionDraft } from '../app/plannerSessionStorage';
 import { PageToolbar } from '../components/PageToolbar';
 import { mq } from '../app/breakpoints';
 import { useMediaQuery } from '../app/useMediaQuery';
+import { ageAt, describeAssets, describeIncome, describeSpending, describeTimeline, monthLabel, pct, provenanceLabel } from '../app/retirementReview';
+import { useDraftProjection } from '../app/useDraftProjection';
 
 const steps = [{ title: 'Your timeline' }, { title: 'Spending and savings' }, { title: 'Retirement assets' }, { title: 'Retirement income' }, { title: 'Assumptions and review' }];
-const monthLabel = (month: string) => /^\d{4}-\d{2}$/.test(month) ? new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1, 1).toLocaleDateString('en-SG', { month: 'long', year: 'numeric' }) : '';
-const pct = (rate: number) => `${Number((rate * 100).toFixed(2))}%`;
-/** Whole years and months between two calendar months, for plain-language feedback. */
-const span = (from: string, to: string) => { const months = monthIndex(to) - monthIndex(from); return months <= 0 ? 'now' : `${Math.floor(months / 12)} years${months % 12 ? ` ${months % 12} months` : ''}`; };
+// Product defaults from initialRetirementPlan, shown beside each assumption so a person knows what they changed.
+const assumptionDefaults = { beforeReturn: 0.05, afterReturn: 0.03, inflation: 0.025 } as const;
+const assumptionHelp = {
+  beforeReturn: 'Nominal yearly growth of your portfolio while you are still investing.',
+  afterReturn: 'Nominal yearly growth once you are drawing down, usually lower for a safer mix.',
+  inflation: 'Yearly rise in your spending. Applied from the month your spending figure is dated.',
+} as const;
+// These two warnings apply to every plan, so the preview footnote covers them instead of listing them.
+const boilerplateWarnings = new Set(['smooth_returns', 'selected_assets']);
 
 /** Initialize the resumable draft only after owner-scoped data is available. */
 export default function FireSetup() {
@@ -25,20 +34,26 @@ export default function FireSetup() {
 /** Keep draft saves separate from explicit final activation. */
 function GuidedSetup() {
   const navigate = useNavigate();
-  const { transactions } = useFireBuddy();
-  const { profile, positions, snapshots, contributions, summary, updateProfile } = useFinancialFoundation();
-  const [plan, setPlan] = useState(() => initialRetirementPlan(profile, positions));
+  const { transactions, session } = useFireBuddy();
+  const { profile, positions, snapshots, summary, updateProfile, addSnapshot } = useFinancialFoundation();
+  // Unsaved answers live in tab storage so switching tabs and coming back does not wipe them.
+  const ownerId = session?.user.id ?? 'demo';
+  const [restored] = useState(() => readSetupSessionDraft(ownerId, profile?.updatedAt ?? null));
+  const [plan, setPlan] = useState(() => restored?.plan ?? initialRetirementPlan(profile, positions));
   // The URL remembers the current step so a refresh, remount or tab switch does not jump back to the saved draft step.
   const [params, setParams] = useSearchParams();
   const isWideSetup = useMediaQuery(mq.setupWide);
   const prefersReducedMotion = useMediaQuery(mq.reducedMotion);
   const stepsRef = useRef<HTMLElement | null>(null);
-  const [step, setStep] = useState(() => { const fromUrl = Number(params.get('step')); return fromUrl >= 1 && fromUrl <= 5 ? fromUrl - 1 : Math.min(4, Math.max(0, profile?.draftPlan?.step ?? 0)); });
+  const [step, setStep] = useState(() => { const fromUrl = Number(params.get('step')); return fromUrl >= 1 && fromUrl <= 5 ? fromUrl - 1 : Math.min(4, Math.max(0, restored?.step ?? profile?.draftPlan?.step ?? 0)); });
   useEffect(() => { if (params.get('step') !== String(step + 1)) setParams({ step: String(step + 1) }, { replace: true }); }, [params, setParams, step]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  // Steps the person has confirmed and moved past. A saved draft at step N means every earlier step was confirmed,
+  // so an optional step such as retirement income still earns its tick when left empty on purpose.
+  const [passed, setPassed] = useState(() => new Set(Array.from({ length: profile?.draftPlan?.step ?? 0 }, (_, i) => i)));
   const baseline = summary!.fire.spendingBaseline;
   const asOf = summary!.effectiveDate;
   const today = asOf.slice(0, 7);
@@ -46,33 +61,42 @@ function GuidedSetup() {
   const average = (kind: 'income' | 'expense') => baseline.completedMonths ? history.filter(t => t.transactionType === kind).reduce((sum, t) => sum + Math.abs(t.amount), 0) / baseline.completedMonths : null;
   const recordedIncome = average('income'), recordedExpenses = average('expense');
   // Planner-only overrides of the recorded averages. They never touch transactions and are not saved with the plan.
-  const [incomeOverride, setIncomeOverride] = useState<number | null>(null);
-  const [expensesOverride, setExpensesOverride] = useState<number | null>(null);
-  const [savingsOverride, setSavingsOverride] = useState<number | null>(null);
+  const [incomeOverride, setIncomeOverride] = useState<number | null>(restored?.incomeOverride ?? null);
+  const [expensesOverride, setExpensesOverride] = useState<number | null>(restored?.expensesOverride ?? null);
+  const [savingsOverride, setSavingsOverride] = useState<number | null>(restored?.savingsOverride ?? null);
   const whole = (value: number | null) => value === null ? null : Math.ceil(value);
   const income = incomeOverride ?? whole(recordedIncome), expenses = expensesOverride ?? whole(recordedExpenses);
   const savings = savingsOverride ?? (income === null || expenses === null ? null : income - expenses);
   const overridden = incomeOverride !== null || expensesOverride !== null || savingsOverride !== null;
   const parse = (value: string) => value === '' ? null : Math.ceil(Number(value));
   const grey = (value: number | null) => value === null ? 'No recorded history' : `Recorded: ${Math.ceil(value)}`;
-  const invested = baseline.completedMonths ? contributions.filter(c => c.contributionDate >= baseline.startDate! && c.contributionDate <= baseline.endDate!).reduce((sum, c) => sum + Number(c.amount), 0) / baseline.completedMonths : null;
   const shown = (value: number | null) => value === null ? 'Unavailable' : formatSGD(value, 0);
   const latest = (id: string) => snapshots.filter(s => s.wealthPositionId === id && s.valueDate <= asOf).sort((a, b) => b.valueDate.localeCompare(a.valueDate))[0];
   const validBirth = /^\d{4}-\d{2}$/.test(plan.birthMonth) && monthIndex(plan.birthMonth) < monthIndex(today);
   const ageNow = validBirth ? Math.floor((monthIndex(today) - monthIndex(plan.birthMonth)) / 12) : null;
   const retirementAge = validBirth && plan.retirementMonth ? Math.floor((monthIndex(plan.retirementMonth) - monthIndex(plan.birthMonth)) / 12) : null;
-  // Planner-only per-asset amounts. Typing one turns the plan into a dated typed total, so the engine uses your numbers.
-  const [assetAmounts, setAssetAmounts] = useState<Record<string, number>>({});
+  // Per-asset amounts typed here. On save they are recorded as dated values in Wealth, so the plan keeps reading
+  // the same records as the Wealth page and neither screen drifts from the other.
+  const [assetAmounts, setAssetAmounts] = useState<Record<string, number>>(restored?.assetAmounts ?? {});
   const assetValue = (id: string) => assetAmounts[id] ?? Math.ceil(Number(latest(id)?.amount ?? 0));
+  const profileUpdatedAt = profile?.updatedAt ?? null;
+  // Mirror every edit into tab storage. A save changes the profile timestamp, so the mirror
+  // is rewritten against the new one and a draft saved elsewhere later still takes precedence.
+  useEffect(() => {
+    writeSetupSessionDraft(ownerId, { plan, step, incomeOverride, expensesOverride, savingsOverride, assetAmounts, profileUpdatedAt });
+  }, [assetAmounts, expensesOverride, incomeOverride, ownerId, plan, profileUpdatedAt, savingsOverride, step]);
   const selectedAssets = plan.portfolioOverride ? plan.portfolioOverride.amount : plan.assetIds.reduce((sum, id) => sum + assetValue(id), 0);
   const cpfIncluded = ['standard', 'escalating'].includes(plan.cpfPlan);
   const done = (index: number) => {
     if (index === 0) return validBirth && !!plan.retirementMonth && monthIndex(plan.retirementMonth) >= monthIndex(today);
     if (index === 1) return plan.monthlySpending > 0;
     if (index === 2) return plan.portfolioOverride !== null || plan.assetIds.length > 0;
-    if (index === 3) return plan.cpfPlan !== 'unknown' || plan.otherIncome.length > 0;
-    return false;
+    if (index === 3) return passed.has(3) || plan.cpfPlan !== 'unknown' || plan.otherIncome.length > 0;
+    return confirmed;
   };
+  const goToStep = (index: number) => { setStep(index); setMessage(''); setError(null); };
+  // The preview only runs on the review step, so typing on earlier steps never recalculates 70 years of cash flows.
+  const preview = useDraftProjection(step === 4 ? plan : null, selectedAssets, asOf);
 
   /** Record provenance for planning overrides without modifying source records. */
   function change<K extends keyof RetirementPlan>(key: K, value: RetirementPlan[K]) {
@@ -85,16 +109,18 @@ function GuidedSetup() {
       const invalid = validateRetirementPlan(plan, asOf);
       if (invalid) { setError(invalid); return; }
       if (!confirmed) { setError('Confirm the completed plan before activation.'); return; }
-      if (!plan.portfolioOverride && plan.assetIds.some(id => !positions.some(p => p.id === id && eligibleRetirementAsset(p)) || !latest(id))) { setError('Review selected assets and add missing dated snapshots.'); return; }
+      if (!plan.portfolioOverride && plan.assetIds.some(id => !positions.some(p => p.id === id && eligibleRetirementAsset(p)) || (!latest(id) && assetAmounts[id] === undefined))) { setError('Review selected assets and add missing dated snapshots.'); return; }
     }
     const next = advance ? Math.min(4, step + 1) : step;
-    const edited = !plan.portfolioOverride && Object.keys(assetAmounts).length > 0;
-    const toSave: RetirementPlan = edited ? { ...plan, portfolioOverride: { amount: selectedAssets, date: asOf }, provenance: { ...plan.provenance, portfolioOverride: 'user-entered' } } : plan;
+    // Typed asset values become today's recorded value in Wealth before the plan is saved, so a failed
+    // write leaves the draft unsaved and the person can simply try again.
+    const valueEdits = plan.portfolioOverride ? [] : Object.entries(assetAmounts).filter(([id]) => positions.some(p => p.id === id && eligibleRetirementAsset(p)));
     setBusy(true);
     try {
-      await updateProfile({ ...legacyProfileValues(profile), ...(activate ? { activePlan: toSave, draftPlan: null } : { draftPlan: { step: next, inputs: toSave } }) });
-      if (edited) { setPlan(toSave); setAssetAmounts({}); }
-      if (activate) navigate('/fire'); else { setStep(next); setMessage('Draft saved. Your active plan has not changed.'); window.scrollTo({ top: 0 }); }
+      for (const [id, amount] of valueEdits) await addSnapshot(id, { valueDate: asOf, amount: amount.toFixed(2) });
+      if (valueEdits.length) setAssetAmounts({});
+      await updateProfile({ ...legacyProfileValues(profile), ...(activate ? { activePlan: plan, draftPlan: null } : { draftPlan: { step: next, inputs: plan } }) });
+      if (activate) { clearSetupSessionDraft(ownerId); navigate('/fire'); } else { if (advance) setPassed(current => new Set(current).add(step)); setStep(next); setMessage('Draft saved. Your active plan has not changed.'); window.scrollTo({ top: 0 }); }
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to save. Your active plan is unchanged.'); }
     finally { setBusy(false); }
   }
@@ -111,10 +137,25 @@ function GuidedSetup() {
     });
   }, [step, prefersReducedMotion]);
 
+  // One summary body serves both the wide aside and the collapsed phone disclosure.
+  const planSoFar = <>
+    <dl>
+      <div><dt>Age now</dt><dd>{ageNow ?? '—'}</dd></div>
+      <div><dt>Retire</dt><dd>{plan.retirementMonth && validBirth ? `${monthLabel(plan.retirementMonth)} · ${retirementAge}` : '—'}</dd></div>
+      <div><dt>Plan through</dt><dd>Age {plan.endAge}</dd></div>
+      <div><dt>Spending</dt><dd>{plan.monthlySpending > 0 ? `${formatSGD(plan.monthlySpending, 0)} / month` : '—'}</dd></div>
+      <div><dt>Investing</dt><dd>{formatSGD(plan.monthlyContribution, 0)} / month</dd></div>
+      <div><dt>Portfolio</dt><dd>{done(2) ? formatSGD(selectedAssets, 0) : '—'}</dd></div>
+      <div><dt>CPF LIFE</dt><dd>{cpfIncluded ? `${formatSGD(plan.cpfMonthlyPayout, 0)} from ${plan.cpfStartAge}` : 'Not included'}</dd></div>
+      <div><dt>Returns</dt><dd>{pct(plan.beforeReturn)} → {pct(plan.afterReturn)}, {pct(plan.inflation)} inflation</dd></div>
+    </dl>
+    <p>{profile?.activePlan ? 'Your active plan keeps running until you activate this one.' : 'Nothing is projected until you activate the plan in step 5.'}</p>
+  </>;
+
   return <main className="page foundation-management-page fire-setup-page">
     <PageToolbar title="Set up your FIRE plan" description="Five short steps. Your answers are saved as a draft until you activate the plan." backAction={() => navigate('/fire')} />
     <div className="retirement-setup-layout">
-      <nav className="retirement-steps" aria-label="Retirement setup steps" ref={stepsRef}>{steps.map((item, index) => <button type="button" key={item.title} disabled={busy} aria-current={step === index ? 'step' : undefined} className={done(index) ? 'retirement-step-done' : undefined} onClick={() => { setStep(index); setMessage(''); setError(null); }}><span className="retirement-step-index" aria-hidden="true">{done(index) && step !== index ? <Check size={14} /> : index + 1}</span><span>{item.title}</span></button>)}</nav>
+      <nav className="retirement-steps" aria-label="Retirement setup steps" ref={stepsRef}>{steps.map((item, index) => <button type="button" key={item.title} disabled={busy} aria-current={step === index ? 'step' : undefined} className={done(index) ? 'retirement-step-done' : undefined} onClick={() => goToStep(index)}><span className="retirement-step-index" aria-hidden="true">{done(index) && step !== index ? <Check size={14} /> : index + 1}</span><span>{item.title}</span></button>)}</nav>
 
       <form className="white-card foundation-form retirement-setup-form" onSubmit={submit}>
         <div className="retirement-setup-heading"><span>Step {step + 1} of 5</span><h2>{steps[step].title}</h2></div>
@@ -141,9 +182,9 @@ function GuidedSetup() {
         </>}
 
         {step === 2 && <>
-          <p>Tick the assets you plan to live on in retirement. Their latest recorded values add up to your starting portfolio. Update values in <Link to="/wealth">Wealth</Link> if one looks out of date.</p>
+          <p>Tick the assets you plan to live on in retirement. Their latest recorded values add up to your starting portfolio. If one looks out of date, type today’s value beside it; it is recorded in <Link to="/wealth">Wealth</Link> when you save, so both pages show the same number.</p>
           <div className="retirement-asset-list">{positions.filter(p => !p.isArchived).map(p => { const snapshot = latest(p.id), eligible = eligibleRetirementAsset(p), selected = eligible && plan.assetIds.includes(p.id); return <div key={p.id} className={selected ? 'retirement-asset-selected' : undefined}><label><input type="checkbox" disabled={!eligible || plan.portfolioOverride !== null} checked={selected} onChange={e => change('assetIds', e.target.checked ? [...plan.assetIds, p.id] : plan.assetIds.filter(id => id !== p.id))} /><span>{p.name}<em>{retirementAssetNote(p)} · {snapshot ? `${formatSGD(Number(snapshot.amount), 0)} recorded ${snapshot.valueDate}` : 'No dated value'}</em></span></label><input type="number" min="0" step="1" aria-label={`${p.name} value for this plan (SGD)`} disabled={!eligible || plan.portfolioOverride !== null} value={assetAmounts[p.id] ?? ''} placeholder={snapshot ? `Recorded: ${Math.ceil(Number(snapshot.amount))}` : 'Enter value'} onChange={e => { const raw = e.target.value; setAssetAmounts(current => { const next = { ...current }; if (raw === '') delete next[p.id]; else next[p.id] = Math.ceil(Number(raw)); return next; }); setConfirmed(false); }} /></div>; })}</div>
-          {Object.keys(assetAmounts).length > 0 && <p role="status">You changed {Object.keys(assetAmounts).length} value{Object.keys(assetAmounts).length === 1 ? '' : 's'}. Your numbers will be saved as a typed total dated today; your Wealth records stay unchanged. <button type="button" className="text-button" onClick={() => setAssetAmounts({})}>Use recorded values</button></p>}
+          {Object.keys(assetAmounts).length > 0 && <p role="status">You changed {Object.keys(assetAmounts).length} value{Object.keys(assetAmounts).length === 1 ? '' : 's'}. When you save, each is recorded in Wealth as today’s value ({asOf}) and the plan uses it from then on. <button type="button" className="text-button" onClick={() => setAssetAmounts({})}>Use recorded values</button></p>}
           <label className="checkbox-label"><input type="checkbox" checked={plan.portfolioOverride !== null} onChange={e => change('portfolioOverride', e.target.checked ? { amount: 0, date: asOf } : null)} />Skip the list and type my total myself</label>
           {plan.portfolioOverride && <div className="form-row"><label>My total investments today (SGD)<input required type="number" min="0" step="1" value={plan.portfolioOverride.amount} onChange={e => change('portfolioOverride', { ...plan.portfolioOverride!, amount: Math.ceil(Number(e.target.value)) })} /></label><label>As of which date?<input required type="date" max={asOf} value={plan.portfolioOverride.date} onChange={e => change('portfolioOverride', { ...plan.portfolioOverride!, date: e.target.value })} /></label></div>}
           <div className="retirement-insight" role="status"><strong>Starting portfolio: {formatSGD(selectedAssets, 0)}</strong><span>{plan.portfolioOverride ? `The total you typed, as of ${plan.portfolioOverride.date}. This is used instead of the list above.` : plan.assetIds.length ? `The ${plan.assetIds.length} asset${plan.assetIds.length === 1 ? '' : 's'} you ticked, added up. The plan grows this amount from today.` : 'Nothing ticked yet, so the plan starts from zero.'}</span></div>
@@ -154,7 +195,7 @@ function GuidedSetup() {
         {step === 3 && <>
           <p>Retirement income reduces the capital your portfolio must supply. Enter estimates in the dollars of the year they start; nothing here is inflated before commencement.</p>
           <div className="form-row"><label>CPF LIFE plan<select value={plan.cpfPlan} onChange={e => change('cpfPlan', e.target.value as RetirementPlan['cpfPlan'])}><option value="unknown">I don’t know yet</option><option value="standard">Standard</option><option value="escalating">Escalating</option><option value="basic">Basic (not modelled)</option></select></label>
-            {cpfIncluded ? <><label>Payout per month (SGD)<input required type="number" min="0" step="1" value={plan.cpfMonthlyPayout} onChange={e => change('cpfMonthlyPayout', Math.ceil(Number(e.target.value)))} /></label><label>Payout start age<input required type="number" min="65" max="70" step="1" value={plan.cpfStartAge} onChange={e => change('cpfStartAge', Number(e.target.value))} /></label></> : null}
+            {cpfIncluded ? <><label>Payout per month (SGD)<input required type="number" min="0" step="1" value={plan.cpfMonthlyPayout} onChange={e => change('cpfMonthlyPayout', Math.ceil(Number(e.target.value)))} /></label><label>Payout start age<select value={plan.cpfStartAge} onChange={e => change('cpfStartAge', Number(e.target.value))}>{[65, 66, 67, 68, 69, 70].map(age => <option key={age} value={age}>{age}{age === 65 ? ' (earliest)' : age === 70 ? ' (latest)' : ''}</option>)}</select><small>CPF LIFE can start any age from 65 to 70. Deferring raises the monthly payout; enter the payout for the age you choose.</small></label></> : null}
           </div>
           {!cpfIncluded && <p role="status">CPF income not included{plan.cpfPlan === 'basic' ? ': Basic declining payouts are not approximated as constant.' : ': no payout is assumed. You can add it later.'}</p>}
           <h3>Other net retirement income (optional)</h3>
@@ -163,53 +204,69 @@ function GuidedSetup() {
         </>}
 
         {step === 4 && <>
-          <p>These are editable product assumptions, not forecasts. Confirm them, then activate the plan.</p>
-          <div className="form-row">{(['beforeReturn', 'afterReturn', 'inflation'] as const).map(key => <label key={key}>{{ beforeReturn: 'Return before retirement (%)', afterReturn: 'Return after retirement (%)', inflation: 'Inflation (%)' }[key]}<input required type="number" min={key === 'inflation' ? 0 : -20} max={key === 'inflation' ? 20 : 30} step="0.1" value={Number((plan[key] * 100).toFixed(4))} onChange={e => change(key, Number(e.target.value) / 100)} /></label>)}</div>
-          <dl className="retirement-facts retirement-facts-compact">
-            <div><dt>Timeline</dt><dd>Retire {monthLabel(plan.retirementMonth) || 'Missing'}{retirementAge !== null ? ` at ${retirementAge}` : ''}, plan through {plan.endAge}</dd></div>
-            <div><dt>Spending</dt><dd>{formatSGD(plan.monthlySpending, 0)} / month today</dd></div>
-            <div><dt>Investment</dt><dd>{formatSGD(plan.monthlyContribution, 0)} / month</dd></div>
-            <div><dt>Portfolio</dt><dd>{formatSGD(selectedAssets, 0)}{plan.portfolioOverride ? `, dated ${plan.portfolioOverride.date}` : ` from ${plan.assetIds.length} assets`}</dd></div>
-            <div><dt>CPF LIFE</dt><dd>{cpfIncluded ? `${formatSGD(plan.cpfMonthlyPayout, 0)} from ${plan.cpfStartAge}, ${plan.cpfPlan}` : 'Not included'}</dd></div>
-            <div><dt>Other income</dt><dd>{plan.otherIncome.length ? `${plan.otherIncome.length} source${plan.otherIncome.length === 1 ? '' : 's'}` : 'None'}</dd></div>
-          </dl>
+          {preview ? (() => {
+            const funded = preview.fundingStatus === 'funded';
+            const earliest = preview.earliestRetirementMonth;
+            const earliestAge = earliest ? ageAt(plan.birthMonth, earliest) : null;
+            const warnings = preview.warnings.filter(w => !boilerplateWarnings.has(w.code));
+            return <div className={`retirement-insight retirement-preview${funded ? '' : ' retirement-preview-shortfall'}`} role="status">
+              <strong>{funded ? `Funded through age ${plan.endAge} under these assumptions` : `Shortfall of ${formatSGD(Number(preview.fundingGap ?? 0), 0)} at retirement`}</strong>
+              <dl className="retirement-preview-facts">
+                <div><dt>Required at retirement</dt><dd>{formatSGD(Number(preview.fiTarget ?? 0), 0)}</dd></div>
+                <div><dt>Projected at retirement</dt><dd>{formatSGD(Number(preview.projectedPortfolio ?? 0), 0)}</dd></div>
+                <div><dt>Funded</dt><dd>{(Number(preview.progressRate ?? 0) * 100).toFixed(0)}%</dd></div>
+                <div><dt>Earliest funded retirement</dt><dd>{earliest ? `${monthLabel(earliest)}${earliestAge !== null ? ` (age ${earliestAge})` : ''}` : `Not before age ${plan.endAge}`}</dd></div>
+              </dl>
+              <dl className="retirement-preview-facts retirement-preview-inputs">
+                <div><dt>Starting portfolio</dt><dd>{formatSGD(selectedAssets, 0)}</dd></div>
+                <div><dt>Investing until retirement</dt><dd>{plan.monthlyContribution > 0 ? `${formatSGD(plan.monthlyContribution, 0)} / month, growing ${pct(plan.beforeReturn)} a year` : 'None'}</dd></div>
+                <div><dt>CPF LIFE payout</dt><dd>{cpfIncluded ? `${formatSGD(plan.cpfMonthlyPayout, 0)} / month from age ${plan.cpfStartAge}` : <>Not included · <button type="button" className="text-button" onClick={() => goToStep(3)}>Add CPF LIFE</button></>}</dd></div>
+                {plan.otherIncome.length > 0 && <div><dt>Other income</dt><dd>{describeIncome(plan).detail}</dd></div>}
+              </dl>
+              {warnings.length > 0 && <ul className="retirement-preview-warnings">{warnings.map(w => <li key={w.code}>{w.message}</li>)}</ul>}
+              <span>Preview only, using smooth returns and the assets you selected. Nothing changes until you activate.</span>
+            </div>;
+          })() : <div className="retirement-insight retirement-preview" role="status"><strong>No preview yet</strong><span>Complete the earlier steps to preview the outcome before you activate.</span></div>}
+
+          <h3>Assumptions</h3>
+          <div className="form-row">{(['beforeReturn', 'afterReturn', 'inflation'] as const).map(key => {
+            const changed = Math.abs(plan[key] - assumptionDefaults[key]) > 1e-9;
+            return <label key={key} className={changed ? 'retirement-field-changed' : undefined}>{{ beforeReturn: 'Return before retirement (%)', afterReturn: 'Return after retirement (%)', inflation: 'Inflation (%)' }[key]}<input required type="number" min={key === 'inflation' ? 0 : -20} max={key === 'inflation' ? 20 : 30} step="0.1" value={Number((plan[key] * 100).toFixed(4))} onChange={e => change(key, Number(e.target.value) / 100)} /><small>{changed ? `Changed from the default ${pct(assumptionDefaults[key])}. ` : `Default ${pct(assumptionDefaults[key])}. `}{assumptionHelp[key]}</small></label>;
+          })}</div>
+
+          <h3>Your answers</h3>
+          <div className="retirement-review-grid">{[
+            { title: 'Timeline', index: 0, fact: describeTimeline(plan, today) },
+            { title: 'Spending and savings', index: 1, fact: describeSpending(plan) },
+            { title: 'Retirement assets', index: 2, fact: describeAssets(plan, selectedAssets) },
+            { title: 'Retirement income', index: 3, fact: describeIncome(plan) },
+          ].map(({ title, index, fact }) => {
+            const label = provenanceLabel(plan, fact.provenanceKeys);
+            return <section className="retirement-review-card" key={title} aria-label={title}>
+              <header><h4>{title}</h4><button type="button" className="text-button" disabled={busy} onClick={() => goToStep(index)} aria-label={`Edit ${title.toLowerCase()}`}>Edit</button></header>
+              <strong>{fact.headline}</strong>
+              <span>{fact.detail}</span>
+              <em className={`retirement-provenance${label === 'Typed by you' ? ' retirement-provenance-user' : ''}`}>{label}</em>
+            </section>;
+          })}</div>
+
           <label className="checkbox-label"><input required type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />I confirm my timeline, spending review, eligible assets, income estimates and assumptions.</label>
         </>}
 
-        <div className="retirement-actions retirement-setup-actions">{step > 0 && <button className="secondary-button" type="button" disabled={busy} onClick={() => { setStep(step - 1); setMessage(''); setError(null); }}>Back</button>}<button className="secondary-button" type="button" disabled={busy} onClick={() => void save()}>Save draft</button><button className="primary-button" disabled={busy} type="submit">{busy ? 'Saving…' : step === 4 ? 'Confirm and activate plan' : 'Confirm step and continue'}</button></div>
+        <div className="retirement-actions retirement-setup-actions">{step > 0 && <button className="secondary-button" type="button" disabled={busy} onClick={() => goToStep(step - 1)}>Back</button>}<button className="secondary-button" type="button" disabled={busy} onClick={() => void save()}>Save draft</button><button className="primary-button" disabled={busy} type="submit">{busy ? 'Saving…' : step === 4 ? 'Confirm and activate plan' : 'Confirm step and continue'}</button></div>
       </form>
 
       {isWideSetup ? (
         <aside className="white-card retirement-summary" aria-label="Your plan so far">
           <h3>Your plan so far</h3>
-          <dl>
-            <div><dt>Age now</dt><dd>{ageNow ?? '—'}</dd></div>
-            <div><dt>Retire</dt><dd>{plan.retirementMonth && validBirth ? `${monthLabel(plan.retirementMonth)} · ${retirementAge}` : '—'}</dd></div>
-            <div><dt>Plan through</dt><dd>Age {plan.endAge}</dd></div>
-            <div><dt>Spending</dt><dd>{plan.monthlySpending > 0 ? `${formatSGD(plan.monthlySpending, 0)} / month` : '—'}</dd></div>
-            <div><dt>Investing</dt><dd>{formatSGD(plan.monthlyContribution, 0)} / month</dd></div>
-            <div><dt>Portfolio</dt><dd>{done(2) ? formatSGD(selectedAssets, 0) : '—'}</dd></div>
-            <div><dt>CPF LIFE</dt><dd>{cpfIncluded ? `${formatSGD(plan.cpfMonthlyPayout, 0)} from ${plan.cpfStartAge}` : 'Not included'}</dd></div>
-            <div><dt>Returns</dt><dd>{pct(plan.beforeReturn)} → {pct(plan.afterReturn)}, {pct(plan.inflation)} inflation</dd></div>
-          </dl>
-          <p>{profile?.activePlan ? 'Your active plan keeps running until you activate this one.' : 'Nothing is projected until you activate the plan in step 5.'}</p>
+          {planSoFar}
         </aside>
       ) : (
         /* Below the three-column layout the summary would be a long block between the form and the
            actions, so it collapses instead and the person opens it when they want it. */
         <details className="white-card retirement-summary setup-summary-disclosure">
           <summary>Your plan so far</summary>
-          <dl>
-            <div><dt>Age now</dt><dd>{ageNow ?? '—'}</dd></div>
-            <div><dt>Retire</dt><dd>{plan.retirementMonth && validBirth ? `${monthLabel(plan.retirementMonth)} · ${retirementAge}` : '—'}</dd></div>
-            <div><dt>Plan through</dt><dd>Age {plan.endAge}</dd></div>
-            <div><dt>Spending</dt><dd>{plan.monthlySpending > 0 ? `${formatSGD(plan.monthlySpending, 0)} / month` : '—'}</dd></div>
-            <div><dt>Investing</dt><dd>{formatSGD(plan.monthlyContribution, 0)} / month</dd></div>
-            <div><dt>Portfolio</dt><dd>{done(2) ? formatSGD(selectedAssets, 0) : '—'}</dd></div>
-            <div><dt>CPF LIFE</dt><dd>{cpfIncluded ? `${formatSGD(plan.cpfMonthlyPayout, 0)} from ${plan.cpfStartAge}` : 'Not included'}</dd></div>
-            <div><dt>Returns</dt><dd>{pct(plan.beforeReturn)} → {pct(plan.afterReturn)}, {pct(plan.inflation)} inflation</dd></div>
-          </dl>
-          <p>{profile?.activePlan ? 'Your active plan keeps running until you activate this one.' : 'Nothing is projected until you activate the plan in step 5.'}</p>
+          {planSoFar}
         </details>
       )}
     </div>

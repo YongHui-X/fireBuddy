@@ -399,6 +399,15 @@ tooltip with a selected-slice readout, because a recharts tooltip lands under th
 summoned it. The recharts legend is replaced below 600px by a static `.chart-key` list, which also
 reads better in TalkBack.
 
+**The native app.** `apps/mobile` (Expo) is the same system again, not a third one.
+`apps/mobile/constants/tokens.ts` mirrors `tokens.css` value for value (light and dark), the
+type scale names the exact Bricolage and Schibsted family per weight because Android cannot
+synthesise weights, and only the display face carries tabular figures. The shell reads the
+safe-area insets on both edges: the forest topbar pads by the status-bar inset and the custom tab
+bar pads by the navigation-bar or home-indicator inset, so no control ever sits under a system
+bar. Every modal surface is the same `BottomSheet`, built on the native Modal so the Android back
+button dismisses it.
+
 ## Do's and Don'ts
 
 ### Do:

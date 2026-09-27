@@ -1,8 +1,9 @@
 import { useState, type ComponentType } from 'react';
 import { Banknote, Building2, Check, CreditCard, Smartphone, Trash2, WalletCards, X } from 'lucide-react';
 
-import { categoryColors, type Account, type AccountType } from '../app/FireBuddyProvider';
+import { categoryColors, type Account, type AccountType } from '../app/fireBuddyModel';
 import { useAccessibleDialog } from './useAccessibleDialog';
+import { onEnterInInput } from './useEnterKey';
 
 export const accountTypeOptions: {
   id: AccountType;
@@ -88,6 +89,7 @@ export function AccountSheet({ mode, initial, onSave, onDelete, onClose }: Accou
         aria-labelledby="account-sheet-title"
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
+        onKeyDown={onEnterInInput(() => void save())}
       >
         <div className="sheet-handle" />
         <div className="sheet-header">
