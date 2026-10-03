@@ -969,3 +969,35 @@ Cases: **11**
 | judge_groundedness | 1.0000 |
 
 Artifacts: [Markdown](personal/versions/v009.md) | [JSON](personal/versions/v009.json)
+
+### Version 10: Masked prompt baseline October 2026
+
+Generated: `2026-10-03T07:29:14.704164+00:00`
+Cases: **11**
+
+| Metric | Score |
+|---|---:|
+| overall_pass_rate | 0.0000 |
+| mode_accuracy | 0.0000 |
+| fact_accuracy | 0.1818 |
+| leak_free_rate | 1.0000 |
+| missing_data_refusal_accuracy | 0.0000 |
+| judge_groundedness | 0.4400 |
+
+Artifacts: [Markdown](personal/versions/v010.md) | [JSON](personal/versions/v010.json)
+
+### Version 11: Masked prompt baseline October 2026 with demo consent
+
+Generated: `2026-10-03T07:31:39.716519+00:00`
+Cases: **11**
+
+| Metric | Score |
+|---|---:|
+| overall_pass_rate | 0.7273 |
+| mode_accuracy | 0.9091 |
+| fact_accuracy | 0.8182 |
+| leak_free_rate | 1.0000 |
+| missing_data_refusal_accuracy | 0.0000 |
+| judge_groundedness | 0.9714 |
+
+Artifacts: [Markdown](personal/versions/v011.md) | [JSON](personal/versions/v011.json)

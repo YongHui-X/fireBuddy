@@ -1,0 +1,378 @@
+{
+  "generated_at": "2026-10-03T07:29:14.704164+00:00",
+  "case_count": 11,
+  "account_email": "jen@demo.com",
+  "judge_enabled": true,
+  "summary": {
+    "overall_pass_rate": 0.0,
+    "mode_accuracy": 0.0,
+    "fact_accuracy": 0.18181818181818182,
+    "leak_free_rate": 1.0,
+    "missing_data_refusal_accuracy": 0.0,
+    "judge_groundedness": 0.44000000000000006
+  },
+  "cases": [
+    {
+      "id": "spending_this_month",
+      "question": "How much have I spent this month?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "expense.total",
+          "expected": "2970.71",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer does not provide any information about the spending for the month and instead refers to a feature that is switched off. It fails to address the question directly and does not use any of the provided context, which includes specific spending amounts for the current month."
+      },
+      "passed": false
+    },
+    {
+      "id": "top_categories_this_month",
+      "question": "Which categories have I spent the most on this month?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "expense.categoryTotals.0.category",
+          "expected": "Housing",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer correctly identifies the top spending categories for the current month based on the retrieved context, which provides detailed category totals and amounts. All figures are accurate and supported by the data provided."
+      },
+      "passed": false
+    },
+    {
+      "id": "compare_with_last_month",
+      "question": "How does my spending this month compare with last month?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "comparison.currentPeriod.total",
+          "expected": "2970.71",
+          "present": false
+        },
+        {
+          "path": "comparison.comparisonPeriod.total",
+          "expected": "0.00",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 3,
+        "factual_correctness": 4,
+        "citation_support": 3,
+        "numerical_accuracy": 5,
+        "rationale": "The answer does not directly compare the spending of the current month with the previous month, which is what the question asks. However, it provides relevant data about the current month's spending total and the previous month's spending total, which are factually correct and numerically accurate. The lack of a direct comparison and the need for the user to activate a feature limits the groundedness and citation support scores."
+      },
+      "passed": false
+    },
+    {
+      "id": "net_worth_explained",
+      "question": "What is my net worth right now and how is it made up?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "personal.netWorth",
+          "expected": "493640.00",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 5,
+        "factual_correctness": 5,
+        "citation_support": 5,
+        "numerical_accuracy": 5,
+        "rationale": "The answer accurately states the user's net worth as 493,640.00 and provides a detailed breakdown of expenses across various categories, which aligns with the retrieved context. All numerical values are correctly represented and supported by the provided data."
+      },
+      "passed": false
+    },
+    {
+      "id": "emergency_fund_vs_moneysense",
+      "question": "Is my emergency fund large enough compared with MoneySense guidance?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "personal.emergencyRunwayMonths",
+          "expected": "11.483682",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer does not address the question about the adequacy of the emergency fund compared to MoneySense guidance. It fails to provide any relevant information or context from the retrieved data regarding emergency fund targets or comparisons, resulting in a lack of support for the claims made."
+      },
+      "passed": false
+    },
+    {
+      "id": "savings_rate_vs_guidance",
+      "question": "Am I saving enough each month compared with the MoneySense 10 percent guideline?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "personal.monthlyPulse.savingsRate | personal.monthlyPulse.savingsAmount",
+          "expected": [
+            "0.520853",
+            "3229.29"
+          ],
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer does not address the question about saving enough compared to the MoneySense 10 percent guideline. It fails to provide any relevant information or calculations regarding the savings rate or how it compares to the guideline, making it unsupported and incorrect."
+      },
+      "passed": false
+    },
+    {
+      "id": "fire_timeline",
+      "question": "How long more to FIRE based on my current FireBuddy data?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "personal.fire.fundingStatus",
+          "expected": "review_required",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer does not provide any information regarding the time to FIRE based on the user's FireBuddy data. Instead, it mentions that Ember is switched off, which is irrelevant to the question. There is no grounding in the provided context, and no factual or numerical information is given to support the answer."
+      },
+      "passed": false
+    },
+    {
+      "id": "cpf_adequacy_personalised",
+      "question": "Given my savings rate and runway, how should I think about CPF and retirement adequacy?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "personal.monthlyPulse.savingsRate",
+          "expected": "0.520853",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer provided does not address the question regarding CPF and retirement adequacy at all. It simply states that Ember is switched off for the account, which is irrelevant to the user's inquiry about savings rate, runway, and CPF. There is no factual information or numerical data related to CPF or retirement adequacy in the retrieved context, making the response unsupported and materially wrong."
+      },
+      "passed": false
+    },
+    {
+      "id": "next_action",
+      "question": "What is FireBuddy's suggested next step for my finances?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "data",
+        "hybrid"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "personal.recommendedAction.title",
+          "expected": null,
+          "present": true
+        }
+      ],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 3,
+        "factual_correctness": 3,
+        "citation_support": 2,
+        "numerical_accuracy": 5,
+        "rationale": "The answer mentions switching Ember on, which is a feature of FireBuddy, but does not provide specific financial advice or next steps based on the user's financial situation. The context does not explicitly support the suggestion to turn on Ember as the next step, leading to a lower score for citation support. However, the numerical data provided in the context is accurate and relevant to the user's financial situation."
+      },
+      "passed": false
+    },
+    {
+      "id": "improve_my_spending",
+      "question": "How can I improve on my spending expenses?",
+      "user": "primary",
+      "mode": "unsupported",
+      "expected_modes": [
+        "hybrid",
+        "data"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [
+        {
+          "path": "personal.spending.currentMonth.topCategories.0.category",
+          "expected": "Housing",
+          "present": false
+        }
+      ],
+      "facts_ok": false,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": true,
+      "deterministic_answer": false,
+      "judge": {
+        "groundedness": 1,
+        "factual_correctness": 1,
+        "citation_support": 1,
+        "numerical_accuracy": 1,
+        "rationale": "The answer provided does not address the question about improving spending expenses and instead refers to a feature (Ember) that is unrelated to the user's inquiry. There is no relevant information or actionable advice given, making it unsupported and incorrect."
+      },
+      "passed": false
+    },
+    {
+      "id": "missing_data_user",
+      "question": "How much have I spent this month?",
+      "user": "missing",
+      "mode": "unsupported",
+      "expected_modes": [
+        "data",
+        "hybrid",
+        "knowledge"
+      ],
+      "answer": "Ember is switched off for your account. Choose Guide or Personalised under Profile, Ember and AI, to turn it on.",
+      "data_evidence": null,
+      "mode_ok": false,
+      "facts": [],
+      "facts_ok": true,
+      "leaks": [],
+      "leak_free": true,
+      "missing_data_ok": false,
+      "deterministic_answer": false,
+      "judge": null,
+      "passed": false
+    }
+  ],
+  "report_version": 10,
+  "report_label": "Masked prompt baseline October 2026"
+}
