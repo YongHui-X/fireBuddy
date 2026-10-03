@@ -1,4 +1,4 @@
-import { formatDateLabel, formatMonthLabel, formatSGD, type LedgerFilters, type Transaction } from '@firebuddy/shared';
+import { formatDateLabel, formatMonthLabel, formatShortDate, type LedgerFilters, type Transaction } from '@firebuddy/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Copy, Download, Ellipsis, Pencil, SlidersHorizontal, Tags, Trash2, Wallet } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -6,6 +6,7 @@ import { SectionList, StyleSheet, View } from 'react-native';
 
 import { Screen, useScreenInsets } from '@/components/layout/Screen';
 import { FiltersSheet, type LedgerFilterDraft } from '@/components/transactions/FiltersSheet';
+import { TagsSheet } from '@/components/transactions/TagsSheet';
 import { TransactionDetailsSheet } from '@/components/transactions/TransactionDetailsSheet';
 import { TransactionRow } from '@/components/transactions/TransactionRow';
 import { ActionSheet } from '@/components/ui/ActionSheet';
@@ -21,7 +22,9 @@ import { SearchField } from '@/components/ui/SearchField';
 import { AppText } from '@/components/ui/Text';
 import { layout, radii, spacing } from '@/constants/tokens';
 import { useCurrentMonth, useFilteredLedger, useTransactionMonths } from '@/hooks/use-ledger';
+import { shareTransactionsCsv } from '@/lib/export-csv';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
 
 const emptyFilters: LedgerFilterDraft = { transactionType: null, categoryId: null, accountId: null, tagId: null, startDate: null, endDate: null };
@@ -30,9 +33,10 @@ const emptyFilters: LedgerFilterDraft = { transactionType: null, categoryId: nul
 export default function TransactionsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { money } = usePrivacy();
   const insets = useScreenInsets();
   const { q, month: requestedMonth, saved } = useLocalSearchParams<{ q?: string; month?: string; saved?: string }>();
-  const { transactions, getCategoryById, getAccountById, deleteTransaction, duplicateTransaction, notify } = useFireBuddy();
+  const { transactions, categories, accounts, tags, getCategoryById, getAccountById, deleteTransaction, duplicateTransaction, addTag, renameTag, deleteTag, notify } = useFireBuddy();
   const latestMonth = useCurrentMonth();
   const months = useTransactionMonths();
   const [month, setMonth] = useState(latestMonth);
@@ -44,6 +48,8 @@ export default function TransactionsScreen() {
   const [menuFor, setMenuFor] = useState<Transaction | null>(null);
   const [viewing, setViewing] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState<Transaction | null>(null);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (typeof q === 'string' && q) setSearch(q);
@@ -65,8 +71,44 @@ export default function TransactionsScreen() {
   const filters = useMemo<LedgerFilters>(() => ({ ...draft, search, monthKey: month }), [draft, search, month]);
   const ledger = useFilteredLedger(filters);
   const customRange = Boolean(draft.startDate || draft.endDate);
+  // Show the actual dates in the period header; fall back to a generic label when one end is open.
+  const customRangeLabel = !customRange
+    ? undefined
+    : draft.startDate && draft.endDate
+      ? `${formatShortDate(draft.startDate)} – ${formatShortDate(draft.endDate)}`
+      : draft.startDate
+        ? `From ${formatShortDate(draft.startDate)}`
+        : `Until ${formatShortDate(draft.endDate as string)}`;
 
-  const openComingSoon = (title: string, description: string) => router.push({ pathname: '/coming-soon', params: { title, description } });
+  const tagUsage = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const transaction of transactions) for (const tagId of transaction.tagIds) counts.set(tagId, (counts.get(tagId) ?? 0) + 1);
+    return counts;
+  }, [transactions]);
+
+  /** Share the rows currently on screen as CSV, so the export always matches what the person is looking at. */
+  async function exportCsv() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const bounds = customRange
+        ? { startDate: draft.startDate ?? undefined, endDate: draft.endDate ?? undefined }
+        : { startDate: `${month}-01`, endDate: `${month}-${String(new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate()).padStart(2, '0')}` };
+      const shared = await shareTransactionsCsv(ledger.rows, categories, accounts, tags, {
+        ...bounds,
+        transactionType: draft.transactionType ?? undefined,
+        categoryId: draft.categoryId ?? undefined,
+        accountId: draft.accountId ?? undefined,
+        tagId: draft.tagId ?? undefined,
+        search: search || undefined,
+      });
+      if (!shared) notify('Sharing is not available on this device.');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Unable to export transactions.');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const header = (
     <View style={styles.header}>
@@ -75,7 +117,7 @@ export default function TransactionsScreen() {
         description="Review income and expenses across your accounts."
         trailing={<IconButton icon={Ellipsis} accessibilityLabel="More actions" onPress={() => setOverflowOpen(true)} />}
       />
-      <MonthStepper months={months} value={month} onChange={setMonth} onOpenPicker={() => setMonthPickerOpen(true)} valueLabel={customRange ? 'Custom range' : undefined} />
+      <MonthStepper months={months} value={month} onChange={setMonth} onOpenPicker={() => setMonthPickerOpen(true)} valueLabel={customRangeLabel} />
       <SearchField value={search} onChangeText={setSearch} />
       <View style={styles.filterRow}>
         <Button
@@ -90,12 +132,12 @@ export default function TransactionsScreen() {
       </View>
       <Card padded={false} style={styles.summary}>
         <View style={[styles.summaryCell, { borderRightColor: theme.line }]}>
-          <AppText variant="overline" tone="ink2">Filtered expenses</AppText>
-          <AppText variant="metric" tone="expense">- {formatSGD(ledger.expenses)}</AppText>
+          <AppText variant="overline" tone="ink2">Expenses</AppText>
+          <AppText variant="metric" tone="expense">- {money(ledger.expenses)}</AppText>
         </View>
         <View style={styles.summaryCell}>
-          <AppText variant="overline" tone="ink2">Filtered income</AppText>
-          <AppText variant="metric" tone="income">+ {formatSGD(ledger.income)}</AppText>
+          <AppText variant="overline" tone="ink2">Income</AppText>
+          <AppText variant="metric" tone="income">+ {money(ledger.income)}</AppText>
         </View>
       </Card>
     </View>
@@ -129,12 +171,22 @@ export default function TransactionsScreen() {
         )}
         ListEmptyComponent={(
           <Card>
-            <EmptyState
-              title={transactions.length ? 'No transactions match these filters' : 'No transactions yet'}
-              message={transactions.length ? 'Clear the filters to return to your complete history.' : 'Add your first income or expense to start building your history.'}
-              actionLabel={transactions.length ? 'Clear filters' : 'Add transaction'}
-              onAction={transactions.length ? () => { setDraft(emptyFilters); setSearch(''); setMonth(latestMonth); } : () => router.push('/add-transaction')}
-            />
+            {ledger.activeFilterCount || search ? (
+              <EmptyState
+                title="No transactions match these filters"
+                message="Clear the filters to see everything recorded this month."
+                actionLabel="Clear filters"
+                onAction={() => { setDraft(emptyFilters); setSearch(''); }}
+              />
+            ) : (
+              // Nothing recorded in this month at all, whether or not other months have entries.
+              <EmptyState
+                title="No transactions were recorded"
+                message="Have you written your expenses for today?"
+                actionLabel="Add transaction"
+                onAction={() => router.push('/add-transaction')}
+              />
+            )}
           </Card>
         )}
       />
@@ -151,16 +203,25 @@ export default function TransactionsScreen() {
         onClose={() => setOverflowOpen(false)}
         title="Transactions"
         actions={[
-          { label: 'Manage tags', icon: Tags, onSelect: () => openComingSoon('Manage tags', 'Rename and remove the tags applied to your transactions.') },
-          { label: 'Export CSV', icon: Download, onSelect: () => openComingSoon('Export CSV', 'Download your ledger as a spreadsheet.') },
-          { label: 'Accounts', icon: Wallet, onSelect: () => openComingSoon('Accounts', 'Manage the payment accounts used by your transactions.') },
+          { label: 'Manage tags', detail: `${tags.length} tag${tags.length === 1 ? '' : 's'}`, icon: Tags, onSelect: () => setTagsOpen(true) },
+          { label: 'Export CSV', detail: ledger.rows.length ? `${ledger.rows.length} row${ledger.rows.length === 1 ? '' : 's'} shown` : 'Nothing to export', icon: Download, disabled: exporting || !ledger.rows.length, onSelect: () => void exportCsv() },
+          { label: 'Accounts', detail: 'Manage payment accounts', icon: Wallet, onSelect: () => router.push('/accounts') },
         ]}
+      />
+      <TagsSheet
+        open={tagsOpen}
+        tags={tags}
+        usageCounts={tagUsage}
+        onClose={() => setTagsOpen(false)}
+        onCreate={(name) => { addTag(name); notify(`${name} added.`); }}
+        onRename={(id, name) => { renameTag(id, name); notify('Tag renamed.'); }}
+        onDelete={(id) => { deleteTag(id); notify('Tag deleted.'); }}
       />
       <ActionSheet
         open={Boolean(menuFor)}
         onClose={() => setMenuFor(null)}
         title={menuFor?.description}
-        description={menuFor ? `${formatDateLabel(menuFor.date)} · ${formatSGD(menuFor.amount)}` : undefined}
+        description={menuFor ? `${formatDateLabel(menuFor.date)} · ${money(menuFor.amount)}` : undefined}
         actions={menuFor ? [
           { label: 'Edit', icon: Pencil, onSelect: () => router.push({ pathname: '/add-transaction', params: { id: menuFor.id } }) },
           { label: 'Duplicate', icon: Copy, onSelect: () => { duplicateTransaction(menuFor.id); notify('Transaction duplicated.'); } },

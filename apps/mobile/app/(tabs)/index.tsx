@@ -1,17 +1,19 @@
 import { formatMonthLabel, formatMonthName, getGreeting, type Transaction } from '@firebuddy/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet } from 'react-native';
 
 import { Screen } from '@/components/layout/Screen';
-import { CategoryBudgetsCard, FiProgressCard, MoneyPulseCard, NetWorthHero, RecentTransactionsCard, SpendingBreakdownCard } from '@/components/home/HomeCards';
+import { HomeActions } from '@/components/home/HomeActions';
+import { CategoryBudgetsCard, MoneyPulseCard, NetWorthHeadline, RecentTransactionsCard, SpendingBreakdownCard } from '@/components/home/HomeCards';
+import { QuickActions } from '@/components/home/QuickActions';
 import { TransactionDetailsSheet } from '@/components/transactions/TransactionDetailsSheet';
-import { Chip } from '@/components/ui/Chip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageToolbar } from '@/components/ui/PageToolbar';
 import { useCategoryBudgets, useCurrentMonth, useMonthSummary, useRecentTransactions, useSpendingBreakdown } from '@/hooks/use-ledger';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
 
-/** Home: the same reading order as the web dashboard on a phone, one card per row. */
+/** Home: a forest hero holding the greeting, net worth headline and shortcuts, then this month's detail on the canvas. Retirement progress lives in the planner. */
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, deleteTransaction, notify } = useFireBuddy();
@@ -24,29 +26,35 @@ export default function HomeScreen() {
   const [viewing, setViewing] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState<Transaction | null>(null);
 
-  const openComingSoon = (title: string, description: string) => router.push({ pathname: '/coming-soon', params: { title, description } });
   const openAdd = () => router.push('/add-transaction');
   const firstName = profile.name.split(' ')[0] ?? profile.name;
 
   return (
-    <Screen>
-      <PageToolbar
-        variant="greeting"
-        title={`${getGreeting()}, ${firstName}`}
-        description={`Here’s your financial position for ${monthName}.`}
-        metadata={<Chip label="Local demo data" />}
-      />
-      <NetWorthHero monthName={monthName} onPress={() => openComingSoon('Wealth', 'Assets and liabilities, dated separately from payment accounts.')} />
+    <Screen
+      hero={(
+        <>
+          <PageToolbar
+            variant="greeting"
+            tone="hero"
+            title={`${getGreeting()}, ${firstName}!`}
+            description={`Your finances for ${monthName}.`}
+            trailing={<HomeActions />}
+            style={styles.toolbar}
+          />
+          <NetWorthHeadline monthName={monthName} />
+          <QuickActions />
+        </>
+      )}
+    >
       <MoneyPulseCard summary={summary} monthName={monthName} />
       <CategoryBudgetsCard rows={budgets} periodLabel={formatMonthLabel(month)} onManage={() => router.navigate('/categories')} />
       <SpendingBreakdownCard
         rows={breakdown}
         periodLabel={formatMonthLabel(month)}
-        onViewMore={() => openComingSoon('Insights', 'Spending trends by day, week, month and year.')}
+        onViewMore={() => router.push({ pathname: '/insights', params: { month } })}
         onAdd={openAdd}
       />
       <RecentTransactionsCard transactions={recent} onSelect={setViewing} onViewAll={() => router.navigate('/transactions')} onAdd={openAdd} />
-      <FiProgressCard onOpen={() => openComingSoon('FIRE Planner', 'Your retirement timeline, from investing to drawing down.')} />
 
       <TransactionDetailsSheet
         transaction={viewing}
@@ -77,3 +85,10 @@ export default function HomeScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  // The hero spaces its blocks itself, so the toolbar drops its own bottom padding.
+  toolbar: {
+    paddingBottom: 0,
+  },
+});

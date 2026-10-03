@@ -1,9 +1,10 @@
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
 /**
- * FireBuddy design tokens for the native app. This file mirrors `apps/web/src/styles/tokens.css`
- * one-to-one: forest and lime editorial, a deep forest rail and hero, a pale green-white canvas,
- * white paper cards, and lime kept for the single primary action. Keep the two in sync.
+ * FireBuddy design tokens for the native app. The palette mirrors `apps/web/src/styles/tokens.css`
+ * (forest and lime, lime kept for the single primary action), but the phone canvas is flat: one
+ * background colour edge to edge, hairline-bordered flat cards instead of shadowed paper on a
+ * tinted canvas, and a single forest accent card per screen. Figures sit directly on the canvas.
  */
 
 export const brand = {
@@ -22,7 +23,6 @@ export const brand = {
 
 export interface Theme {
   bg: string;
-  bgTop: string;
   surface: string;
   surface2: string;
   surface3: string;
@@ -72,10 +72,9 @@ export interface Theme {
 
 export const lightTheme: Theme = {
   bg: '#f2f4ec',
-  bgTop: '#e9eee3',
   surface: '#ffffff',
-  surface2: '#e9ede2',
-  surface3: '#dfe5d7',
+  surface2: '#f1f4ec',
+  surface3: '#e4e9de',
   ink: '#14231c',
   ink2: '#56655c',
   ink3: '#6b7a71',
@@ -122,7 +121,6 @@ export const lightTheme: Theme = {
 export const darkTheme: Theme = {
   ...lightTheme,
   bg: '#0c1712',
-  bgTop: '#0f1d16',
   surface: '#132119',
   surface2: '#1b2c22',
   surface3: '#24382c',
@@ -163,7 +161,7 @@ export const radii = {
   card: 16,
   drawer: 18,
   pill: 999,
-  addTile: 14,
+  addTile: 28,
 } as const;
 
 export const spacing = {
@@ -180,7 +178,7 @@ export const spacing = {
 export const layout = {
   topbar: 60,
   tabBar: 64,
-  addTile: { width: 62, height: 58 },
+  addTile: { size: 56 },
   touch: 48,
   touchCompact: 44,
   gutter: 18,
@@ -208,9 +206,10 @@ const tabular: TextStyle = { fontVariant: ['tabular-nums'] };
 
 /** Type scale. Figures use the display face; prose uses the body face. */
 export const type = {
-  greeting: { fontFamily: fonts.display.semibold, fontSize: 28, lineHeight: 32, letterSpacing: -0.7 },
+  greeting: { fontFamily: fonts.display.semibold, fontSize: 24, lineHeight: 28, letterSpacing: -0.5 },
   pageTitle: { fontFamily: fonts.display.semibold, fontSize: 22, lineHeight: 26, letterSpacing: -0.5 },
   heroFigure: { fontFamily: fonts.display.semibold, fontSize: 34, lineHeight: 38, letterSpacing: -0.8, ...tabular },
+  balance: { fontFamily: fonts.display.semibold, fontSize: 40, lineHeight: 44, letterSpacing: -1, ...tabular },
   metric: { fontFamily: fonts.display.semibold, fontSize: 22, lineHeight: 26, letterSpacing: -0.4, ...tabular },
   cardTitle: { fontFamily: fonts.display.semibold, fontSize: 17, lineHeight: 21, letterSpacing: -0.2 },
   sheetTitle: { fontFamily: fonts.display.semibold, fontSize: 18, lineHeight: 22, letterSpacing: -0.2 },
@@ -242,12 +241,13 @@ export function shadows(scheme: 'light' | 'dark'): Shadows {
   const shadowColor = scheme === 'dark' ? '#000000' : '#14231c';
   const strength = scheme === 'dark' ? 1.8 : 1;
   return {
+    // Cards are flat on the single-colour canvas; the hairline border does the separating.
     card: {
       shadowColor,
-      shadowOpacity: 0.12 * strength,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 6 },
-      elevation: 2,
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 0,
     },
     md: {
       shadowColor,

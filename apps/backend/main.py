@@ -12,9 +12,11 @@ from routers.ai import router as ai_router
 from routers.categories import router as categories_router
 from routers.expenses import router as expenses_router
 from routers.fire import router as fire_router
+from routers.profile import router as profile_router
 from routers.rag import router as rag_router
 from routers.transactions import router as transactions_router
 from routers.tags import router as tags_router
+from routers.user_account import router as user_account_router
 from routers.wealth import router as wealth_router
 
 
@@ -81,7 +83,9 @@ app.include_router(ai_router)
 app.include_router(categories_router)
 app.include_router(expenses_router)
 app.include_router(fire_router)
+app.include_router(profile_router)
 app.include_router(rag_router)
 app.include_router(transactions_router)
 app.include_router(tags_router)
+app.include_router(user_account_router)
 app.include_router(wealth_router)

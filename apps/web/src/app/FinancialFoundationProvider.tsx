@@ -75,32 +75,34 @@ const defaultPositions: WealthPosition[] = [
   demoPosition('00000000-0000-4000-8000-00000000f101', 'Cash reserve', { includeInFi: true, isEmergencyFund: true }),
   demoPosition('00000000-0000-4000-8000-00000000f102', 'Brokerage', { positionType: 'investment', liquidityClass: 'less_liquid', includeInFi: true }),
   demoPosition('00000000-0000-4000-8000-00000000f103', 'Home', { positionType: 'property', liquidityClass: 'less_liquid' }),
-  demoPosition('00000000-0000-4000-8000-00000000f104', 'Mortgage', { positionKind: 'liability', positionType: 'mortgage', liquidityClass: 'less_liquid', interestRate: '0.0260', monthlyPayment: '1850.00', nextPaymentDate: monthsAgo(-1), originalPrincipal: '320000.00' }),
+  demoPosition('00000000-0000-4000-8000-00000000f104', 'Mortgage', { positionKind: 'liability', positionType: 'mortgage', liquidityClass: 'less_liquid', interestRate: '0.0260', monthlyPayment: '1650.00', nextPaymentDate: monthsAgo(-1), originalPrincipal: '380000.00' }),
 ];
 
 const defaultSnapshots: WealthPositionSnapshot[] = [
-  ['00000000-0000-4000-8000-00000000f101', '31200'],
-  ['00000000-0000-4000-8000-00000000f102', '192000'],
-  ['00000000-0000-4000-8000-00000000f103', '120000'],
-  ['00000000-0000-4000-8000-00000000f104', '56800'],
+  // About S$80,000 of net worth: S$18k cash, S$47k invested, and an HDB flat with S$15k of equity.
+  ['00000000-0000-4000-8000-00000000f101', '18000'],
+  ['00000000-0000-4000-8000-00000000f102', '47000'],
+  ['00000000-0000-4000-8000-00000000f103', '380000'],
+  ['00000000-0000-4000-8000-00000000f104', '365000'],
 ].flatMap(([wealthPositionId, amount], index) => [6, 3, 0].map((age) => ({
   id: `00000000-0000-4000-8000-${String(200 + index * 10 + age).padStart(12, '0')}`,
   userId: demoUserId, wealthPositionId, valueDate: monthsAgo(age),
-  amount: age === 0 ? amount : (Number(amount) * (age === 6 ? 0.94 : 0.97)).toFixed(2),
+  // The mortgage shrinks over time while assets grow, so the history reads the right way round.
+  amount: age === 0 ? amount : (Number(amount) * (wealthPositionId === '00000000-0000-4000-8000-00000000f104' ? (age === 6 ? 1.016 : 1.008) : age === 6 ? 0.94 : 0.97)).toFixed(2),
   createdAt: timestamp(), updatedAt: timestamp(),
 })));
 
 const defaultContributions: WealthContribution[] = [{
   id: '00000000-0000-4000-8000-00000000f301', userId: demoUserId,
   wealthPositionId: '00000000-0000-4000-8000-00000000f102', contributionDate: monthsAgo(0, 5),
-  amount: '2480.00', note: 'Monthly investment', createdAt: timestamp(), updatedAt: timestamp(),
+  amount: '2000.00', note: 'Monthly investment', createdAt: timestamp(), updatedAt: timestamp(),
 }];
 
 const defaultProfile: FireProfile = {
   id: '00000000-0000-4000-8000-00000000f401', userId: demoUserId,
-  monthlyContribution: '2500.00', expectedReturnRate: '0.070000', inflationRate: '0.020000',
-  withdrawalRate: '0.040000', retirementSpendingOverride: '4000.00',
-  targetFiDate: `${new Date().getFullYear() + 16}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`,
+  monthlyContribution: '2000.00', expectedReturnRate: '0.070000', inflationRate: '0.030000',
+  withdrawalRate: '0.040000', retirementSpendingOverride: '3500.00',
+  targetFiDate: `${new Date().getFullYear() + 28}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`,
   birthYear: 1994, createdAt: timestamp(), updatedAt: timestamp(),
 };
 

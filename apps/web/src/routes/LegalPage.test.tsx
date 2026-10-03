@@ -15,13 +15,18 @@ vi.mock('../app/fireBuddyContext', async () => {
 describe('public legal pages', () => {
   it.each([
     ['terms', 'Terms of use', 'Educational purpose'],
-    ['privacy', 'Privacy notice', 'Information handled'],
+    ['privacy', 'Privacy notice', 'What we collect'],
   ] as const)('renders the %s draft with FireBuddy navigation', (kind, title, section) => {
     render(<MemoryRouter><LegalPage kind={kind} /></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: title })).toBeTruthy();
     expect(screen.getByText('Draft for review before production')).toBeTruthy();
     expect(screen.getByRole('heading', { name: section })).toBeTruthy();
+    if (kind === 'privacy') {
+      expect(screen.getByRole('heading', { name: 'AI features and your choice' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Your rights' })).toBeTruthy();
+      expect(screen.getByText(/firebuddyapp@gmail.com/)).toBeTruthy();
+    }
     expect(screen.getByRole('link', { name: 'Back to FireBuddy' }).getAttribute('href')).toBe('/');
   });
 });

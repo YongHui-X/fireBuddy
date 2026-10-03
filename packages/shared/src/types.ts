@@ -8,6 +8,33 @@ export interface Profile {
   createdAt: string;
 }
 
+/**
+ * How much the AI guide may see. `off`: no AI calls at all. `guide`: curated Singapore finance
+ * answers with the question scrubbed of amounts and names. `personalised`: a masked snapshot of
+ * the user's aggregates is added; exact figures never leave the backend.
+ */
+export type AiPreference = 'off' | 'guide' | 'personalised';
+
+export interface UserProfile {
+  id: UUID;
+  email: string;
+  aiPreference: AiPreference;
+  /** When the user last chose guide or personalised; null while off. */
+  aiConsentedAt: string | null;
+}
+
+export interface UpdateAiPreferenceInput {
+  aiPreference: AiPreference;
+}
+
+/** Everything FireBuddy holds for one user, as returned by GET /account/export. */
+export interface AccountExport {
+  format: 'firebuddy-export/1';
+  exportedAt: string;
+  profile: UserProfile;
+  tables: Record<string, unknown[]>;
+}
+
 export interface Category {
   id: UUID;
   userId: UUID | null;
@@ -185,10 +212,22 @@ export interface RagAppContext {
   recentActions: RagAppAction[];
 }
 
+/** A snapshot computed and masked on the device; the backend forwards it to the model as-is. */
+export interface RagClientSnapshot {
+  effectiveDate: string;
+  facts: Record<string, unknown>;
+}
+
 export interface RagChatRequest {
   question: string;
   history: RagChatMessage[];
   appContext?: RagAppContext;
+  /**
+   * True when the device already scrubbed the question and history and masked the snapshot.
+   * The backend then neither scrubs nor restores values; the device restores them from its own map.
+   */
+  clientMasked?: boolean;
+  clientSnapshot?: RagClientSnapshot;
 }
 
 export interface RagChatSource {

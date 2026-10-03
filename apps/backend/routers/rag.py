@@ -101,6 +101,8 @@ def financial_advisor(body: AdvisorRequest, current_user: CurrentUser):
             body.question,
             body.history,
             body.app_context,
+            client_masked=body.client_masked,
+            client_snapshot=body.client_snapshot,
         )
     except Exception as exc:
         # Keep raw finance questions out of logs; the user id is enough to trace failures.
@@ -142,7 +144,9 @@ def financial_advisor_stream(body: AdvisorRequest, current_user: StreamUser):
                 body.question,
                 body.history,
                 body.app_context,
-            ): 
+                client_masked=body.client_masked,
+                client_snapshot=body.client_snapshot,
+            ):
             #yield means: streaming. Here's one result now. I might give you another one later.
                 yield encode_sse(event["event"], event["data"])
         except Exception:

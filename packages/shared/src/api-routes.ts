@@ -17,4 +17,8 @@ export const apiRoutes = {
   fireProfile: '/fire/profile',
   fireCalculate: '/fire/calculate',
   fireScenario: '/fire/scenario',
+  profile: '/profile',
+  profileAiPreference: '/profile/ai-preference',
+  account: '/account',
+  accountExport: '/account/export',
 } as const;

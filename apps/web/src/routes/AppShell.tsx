@@ -1203,11 +1203,11 @@ function Transactions() {
         </div>
         <article className="summary-strip">
           <div className="summary-expense">
-            <span>Filtered expenses</span>
+            <span>Expenses</span>
             <strong className="amount-negative">- {formatSGD(expenseTotal)}</strong>
           </div>
           <div className="summary-income">
-            <span>Filtered income</span>
+            <span>Income</span>
             <strong className="amount-positive">+ {formatSGD(incomeTotal)}</strong>
           </div>
         </article>

@@ -2,10 +2,11 @@ export const TRANSACTIONS_STORAGE_KEY = 'firebuddy_web_transactions_v3';
 export const CATEGORIES_STORAGE_KEY = 'firebuddy_web_categories_v3';
 export const ACCOUNTS_STORAGE_KEY = 'firebuddy_web_accounts_v2';
 export const TAGS_STORAGE_KEY = 'firebuddy_web_tags_v1';
-export const WEALTH_POSITIONS_STORAGE_KEY = 'firebuddy_web_wealth_positions_v1';
-export const WEALTH_SNAPSHOTS_STORAGE_KEY = 'firebuddy_web_wealth_snapshots_v1';
-export const WEALTH_CONTRIBUTIONS_STORAGE_KEY = 'firebuddy_web_wealth_contributions_v1';
-export const FIRE_PROFILE_STORAGE_KEY = 'firebuddy_web_fire_profile_v1';
+// v2: demo balance sheet and plan reseeded at about S$80,000 net worth on 2026-09-30.
+export const WEALTH_POSITIONS_STORAGE_KEY = 'firebuddy_web_wealth_positions_v2';
+export const WEALTH_SNAPSHOTS_STORAGE_KEY = 'firebuddy_web_wealth_snapshots_v2';
+export const WEALTH_CONTRIBUTIONS_STORAGE_KEY = 'firebuddy_web_wealth_contributions_v2';
+export const FIRE_PROFILE_STORAGE_KEY = 'firebuddy_web_fire_profile_v2';
 export const ESSENTIAL_CATEGORIES_STORAGE_KEY = 'firebuddy_web_essential_categories_v1';
 
 /** Remove FireBuddy demo records without touching Supabase session storage or theme choice. */

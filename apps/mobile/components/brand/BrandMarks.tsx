@@ -34,13 +34,13 @@ export function AscentMark({ size = 24, color }: MarkProps & { color?: string })
 }
 
 /** Ember, the assistant, keeps a small warm spark subordinate to the FireBuddy mark. */
-export function EmberMark({ size = 24 }: MarkProps) {
+export function EmberMark({ size = 24, color }: MarkProps & { color?: string }) {
   const { theme } = useTheme();
   return (
     <Svg width={size} height={size} viewBox="0 0 28 28" fill="none">
       <Path
         d="M14 3c.9 5.6 5.4 10.1 11 11-5.6.9-10.1 5.4-11 11-.9-5.6-5.4-10.1-11-11 5.6-.9 10.1-5.4 11-11Z"
-        fill={theme.emberSymbol}
+        fill={color ?? theme.emberSymbol}
       />
     </Svg>
   );

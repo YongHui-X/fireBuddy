@@ -25,7 +25,7 @@ export function CategoryAvatar({ category, size = 'row', style }: CategoryAvatar
   const color = category?.color ?? theme.accent;
   const { box, icon } = dims[size];
   return (
-    <View style={[styles.tile, { width: box, height: box, backgroundColor: tint(color, 0.16) }, style]}>
+    <View style={[styles.tile, { width: box, height: box, borderRadius: size === 'row' ? radii.pill : radii.tile, backgroundColor: tint(color, 0.16) }, style]}>
       <Icon size={icon} color={color} strokeWidth={1.9} />
     </View>
   );

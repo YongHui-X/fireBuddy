@@ -56,8 +56,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Paints behind modals and during rotation so there is never a white flash in dark mode.
     SystemUI.setBackgroundColorAsync(theme.bg).catch(() => undefined);
     if (Platform.OS === 'android') {
-      // Under edge-to-edge the bar is transparent; only the button glyph colour is ours to set.
-      NavigationBar.setButtonStyleAsync(scheme === 'dark' ? 'light' : 'dark').catch(() => undefined);
+      // SDK 57 derives the Android navigation button contrast from the selected bar style.
+      NavigationBar.NavigationBar.setStyle(scheme === 'dark' ? 'dark' : 'light');
     }
   }, [scheme, theme.bg]);
 

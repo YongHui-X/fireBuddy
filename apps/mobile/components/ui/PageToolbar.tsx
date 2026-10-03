@@ -19,23 +19,26 @@ export interface PageToolbarProps {
   /** A trailing control on the title row, such as an overflow menu. */
   trailing?: ReactNode;
   variant?: 'page' | 'greeting';
+  /** `hero` sets the copy in white and muted forest ink for a toolbar inside the forest region. */
+  tone?: 'canvas' | 'hero';
   style?: StyleProp<ViewStyle>;
 }
 
 /** Route heading: a display title with the context in secondary ink beneath it, like the web `.page-toolbar`. */
-export function PageToolbar({ title, description, onBack, metadata, actions, trailing, variant = 'page', style }: PageToolbarProps) {
+export function PageToolbar({ title, description, onBack, metadata, actions, trailing, variant = 'page', tone = 'canvas', style }: PageToolbarProps) {
+  const hero = tone === 'hero';
   return (
     <View style={[styles.toolbar, style]}>
       <View style={styles.leading}>
         {onBack ? (
-          <IconButton icon={ChevronLeft} accessibilityLabel="Go back" onPress={onBack} iconSize={22} style={styles.back} />
+          <IconButton icon={ChevronLeft} tone={hero ? 'hero' : 'quiet'} accessibilityLabel="Go back" onPress={onBack} iconSize={22} style={styles.back} />
         ) : null}
         <View style={styles.copy}>
-          <AppText variant={variant === 'greeting' ? 'greeting' : 'pageTitle'} accessibilityRole="header">
+          <AppText variant={variant === 'greeting' ? 'greeting' : 'pageTitle'} tone={hero ? 'hero' : 'ink'} accessibilityRole="header">
             {title}
           </AppText>
           {description ? (
-            <AppText variant="bodySmall" tone="ink2" style={styles.description}>
+            <AppText variant="bodySmall" tone={hero ? 'heroMuted' : 'ink2'} style={styles.description}>
               {description}
             </AppText>
           ) : null}

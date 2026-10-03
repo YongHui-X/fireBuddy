@@ -10,8 +10,7 @@ import {
   SchibstedGrotesk_700Bold,
   useFonts,
 } from '@expo-google-fonts/schibsted-grotesk';
-import { ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
@@ -21,8 +20,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 import { Toast } from '@/components/ui/Toast';
+import { AiPreferenceProvider, useAiPreference } from '@/lib/ai-preference';
 import { FireBuddyStoreProvider, useFireBuddy } from '@/lib/fire-buddy-store';
 import { toNavigationTheme } from '@/lib/navigation-theme';
+import { PrivacyProvider, usePrivacy } from '@/lib/privacy';
 import { ThemeProvider, useTheme } from '@/lib/theme';
 
 export const unstable_settings = {
@@ -47,7 +48,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <FireBuddyStoreProvider>
-            <AppShell ready={fontsLoaded || Boolean(fontError)} />
+            <PrivacyProvider>
+              <AiPreferenceProvider>
+                <AppShell ready={fontsLoaded || Boolean(fontError)} />
+              </AiPreferenceProvider>
+            </PrivacyProvider>
           </FireBuddyStoreProvider>
         </ThemeProvider>
       </SafeAreaProvider>
@@ -55,12 +60,14 @@ export default function RootLayout() {
   );
 }
 
-/** Holds the splash until fonts and the stored theme and data are in, so the first frame is the finished shell. */
+/** Holds the splash until fonts, the stored theme, data and the privacy choice are in, so the first frame is the finished shell. */
 function AppShell({ ready }: { ready: boolean }) {
   const { theme, scheme, hydrated: themeHydrated } = useTheme();
   const { hydrated: storeHydrated, notification, dismissNotification } = useFireBuddy();
+  const { hydrated: privacyHydrated } = usePrivacy();
+  const { hydrated: aiHydrated } = useAiPreference();
   const navigationTheme = useMemo(() => toNavigationTheme(theme, scheme), [theme, scheme]);
-  const allReady = ready && themeHydrated && storeHydrated;
+  const allReady = ready && themeHydrated && storeHydrated && privacyHydrated && aiHydrated;
 
   useEffect(() => {
     if (allReady) SplashScreen.hideAsync().catch(() => undefined);
@@ -75,10 +82,17 @@ function AppShell({ ready }: { ready: boolean }) {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="add-transaction" options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
-        <Stack.Screen name="coming-soon" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="wealth" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="fire-planner" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="fire-plan-edit" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="insights" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="accounts" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="plan" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="goals" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="ember" options={{ presentation: 'card', animation: 'slide_from_right' }} />
       </Stack>
-      {/* The forest topbar always sits under the status bar, so its icons stay light in both themes. */}
-      <StatusBar style="light" translucent />
+      {/* Screens start with the canvas colour under the status bar, so its icons follow the theme. */}
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Toast message={notification?.message ?? null} onDismiss={dismissNotification} />
     </NavigationThemeProvider>
   );

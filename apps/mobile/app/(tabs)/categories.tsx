@@ -1,4 +1,4 @@
-import { formatSGD, getMonthlySpend, type Category, type TransactionType } from '@firebuddy/shared';
+import { getMonthlySpend, type Category, type TransactionType } from '@firebuddy/shared';
 import { Pencil, Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -17,11 +17,13 @@ import { AppText } from '@/components/ui/Text';
 import { layout, radii, spacing } from '@/constants/tokens';
 import { useCurrentMonth } from '@/hooks/use-ledger';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
 
 /** Category cards with this month's spend against each budget, plus the full breakdown list. */
 export default function CategoriesScreen() {
   const { theme, shadows } = useTheme();
+  const { money, percent } = usePrivacy();
   const { categories, transactions, addCategory, updateCategory, deleteCategory, notify } = useFireBuddy();
   const month = useCurrentMonth();
   const [type, setType] = useState<TransactionType>('expense');
@@ -73,10 +75,10 @@ export default function CategoriesScreen() {
                 <AppText variant="bodySemibold" numberOfLines={1}>{category.name}</AppText>
                 {category.categoryType === 'expense' ? (
                   <>
-                    <AppText variant="caption" tone="ink2">{formatSGD(spent, 0)} this month</AppText>
+                    <AppText variant="caption" tone="ink2">{money(spent, 0)} this month</AppText>
                     <ProgressTrack value={ratio} color={category.color} style={styles.track} />
                     <AppText variant="caption" tone="ink2">
-                      {budget > 0 ? `${Math.round(ratio * 100)}% of ${formatSGD(budget, 0)}` : 'No budget'}
+                      {budget > 0 ? `${percent(ratio)} of ${money(budget, 0)}` : 'No budget'}
                     </AppText>
                   </>
                 ) : (
@@ -96,9 +98,9 @@ export default function CategoriesScreen() {
               <CategoryAvatar category={category} size="row" />
               <View style={styles.breakdownCopy}>
                 <AppText variant="bodySemibold" numberOfLines={1}>{category.name}</AppText>
-                <AppText variant="caption" tone="ink2">{Math.round(share * 100)}% of tracked spend</AppText>
+                <AppText variant="caption" tone="ink2">{percent(share)} of tracked spend</AppText>
               </View>
-              <AppText variant="amount">{formatSGD(allTime, 0)}</AppText>
+              <AppText variant="amount">{money(allTime, 0)}</AppText>
             </View>
           ))}
         </Card>

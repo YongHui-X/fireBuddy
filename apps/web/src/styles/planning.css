@@ -695,7 +695,8 @@ details.foundation-form[open] > summary {
   margin-top: 4px;
 }
 
-.foundation-form > .retirement-note {
+.foundation-form > .retirement-note,
+.retirement-page > .retirement-note {
   font-size: 0.8125rem;
   color: var(--ink-3);
 }
@@ -1416,4 +1417,45 @@ details.foundation-form[open] > summary {
   color: var(--ink-3);
   font-size: 0.78rem;
   margin: -6px 0 8px;
+}
+
+/* Profile: AI level ---------------------------------------------------------- */
+
+.setting-description {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.ai-level-control {
+  display: grid;
+  gap: 10px;
+  padding: 4px 16px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.ai-level-toggle {
+  margin-top: 10px;
+}
+
+.ai-level-toggle button[aria-checked='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(20, 35, 28, 0.12);
+}
+
+.ai-level-summary,
+.ai-level-meta {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.ai-level-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.8rem;
 }

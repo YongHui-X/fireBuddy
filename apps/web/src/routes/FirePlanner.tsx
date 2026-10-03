@@ -94,17 +94,18 @@ function Results({ fire }: { fire: FireCalculationResult }) {
   const monthly = (annual: number) => (1 + annual) ** (1 / 12) - 1;
   return <>
     <div className="retirement-headlines">{[
-      ['Required at retirement', amount(fire.fiTarget), `${amount(fire.targetToday)} in today’s money · ${monthLabel(plan.retirementMonth)}, age ${retirementAge}`],
-      ['Projected at retirement', amount(fire.projectedPortfolio), `${amount(fire.portfolioToday)} in today’s money · from ${amount(fire.currentInvestableAssets)} today`],
-      ['Funding gap', funded ? 'None' : amount(fire.fundingGap), funded ? `Funded through age ${plan.endAge} under these assumptions` : 'Additional capital needed at retirement'],
-      ['Required monthly investment', amount(fire.requiredMonthlyInvestment), fire.requiredMonthlyInvestment == null ? 'No monthly amount can close the gap by this retirement month' : contributionDelta! > 0.005 ? `${formatSGD(contributionDelta!, 0)} more than your ${formatSGD(plan.monthlyContribution, 0)} plan` : `Your ${formatSGD(plan.monthlyContribution, 0)} plan covers it`],
-    ].map(([label, value, detail]) => <article className={`white-card${label === 'Funding gap' && !funded ? ' retirement-headline-alert' : ''}`} key={label}><h2>{label}</h2><strong>{value}</strong><p>{detail}</p></article>)}</div>
+      ['Amount needed for retirement', amount(fire.fiTarget), `In ${monthLabel(plan.retirementMonth)}`],
+      ['Projected portfolio at retirement', amount(fire.projectedPortfolio), `From ${amount(fire.currentInvestableAssets)} today`],
+      ['Remaining needed amount', funded ? 'None' : amount(fire.fundingGap), funded ? `Funded through age ${plan.endAge} under these assumptions` : 'Amount needed minus projected portfolio, at retirement'],
+      ['Monthly investment needed', amount(fire.requiredMonthlyInvestment), fire.requiredMonthlyInvestment == null ? 'No monthly amount can close the gap by this retirement month' : contributionDelta! > 0.005 ? `${formatSGD(contributionDelta!, 0)} more than your ${formatSGD(plan.monthlyContribution, 0)} plan` : `Your ${formatSGD(plan.monthlyContribution, 0)} plan covers it`],
+    ].map(([label, value, detail]) => <article className={`white-card${label === 'Remaining needed amount' && !funded ? ' retirement-headline-alert' : ''}`} key={label}><h2>{label}</h2><strong>{value}</strong><p>{detail}</p></article>)}</div>
+    <p className="retirement-note">Accounting for {pct(plan.inflation)} annual inflation.</p>
 
     <section className="white-card foundation-form retirement-progress-card">
-      <div className="section-title-row"><div><h2>FIRE progress</h2><p className="card-subtitle">Projected portfolio ÷ required portfolio at retirement in {monthLabel(plan.retirementMonth)}.</p></div><strong className="retirement-progress-figure">{(progress * 100).toFixed(1)}% funded</strong></div>
-      <div className="dashboard-budget-track fire-progress-track" role="img" aria-label={`${(progress * 100).toFixed(1)}% of the required retirement portfolio`}><span style={{ width: `${Math.min(100, Math.max(0, progress * 100))}%` }} /></div>
+      <div className="section-title-row"><div><h2>FIRE progress</h2><p className="card-subtitle">Projected portfolio ÷ amount needed in {monthLabel(plan.retirementMonth)}.</p></div><strong className="retirement-progress-figure">{(progress * 100).toFixed(1)}% funded</strong></div>
+      <div className="dashboard-budget-track fire-progress-track" role="img" aria-label={`${(progress * 100).toFixed(1)}% of the amount needed for retirement`}><span style={{ width: `${Math.min(100, Math.max(0, progress * 100))}%` }} /></div>
       <dl className="fire-progress-facts retirement-progress-facts">
-        <div><dt>Earliest funded retirement</dt><dd>{fire.earliestRetirementMonth ? monthLabel(fire.earliestRetirementMonth) : 'Not found'}<small> {fire.earliestRetirementMonth ? `age ${earliestAge}` : `before age ${plan.endAge}`}</small></dd></div>
+        <div><dt>Earliest you could retire</dt><dd>{fire.earliestRetirementMonth ? monthLabel(fire.earliestRetirementMonth) : 'Not found'}<small> {fire.earliestRetirementMonth ? `age ${earliestAge}` : `before age ${plan.endAge}`}</small></dd></div>
         <div><dt>Selected retirement</dt><dd>{monthLabel(plan.retirementMonth)}<small> age {retirementAge}, {monthsToRetirement === 0 ? 'this month' : `${Math.floor(monthsToRetirement / 12)}y ${monthsToRetirement % 12}m away`}</small></dd></div>
         <div><dt>Portfolio lasts</dt><dd>{depletion ? monthLabel(depletion) : `Through age ${plan.endAge}`}<small> {depletion ? `depleted at age ${ageAt(plan, depletion)}` : 'no unfunded months'}</small></dd></div>
         <div><dt>Peak portfolio</dt><dd>{formatSGD(peak, 0)}<small> nominal SGD</small></dd></div>
@@ -120,7 +121,7 @@ function Results({ fire }: { fire: FireCalculationResult }) {
           <ReferenceLine y={0} stroke="var(--line-strong)" />
           <ReferenceLine x={plan.retirementMonth} stroke="var(--ink-3)" strokeDasharray="4 4" label={{ value: `Retire ${plan.retirementMonth.slice(0, 4)}`, position: 'insideBottomLeft', fill: 'var(--ink-2)', fontSize: 12 }} />
           {depletionTick && <ReferenceLine x={depletionTick} stroke="var(--expense)" strokeDasharray="4 4" label={{ value: `Depleted ${depletion!.slice(0, 4)}`, position: 'insideTopRight', fill: 'var(--expense)', fontSize: 12 }} />}
-          {fire.fiTarget && <ReferenceDot x={plan.retirementMonth} y={Number(fire.fiTarget)} r={5} fill="var(--chart-target)" stroke="var(--surface)" strokeWidth={2} label={{ value: `Required ${compact(Number(fire.fiTarget))}`, position: 'top', fill: 'var(--chart-target)', fontSize: 12 }} />}
+          {fire.fiTarget && <ReferenceDot x={plan.retirementMonth} y={Number(fire.fiTarget)} r={5} fill="var(--chart-target)" stroke="var(--surface)" strokeWidth={2} label={{ value: `Needed ${compact(Number(fire.fiTarget))}`, position: 'top', fill: 'var(--chart-target)', fontSize: 12 }} />}
           <Line name="Recorded eligible assets" dataKey="actual" stroke="var(--chart-actual)" strokeWidth={3} dot={{ r: 3 }} isAnimationActive={false} />
           <Line name="Accumulation" dataKey="accumulation" stroke="var(--chart-actual)" strokeWidth={3} dot={false} isAnimationActive={false} />
           <Line name="Retirement drawdown" dataKey="retirement" stroke="var(--chart-projection)" strokeWidth={2} strokeDasharray="7 6" dot={false} isAnimationActive={false} />
@@ -129,11 +130,11 @@ function Results({ fire }: { fire: FireCalculationResult }) {
           <ul className="chart-key">
             <li><span style={{ background: 'var(--chart-actual)' }} aria-hidden="true" />Recorded and accumulation</li>
             <li><span style={{ background: 'var(--chart-projection)' }} aria-hidden="true" />Retirement drawdown</li>
-            <li><span style={{ background: 'var(--chart-target)' }} aria-hidden="true" />Required at retirement</li>
+            <li><span style={{ background: 'var(--chart-target)' }} aria-hidden="true" />Amount needed for retirement</li>
           </ul>
         ) : null}
       </div>
-      <p>Nominal SGD, smooth returns. The gold dot is the capital required in {monthLabel(plan.retirementMonth)}; balances below zero are unfunded months, not borrowing. {depletion ? 'Compare a later retirement date or a higher contribution below.' : 'Review assumptions and refresh asset values regularly.'}</p>
+      <p>Nominal SGD, smooth returns. The gold dot is the amount you need in {monthLabel(plan.retirementMonth)}; balances below zero are unfunded months, not borrowing. {depletion ? 'Compare a later retirement date or a higher contribution below.' : 'Review assumptions and refresh asset values regularly.'}</p>
       <p role="status" className="retirement-portfolio-source">{plan.portfolioOverride
         ? <>Starting portfolio is the {formatSGD(plan.portfolioOverride.amount, 0)} you typed, dated {plan.portfolioOverride.date}. Values in <Link to="/wealth">Wealth</Link> do not change it until you <Link to="/fire/setup?step=3">pick assets in setup</Link>.</>
         : <>Starting portfolio is {amount(fire.currentInvestableAssets)} from {plan.assetIds.length} asset{plan.assetIds.length === 1 ? '' : 's'} ticked in setup, at their latest values in <Link to="/wealth">Wealth</Link>. Edit a value there, or in <Link to="/fire/setup?step=3">setup</Link>, and this projection follows.</>}</p>
@@ -149,8 +150,8 @@ function Results({ fire }: { fire: FireCalculationResult }) {
         <div><dt>Monthly growth before retirement</dt><dd>(1 + {pct(plan.beforeReturn)})^(1/12) − 1 = {pct(monthly(plan.beforeReturn), 3)}</dd></div>
         <div><dt>Monthly growth after retirement</dt><dd>(1 + {pct(plan.afterReturn)})^(1/12) − 1 = {pct(monthly(plan.afterReturn), 3)}</dd></div>
         {firstRetirement && <div><dt>Spending at retirement</dt><dd>{formatSGD(plan.monthlySpending, 0)} × (1 + {pct(plan.inflation)})^({monthIndex(firstRetirement.month) - monthIndex(plan.spendingMonth) + 1}/12) = {amount(firstRetirement.expenses)} per month</dd></div>}
-        <div><dt>Required at retirement</dt><dd>Capital that funds every retirement month through age {plan.endAge} after CPF and other income, worked backwards at {pct(plan.afterReturn)} = {amount(fire.fiTarget)}</dd></div>
-        <div><dt>Projected at retirement</dt><dd>{amount(fire.currentInvestableAssets)} grown for {monthsToRetirement} months plus {formatSGD(plan.monthlyContribution, 0)} monthly = {amount(fire.projectedPortfolio)}</dd></div>
+        <div><dt>Amount needed for retirement</dt><dd>Capital that funds every retirement month through age {plan.endAge} after CPF and other income, worked backwards at {pct(plan.afterReturn)} = {amount(fire.fiTarget)}</dd></div>
+        <div><dt>Projected portfolio at retirement</dt><dd>{amount(fire.currentInvestableAssets)} grown for {monthsToRetirement} months plus {formatSGD(plan.monthlyContribution, 0)} monthly = {amount(fire.projectedPortfolio)}</dd></div>
         <div><dt>Progress</dt><dd>{amount(fire.projectedPortfolio)} ÷ {amount(fire.fiTarget)} = {(progress * 100).toFixed(1)}%</dd></div>
         <div><dt>Today’s money</dt><dd>Retirement-date amounts ÷ (1 + {pct(plan.inflation)})^({monthsToRetirement}/12)</dd></div>
       </dl>
@@ -212,9 +213,9 @@ function Scenario({ baseline }: { baseline: FireCalculationResult }) {
     {result && <div role="status" className="retirement-scenario-result">{result.fundingStatus === 'review_required' ? <p>{result.warnings.map(w => w.message).join(' ')}</p> : <>
       <p><strong>{result.fundingStatus === 'funded' ? 'Funded' : 'Shortfall'}</strong> through age {plan.endAge} under this scenario{changed.length ? ` (changed: ${changed.map(key => scenarioLabels[key].replace(/ \(.*\)/, '').toLowerCase()).join(', ')})` : ''}.</p>
       <div className="retirement-table"><table><thead><tr><th>Nominal SGD</th><th>Saved plan</th><th>Scenario</th><th>Difference</th></tr></thead><tbody>
-        {compare('fiTarget', 'Required capital')}{compare('projectedPortfolio', 'Projected capital')}{compare('fundingGap', 'Funding gap')}{compare('requiredMonthlyInvestment', 'Monthly investment needed')}
+        {compare('fiTarget', 'Amount needed')}{compare('projectedPortfolio', 'Projected portfolio')}{compare('fundingGap', 'Remaining needed amount')}{compare('requiredMonthlyInvestment', 'Monthly investment needed')}
         <tr><th>Progress</th><td>{(Number(baseline.progressRate ?? 0) * 100).toFixed(1)}%</td><td>{(Number(result.progressRate ?? 0) * 100).toFixed(1)}%</td><td>{signed((Number(result.progressRate ?? 0) - Number(baseline.progressRate ?? 0)) * 100, n => `${n.toFixed(1)} pts`)}</td></tr>
-        <tr><th>Earliest funded month</th><td>{baseline.earliestRetirementMonth ? monthLabel(baseline.earliestRetirementMonth) : 'Not found'}</td><td>{result.earliestRetirementMonth ? monthLabel(result.earliestRetirementMonth) : 'Not found'}</td><td>{earliestDelta === null ? 'Unavailable' : earliestDelta === 0 ? 'No change' : `${Math.abs(earliestDelta)} months ${earliestDelta < 0 ? 'earlier' : 'later'}`}</td></tr>
+        <tr><th>Earliest you could retire</th><td>{baseline.earliestRetirementMonth ? monthLabel(baseline.earliestRetirementMonth) : 'Not found'}</td><td>{result.earliestRetirementMonth ? monthLabel(result.earliestRetirementMonth) : 'Not found'}</td><td>{earliestDelta === null ? 'Unavailable' : earliestDelta === 0 ? 'No change' : `${Math.abs(earliestDelta)} months ${earliestDelta < 0 ? 'earlier' : 'later'}`}</td></tr>
       </tbody></table></div>
     </>}</div>}
   </form>;

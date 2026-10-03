@@ -1,11 +1,10 @@
 import { formatMonthLabel } from '@firebuddy/shared';
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { radii, spacing } from '@/constants/tokens';
+import { layout, radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
-import { IconButton } from './IconButton';
 import { PressOverlay } from './PressOverlay';
 import { AppText } from './Text';
 
@@ -16,57 +15,92 @@ export interface MonthStepperProps {
   onChange: (monthKey: string) => void;
   /** Opens a picker listing every month. */
   onOpenPicker?: () => void;
-  /** Overrides the month text, e.g. "Custom range". */
+  /** Overrides the month text, e.g. "3 Sep – 27 Sep" for a custom range. */
   valueLabel?: string;
 }
 
-/** One pill: previous month, the month name (tap for the full list), next month. */
+/**
+ * A borderless period header: the month name in display type, flanked by two round step buttons.
+ * Tapping the name opens the full month picker. No enclosing frame, so it reads as a heading
+ * rather than a form control.
+ */
 export function MonthStepper({ months, value, onChange, onOpenPicker, valueLabel }: MonthStepperProps) {
   const { theme } = useTheme();
   const index = months.indexOf(value);
   const older = index >= 0 ? months[index + 1] : undefined;
   const newer = index > 0 ? months[index - 1] : undefined;
 
+  const step = (label: string, Icon: typeof ChevronLeft, target?: string) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={!target}
+      hitSlop={6}
+      onPress={() => target && onChange(target)}
+      style={[styles.stepTarget, !target ? styles.disabled : null]}
+    >
+      {({ pressed }) => (
+        <View style={[styles.stepCircle, { backgroundColor: theme.surface2 }]}>
+          <PressOverlay pressed={pressed && Boolean(target)} radius={radii.pill} />
+          <Icon size={18} color={theme.ink2} strokeWidth={2} />
+        </View>
+      )}
+    </Pressable>
+  );
+
   return (
-    <View style={[styles.panel, { backgroundColor: theme.surface, borderColor: theme.lineStrong }]}>
-      <IconButton icon={ChevronLeft} accessibilityLabel="Show previous month" disabled={!older} onPress={() => older && onChange(older)} size="compact" />
-        <Pressable
-          accessibilityRole={onOpenPicker ? 'button' : undefined}
-          accessibilityLabel="Month"
-          disabled={!onOpenPicker}
-          onPress={onOpenPicker}
-          style={styles.value}
-        >
-          {({ pressed }) => (
-            <>
-              <PressOverlay pressed={pressed && Boolean(onOpenPicker)} radius={radii.control} />
-              <View style={styles.valueRow}>
-                <CalendarDays size={16} color={theme.ink2} strokeWidth={1.9} />
-                <AppText variant="bodySemibold">{valueLabel ?? formatMonthLabel(value)}</AppText>
-                {onOpenPicker ? <ChevronDown size={15} color={theme.ink3} strokeWidth={2} /> : null}
-              </View>
-            </>
-          )}
-        </Pressable>
-      <IconButton icon={ChevronRight} accessibilityLabel="Show next month" disabled={!newer} onPress={() => newer && onChange(newer)} size="compact" />
+    <View style={styles.row}>
+      {step('Show previous month', ChevronLeft, older)}
+      <Pressable
+        accessibilityRole={onOpenPicker ? 'button' : undefined}
+        accessibilityLabel="Month"
+        disabled={!onOpenPicker}
+        onPress={onOpenPicker}
+        style={styles.value}
+      >
+        {({ pressed }) => (
+          <>
+            <PressOverlay pressed={pressed && Boolean(onOpenPicker)} radius={radii.control} />
+            <View style={styles.valueRow}>
+              <AppText variant="cardTitle" numberOfLines={1}>{valueLabel ?? formatMonthLabel(value)}</AppText>
+              {onOpenPicker ? <ChevronDown size={16} color={theme.ink3} strokeWidth={2.2} /> : null}
+            </View>
+          </>
+        )}
+      </Pressable>
+      {step('Show next month', ChevronRight, newer)}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  panel: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    padding: 4,
-    borderRadius: radii.control,
-    borderWidth: 1,
+    gap: spacing.sm,
+  },
+  stepTarget: {
+    width: layout.touchCompact,
+    height: layout.touchCompact,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  disabled: {
+    opacity: 0.35,
   },
   value: {
     flex: 1,
-    minHeight: 40,
+    minHeight: layout.touchCompact,
     justifyContent: 'center',
-    borderRadius: radii.control - 3,
+    borderRadius: radii.control,
     overflow: 'hidden',
   },
   valueRow: {

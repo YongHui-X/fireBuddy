@@ -110,7 +110,31 @@ describe('retirement plan workflows', () => {
     state.profile!.draftPlan = { step: 4, inputs: { ...plan, retirementMonth: '' } };
     render(<MemoryRouter><FireSetup /></MemoryRouter>);
     expect(screen.getByText('No preview yet')).toBeTruthy();
-    expect(screen.queryByText(/at retirement$/)).toBeNull();
+    expect(screen.queryByText('Amount needed for retirement')).toBeNull();
+  });
+
+  it('sets retirement spending from a FIRE style preset and reads a typed figure back as Custom', () => {
+    render(<MemoryRouter><FireSetup /></MemoryRouter>);
+    const lean = within(screen.getByRole('group', { name: 'FIRE style' })).getByRole('button', { name: 'Lean' });
+    const custom = screen.getByRole('button', { name: 'Custom' });
+    // No recorded transactions in this fixture, so the presets wait for a typed expense figure.
+    expect((lean as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Your monthly expenses (SGD)'), { target: { value: '5000' } });
+    expect((lean as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(lean);
+    const spending = screen.getByLabelText(/How much will you spend during retirement/) as HTMLInputElement;
+    expect(spending.value).toBe('3000');
+    expect(lean.getAttribute('aria-pressed')).toBe('true');
+    expect(custom.getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Regular' }).getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(screen.getByRole('button', { name: 'Fat' }));
+    expect(spending.value).toBe('7500');
+    expect(screen.getByRole('button', { name: 'Fat' }).getAttribute('aria-pressed')).toBe('true');
+    expect(lean.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.change(spending, { target: { value: '4200' } });
+    expect(lean.getAttribute('aria-pressed')).toBe('false');
+    expect(custom.getAttribute('aria-pressed')).toBe('true');
+    expect(state.updateProfile).not.toHaveBeenCalled();
   });
 
   it('shows unknown CPF and compares a scenario without saving', async () => {

@@ -55,6 +55,7 @@ Configure:
 - `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_JWT_SECRET` only when legacy HS256 verification is required
 - `OPENAI_API_KEY`, `OPENAI_MODEL`, and RAG model settings
+- `EMBER_MASKING_MODE` (evaluation only; `off` sends exact figures to the model and logs a warning; never set it in production)
 - `CORS_ALLOWED_ORIGINS`
 - Both advisor and AI suggestion rate limit pairs
 

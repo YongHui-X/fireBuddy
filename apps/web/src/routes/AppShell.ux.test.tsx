@@ -75,6 +75,11 @@ vi.mock('../app/fireBuddyContext', async () => {
       getCategoryById: (id: string) => mocks.categories.find((category) => category.id === id),
       notification: null,
       notify: mocks.notify,
+      aiPreference: 'personalised',
+      aiPreferenceStatus: 'ready',
+      setAiPreference: vi.fn(),
+      demoMode: false,
+      profile: { id: 'user-id', email: 'ben@firebuddy.test', aiPreference: 'personalised', aiConsentedAt: null },
       session: {
         access_token: 'access-token',
         user: { email: 'ben@firebuddy.test', user_metadata: { name: 'Ben' } },

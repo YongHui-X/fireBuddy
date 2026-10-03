@@ -5,7 +5,7 @@ import type { TransactionType } from '@firebuddy/shared';
 
 import { accountTypeLabel, categoryColors, getDeviceDateKey, type Account, type Category } from '../app/fireBuddyModel';
 import { useFireBuddy } from '../app/fireBuddyContext';
-import { suggestExpenseCategory } from '../api';
+import { ApiRequestError, suggestExpenseCategory } from '../api';
 import { AccountSheet } from '../components/AccountSheet';
 import { CategorySheet } from '../components/CategorySheet';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';
@@ -14,7 +14,9 @@ import { TransactionTagSelector } from '../components/TransactionTagSelector';
 function AddExpense() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addTransaction, addCategory, addAccount, addTag, categories, accounts, tags, session, syncStatus } = useFireBuddy();
+  const { addTransaction, addCategory, addAccount, addTag, categories, accounts, tags, session, syncStatus, aiPreference } = useFireBuddy();
+  // Autodetect sends the typed description to the AI provider, so it needs the Personalised level.
+  const canAutodetect = aiPreference === 'personalised';
   const [transactionType, setTransactionType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -66,7 +68,7 @@ function AddExpense() {
   async function requestSuggestion() {
     const token = session?.access_token;
     const cleanDescription = description.trim();
-    if (transactionType !== 'expense' || !token || !cleanDescription || isSuggesting) {
+    if (!canAutodetect || transactionType !== 'expense' || !token || !cleanDescription || isSuggesting) {
       return;
     }
 
@@ -80,8 +82,10 @@ function AddExpense() {
       } else {
         setSuggestionMessage('Unable to determine category. Choose one manually.');
       }
-    } catch {
-      setSuggestionMessage('Unable to determine category. Choose one manually.');
+    } catch (error) {
+      setSuggestionMessage(error instanceof ApiRequestError && error.code === 'ai_disabled'
+        ? 'AI suggestions are off. Turn them on in Profile.'
+        : 'Unable to determine category. Choose one manually.');
     } finally {
       setIsSuggesting(false);
     }
@@ -219,7 +223,7 @@ function AddExpense() {
               <div className="field-label-actions">
                 <label htmlFor="transaction-category">Category</label>
                 <span className="compact-field-actions">
-                  {transactionType === 'expense' ? (
+                  {transactionType === 'expense' && canAutodetect ? (
                     <button
                       className="category-suggestion-button"
                       type="button"

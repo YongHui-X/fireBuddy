@@ -8,13 +8,13 @@ import { AppText } from './Text';
 
 export interface ChipProps {
   label: string;
-  tone?: 'neutral' | 'income' | 'expense' | 'warning' | 'info' | 'lime' | 'accent' | 'ai';
+  tone?: 'neutral' | 'income' | 'expense' | 'warning' | 'info' | 'lime' | 'accent' | 'ai' | 'heroNeutral' | 'heroUp' | 'heroDown';
   icon?: LucideIcon;
   round?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-/** Small status badge: semantic tints for income/expense, lime for the hero delta, pill for filter counts. */
+/** Small status badge: semantic tints for income/expense, lime for the hero delta, pill for filter counts, `hero*` tones on forest. */
 export function Chip({ label, tone = 'neutral', icon: Icon, round = false, style }: ChipProps) {
   const { theme } = useTheme();
   const palette = {
@@ -26,6 +26,10 @@ export function Chip({ label, tone = 'neutral', icon: Icon, round = false, style
     lime: { bg: 'rgba(203, 234, 99, 0.16)', ink: theme.railActiveInk },
     accent: { bg: theme.accentSoft, ink: theme.accentText },
     ai: { bg: theme.accentSoft, ink: theme.accentText },
+    // Translucent white badges for the forest hero; the delta reads lime up, coral down, as on the web.
+    heroNeutral: { bg: 'rgba(255, 255, 255, 0.1)', ink: theme.heroInkMuted },
+    heroUp: { bg: 'rgba(255, 255, 255, 0.1)', ink: theme.railActiveInk },
+    heroDown: { bg: 'rgba(255, 255, 255, 0.1)', ink: '#ffb0a3' },
   }[tone];
 
   return (

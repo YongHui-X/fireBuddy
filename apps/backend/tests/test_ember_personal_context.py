@@ -58,9 +58,11 @@ class EmberPersonalContextTests(unittest.TestCase):
 
         self.assertEqual(set(context.facts), {
             "effectiveDate", "snapshotStatus", "netWorth", "liabilityTotal", "monthlyDebtService", "investableAssets",
-            "emergencyRunwayMonths", "averageMonthlyEssentialSpending", "monthlyPulse",
+            "emergencyRunwayMonths", "averageMonthlyEssentialSpending", "derived", "monthlyPulse",
             "fire", "recommendedAction", "anomalyCounts", "warningCodes", "spending",
         })
+        self.assertEqual(context.facts["derived"]["emergencyFundTarget3Months"], "18000.00")
+        self.assertNotIn("title", context.facts["recommendedAction"] or {})
         self.assertEqual(context.facts["netWorth"], "286400.00")
         self.assertEqual(context.facts["liabilityTotal"], "56800.00")
         self.assertEqual(context.facts["monthlyDebtService"], "0.00")

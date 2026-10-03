@@ -13,6 +13,7 @@ if str(BACKEND_DIR) not in sys.path:
 from lib.auth import AuthenticatedUser, get_current_user
 from main import app
 from routers import rag as rag_router
+from schemas.rag import MAX_CLIENT_SNAPSHOT_CHARS
 from services.rate_limiter import RateLimitDecision
 
 
@@ -30,6 +31,28 @@ class RagRouteTests(unittest.TestCase):
     def tearDown(self):
         app.dependency_overrides.clear()
         rag_router.advisor_rate_limiter.reset()
+
+    def test_client_snapshot_over_limit_is_rejected_with_422(self):
+        response = self.client.post("/api/chat/financial-advisor", json={
+            "question": "What is my net worth?", "history": [], "clientMasked": True,
+            "clientSnapshot": {"effectiveDate": "2026-10-03", "facts": {"padding": "x" * MAX_CLIENT_SNAPSHOT_CHARS}},
+        })
+
+        self.assertEqual(response.status_code, 422, response.text)
+
+    def test_client_fields_are_forwarded_to_the_service(self):
+        facts = {"netWorth": "{{M1}} (range: 50k-100k)"}
+        with patch.object(rag_router, "answer_ember_question", return_value={
+            "answer": "Answer", "sources": [], "source_details": [],
+        }) as advisor:
+            response = self.client.post("/api/chat/financial-advisor", json={
+                "question": "Is {{Q1}} enough?", "history": [], "clientMasked": True,
+                "clientSnapshot": {"effectiveDate": "2026-10-03", "facts": facts},
+            })
+
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertIs(advisor.call_args.kwargs["client_masked"], True)
+        self.assertEqual(advisor.call_args.kwargs["client_snapshot"].facts, facts)
 
     def test_requires_authentication(self):
         app.dependency_overrides.clear()

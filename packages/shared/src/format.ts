@@ -101,3 +101,11 @@ export function getGreeting(hour = new Date().getHours()) {
   if (hour < 18) return 'Good afternoon';
   return 'Good evening';
 }
+
+/** "23 Sept" for a YYYY-MM-DD key, used in compact period headers. */
+export function formatShortDate(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString('en-SG', {
+    day: 'numeric',
+    month: 'short',
+  });
+}

@@ -88,7 +88,7 @@ cross join (
 ) as category(name, icon, color, monthly_budget);
 
 create temporary table seed_transaction_templates (
-  month_offset integer not null check (month_offset between 0 and 6),
+  month_offset integer not null check (month_offset between 0 and 11),
   category_name text not null,
   account_name text not null,
   day_of_month integer not null,
@@ -105,87 +105,216 @@ insert into seed_transaction_templates (
   amount
 )
 values
-  -- Current month: balanced spending with every category represented.
+  -- Current month: a typical month with every expense category represented.
   (0, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
-  (0, 'Food & Drink', 'DBS Altitude', 3, 'FairPrice groceries', 420.35),
-  (0, 'Transport', 'GrabPay', 5, 'SimplyGo and Grab rides', 132.80),
-  (0, 'Bills & Utilities', 'DBS Multiplier', 7, 'SP Services and mobile bill', 178.60),
-  (0, 'Entertainment', 'DBS Altitude', 10, 'Streaming subscriptions', 48.90),
-  (0, 'Food & Drink', 'GrabPay', 13, 'Dining and coffee', 185.40),
-  (0, 'Healthcare', 'DBS Altitude', 17, 'Pharmacy purchase', 42.50),
-  (0, 'Shopping', 'DBS Altitude', 21, 'Household purchases', 96.40),
-  (0, 'Insurance', 'DBS Multiplier', 25, 'Insurance premium', 145.00),
-  (0, 'Travel', 'DBS Altitude', 27, 'Weekend travel fund', 75.00),
-  (0, 'Others', 'Cash', 28, 'Miscellaneous household expense', 36.20),
+  (0, 'Food & Drink', 'DBS Altitude', 2, 'FairPrice groceries', 138.65),
+  (0, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 112.40),
+  (0, 'Food & Drink', 'Cash', 4, 'Hawker lunches', 46.80),
+  (0, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (0, 'Transport', 'DBS Multiplier', 6, 'SimplyGo MRT and bus', 58.20),
+  (0, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (0, 'Food & Drink', 'GrabPay', 9, 'GrabFood dinners', 62.30),
+  (0, 'Shopping', 'DBS Altitude', 11, 'Shopee household order', 57.80),
+  (0, 'Transport', 'GrabPay', 12, 'Grab rides', 41.60),
+  (0, 'Healthcare', 'DBS Altitude', 14, 'Polyclinic visit', 24.30),
+  (0, 'Food & Drink', 'DBS Altitude', 16, 'Sheng Siong groceries', 121.10),
+  (0, 'Entertainment', 'DBS Altitude', 19, 'Golden Village movie night', 32.00),
+  (0, 'Food & Drink', 'DBS Altitude', 22, 'Seafood dinner with family', 148.00),
+  (0, 'Shopping', 'DBS Altitude', 24, 'Uniqlo work shirts', 89.70),
+  (0, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
+  (0, 'Travel', 'DBS Altitude', 26, 'Holiday flight deposit', 120.00),
+  (0, 'Others', 'Cash', 27, 'Haircut', 18.00),
 
-  -- Previous month: a travel-heavy month with flights and accommodation.
+  -- 1 month ago: a Japan trip made travel the biggest cost after housing.
   (1, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
-  (1, 'Food & Drink', 'DBS Altitude', 3, 'Groceries and meal prep', 510.00),
-  (1, 'Transport', 'GrabPay', 5, 'Airport rides and SimplyGo', 240.00),
-  (1, 'Bills & Utilities', 'DBS Multiplier', 7, 'SP Services and mobile bill', 215.00),
-  (1, 'Entertainment', 'DBS Altitude', 10, 'Concert tickets', 120.00),
-  (1, 'Food & Drink', 'GrabPay', 13, 'Holiday dining', 295.00),
-  (1, 'Shopping', 'DBS Altitude', 18, 'Travel essentials', 210.00),
-  (1, 'Insurance', 'DBS Multiplier', 20, 'Insurance premium', 145.00),
-  (1, 'Travel', 'DBS Altitude', 22, 'Return flights', 1250.00),
-  (1, 'Travel', 'DBS Altitude', 24, 'Hotel deposit', 280.00),
-  (1, 'Others', 'Cash', 27, 'Foreign currency fees', 85.00),
+  (1, 'Food & Drink', 'DBS Altitude', 2, 'FairPrice groceries', 102.30),
+  (1, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 128.70),
+  (1, 'Transport', 'DBS Multiplier', 4, 'SimplyGo MRT and bus', 44.10),
+  (1, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (1, 'Food & Drink', 'Cash', 6, 'Hawker lunches', 38.50),
+  (1, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (1, 'Travel', 'DBS Altitude', 8, 'Return flights to Tokyo', 1180.00),
+  (1, 'Insurance', 'DBS Altitude', 9, 'Travel insurance', 48.00),
+  (1, 'Others', 'Cash', 10, 'Currency exchange fees', 32.40),
+  (1, 'Transport', 'GrabPay', 12, 'Grab to Changi Airport', 31.50),
+  (1, 'Travel', 'DBS Altitude', 13, 'Tokyo hotel', 520.00),
+  (1, 'Transport', 'DBS Altitude', 13, 'JR Pass and Suica top up', 342.00),
+  (1, 'Food & Drink', 'DBS Altitude', 14, 'Tokyo ramen and izakaya', 215.40),
+  (1, 'Travel', 'DBS Altitude', 15, 'Kyoto ryokan', 640.00),
+  (1, 'Entertainment', 'DBS Altitude', 16, 'teamLab tickets', 68.00),
+  (1, 'Food & Drink', 'DBS Altitude', 17, 'Osaka street food', 96.20),
+  (1, 'Shopping', 'DBS Altitude', 18, 'Don Quijote souvenirs', 184.50),
+  (1, 'Food & Drink', 'DBS Altitude', 24, 'Sheng Siong groceries', 88.90),
+  (1, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
 
-  -- Two months ago: home setup and shopping were the main discretionary costs.
+  -- 2 months ago: a home refresh pushed shopping well over budget.
   (2, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
-  (2, 'Food & Drink', 'DBS Altitude', 4, 'Groceries and dining', 560.00),
-  (2, 'Transport', 'GrabPay', 6, 'SimplyGo top ups', 145.00),
-  (2, 'Bills & Utilities', 'DBS Multiplier', 8, 'SP Services and broadband', 190.00),
-  (2, 'Shopping', 'DBS Altitude', 11, 'Home office chair', 860.00),
-  (2, 'Shopping', 'DBS Altitude', 15, 'Storage and household items', 230.00),
-  (2, 'Healthcare', 'DBS Altitude', 18, 'Dental check-up', 60.00),
-  (2, 'Entertainment', 'DBS Altitude', 21, 'Streaming and cinema', 55.00),
-  (2, 'Insurance', 'DBS Multiplier', 25, 'Insurance premium', 145.00),
-  (2, 'Others', 'Cash', 27, 'Home repair service', 240.00),
+  (2, 'Food & Drink', 'DBS Altitude', 3, 'FairPrice groceries', 152.40),
+  (2, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 141.20),
+  (2, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (2, 'Transport', 'DBS Multiplier', 5, 'SimplyGo MRT and bus', 61.40),
+  (2, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (2, 'Food & Drink', 'Cash', 8, 'Hawker lunches', 52.60),
+  (2, 'Shopping', 'DBS Altitude', 9, 'IKEA sofa', 899.00),
+  (2, 'Bills & Utilities', 'DBS Multiplier', 10, 'Town council conservancy charges', 82.00),
+  (2, 'Others', 'Cash', 10, 'Movers and handyman', 180.00),
+  (2, 'Shopping', 'DBS Altitude', 12, 'Courts air purifier', 329.00),
+  (2, 'Transport', 'GrabPay', 15, 'Grab rides', 28.90),
+  (2, 'Food & Drink', 'DBS Altitude', 17, 'Sheng Siong groceries', 134.80),
+  (2, 'Healthcare', 'DBS Altitude', 18, 'Dental scaling and polish', 85.00),
+  (2, 'Food & Drink', 'DBS Altitude', 20, 'Brunch with friends', 76.50),
+  (2, 'Shopping', 'DBS Altitude', 21, 'Taobao home decor', 146.30),
+  (2, 'Entertainment', 'DBS Altitude', 23, 'Board game cafe', 36.00),
+  (2, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
 
-  -- Three months ago: healthcare was unusually high.
+  -- 3 months ago: a knee injury made healthcare the standout category.
   (3, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
-  (3, 'Food & Drink', 'DBS Altitude', 4, 'Groceries and dining', 530.00),
-  (3, 'Transport', 'GrabPay', 6, 'SimplyGo and clinic rides', 160.00),
-  (3, 'Bills & Utilities', 'DBS Multiplier', 8, 'SP Services and mobile bill', 185.00),
-  (3, 'Healthcare', 'DBS Altitude', 12, 'Specialist consultation', 680.00),
-  (3, 'Healthcare', 'DBS Altitude', 18, 'Medication and follow-up', 125.00),
-  (3, 'Insurance', 'DBS Multiplier', 20, 'Insurance premium', 145.00),
-  (3, 'Entertainment', 'DBS Altitude', 23, 'Streaming subscriptions', 35.00),
-  (3, 'Others', 'Cash', 27, 'Family support', 70.00),
+  (3, 'Food & Drink', 'DBS Altitude', 2, 'FairPrice groceries', 118.20),
+  (3, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 156.80),
+  (3, 'Transport', 'DBS Multiplier', 4, 'SimplyGo MRT and bus', 39.80),
+  (3, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (3, 'Food & Drink', 'Cash', 6, 'Hawker lunches', 44.70),
+  (3, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (3, 'Healthcare', 'DBS Altitude', 10, 'Orthopaedic specialist consultation', 280.00),
+  (3, 'Transport', 'GrabPay', 11, 'Grab rides to hospital', 64.20),
+  (3, 'Healthcare', 'DBS Altitude', 12, 'MRI scan co-payment', 460.00),
+  (3, 'Healthcare', 'DBS Altitude', 14, 'Guardian pharmacy', 38.60),
+  (3, 'Food & Drink', 'DBS Altitude', 16, 'Sheng Siong groceries', 96.40),
+  (3, 'Food & Drink', 'GrabPay', 19, 'GrabFood while recovering', 112.60),
+  (3, 'Healthcare', 'DBS Altitude', 22, 'Physiotherapy sessions', 240.00),
+  (3, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
+  (3, 'Others', 'Cash', 26, 'Gift for mum', 45.00),
 
-  -- Four months ago: a deliberately quiet, low-spend month.
+  -- 4 months ago: a no-spend challenge kept discretionary costs near zero.
   (4, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
-  (4, 'Food & Drink', 'DBS Altitude', 4, 'Groceries and meal prep', 430.00),
-  (4, 'Transport', 'GrabPay', 7, 'SimplyGo top ups', 105.00),
-  (4, 'Bills & Utilities', 'DBS Multiplier', 9, 'SP Services and mobile bill', 168.00),
-  (4, 'Insurance', 'DBS Multiplier', 16, 'Insurance premium', 145.00),
-  (4, 'Healthcare', 'DBS Altitude', 19, 'Pharmacy purchase', 30.00),
-  (4, 'Others', 'Cash', 27, 'Small cash purchases', 25.00),
+  (4, 'Food & Drink', 'DBS Altitude', 3, 'FairPrice groceries', 96.50),
+  (4, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 118.90),
+  (4, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (4, 'Transport', 'DBS Multiplier', 5, 'SimplyGo MRT and bus', 46.30),
+  (4, 'Food & Drink', 'Cash', 7, 'Hawker lunches', 38.40),
+  (4, 'Healthcare', 'DBS Altitude', 13, 'Follow-up physiotherapy', 60.00),
+  (4, 'Food & Drink', 'DBS Altitude', 15, 'Sheng Siong groceries', 88.70),
+  (4, 'Others', 'Cash', 20, 'Printing and stationery', 6.50),
+  (4, 'Food & Drink', 'DBS Altitude', 23, 'Meal prep supplies', 54.20),
+  (4, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
 
-  -- Five months ago: dining, social events, and entertainment were elevated.
+  -- 5 months ago: birthdays, a concert and nights out lifted food and entertainment.
   (5, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
-  (5, 'Food & Drink', 'DBS Altitude', 3, 'Groceries', 680.00),
-  (5, 'Transport', 'GrabPay', 6, 'SimplyGo and late-night rides', 210.00),
-  (5, 'Bills & Utilities', 'DBS Multiplier', 8, 'SP Services and mobile bill', 175.00),
-  (5, 'Food & Drink', 'DBS Altitude', 11, 'Birthday dinners', 390.00),
-  (5, 'Entertainment', 'DBS Altitude', 14, 'Festival passes', 320.00),
-  (5, 'Entertainment', 'DBS Altitude', 18, 'Cinema and games', 110.00),
-  (5, 'Shopping', 'DBS Altitude', 21, 'Gifts and clothing', 180.00),
-  (5, 'Insurance', 'DBS Multiplier', 24, 'Insurance premium', 145.00),
-  (5, 'Travel', 'DBS Altitude', 26, 'Weekend staycation', 190.00),
+  (5, 'Food & Drink', 'DBS Altitude', 2, 'FairPrice groceries', 124.30),
+  (5, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 132.40),
+  (5, 'Transport', 'DBS Multiplier', 4, 'SimplyGo MRT and bus', 52.80),
+  (5, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (5, 'Entertainment', 'DBS Altitude', 6, 'Concert ticket', 248.00),
+  (5, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (5, 'Shopping', 'DBS Altitude', 8, 'Birthday gifts', 168.00),
+  (5, 'Food & Drink', 'DBS Altitude', 9, 'Birthday dinner', 286.00),
+  (5, 'Food & Drink', 'GrabPay', 13, 'Hotpot with colleagues', 92.40),
+  (5, 'Shopping', 'DBS Altitude', 14, 'Zara outfit', 119.90),
+  (5, 'Food & Drink', 'DBS Altitude', 16, 'Drinks at Clarke Quay', 118.00),
+  (5, 'Transport', 'GrabPay', 16, 'Late-night Grab rides', 87.30),
+  (5, 'Entertainment', 'DBS Altitude', 20, 'Karaoke night', 54.00),
+  (5, 'Food & Drink', 'DBS Altitude', 21, 'Sheng Siong groceries', 109.60),
+  (5, 'Travel', 'DBS Altitude', 23, 'Sentosa staycation', 320.00),
+  (5, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
 
-  -- Six months ago: transport and a regional trip drove the total.
+  -- 6 months ago: a Bali getaway, with no entertainment spending at home.
   (6, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
-  (6, 'Food & Drink', 'DBS Altitude', 4, 'Groceries and dining', 480.00),
-  (6, 'Transport', 'GrabPay', 6, 'Monthly transport pass', 310.00),
-  (6, 'Transport', 'GrabPay', 9, 'Ride-hailing trips', 95.00),
-  (6, 'Bills & Utilities', 'DBS Multiplier', 11, 'SP Services and mobile bill', 205.00),
-  (6, 'Travel', 'DBS Altitude', 15, 'Regional getaway', 780.00),
-  (6, 'Shopping', 'DBS Altitude', 19, 'Trip essentials', 120.00),
-  (6, 'Insurance', 'DBS Multiplier', 22, 'Insurance premium', 145.00),
-  (6, 'Healthcare', 'DBS Altitude', 25, 'Clinic visit', 55.00),
-  (6, 'Others', 'Cash', 27, 'Travel incidentals', 60.00);
+  (6, 'Food & Drink', 'DBS Altitude', 2, 'FairPrice groceries', 112.40),
+  (6, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 124.60),
+  (6, 'Transport', 'DBS Multiplier', 4, 'SimplyGo MRT and bus', 48.60),
+  (6, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (6, 'Food & Drink', 'Cash', 6, 'Hawker lunches', 41.20),
+  (6, 'Travel', 'DBS Altitude', 10, 'Return flights to Bali', 410.00),
+  (6, 'Healthcare', 'DBS Altitude', 12, 'Travel vaccinations', 95.00),
+  (6, 'Shopping', 'DBS Altitude', 14, 'Swimwear and sunscreen', 74.50),
+  (6, 'Insurance', 'DBS Altitude', 15, 'Travel insurance', 36.00),
+  (6, 'Transport', 'GrabPay', 17, 'Grab to Changi Airport', 29.80),
+  (6, 'Travel', 'DBS Altitude', 18, 'Ubud villa', 560.00),
+  (6, 'Others', 'Cash', 18, 'Visa on arrival fee', 49.00),
+  (6, 'Food & Drink', 'DBS Altitude', 19, 'Bali beach club dining', 138.70),
+  (6, 'Transport', 'Cash', 20, 'Bali driver hire', 85.00),
+  (6, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
+  (6, 'Food & Drink', 'DBS Altitude', 25, 'Sheng Siong groceries', 98.30),
+
+  -- 7 months ago: a laptop upgrade made shopping the main discretionary cost.
+  (7, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
+  (7, 'Food & Drink', 'DBS Altitude', 3, 'FairPrice groceries', 131.70),
+  (7, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 119.30),
+  (7, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (7, 'Transport', 'DBS Multiplier', 5, 'SimplyGo MRT and bus', 55.10),
+  (7, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (7, 'Food & Drink', 'Cash', 8, 'Hawker lunches', 48.90),
+  (7, 'Shopping', 'DBS Altitude', 11, 'MacBook Air', 1599.00),
+  (7, 'Shopping', 'DBS Altitude', 12, 'Laptop sleeve and adapter', 89.00),
+  (7, 'Transport', 'GrabPay', 13, 'Grab rides', 36.40),
+  (7, 'Food & Drink', 'DBS Altitude', 17, 'Sheng Siong groceries', 117.20),
+  (7, 'Entertainment', 'DBS Altitude', 19, 'Nintendo Switch game', 69.90),
+  (7, 'Food & Drink', 'DBS Altitude', 22, 'Omakase dinner', 168.00),
+  (7, 'Others', 'Cash', 24, 'Phone screen repair', 129.00),
+  (7, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
+
+  -- 8 months ago: a family celebration drove food, gifts and red packets.
+  (8, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
+  (8, 'Food & Drink', 'DBS Altitude', 2, 'FairPrice groceries', 146.20),
+  (8, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 127.80),
+  (8, 'Transport', 'DBS Multiplier', 4, 'SimplyGo MRT and bus', 49.70),
+  (8, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (8, 'Shopping', 'DBS Altitude', 8, 'New clothes for the celebration', 156.00),
+  (8, 'Food & Drink', 'DBS Altitude', 10, 'Festive goodies', 96.50),
+  (8, 'Others', 'Cash', 13, 'Red packets for family', 680.00),
+  (8, 'Food & Drink', 'DBS Altitude', 14, 'Family reunion dinner', 388.00),
+  (8, 'Transport', 'GrabPay', 15, 'Grab rides visiting relatives', 72.40),
+  (8, 'Food & Drink', 'Cash', 20, 'Hawker lunches', 43.60),
+  (8, 'Healthcare', 'DBS Altitude', 22, 'GP visit for flu', 42.00),
+  (8, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
+
+  -- 9 months ago: a Melaka weekend and an annual health screening.
+  (9, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
+  (9, 'Food & Drink', 'DBS Altitude', 3, 'FairPrice groceries', 119.80),
+  (9, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 121.50),
+  (9, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (9, 'Transport', 'DBS Multiplier', 5, 'SimplyGo MRT and bus', 47.20),
+  (9, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (9, 'Food & Drink', 'Cash', 7, 'Hawker lunches', 39.90),
+  (9, 'Entertainment', 'DBS Altitude', 12, 'Bouldering gym pass', 38.00),
+  (9, 'Transport', 'DBS Altitude', 17, 'Coach to Melaka', 64.00),
+  (9, 'Travel', 'DBS Altitude', 17, 'Melaka hotel', 186.00),
+  (9, 'Food & Drink', 'DBS Altitude', 18, 'Melaka food trail', 84.60),
+  (9, 'Healthcare', 'DBS Altitude', 21, 'Annual health screening', 158.00),
+  (9, 'Food & Drink', 'DBS Altitude', 24, 'Sheng Siong groceries', 102.40),
+  (9, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
+
+  -- 10 months ago: online sales and a Taipei trip.
+  (10, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
+  (10, 'Food & Drink', 'DBS Altitude', 2, 'FairPrice groceries', 128.90),
+  (10, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 116.20),
+  (10, 'Transport', 'DBS Multiplier', 4, 'SimplyGo MRT and bus', 51.30),
+  (10, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (10, 'Food & Drink', 'Cash', 6, 'Hawker lunches', 46.10),
+  (10, 'Travel', 'DBS Altitude', 9, 'Return flights to Taipei', 368.00),
+  (10, 'Shopping', 'DBS Altitude', 11, 'Dyson cordless vacuum', 649.00),
+  (10, 'Shopping', 'DBS Altitude', 12, 'Lazada sale haul', 213.40),
+  (10, 'Others', 'DBS Multiplier', 15, 'Charity donation', 100.00),
+  (10, 'Transport', 'GrabPay', 19, 'Grab rides', 33.70),
+  (10, 'Travel', 'DBS Altitude', 20, 'Taipei hotel', 412.00),
+  (10, 'Food & Drink', 'DBS Altitude', 21, 'Taipei night market', 72.80),
+  (10, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00),
+  (10, 'Food & Drink', 'DBS Altitude', 27, 'Sheng Siong groceries', 94.70),
+
+  -- 11 months ago: a simple month with running gear and a comedy show.
+  (11, 'Housing', 'DBS Multiplier', 1, 'HDB mortgage contribution', 1650.00),
+  (11, 'Food & Drink', 'DBS Altitude', 3, 'FairPrice groceries', 117.40),
+  (11, 'Bills & Utilities', 'DBS Multiplier', 3, 'SP Services electricity and water', 109.80),
+  (11, 'Bills & Utilities', 'DBS Multiplier', 5, 'Singtel mobile and fibre', 74.90),
+  (11, 'Transport', 'DBS Multiplier', 5, 'SimplyGo MRT and bus', 62.40),
+  (11, 'Entertainment', 'DBS Altitude', 7, 'Netflix and Spotify', 29.96),
+  (11, 'Food & Drink', 'Cash', 9, 'Hawker lunches', 51.30),
+  (11, 'Transport', 'GrabPay', 14, 'Grab rides', 24.60),
+  (11, 'Shopping', 'DBS Altitude', 16, 'Running shoes', 139.00),
+  (11, 'Food & Drink', 'DBS Altitude', 18, 'Sheng Siong groceries', 106.80),
+  (11, 'Entertainment', 'DBS Altitude', 21, 'Comedy show', 58.00),
+  (11, 'Food & Drink', 'DBS Altitude', 24, 'Team lunch', 42.00),
+  (11, 'Insurance', 'DBS Multiplier', 25, 'Integrated Shield premium', 145.00);
 
 do $$
 begin
@@ -229,7 +358,7 @@ with seed_months as (
     (date_trunc('month', context.as_of)::date - make_interval(months => month_offset))::date as month_start,
     context.as_of
   from seed_context context
-  cross join generate_series(0, 6) as month_offset
+  cross join generate_series(0, 11) as month_offset
 )
 insert into public.expenses (
   user_id,
@@ -246,7 +375,13 @@ select
   account.id,
   template.description,
   template.amount,
-  least((months.month_start + (template.day_of_month - 1))::date, months.as_of),
+  -- Past months keep their day of month. Current-month rows are spread across the days
+  -- elapsed so far, so the month is fully populated without any future-dated rows.
+  case
+    when template.month_offset = 0 then
+      months.month_start + ((template.day_of_month - 1) * (extract(day from months.as_of)::integer - 1) / 30)
+    else months.month_start + (template.day_of_month - 1)
+  end,
   'expense'
 from seed_context context
 cross join seed_transaction_templates template
@@ -268,7 +403,7 @@ with seed_months as (
     (date_trunc('month', context.as_of)::date - make_interval(months => month_offset))::date as month_start,
     context.as_of
   from seed_context context
-  cross join generate_series(0, 6) as month_offset
+  cross join generate_series(0, 11) as month_offset
 )
 insert into public.expenses (
   user_id,
@@ -318,7 +453,14 @@ from seed_context context
 cross join (
   values
     ('Bonus', 'Performance bonus', 1850.00::numeric, 3, 14),
-    ('Dividends', 'Quarterly ETF distribution', 286.40::numeric, 1, 24)
+    ('Bonus', 'Annual wage supplement', 6200.00::numeric, 8, 24),
+    ('Dividends', 'Quarterly ETF distribution', 286.40::numeric, 1, 24),
+    ('Dividends', 'Quarterly ETF distribution', 241.80::numeric, 4, 24),
+    ('Dividends', 'Quarterly ETF distribution', 263.10::numeric, 7, 24),
+    ('Dividends', 'Quarterly ETF distribution', 228.50::numeric, 10, 24),
+    ('Interest', 'DBS Multiplier interest', 38.20::numeric, 2, 27),
+    ('Interest', 'DBS Multiplier interest', 41.75::numeric, 5, 27),
+    ('Other income', 'Carousell sale of old monitor', 120.00::numeric, 6, 12)
 ) as occasional(category_name, description, amount, month_offset, day_offset)
 join public.categories category
   on category.name = occasional.category_name
@@ -423,7 +565,7 @@ select
   user_id,
   2500.00,
   0.070000,
-  0.025000,
+  0.030000,
   0.040000,
   4000.00,
   (as_of + interval '16 years')::date,
@@ -457,7 +599,7 @@ begin
   if (select count(*) from public.categories where user_id = target_user_id and is_default = false) <> 2 then
     raise exception 'Jen seed must create two custom categories';
   end if;
-  if transaction_count <> 77 then
+  if transaction_count <> 208 then
     raise exception 'Jen seed transaction count % does not match the expected rolling dataset', transaction_count;
   end if;
   if (select count(*) from public.wealth_positions where user_id = target_user_id) <> 5 then
@@ -522,7 +664,7 @@ begin
         and transaction_type = 'expense'
       group by date_trunc('month', date)
     ) monthly_totals
-  ) <> 7 then
+  ) <> 12 then
     raise exception 'Jen seed needs a distinct expense total in every seeded month';
   end if;
   if (
@@ -537,7 +679,7 @@ begin
         and stored_expense.transaction_type = 'expense'
       group by date_trunc('month', stored_expense.date)
     ) monthly_categories
-  ) <> 7 then
+  ) <> 12 then
     raise exception 'Jen seed needs a distinct category mix in every seeded month';
   end if;
   if exists (

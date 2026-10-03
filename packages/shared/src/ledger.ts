@@ -95,18 +95,17 @@ export interface SpendingBreakdownRow {
   share: number;
 }
 
-/** Expenses per category for a month, largest first. Uncategorised spend lands in a synthetic row. */
-export function getSpendingBreakdown(
+/** Expenses per category across the given rows, largest first. Uncategorised spend lands in a synthetic row. */
+export function summariseSpendingByCategory(
   items: readonly Transaction[],
   categories: readonly Category[],
-  monthKey: string,
   fallbackColor = '#7A869A',
 ): SpendingBreakdownRow[] {
   const totals = new Map<string, number>();
   let total = 0;
 
   for (const transaction of items) {
-    if (transaction.transactionType !== 'expense' || !isInMonth(transaction, monthKey)) continue;
+    if (transaction.transactionType !== 'expense') continue;
     const key = transaction.categoryId ?? '';
     const magnitude = transactionMagnitude(transaction);
     totals.set(key, (totals.get(key) ?? 0) + magnitude);
@@ -125,6 +124,16 @@ export function getSpendingBreakdown(
       };
     })
     .sort((left, right) => right.amount - left.amount);
+}
+
+/** Expenses per category for one YYYY-MM month, largest first. */
+export function getSpendingBreakdown(
+  items: readonly Transaction[],
+  categories: readonly Category[],
+  monthKey: string,
+  fallbackColor = '#7A869A',
+): SpendingBreakdownRow[] {
+  return summariseSpendingByCategory(items.filter((transaction) => isInMonth(transaction, monthKey)), categories, fallbackColor);
 }
 
 export interface LedgerFilters {

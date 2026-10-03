@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   getAccounts: vi.fn(),
   getTransactions: vi.fn(),
   getTags: vi.fn(),
+  getProfile: vi.fn(),
+  updateAiPreference: vi.fn(),
   getSession: vi.fn(),
   resetPasswordForEmail: vi.fn(),
   signInWithPassword: vi.fn(),
@@ -34,6 +36,8 @@ vi.mock('../api', () => ({
   getCategories: mocks.getCategories,
   getTransactions: mocks.getTransactions,
   getTags: mocks.getTags,
+  getProfile: mocks.getProfile,
+  updateAiPreference: mocks.updateAiPreference,
   createTag: vi.fn(),
   updateTag: vi.fn(),
   deleteTag: vi.fn(),
@@ -91,6 +95,11 @@ function AuthActions() {
   );
 }
 
+function AiPreferenceState() {
+  const { aiPreference, aiPreferenceStatus, profile } = useFireBuddy();
+  return <div><span data-testid="ai-preference">{aiPreference}</span><span data-testid="ai-status">{aiPreferenceStatus}</span><span data-testid="profile-email">{profile?.email ?? 'no profile'}</span></div>;
+}
+
 describe('authenticated FireBuddy synchronisation', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -111,6 +120,8 @@ describe('authenticated FireBuddy synchronisation', () => {
       error: null,
     });
     mocks.getTags.mockResolvedValue([]);
+    mocks.getProfile.mockReset().mockResolvedValue({ id: 'user-id', email: 'sam@example.com', aiPreference: 'personalised', aiConsentedAt: '2026-10-03T00:00:00Z' });
+    mocks.updateAiPreference.mockReset();
     mocks.authStateChangeHandler = null;
     mocks.getCategories.mockResolvedValue([
       {
@@ -156,6 +167,24 @@ describe('authenticated FireBuddy synchronisation', () => {
     mocks.signInWithPassword.mockReset().mockResolvedValue({ error: null });
     mocks.signOut.mockReset().mockResolvedValue({ error: null });
     mocks.updateUser.mockReset().mockResolvedValue({ error: null });
+  });
+
+  it('loads the AI preference from the profile after sign in', async () => {
+    render(<AppProvider><AiPreferenceState /></AppProvider>);
+
+    await waitFor(() => expect(screen.getByTestId('ai-status').textContent).toBe('ready'));
+    expect(screen.getByTestId('ai-preference').textContent).toBe('personalised');
+    expect(screen.getByTestId('profile-email').textContent).toBe('sam@example.com');
+    expect(mocks.getProfile).toHaveBeenCalledWith('access-token');
+  });
+
+  it('defaults the AI preference to off when the profile request fails', async () => {
+    mocks.getProfile.mockRejectedValueOnce(new Error('Profile unavailable'));
+    render(<AppProvider><AiPreferenceState /></AppProvider>);
+
+    await waitFor(() => expect(screen.getByTestId('ai-status').textContent).toBe('error'));
+    expect(screen.getByTestId('ai-preference').textContent).toBe('off');
+    expect(screen.getByTestId('profile-email').textContent).toBe('no profile');
   });
 
   afterEach(() => {

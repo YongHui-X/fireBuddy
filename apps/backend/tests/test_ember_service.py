@@ -12,10 +12,201 @@ if str(BACKEND_DIR) not in sys.path:
 
 from services import ember_service
 from services.ember_data_tools import EmberDataResult
+from services.ember_masking import UserNames
 from services.ember_planner import EmberPlan
+from schemas.rag import AdvisorClientSnapshot, ChatMessage
 
 
 class EmberServiceTests(unittest.TestCase):
+    def setUp(self):
+        # A consenting account with no stored names, so the existing paths run unchanged.
+        patches = [
+            patch.object(ember_service, "load_ai_preference", return_value="personalised"),
+            patch.object(ember_service, "load_user_names", return_value=UserNames()),
+        ]
+        for item in patches:
+            item.start()
+            self.addCleanup(item.stop)
+
+    def _client_snapshot(self) -> AdvisorClientSnapshot:
+        return AdvisorClientSnapshot(effectiveDate="2026-10-03", facts={"netWorth": "{{M1}} (range: 50k-100k)"})
+
+    def test_client_masked_request_skips_server_scrubbing_and_unmasking(self):
+        question = "Is {{Q1}} enough from {{P1}}?"
+        snapshot = self._client_snapshot()
+        with patch.object(ember_service, "load_user_names", return_value=UserNames(accounts=("DBS Savings",))) as names, patch.object(
+            ember_service, "plan_ember_question", return_value=self._knowledge_plan(False),
+        ) as planner, patch.object(ember_service, "answer_financial_advisor_question") as answer:
+            ember_service.answer_ember_question("user-a", question, client_masked=True, client_snapshot=snapshot)
+
+        names.assert_not_called()
+        self.assertEqual(planner.call_args.args[0], question)
+        self.assertEqual(answer.call_args.args[0], question)
+        self.assertIsNone(answer.call_args.kwargs["masking"])
+        context = answer.call_args.kwargs["personal_context"]
+        self.assertEqual(context.facts, snapshot.facts)
+        self.assertIn("{{M1}}", context.context())
+        self.assertNotIn("[figure unavailable]", context.context())
+
+    def test_client_masked_data_plan_becomes_knowledge_with_the_snapshot(self):
+        snapshot = self._client_snapshot()
+        planned = EmberPlan(
+            mode="data", tool="expense_summary", start_date=date(2026, 10, 1), end_date=date(2026, 10, 31),
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=False, clarification_question=None,
+        )
+        with patch.object(ember_service, "plan_ember_question", return_value=planned), patch.object(
+            ember_service, "run_ember_data_tool",
+        ) as tool, patch.object(ember_service, "answer_financial_advisor_question") as answer:
+            ember_service.answer_ember_question("user-a", "How much did I spend?", client_masked=True, client_snapshot=snapshot)
+
+        tool.assert_not_called()
+        answer.assert_called_once()
+        self.assertEqual(answer.call_args.kwargs["personal_context"].facts, snapshot.facts)
+
+    def test_client_masked_figure_lookup_still_runs(self):
+        planned = EmberPlan(
+            mode="data", tool="figure_lookup", start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=False, clarification_question=None,
+            figure_key="cpf_full_retirement_sum", figure_year=2026,
+        )
+        with patch.object(ember_service, "plan_ember_question", return_value=planned):
+            response = ember_service.answer_ember_question(
+                "user-a", "What is the FRS for 2026?", client_masked=True, client_snapshot=self._client_snapshot(),
+            )
+
+        self.assertEqual(response.mode, "data")
+        self.assertIn("S$220,400", response.answer)
+
+    def test_client_snapshot_is_ignored_at_guide_level(self):
+        with patch.object(ember_service, "load_ai_preference", return_value="guide"), patch.object(
+            ember_service, "plan_ember_question", return_value=self._knowledge_plan(False),
+        ), patch.object(ember_service, "answer_financial_advisor_question") as answer:
+            ember_service.answer_ember_question(
+                "user-a", "What is CPF?", client_masked=True, client_snapshot=self._client_snapshot(),
+            )
+
+        self.assertIsNone(answer.call_args.kwargs["personal_context"])
+
+    def test_stream_client_masked_passes_snapshot_and_no_masking(self):
+        snapshot = self._client_snapshot()
+        with patch.object(ember_service, "plan_ember_question", return_value=self._knowledge_plan(False)), patch.object(
+            ember_service, "stream_financial_advisor_question", return_value=iter([{"event": "done", "data": {}}]),
+        ) as stream:
+            events = list(ember_service.stream_ember_question(
+                "user-a", "Is {{Q1}} enough?", client_masked=True, client_snapshot=snapshot,
+            ))
+
+        self.assertEqual(events[-1]["event"], "done")
+        self.assertIsNone(stream.call_args.kwargs["masking"])
+        self.assertEqual(stream.call_args.kwargs["personal_context"].facts, snapshot.facts)
+
+    def test_off_preference_returns_fixed_answer_without_planner_or_openai(self):
+        with patch.object(ember_service, "load_ai_preference", return_value="off"), patch.object(
+            ember_service, "plan_ember_question",
+        ) as planner, patch.object(ember_service, "answer_financial_advisor_question") as answer:
+            response = ember_service.answer_ember_question("user-a", "How much did I spend?")
+
+        planner.assert_not_called()
+        answer.assert_not_called()
+        self.assertEqual(response.mode, "unsupported")
+        self.assertIn("switched off", response.answer)
+
+    def test_off_preference_stream_ends_with_done_and_no_evidence(self):
+        with patch.object(ember_service, "load_ai_preference", return_value="off"), patch.object(
+            ember_service, "plan_ember_question",
+        ) as planner:
+            events = list(ember_service.stream_ember_question("user-a", "How much did I spend?"))
+
+        planner.assert_not_called()
+        self.assertEqual(events[-1]["event"], "done")
+        self.assertFalse(any(event["event"] == "evidence" for event in events))
+
+    def test_guide_preference_never_personalises_knowledge_plans(self):
+        with patch.object(ember_service, "load_ai_preference", return_value="guide"), patch.object(
+            ember_service, "plan_ember_question", return_value=self._knowledge_plan(False),
+        ), patch.object(ember_service, "build_personal_context") as build, patch.object(
+            ember_service, "answer_financial_advisor_question",
+        ) as answer:
+            ember_service.answer_ember_question("user-a", "What is CPF?")
+
+        build.assert_not_called()
+        self.assertIsNone(answer.call_args.kwargs["personal_context"])
+
+    def test_guide_preference_refuses_data_tools_without_running_them(self):
+        planned = EmberPlan(
+            mode="data", tool="expense_summary", start_date=date(2026, 8, 1), end_date=date(2026, 8, 31),
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=False, clarification_question=None,
+        )
+        with patch.object(ember_service, "load_ai_preference", return_value="guide"), patch.object(
+            ember_service, "plan_ember_question", return_value=planned,
+        ), patch.object(ember_service, "run_ember_data_tool") as tool:
+            response = ember_service.answer_ember_question("user-a", "How much did I spend in August?")
+
+        tool.assert_not_called()
+        self.assertEqual(response.mode, "unsupported")
+        self.assertIn("Guide", response.answer)
+
+    def test_guide_preference_still_allows_figure_lookup(self):
+        planned = EmberPlan(
+            mode="data", tool="figure_lookup", start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=False, clarification_question=None,
+            figure_key="cpf_full_retirement_sum", figure_year=2026,
+        )
+        with patch.object(ember_service, "load_ai_preference", return_value="guide"), patch.object(
+            ember_service, "plan_ember_question", return_value=planned,
+        ):
+            response = ember_service.answer_ember_question("user-a", "What is the FRS for 2026?")
+
+        self.assertEqual(response.mode, "data")
+        self.assertIn("S$220,400", response.answer)
+
+    def test_explicit_preference_kwarg_bypasses_lookup(self):
+        with patch.object(ember_service, "load_ai_preference", side_effect=RuntimeError("lookup called")) as lookup:
+            response = ember_service.answer_ember_question("user-a", "What did I spend?", preference="off")
+
+        lookup.assert_not_called()
+        self.assertEqual(response.mode, "unsupported")
+        self.assertIn("switched off", response.answer)
+
+    def test_planner_and_model_receive_scrubbed_question_and_history(self):
+        question = "Can I afford S$2,000 a month from DBS Savings?"
+        history = [ChatMessage(role="user", content="I have S$5,000 in DBS Savings")]
+        with patch.object(ember_service, "load_user_names", return_value=UserNames(accounts=("DBS Savings",))), patch.object(
+            ember_service, "plan_ember_question", return_value=self._knowledge_plan(False),
+        ) as planner, patch.object(ember_service, "build_personal_context", return_value=SimpleNamespace(facts={})), patch.object(
+            ember_service, "answer_financial_advisor_question",
+        ) as answer:
+            ember_service.answer_ember_question("user-a", question, history)
+
+        planner_question, planner_history = planner.call_args.args
+        model_question, model_history = answer.call_args.args[:2]
+        for text in (planner_question, model_question):
+            self.assertIn("{{Q1}}", text)
+            self.assertIn("{{P1}}", text)
+            self.assertNotIn("2,000", text)
+            self.assertNotIn("DBS Savings", text)
+        for messages in (planner_history, model_history):
+            self.assertIn("{{Q2}}", messages[0].content)
+            self.assertIn("{{P1}}", messages[0].content)
+            self.assertNotIn("5,000", messages[0].content)
+            self.assertNotIn("DBS Savings", messages[0].content)
+
+    def test_clarification_question_is_unmasked(self):
+        planned = EmberPlan(
+            mode="clarification", tool=None, start_date=None, end_date=None,
+            comparison_start_date=None, comparison_end_date=None, category_name=None,
+            requires_explanation=False, clarification_question="Compare {{Q1}} with which month?",
+        )
+        with patch.object(ember_service, "plan_ember_question", return_value=planned):
+            response = ember_service.answer_ember_question("user-a", "Compare S$200 with last month")
+
+        self.assertEqual(response.mode, "clarification")
+        self.assertIn("S$200", response.answer)
+
     def test_data_question_executes_one_tool_with_server_user_id(self):
         planned = EmberPlan(
             mode="data", tool="expense_summary", start_date=date(2026, 8, 1), end_date=date(2026, 8, 31),
@@ -126,18 +317,6 @@ class EmberServiceTests(unittest.TestCase):
             ember_service.answer_ember_question("user-a", "What are the CPF contribution rates for 2026?")
 
         build.assert_called_once_with("user-a")
-
-    def test_auto_mode_uses_the_keyword_fallback_only(self):
-        with patch.object(ember_service, "PERSONALISE_MODE", "auto"), patch.object(
-            ember_service, "plan_ember_question", return_value=self._knowledge_plan(False),
-        ), patch.object(
-            ember_service, "build_personal_context", return_value=SimpleNamespace(facts={}),
-        ) as build, patch.object(ember_service, "answer_financial_advisor_question"):
-            ember_service.answer_ember_question("user-a", "Is my emergency fund large enough?")
-            build.assert_called_once()
-            build.reset_mock()
-            ember_service.answer_ember_question("user-a", "What are the CPF contribution rates for 2026?")
-            build.assert_not_called()
 
     def test_hybrid_plan_explains_when_curated_context_was_retrieved(self):
         planned = EmberPlan(

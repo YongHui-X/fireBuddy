@@ -7,8 +7,10 @@ import {
 import type { Session } from '@supabase/supabase-js';
 import {
   type Account as ApiAccount,
+  type AiPreference,
   type Category as ApiCategory,
   type Transaction as ApiTransaction,
+  type UserProfile,
 } from '@firebuddy/shared';
 
 import {
@@ -20,8 +22,10 @@ import {
   deleteTransaction as deleteApiTransaction,
   getCategories,
   getAccounts,
+  getProfile,
   getTransactions,
   getTags,
+  updateAiPreference as updateApiAiPreference,
   createTag,
   updateTag as updateApiTag,
   deleteTag as deleteApiTag,
@@ -152,6 +156,22 @@ function mapApiAccount(account: ApiAccount): Account {
 }
 
 const THEME_STORAGE_KEY = 'firebuddy_theme_v1';
+// Demo mode has no profile row, so the AI level lives in the browser there.
+const AI_PREFERENCE_STORAGE_KEY = 'firebuddy_ai_preference_v1';
+const AI_PREFERENCES: readonly AiPreference[] = ['off', 'guide', 'personalised'];
+
+function isAiPreference(value: unknown): value is AiPreference {
+  return typeof value === 'string' && (AI_PREFERENCES as readonly string[]).includes(value);
+}
+
+function loadDemoAiPreference(): AiPreference {
+  try {
+    const stored = window.localStorage.getItem(AI_PREFERENCE_STORAGE_KEY);
+    return isAiPreference(stored) ? stored : 'off';
+  } catch {
+    return 'off';
+  }
+}
 const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true';
 const missingSupabaseConfigMessage =
   'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY. Add them to apps/web/.env.local, or set VITE_SKIP_AUTH=true for local demo mode.';
@@ -271,6 +291,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
   const [notification, setNotification] = useState<AppNotification | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [aiPreference, setAiPreferenceState] = useState<AiPreference>(() => (skipAuth ? loadDemoAiPreference() : 'off'));
+  const [aiPreferenceStatus, setAiPreferenceStatus] = useState<'loading' | 'ready' | 'error'>(skipAuth ? 'ready' : 'loading');
   const authenticatedUserId = session?.user.id ?? null;
 
   function notify(message: string) {
@@ -378,6 +401,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticatedUserId]);
 
+  // The profile loads apart from the data sync so a consent lookup failure never blocks records.
+  // Until it answers, and whenever it fails, the AI level stays `off`: no request can send data
+  // the person has not agreed to.
+  useEffect(() => {
+    if (skipAuth) return;
+    if (!session) {
+      setProfile(null);
+      setAiPreferenceState('off');
+      setAiPreferenceStatus('loading');
+      return;
+    }
+
+    let isActive = true;
+    setAiPreferenceStatus('loading');
+    getProfile(session.access_token)
+      .then((loaded) => {
+        if (!isActive) return;
+        setProfile(loaded);
+        setAiPreferenceState(isAiPreference(loaded.aiPreference) ? loaded.aiPreference : 'off');
+        setAiPreferenceStatus('ready');
+      })
+      .catch(() => {
+        if (!isActive) return;
+        setProfile(null);
+        setAiPreferenceState('off');
+        setAiPreferenceStatus('error');
+      });
+
+    return () => {
+      isActive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticatedUserId]);
+
   useEffect(() => {
     if (skipAuth) {
       window.localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
@@ -457,6 +514,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
       syncStatus,
       syncError,
       demoMode: skipAuth,
+      profile,
+      aiPreference,
+      aiPreferenceStatus,
+      setAiPreference: async (preference) => {
+        if (skipAuth) {
+          setAiPreferenceState(preference);
+          window.localStorage.setItem(AI_PREFERENCE_STORAGE_KEY, preference);
+          return;
+        }
+        if (!session) {
+          throw new Error('Sign in to change the AI setting.');
+        }
+        const previous = aiPreference;
+        setAiPreferenceState(preference);
+        try {
+          const saved = await updateApiAiPreference(session.access_token, { aiPreference: preference });
+          setProfile(saved);
+          setAiPreferenceState(saved.aiPreference);
+          recordEmberAppAction('update', 'Changed the AI setting');
+        } catch (error) {
+          setAiPreferenceState(previous);
+          notify(error instanceof Error ? error.message : 'Unable to save the AI setting.');
+          throw error;
+        }
+      },
       signIn: async (email, password) => {
         setAuthError(null);
         if (!supabase) {
@@ -767,7 +849,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notify,
       dismissNotification,
     };
-  }, [accounts, authError, authLoading, categories, notification, session, syncError, syncStatus, tags, transactions, themeMode]);
+  }, [accounts, aiPreference, aiPreferenceStatus, authError, authLoading, categories, notification, profile, session, syncError, syncStatus, tags, transactions, themeMode]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

@@ -59,6 +59,8 @@ class AiRouteTests(unittest.TestCase):
         self.supabase_patcher.start()
         self.key_patcher = patch.object(ai_router.settings, "openai_api_key", "test-key")
         self.key_patcher.start()
+        self.preference_patcher = patch.object(ai_router, "load_ai_preference", return_value="personalised")
+        self.preference_patcher.start()
         ai_router.ai_suggestion_rate_limiter.reset()
         app.dependency_overrides[get_current_user] = lambda: AuthenticatedUser(id=USER_ID)
         self.client = TestClient(app)
@@ -66,8 +68,50 @@ class AiRouteTests(unittest.TestCase):
     def tearDown(self):
         app.dependency_overrides.clear()
         ai_router.ai_suggestion_rate_limiter.reset()
+        self.preference_patcher.stop()
         self.key_patcher.stop()
         self.supabase_patcher.stop()
+
+    def test_openai_call_sets_store_false(self):
+        calls = []
+
+        def create(**kwargs):
+            calls.append(kwargs)
+            return model_response('{"categoryId":null,"confidence":"low","reason":"Unknown"}')
+
+        client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+        with patch.object(ai_router, "OpenAI", return_value=client):
+            response = self.client.post("/ai/parse-input", json={"description": "Dinner"})
+
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(len(calls), 1)
+        self.assertIs(calls[0]["store"], False)
+
+    def test_returns_403_ai_disabled_when_preference_is_off_or_guide(self):
+        for preference in ("off", "guide"):
+            with self.subTest(preference=preference), patch.object(
+                ai_router, "load_ai_preference", return_value=preference,
+            ), patch.object(ai_router, "OpenAI") as openai:
+                response = self.client.post("/ai/parse-input", json={"description": "Dinner"})
+                self.assertEqual(response.status_code, 403, response.text)
+                self.assertEqual(response.json()["detail"]["code"], "ai_disabled")
+                openai.assert_not_called()
+
+    def test_description_amounts_are_scrubbed_before_openai(self):
+        calls = []
+
+        def create(**kwargs):
+            calls.append(kwargs)
+            return model_response('{"categoryId":null,"confidence":"low","reason":"Unknown"}')
+
+        client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+        with patch.object(ai_router, "OpenAI", return_value=client):
+            response = self.client.post("/ai/parse-input", json={"description": "Dinner S$85.50 at Jumbo"})
+
+        self.assertEqual(response.status_code, 200, response.text)
+        user_message = next(message["content"] for message in calls[0]["messages"] if message["role"] == "user")
+        self.assertIn("{{Q1}}", user_message)
+        self.assertNotIn("85.50", user_message)
 
     def test_returns_valid_available_category_suggestion(self):
         client = SimpleNamespace(

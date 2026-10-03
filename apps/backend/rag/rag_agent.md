@@ -138,8 +138,8 @@ routers/rag.py
   -> services/ember_service.py        plan_ember_question() once (after the deterministic scope screen)
        mode knowledge  -> rag_service.answer_financial_advisor_question(question, retrieval_query=plan.retrieval_query,
                           personal_context=build_personal_context(user_id))
-                          EMBER_PERSONALISE_MODE=always (default) attaches the snapshot to every knowledge
-                          answer; "auto" attaches it only when the planner or should_personalise() asks.
+                          A personalised profile.ai_preference attaches the masked snapshot to every
+                          knowledge answer; "guide" never does, and "off" returns a fixed answer with no model call.
                           A personalised answer returns mode "hybrid" with a "personal_context" evidence entry
        mode data       -> ember_data_tools.run_ember_data_tool()   (expense_summary, spending_comparison,
                           financial_summary, fire_projection, financial_health_review, figure_lookup)

@@ -30,8 +30,8 @@ Current repo state:
 - `apps/web/` is the active React and Vite frontend
 - `apps/web/` includes Supabase auth, income and expense tracking, read-only system categories, persisted accounts, expense-only insights, wealth and FIRE setup, a real data dashboard, optional expense category suggestions, Ember with streamed cited answers and a page-aware quick-chat launcher, and versioned demo-only local state
 - `apps/backend/` is a FastAPI backend with mounted accounts, typed transactions, compatibility expenses, categories, wealth, FIRE, analytics, AI suggestion, health, and Ember JSON and SSE RAG routes
-- `apps/mobile/` contains the Expo app: the design-system shell (forest topbar, four tabs with the lime Add tile, bottom sheets), Home, Transactions, Categories, Profile and Add transaction on local demo data, with Supabase and the backend still to wire
-- `packages/shared/` contains shared TypeScript contracts, deterministic demo FIRE calculations, category data, add-expense helpers, and API route constants
+- `apps/mobile/` contains the Expo app: the design-system shell (four tabs with the lime Add tile, bottom sheets), Home, Transactions, Categories, Profile, Add transaction, Wealth, FIRE Planner, Insights, Accounts, Plan, Ember chat and a Goals placeholder on local demo data, with Supabase auth and the backend data routes still to wire
+- `packages/shared/` contains shared TypeScript contracts, deterministic demo FIRE calculations, category data, add-expense helpers, API route constants, the client-side masking session, the device snapshot builder, and the encrypted backup format
 - `supabase/` contains timestamped SQL migrations for the UUID-aligned app schema, persisted accounts, typed transactions, wealth and FIRE records, security, HNSW indexing, and private hybrid RAG retrieval
 - `docs/Figmamake/` remains a visual reference, not production source code
 - `docs/design/firebuddy-dashboard-roadmap.png` is the primary visual reference for the current dashboard
@@ -200,6 +200,10 @@ Mounted FastAPI routes:
 - `POST /ai/parse-input`
 - `POST /api/chat/financial-advisor`
 - `POST /api/chat/financial-advisor/stream`
+- `GET /profile`
+- `PUT /profile/ai-preference`
+- `GET /account/export`
+- `DELETE /account`
 
 API compatibility:
 - `/transactions` is the primary API for typed income and expense records
@@ -244,9 +248,10 @@ Current:
 - Ember requests may include bounded interface context: the current route label and up to five generic action labels from the current browser session. This context never includes amounts, descriptions, account names, or record IDs, and is used only to tailor answer emphasis.
 - Ember opens with an empty transcript and supported starter questions. It streams search status, grounded answer text, and citations without automatically submitting a starter or greeting the user.
 - Ember uses one structured planning call to select a fixed read-only expense summary, spending comparison, financial summary, FIRE projection, financial health review, curated finance RAG, or a hybrid of data and RAG. FastAPI injects the authenticated user ID, tools scope every query to that ID, and only aggregate tool results can enter the answer prompt.
+- Every AI call runs behind the user's consent level (`profiles.ai_preference`: `off` by default, `guide`, or `personalised`) and a per-request masking session (`services/ember_masking.py`). The question and history are scrubbed of amounts and the user's own account, position and custom category names; at `personalised` every figure in the aggregate snapshot and tool results becomes a placeholder token plus a coarse band, the model is told to copy tokens verbatim, and the backend restores the real values in the answer, including across streamed deltas. Exact figures, transaction descriptions and user-entered names never reach the provider. Every OpenAI call sets `store=False`. The phone goes one step further: it keeps every record on the device, computes and masks the snapshot itself (`buildPersonalSnapshot` and `MaskingSession` in `packages/shared`), sends `clientMasked` requests the backend forwards untouched, and offers a passphrase-encrypted backup file instead of cloud storage. See `docs/PRIVACY.md`.
 - Knowledge answers that would benefit from the user's own numbers (emergency fund sizing, savings rate, FIRE timeline, retirement adequacy, budgeting) attach a bounded aggregate snapshot built from one `build_financial_summary` call and return mode `hybrid` with a `personal_context` evidence entry. The snapshot holds aggregates and the deterministic recommended action only; never transactions, descriptions, or identifiers.
 - Ember can explain saved deterministic personal results but cannot change records, generate SQL, run an iterative tool loop, retrieve live prices, or provide regulated financial advice.
-- Authenticated category suggestions at `POST /ai/parse-input`, limited to 10 requests per user per 60 seconds by default
+- Authenticated category suggestions at `POST /ai/parse-input`, limited to 10 requests per user per 60 seconds by default, available only at the `personalised` level because the typed description leaves FireBuddy (amounts are scrubbed first)
 - Knowledge base under `apps/backend/rag/knowledge-base/`
 - Ingestion script under `apps/backend/rag/Implementation/ingest.py`
 - Retrieval helper under `apps/backend/rag/retrieval.py`, using keyword and vector reciprocal rank fusion
@@ -328,7 +333,7 @@ npm run test:web
 python -m unittest discover apps/backend/tests -v
 ```
 
-The web app remains ahead of mobile on feature coverage (Insights, Wealth, FIRE Planner and Ember are web-only). `apps/mobile/` now shares the web design system and the shared demo dataset, so mobile work builds on that shell rather than on a preserved reference.
+Mobile now mirrors the web screens on local demo data; Ember on the phone needs a configured API base URL and a signed-in token, and sign-in itself is the next mobile milestone. `apps/mobile/` shares the web design system and the shared demo dataset, so mobile work builds on that shell rather than on a preserved reference.
 
 ## Deployment Direction
 - Web: Vercel Hobby, built from the repository root using `vercel.json`

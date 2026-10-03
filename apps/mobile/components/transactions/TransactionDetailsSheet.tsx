@@ -1,9 +1,10 @@
-import { accountTypeLabel, formatLongDate, formatSGD, type Transaction } from '@firebuddy/shared';
+import { accountTypeLabel, formatLongDate, type Transaction } from '@firebuddy/shared';
 import { Pencil, Trash2 } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { spacing } from '@/constants/tokens';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
 
 import { BottomSheet } from '../ui/BottomSheet';
@@ -23,6 +24,7 @@ export interface TransactionDetailsSheetProps {
 export function TransactionDetailsSheet({ transaction, onClose, onEdit, onDelete }: TransactionDetailsSheetProps) {
   const { theme } = useTheme();
   const { getCategoryById, getAccountById, tags } = useFireBuddy();
+  const { money } = usePrivacy();
   const category = transaction ? getCategoryById(transaction.categoryId) : undefined;
   const account = transaction ? getAccountById(transaction.accountId) : undefined;
   const isIncome = transaction?.transactionType === 'income';
@@ -50,7 +52,7 @@ export function TransactionDetailsSheet({ transaction, onClose, onEdit, onDelete
             </View>
           </View>
           <AppText variant="heroFigure" tone={isIncome ? 'income' : 'expense'}>
-            {isIncome ? '+' : '-'} {formatSGD(transaction.amount)}
+            {isIncome ? '+' : '-'} {money(transaction.amount)}
           </AppText>
           <View style={[styles.list, { borderTopColor: theme.line }]}>
             <DetailRow label="Date" value={formatLongDate(transaction.date)} />

@@ -218,10 +218,14 @@ class RagServiceTests(unittest.TestCase):
         plain = rag_service.build_answer_messages("Q", "context", [])
         tailored = rag_service.build_answer_messages("Q", "context", [], personalised=True)
 
-        self.assertNotIn("must be tailored to those numbers", plain[0]["content"])
-        self.assertIn("must be tailored to those numbers", tailored[0]["content"])
-        self.assertIn("largest categories with their amounts", tailored[0]["content"])
+        self.assertNotIn("Tailor every answer to the user's situation", plain[0]["content"])
+        self.assertIn("Tailor every answer to the user's situation", tailored[0]["content"])
+        self.assertIn("quote their placeholders", tailored[0]["content"])
+        self.assertIn("Never add, subtract, multiply or divide placeholders", tailored[0]["content"])
         self.assertIn("Never present projections", tailored[0]["content"])
+        # Both prompts explain placeholders; curated figures stay exact.
+        self.assertIn("copy the placeholder exactly as written", plain[0]["content"])
+        self.assertIn("Preserve numeric values and formulas exactly", plain[0]["content"])
 
     def test_answer_prompt_instructs_the_sentinel_refusal(self):
         messages = rag_service.build_answer_messages("What is CPF?", "context", [])

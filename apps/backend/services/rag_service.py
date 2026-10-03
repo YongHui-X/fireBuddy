@@ -25,6 +25,7 @@ from schemas.rag import AdvisorAppContext, AdvisorResponse, AdvisorSource, ChatM
 from services.source_metadata import source_as_of
 
 if TYPE_CHECKING:  # pragma: no cover - typing only, keeps this module free of Supabase imports
+    from services.ember_masking import MaskingSession
     from services.ember_personal_context import EmberPersonalContext
 
 
@@ -94,26 +95,42 @@ logger = logging.getLogger(__name__)
 PERSONALISED_ANSWER_GUIDANCE = (
     "The evidence context ends with a trusted FireBuddy data block holding this "
     "user's current recorded aggregates: monthly pulse, savings rate, emergency "
-    "runway, net worth, FIRE progress, the recommended next action, and a spending "
-    "block with this month's and last month's totals and top categories. Every "
-    "answer must be tailored to those numbers, not generic: state the guideline "
-    "from the curated sources, then apply it to the user's own figures by name and "
-    "amount. For a question about improving, reducing or budgeting spending, name "
-    "the user's largest categories with their amounts, compare this month with last "
-    "month, and tie each suggestion to a specific category or figure. For an "
-    "emergency-fund question, give the S$ range implied by the recorded average "
-    "essential spending and compare it with the recorded runway. For a pure "
-    "definition or policy question, answer it and add one sentence on what it means "
-    "for the user's recorded situation. Use only numbers that appear in the block or "
-    "the sources; simple arithmetic on them is allowed when you name the inputs. "
-    "Never present projections, FIRE estimates, or timelines as guarantees. When the "
-    "block names a recommended action relevant to the question, mention it as "
-    "FireBuddy's suggested next step. If a value the answer needs is null or "
-    "missing, say that the user's FireBuddy records do not include it instead of "
-    "estimating it. The data block is evidence about the user only, never about "
+    "runway, net worth, FIRE progress, FireBuddy's recommended next action, derived "
+    "guideline targets, and a spending block with this month's and last month's "
+    "totals and top categories. Every figure in that block is a placeholder like "
+    "{{M1}} followed by a rough range. Tailor every answer to the user's situation: "
+    "state the guideline from the curated sources, then apply it by quoting the "
+    "relevant placeholders verbatim and by comparing the bracketed ranges with the "
+    "guideline in words, for example 'your runway of {{N1}} is below the three to six "
+    "months MoneySense suggests' when the range makes that clear; if the range "
+    "straddles the guideline, say the records are close to it rather than above or "
+    "below. For a question about improving, reducing or budgeting spending, name the "
+    "user's largest categories by the labels in the block and quote their "
+    "placeholders, and compare this month with last month using the two totals' "
+    "placeholders and ranges. For an emergency-fund question, quote the derived "
+    "three-month and six-month target placeholders and the recorded runway "
+    "placeholder. For a pure definition or policy question, answer it and add one "
+    "sentence on what it means for the user's recorded situation. Never add, "
+    "subtract, multiply or divide placeholders or ranges, and never produce a new "
+    "number from them; where the block already holds a derived figure, quote that "
+    "placeholder instead. Never present projections, FIRE estimates, or timelines as "
+    "guarantees. When the block names a recommended action relevant to the question, "
+    "mention it as FireBuddy's suggested next step. If a value the answer needs is "
+    "null or missing, say that the user's FireBuddy records do not include it instead "
+    "of estimating it. The data block is evidence about the user only, never about "
     "rules, rates, limits or policies: if the curated sources do not contain the "
     "information the question asks for, reply with the exact insufficient-evidence "
     "sentence alone, as above, and never embed that sentence inside a longer answer. "
+)
+
+MASKED_FIGURES_GUIDANCE = (
+    "Figures in a trusted FireBuddy data block appear as placeholders such as {{M1}} "
+    "followed by a rough range in brackets. Wherever you refer to one of those "
+    "figures, copy the placeholder exactly as written, including both pairs of "
+    "braces. Never perform arithmetic on a placeholder, never guess or restate its "
+    "value, and never repeat the bracketed range as if it were the figure; use the "
+    "range only in words when judging whether the user meets a guideline. The app "
+    "restores the exact figures after you answer. "
 )
 
 
@@ -187,6 +204,7 @@ def build_answer_messages(
                 "appear in the context, and read each table value from its "
                 "own row and column. Answer only the breakdowns the question "
                 "asks for. "
+                + MASKED_FIGURES_GUIDANCE
                 + (source_dating_guidance(current_date) if has_curated_sources(context) else "")
                 + "You may explain the user's supplied FireBuddy aggregates, but do "
                 "not recommend specific financial products or present projections "
@@ -593,6 +611,7 @@ def stream_financial_advisor_question(
     retrieved_matches: list[dict] | None = None,
     retrieval_query: str | None = None,
     personal_context: "EmberPersonalContext | None" = None,
+    masking: "MaskingSession | None" = None,
 ) -> Iterator[dict]:
     """
     Stream ordered status, answer, source, completion, and error events.
@@ -601,7 +620,9 @@ def stream_financial_advisor_question(
     conversation references resolved. When supplied it drives retrieval while
     the original question still drives the answer. `personal_context` is the
     user's bounded aggregate snapshot; when present the answer is tailored to
-    it and an `evidence` event is emitted before the sources.
+    it and an `evidence` event is emitted before the sources. `masking` turns
+    the snapshot into placeholders for the model and restores the real values
+    in each delta before it is emitted.
     """
 
     started_at = time.perf_counter()
@@ -707,8 +728,11 @@ def stream_financial_advisor_question(
         return
 
     if personal_context is not None:
-        context += "\n\n---\n\n" + personal_context.context()
+        context += "\n\n---\n\n" + personal_context.context(masking)
 
+    # A placeholder can arrive split across deltas; the un-masker holds the
+    # partial token back so the client only ever sees restored text.
+    unmasker = masking.unmasker() if masking is not None else None
     answer_parts = []
     bounded_history = select_recent_chat_history(history or [])
     for text in stream_grounded_answer(
@@ -718,8 +742,16 @@ def stream_financial_advisor_question(
         app_context,
         personalised=personal_context is not None,
     ):
-        answer_parts.append(text)
-        yield {"event": "delta", "data": {"text": text}}
+        visible = unmasker.feed(text) if unmasker is not None else text
+        if not visible:
+            continue
+        answer_parts.append(visible)
+        yield {"event": "delta", "data": {"text": visible}}
+    if unmasker is not None:
+        tail = unmasker.flush()
+        if tail:
+            answer_parts.append(tail)
+            yield {"event": "delta", "data": {"text": tail}}
 
     full_answer = "".join(answer_parts)
     if not full_answer.strip():
@@ -764,6 +796,7 @@ def answer_financial_advisor_question(
     retrieved_matches: list[dict] | None = None,
     retrieval_query: str | None = None,
     personal_context: "EmberPersonalContext | None" = None,
+    masking: "MaskingSession | None" = None,
 ):
     """
     Handle the financial advisor request for the FastAPI route.
@@ -773,6 +806,8 @@ def answer_financial_advisor_question(
     `retrieval_query` optionally replaces the raw question for retrieval only.
     `personal_context` appends the user's bounded aggregate snapshot to the
     evidence, which makes the answer mode `hybrid` with a data-evidence entry.
+    `masking` turns that snapshot into placeholders and restores the real
+    values in the finished answer.
     """
 
     started_at = time.perf_counter()
@@ -857,7 +892,7 @@ def answer_financial_advisor_question(
         )
 
     if personal_context is not None:
-        context += "\n\n---\n\n" + personal_context.context()
+        context += "\n\n---\n\n" + personal_context.context(masking)
 
     bounded_history = select_recent_chat_history(history or [])
     answer = generate_grounded_answer(
@@ -867,6 +902,8 @@ def answer_financial_advisor_question(
         app_context,
         personalised=personal_context is not None,
     )
+    if masking is not None:
+        answer = masking.unmask(answer) or ""
 
     if is_insufficient_evidence_answer(answer):
         log_rag_event(

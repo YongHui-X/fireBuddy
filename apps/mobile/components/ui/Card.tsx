@@ -13,7 +13,7 @@ export interface CardProps extends ViewProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** White paper card with one soft shadow, radius 16, the same container the web uses for every panel. */
+/** Flat card on the single-colour canvas: hairline border, radius 16, no shadow. `hero` is the one forest accent card. */
 export function Card({ tone = 'paper', padded = true, style, children, ...rest }: CardProps) {
   const { theme, shadows } = useTheme();
   const background = tone === 'hero' ? theme.heroBg : tone === 'muted' ? theme.surface2 : theme.surface;

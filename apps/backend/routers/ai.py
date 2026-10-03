@@ -11,6 +11,8 @@ from config import settings
 from lib.auth import AuthenticatedUser, get_current_user
 from lib.repository import fetch_all
 from lib.supabase import supabase
+from services.ai_preference import load_ai_preference
+from services.ember_masking import MaskingSession
 from services.rate_limiter import SlidingWindowRateLimiter
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -121,6 +123,13 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
             headers={"Retry-After": str(rate_limit.retry_after_seconds)},
         )
 
+    # The typed description leaves FireBuddy, so only a Personalised account may use this.
+    if load_ai_preference(current_user.id) != "personalised":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "ai_disabled", "message": "AI suggestions are off for this account. Turn them on under Profile, Ember and AI."},
+        )
+
     categories = fetch_available_categories(current_user.id)
     if not categories:
         return ParseInputResponse(
@@ -132,11 +141,14 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
 
     category_lookup = {str(category.id): category for category in categories}
     category_list = "\n".join(f"- {category.id}: {category.name}" for category in categories)
+    # Amounts typed into the description never leave; merchant words are the feature's input.
+    description = MaskingSession().scrub_question(payload.description)
     try:
         client = OpenAI(api_key=settings.openai_api_key, **settings.openai_client_options)
         response = client.chat.completions.create(
             model=settings.openai_model,
             temperature=0,
+            store=False,
             messages=[
                 {
                     "role": "system",
@@ -149,7 +161,7 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
                 {
                     "role": "user",
                     "content": (
-                        f"Description: {payload.description}\n\n"
+                        f"Description: {description}\n\n"
                         f"Available categories:\n{category_list}"
                     ),
                 },

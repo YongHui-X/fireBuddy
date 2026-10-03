@@ -33,7 +33,7 @@ export function describeTimeline(plan: RetirementPlan, today: string): ReviewFac
 
 export function describeSpending(plan: RetirementPlan): ReviewFact {
   return {
-    headline: plan.monthlySpending > 0 ? `${formatSGD(plan.monthlySpending, 0)} / month today` : 'Retirement spending missing',
+    headline: plan.monthlySpending > 0 ? `${formatSGD(plan.monthlySpending, 0)} / month in retirement (today’s money)` : 'Retirement spending missing',
     detail: `Investing ${formatSGD(plan.monthlyContribution, 0)} / month until retirement`,
     provenanceKeys: ['monthlySpending', 'monthlyContribution'],
   };

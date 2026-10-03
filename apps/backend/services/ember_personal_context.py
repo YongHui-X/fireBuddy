@@ -14,8 +14,13 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 
+from typing import TYPE_CHECKING
+
 from lib.clock import singapore_today
 from schemas.rag import AdvisorDataEvidence
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from services.ember_masking import MaskingSession
 from services.category_visibility import load_visible_expense_categories
 from services.financial_repository import load_financial_records
 from services.financial_summary import build_financial_summary
@@ -39,7 +44,8 @@ FIRE_KEYS = (
     "estimatedFiYear",
     "earliestRetirementMonth",
 )
-ACTION_KEYS = ("title", "rationale", "destination")
+# `title` is excluded: two rules embed a wealth position name in it. The dashboard keeps the title.
+ACTION_KEYS = ("actionType", "rationale", "destination")
 
 
 def trusted_data_block(facts: dict, *, label: str) -> str:
@@ -58,8 +64,11 @@ class EmberPersonalContext:
     facts: dict
     effective_date: str
 
-    def context(self) -> str:
-        return trusted_data_block(self.facts, label=PERSONAL_CONTEXT_LABEL)
+    def context(self, masking: "MaskingSession | None" = None) -> str:
+        """Serialise the block; with a masking session every figure and name becomes a placeholder."""
+
+        facts = masking.mask_facts(self.facts) if masking is not None else self.facts
+        return trusted_data_block(facts, label=PERSONAL_CONTEXT_LABEL)
 
     def evidence(self) -> AdvisorDataEvidence:
         return AdvisorDataEvidence(
@@ -164,6 +173,14 @@ def personal_context_from_summary(summary: dict, *, spending: dict | None = None
         for kind in ANOMALY_KINDS
     }
 
+    # The model cannot multiply masked figures, so the common guideline targets are pre-computed.
+    essential = summary.get("averageMonthlyEssentialSpending")
+    essential_value = Decimal(str(essential)) if essential not in (None, "") else None
+    derived = {
+        "emergencyFundTarget3Months": _money(essential_value * 3) if essential_value is not None else None,
+        "emergencyFundTarget6Months": _money(essential_value * 6) if essential_value is not None else None,
+    }
+
     facts = {
         "effectiveDate": summary.get("effectiveDate"),
         "snapshotStatus": summary.get("snapshotStatus"),
@@ -173,6 +190,7 @@ def personal_context_from_summary(summary: dict, *, spending: dict | None = None
         "investableAssets": summary.get("investableAssets"),
         "emergencyRunwayMonths": summary.get("emergencyRunwayMonths"),
         "averageMonthlyEssentialSpending": summary.get("averageMonthlyEssentialSpending"),
+        "derived": derived,
         "monthlyPulse": _pick(summary.get("pulse"), PULSE_KEYS),
         "fire": _pick(fire, FIRE_KEYS),
         "recommendedAction": _pick(summary.get("recommendedAction"), ACTION_KEYS),

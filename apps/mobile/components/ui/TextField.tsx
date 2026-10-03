@@ -49,6 +49,9 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
       <TextInput
         ref={ref}
         {...rest}
+        // The visible label is a sibling view, so name the input explicitly for screen readers.
+        accessibilityLabel={rest.accessibilityLabel ?? label}
+        accessibilityHint={rest.accessibilityHint ?? (error ?? help ?? undefined)}
         placeholderTextColor={theme.ink3}
         style={[
           styles.input,

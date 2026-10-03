@@ -1,16 +1,16 @@
 import {
-  demoFoundation,
-  formatSGD,
   type CategoryBudgetRow,
   type MonthSummary,
   type SpendingBreakdownRow,
   type Transaction,
 } from '@firebuddy/shared';
-import { ArrowUpRight, Landmark } from 'lucide-react-native';
+import { ArrowDownRight, ArrowUpRight, Eye, EyeOff } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { radii, spacing } from '@/constants/tokens';
+import { useWealth } from '@/hooks/use-wealth';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
 
 import { DonutChart } from '../charts/DonutChart';
@@ -19,46 +19,69 @@ import { Button } from '../ui/Button';
 import { Card, CardHeader } from '../ui/Card';
 import { Chip } from '../ui/Chip';
 import { EmptyState } from '../ui/EmptyState';
-import { PressOverlay } from '../ui/PressOverlay';
 import { ProgressTrack } from '../ui/ProgressTrack';
 import { AppText } from '../ui/Text';
 
-/** Forest hero for the headline figure, the first thing on Home. */
-export function NetWorthHero({ monthName, onPress }: { monthName: string; onPress: () => void }) {
+/**
+ * The net worth headline, set straight on the forest hero like a wallet balance: the label with
+ * the app-wide privacy eye beside it, the figure in white, this month's change, and the asset and
+ * debt totals. Reads the latest dated wealth values.
+ */
+export function NetWorthHeadline({ monthName }: { monthName: string }) {
   const { theme } = useTheme();
-  const { netWorth, assets, liabilities, monthlyChange } = demoFoundation;
+  const { money, hidden, toggle } = usePrivacy();
+  const { netWorth, assetTotal, liabilityTotal, monthlyChange, active, missingValues } = useWealth();
+  const EyeIcon = hidden ? EyeOff : Eye;
 
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel="Net worth, view wealth" onPress={onPress}>
-      {({ pressed }) => (
-        <Card tone="hero" style={styles.hero}>
-          <PressOverlay pressed={pressed} radius={radii.card} light />
-          <View style={[styles.heroIcon, { backgroundColor: 'rgba(203, 234, 99, 0.16)' }]}>
-            <Landmark size={20} color={theme.railActiveInk} strokeWidth={1.9} />
-          </View>
-          <AppText variant="overline" tone="heroMuted" style={styles.heroLabel}>Net worth</AppText>
-          <AppText variant="heroFigure" tone="hero">{formatSGD(netWorth, 0)}</AppText>
-          <Chip label={`${monthlyChange >= 0 ? '+' : '-'}${formatSGD(Math.abs(monthlyChange), 0)} in ${monthName}`} tone="lime" icon={ArrowUpRight} style={styles.heroChip} />
-          <View style={[styles.heroMeta, { borderTopColor: theme.heroLine }]}>
-            <View style={styles.heroMetaItem}>
-              <AppText variant="overline" tone="heroMuted">Assets</AppText>
-              <AppText variant="amount" tone="hero">{formatSGD(assets, 0)}</AppText>
-            </View>
-            <View style={styles.heroMetaItem}>
-              <AppText variant="overline" tone="heroMuted">Liabilities</AppText>
-              <AppText variant="amount" tone="hero">{formatSGD(liabilities, 0)}</AppText>
-            </View>
-          </View>
-          <AppText variant="label" tone="hero" style={styles.heroLink}>View wealth</AppText>
-        </Card>
-      )}
-    </Pressable>
+    <View style={styles.headline}>
+      <View style={styles.headlineLabelRow}>
+        <AppText variant="overline" tone="heroMuted">Net worth</AppText>
+        {/* A bare icon rather than an IconButton so it sits beside the label; hitSlop keeps the target comfortable. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={hidden ? 'Show amounts' : 'Hide amounts'}
+          accessibilityState={{ checked: hidden }}
+          hitSlop={{ top: 12, bottom: 12, left: 8, right: 12 }}
+          onPress={toggle}
+          style={({ pressed }) => [styles.headlineEye, pressed ? styles.headlineEyePressed : null]}
+        >
+          <EyeIcon size={16} color={theme.heroInkMuted} strokeWidth={2} />
+        </Pressable>
+      </View>
+      <AppText variant="balance" tone="hero" numberOfLines={1} adjustsFontSizeToFit>{active.length ? money(netWorth, 0) : '—'}</AppText>
+      <View style={styles.headlineMeta}>
+        {monthlyChange !== null ? (
+          <Chip
+            label={`${hidden ? '' : monthlyChange >= 0 ? '+' : '-'}${money(Math.abs(monthlyChange), 0)} in ${monthName}`}
+            tone={hidden ? 'heroNeutral' : monthlyChange >= 0 ? 'heroUp' : 'heroDown'}
+            icon={hidden ? undefined : monthlyChange >= 0 ? ArrowUpRight : ArrowDownRight}
+            round
+          />
+        ) : (
+          // Mirrors the Wealth screen: a total built on unvalued positions says so.
+          <Chip
+            label={!active.length
+              ? 'Add your first asset or debt'
+              : missingValues
+                ? `${missingValues} position${missingValues === 1 ? ' has' : 's have'} no value yet`
+                : 'Add this month’s values to see the change'}
+            tone="heroNeutral"
+            round
+          />
+        )}
+        <AppText variant="caption" tone="heroMuted" numberOfLines={1} style={styles.headlineTotals}>
+          Assets {money(assetTotal, 0)} · Debts {money(liabilityTotal, 0)}
+        </AppText>
+      </View>
+    </View>
   );
 }
 
 /** "Where it went": income at the top, then a split bar of expenses against savings. */
 export function MoneyPulseCard({ summary, monthName }: { summary: MonthSummary; monthName: string }) {
   const { theme } = useTheme();
+  const { money, percent, hidden } = usePrivacy();
   const { income, expenses, savings, savingsRate, transactionCount } = summary;
   const scale = Math.max(income, expenses, Math.abs(savings), 1);
   const expenseShare = Math.min(expenses / scale, 1);
@@ -68,13 +91,13 @@ export function MoneyPulseCard({ summary, monthName }: { summary: MonthSummary; 
   let observationTitle: string | null = null;
   let observationDetail: string | null = null;
   if (income > 0 && savings < 0) {
-    observationTitle = `Expenses exceeded income by ${formatSGD(Math.abs(savings), 0)}`;
+    observationTitle = `Expenses exceeded income by ${money(Math.abs(savings), 0)}`;
     observationDetail = `Review the largest expenses recorded in ${monthName}.`;
   } else if (income > 0 && savingsRate !== null) {
-    observationTitle = `You saved ${(savingsRate * 100).toFixed(1)}% of recorded income`;
-    observationDetail = `${formatSGD(savings, 0)} remained after ${formatSGD(expenses, 0)} of expenses in ${monthName}.`;
+    observationTitle = `You saved ${percent(savingsRate, 1)} of recorded income`;
+    observationDetail = `${money(savings, 0)} remained after ${money(expenses, 0)} of expenses in ${monthName}.`;
   } else if (expenses > 0) {
-    observationTitle = `${formatSGD(expenses, 0)} recorded in expenses`;
+    observationTitle = `${money(expenses, 0)} recorded in expenses`;
     observationDetail = `Add income for ${monthName} to see your savings rate.`;
   }
 
@@ -82,24 +105,25 @@ export function MoneyPulseCard({ summary, monthName }: { summary: MonthSummary; 
     <Card>
       <CardHeader title={`${monthName} Money Pulse`} action={limited ? <Chip label="Limited data" tone="warning" style={styles.limited} /> : undefined} />
       <AppText variant="caption" tone="ink2">Income</AppText>
-      <AppText variant="metric" style={styles.pulseIncome}>{formatSGD(income, 0)}</AppText>
+      <AppText variant="metric" style={styles.pulseIncome}>{money(income, 0)}</AppText>
       <AppText variant="caption" tone="ink2" style={styles.pulseLabel}>Where it went</AppText>
+      {/* While amounts are hidden the split is drawn as two equal neutral segments. */}
       <View style={[styles.pulseTrack, { backgroundColor: theme.surface2 }]}>
-        <View style={[styles.pulseSegment, { flex: expenseShare, backgroundColor: theme.expense }]} />
-        <View style={[styles.pulseSegment, { flex: savingsShare, backgroundColor: theme.info }]} />
-        <View style={{ flex: Math.max(1 - expenseShare - savingsShare, 0) }} />
+        <View style={[styles.pulseSegment, { flex: hidden ? 1 : expenseShare, backgroundColor: hidden ? theme.surface3 : theme.expense }]} />
+        <View style={[styles.pulseSegment, { flex: hidden ? 1 : savingsShare, backgroundColor: hidden ? theme.surface3 : theme.info }]} />
+        <View style={{ flex: hidden ? 0 : Math.max(1 - expenseShare - savingsShare, 0) }} />
       </View>
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: theme.expense }]} />
           <AppText variant="caption" tone="ink2">Expenses</AppText>
-          <AppText variant="amountSmall">{formatSGD(expenses, 0)}</AppText>
+          <AppText variant="amountSmall">{money(expenses, 0)}</AppText>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: theme.info }]} />
           <AppText variant="caption" tone="ink2">Savings</AppText>
-          <AppText variant="amountSmall" tone={savings < 0 ? 'expense' : 'ink'}>{savings < 0 ? '-' : ''}{formatSGD(savings, 0)}</AppText>
-          {savingsRate !== null ? <AppText variant="caption" tone="ink3">{(savingsRate * 100).toFixed(1)}%</AppText> : null}
+          <AppText variant="amountSmall" tone={savings < 0 && !hidden ? 'expense' : 'ink'}>{savings < 0 && !hidden ? '-' : ''}{money(savings, 0)}</AppText>
+          {savingsRate !== null ? <AppText variant="caption" tone="ink3">{percent(savingsRate, 1)}</AppText> : null}
         </View>
       </View>
       {observationTitle ? (
@@ -114,6 +138,7 @@ export function MoneyPulseCard({ summary, monthName }: { summary: MonthSummary; 
 
 export function CategoryBudgetsCard({ rows, periodLabel, onManage }: { rows: CategoryBudgetRow[]; periodLabel: string; onManage: () => void }) {
   const { theme } = useTheme();
+  const { money, percent } = usePrivacy();
   const spent = rows.reduce((total, row) => total + row.spent, 0);
   const budget = rows.reduce((total, row) => total + row.budget, 0);
   const shown = rows.slice(0, 5);
@@ -131,23 +156,23 @@ export function CategoryBudgetsCard({ rows, periodLabel, onManage }: { rows: Cat
                   <AppText variant="bodySmall" numberOfLines={1} style={styles.budgetNameText}>{row.category.name}</AppText>
                 </View>
                 <AppText variant="amountSmall">
-                  {formatSGD(row.spent, 0)} <AppText variant="caption" tone="ink2">of {formatSGD(row.budget, 0)}</AppText>
+                  {money(row.spent, 0)} <AppText variant="caption" tone="ink2">of {money(row.budget, 0)}</AppText>
                 </AppText>
               </View>
-              <ProgressTrack value={row.ratio} color={row.category.color} accessibilityLabel={`${row.category.name}: ${formatSGD(row.spent)} spent of ${formatSGD(row.budget)} budget`} />
+              <ProgressTrack value={row.ratio} color={row.category.color} accessibilityLabel={`${row.category.name}: ${money(row.spent)} spent of ${money(row.budget)} budget`} />
             </View>
           ))}
           <View style={[styles.budgetSummary, { borderTopColor: theme.line }]}>
             <View style={styles.budgetHeading}>
               <AppText variant="bodySemibold">All {rows.length} budgets</AppText>
               <AppText variant="amountSmall">
-                {formatSGD(spent, 0)} <AppText variant="caption" tone="ink2">of {formatSGD(budget, 0)}</AppText>
+                {money(spent, 0)} <AppText variant="caption" tone="ink2">of {money(budget, 0)}</AppText>
               </AppText>
             </View>
             <ProgressTrack value={budget > 0 ? spent / budget : 0} color={theme.accent} />
             {budget > 0 ? (
               <AppText variant="caption" tone="ink2">
-                {Math.round((spent / budget) * 100)}% of this month’s budgets used, {formatSGD(Math.max(budget - spent, 0), 0)} left.
+                {percent(spent / budget)} of this month’s budgets used, {money(Math.max(budget - spent, 0), 0)} left.
               </AppText>
             ) : null}
           </View>
@@ -160,6 +185,7 @@ export function CategoryBudgetsCard({ rows, periodLabel, onManage }: { rows: Cat
 }
 
 export function SpendingBreakdownCard({ rows, periodLabel, onViewMore, onAdd }: { rows: SpendingBreakdownRow[]; periodLabel: string; onViewMore: () => void; onAdd: () => void }) {
+  const { money, percent } = usePrivacy();
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   // The five largest categories and everything else grouped as Others, as on the web.
   const grouped = rows.length > 6
@@ -177,8 +203,8 @@ export function SpendingBreakdownCard({ rows, periodLabel, onViewMore, onAdd }: 
               <View key={row.name} style={styles.legendRow}>
                 <View style={[styles.legendDot, { backgroundColor: row.color }]} />
                 <AppText variant="bodySmall" numberOfLines={1} style={styles.legendName}>{row.name}</AppText>
-                <AppText variant="caption" tone="ink3">{Math.round(row.share * 100)}%</AppText>
-                <AppText variant="amountSmall">{formatSGD(row.amount, 0)}</AppText>
+                <AppText variant="caption" tone="ink3">{percent(row.share)}</AppText>
+                <AppText variant="amountSmall">{money(row.amount, 0)}</AppText>
               </View>
             ))}
           </View>
@@ -213,63 +239,28 @@ export function RecentTransactionsCard({ transactions, onSelect, onViewAll, onAd
   );
 }
 
-export function FiProgressCard({ onOpen }: { onOpen: () => void }) {
-  const { theme } = useTheme();
-  const { netWorth, fiTarget, projectedFireYear, projectedFireAge } = demoFoundation;
-  const progress = fiTarget > 0 ? netWorth / fiTarget : 0;
-
-  return (
-    <Card>
-      <CardHeader title="FI progress" subtitle="Projected on the demo plan" action={<Button label="Open planner" variant="text" size="compact" onPress={onOpen} />} />
-      <AppText variant="heroFigure" style={styles.fiFigure}>{Math.round(progress * 100)}%</AppText>
-      <ProgressTrack value={progress} color={theme.accent} height={10} keepColorWhenOver accessibilityLabel={`${Math.round(progress * 100)}% of your FI target`} />
-      <View style={styles.facts}>
-        <View style={styles.fact}>
-          <AppText variant="caption" tone="ink2">FI target</AppText>
-          <AppText variant="amount">{formatSGD(fiTarget, 0)}</AppText>
-        </View>
-        <View style={styles.fact}>
-          <AppText variant="caption" tone="ink2">Projected retirement</AppText>
-          <AppText variant="amount">{projectedFireYear} <AppText variant="caption" tone="ink2">age {projectedFireAge}</AppText></AppText>
-        </View>
-      </View>
-    </Card>
-  );
-}
-
 const styles = StyleSheet.create({
-  hero: {
-    overflow: 'hidden',
-    padding: 22,
+  headline: {
+    gap: 2,
   },
-  heroIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.tile,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xl,
-  },
-  heroLabel: {
-    marginBottom: 4,
-  },
-  heroChip: {
-    marginTop: spacing.md,
-  },
-  heroMeta: {
+  headlineLabelRow: {
     flexDirection: 'row',
-    gap: spacing.xl,
-    marginTop: spacing.xl,
-    paddingTop: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  heroMetaItem: {
-    flex: 1,
-    gap: 4,
+  headlineEye: {
+    padding: 2,
+    borderRadius: radii.chip,
   },
-  heroLink: {
-    marginTop: spacing.xl,
-    textDecorationLine: 'underline',
+  headlineEyePressed: {
+    opacity: 0.6,
+  },
+  headlineMeta: {
+    marginTop: spacing.sm,
+    gap: spacing.sm,
+  },
+  headlineTotals: {
+    marginTop: 2,
   },
   limited: {
     marginTop: 6,
@@ -357,17 +348,5 @@ const styles = StyleSheet.create({
   legendName: {
     flex: 1,
     minWidth: 0,
-  },
-  fiFigure: {
-    marginBottom: spacing.sm,
-  },
-  facts: {
-    flexDirection: 'row',
-    gap: spacing.lg,
-    marginTop: spacing.lg,
-  },
-  fact: {
-    flex: 1,
-    gap: 2,
   },
 });

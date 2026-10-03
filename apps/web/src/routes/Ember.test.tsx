@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
 
 import { ApiRequestError, type RagStreamHandlers } from '../api';
 import { clearEmberAppActions, recordEmberAppAction } from '../app/emberAppContext';
@@ -14,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   scrollIntoView: vi.fn(),
   streamFinancialAdvisor: vi.fn(),
   session: { access_token: 'access-token' } as { access_token: string } | null,
+  aiPreference: 'personalised' as 'off' | 'guide' | 'personalised',
+  setAiPreference: vi.fn(),
 }));
 
 vi.mock('../api', async () => {
@@ -23,7 +26,7 @@ vi.mock('../api', async () => {
 
 vi.mock('../app/fireBuddyContext', async () => {
   const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
-  return { ...actual, useFireBuddy: () => ({ session: mocks.session }) };
+  return { ...actual, useFireBuddy: () => ({ session: mocks.session, aiPreference: mocks.aiPreference, aiPreferenceStatus: 'ready', setAiPreference: mocks.setAiPreference }) };
 });
 
 function askQuestion(question: string) {
@@ -57,6 +60,28 @@ describe('Ember page', () => {
     });
     mocks.streamFinancialAdvisor.mockReset();
     mocks.session = { access_token: 'access-token' };
+    mocks.aiPreference = 'personalised';
+    mocks.setAiPreference.mockReset().mockResolvedValue(undefined);
+  });
+
+  it('shows the consent panel instead of the composer when AI is off', () => {
+    mocks.aiPreference = 'off';
+    render(<MemoryRouter><Ember /></MemoryRouter>);
+
+    expect(screen.queryByRole('textbox', { name: 'Ask Ember' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Turn on Ember' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Use Guide' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Use Personalised' })).toBeTruthy();
+    expect(mocks.streamFinancialAdvisor).not.toHaveBeenCalled();
+  });
+
+  it('choosing Personalised calls setAiPreference without sending a question', async () => {
+    mocks.aiPreference = 'off';
+    render(<MemoryRouter><Ember /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use Personalised' }));
+    await waitFor(() => expect(mocks.setAiPreference).toHaveBeenCalledWith('personalised'));
+    expect(mocks.streamFinancialAdvisor).not.toHaveBeenCalled();
   });
 
   it('fills and focuses the composer from a starter without sending', async () => {

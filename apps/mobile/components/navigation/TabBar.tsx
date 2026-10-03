@@ -1,7 +1,7 @@
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeftRight, Grid2X2, Home, Plus, User, type LucideIcon } from 'lucide-react-native';
+import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,8 @@ import { useTheme } from '@/lib/theme';
 import { PressOverlay } from '../ui/PressOverlay';
 import { AppText } from '../ui/Text';
 
+type ExpoTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
+
 const tabIcons: Record<string, LucideIcon> = {
   index: Home,
   transactions: ArrowLeftRight,
@@ -18,12 +20,18 @@ const tabIcons: Record<string, LucideIcon> = {
   profile: User,
 };
 
+/** How far the docked Add button rises above the bar's top edge. */
+const FAB_LIFT = 22;
+/** Surface-coloured ring so the circle reads as cut into the bar edge without an SVG notch. */
+const FAB_RING = 3;
+
 /**
- * The phone shell's bottom bar: the four fixed tabs with the lime Add tile centred between them.
- * Painted in normal layout flow with the bottom inset inside it, so the Android navigation bar
- * and the iOS home indicator never cover a tab and screens never scroll underneath.
+ * The phone shell's bottom bar: the four fixed tabs with a circular lime Add button docked in the
+ * centre, half above the bar edge like a Material docked FAB. Painted in normal layout flow with
+ * the bottom inset inside it, so the Android navigation bar and the iOS home indicator never cover
+ * a tab and screens never scroll underneath.
  */
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function TabBar({ state, descriptors, navigation }: ExpoTabBarProps) {
   const { theme, shadows } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -79,22 +87,22 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Add transaction"
+            hitSlop={6}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
               router.push('/add-transaction');
             }}
             style={({ pressed }) => [
-              styles.addTile,
+              styles.fab,
               shadows.limeGlow,
-              { backgroundColor: theme.primary },
+              { backgroundColor: theme.primary, borderColor: theme.surface },
               pressed ? { transform: [{ translateY: 1 }] } : null,
             ]}
           >
             {({ pressed }) => (
               <>
                 <PressOverlay pressed={pressed} radius={radii.addTile} />
-                <Plus size={22} color={theme.onPrimary} strokeWidth={2.4} />
-                <AppText variant="tabLabel" tone="onPrimary">Add</AppText>
+                <Plus size={26} color={theme.onPrimary} strokeWidth={2.5} />
               </>
             )}
           </Pressable>
@@ -109,11 +117,13 @@ const styles = StyleSheet.create({
   bar: {
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 8,
+    overflow: 'visible',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'stretch',
     height: layout.tabBar,
+    overflow: 'visible',
   },
   group: {
     flex: 1,
@@ -138,16 +148,17 @@ const styles = StyleSheet.create({
   addSlot: {
     width: 76,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    overflow: 'visible',
   },
-  addTile: {
-    width: layout.addTile.width,
-    height: layout.addTile.height,
-    borderRadius: radii.addTile,
+  fab: {
+    width: layout.addTile.size + FAB_RING * 2,
+    height: layout.addTile.size + FAB_RING * 2,
+    borderRadius: radii.addTile + FAB_RING,
+    borderWidth: FAB_RING,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 1,
-    marginTop: -14,
+    marginTop: -FAB_LIFT,
     overflow: 'visible',
   },
 });

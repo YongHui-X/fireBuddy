@@ -36,7 +36,7 @@ import {
   TrendingUp,
   Utensils,
 } from 'lucide-react';
-import type { AccountType as ApiAccountType, Tag as ApiTag, TransactionType } from '@firebuddy/shared';
+import type { AccountType as ApiAccountType, AiPreference, Tag as ApiTag, TransactionType, UserProfile } from '@firebuddy/shared';
 
 export type AccountType = ApiAccountType;
 
@@ -94,6 +94,12 @@ export interface AppContextValue {
   syncStatus: 'idle' | 'loading' | 'ready' | 'error';
   syncError: string | null;
   demoMode: boolean;
+  /** The signed-in user's profile, or null in demo mode and before it loads. */
+  profile: UserProfile | null;
+  /** How much the AI guide may see. `off` until the user consents. */
+  aiPreference: AiPreference;
+  aiPreferenceStatus: 'loading' | 'ready' | 'error';
+  setAiPreference: (preference: AiPreference) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;

@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from lib.clock import singapore_today
 from lib.repository import fetch_all
@@ -15,6 +16,9 @@ from services.ember_personal_context import trusted_data_block
 from services.ember_planner import EmberPlan, EmberToolName
 from services.financial_repository import load_financial_records
 from services.financial_summary import build_financial_summary
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from services.ember_masking import MaskingSession
 
 
 EXPENSE_COLUMNS = "amount,date,category_id,transaction_type"
@@ -35,15 +39,17 @@ class EmberDataResult:
     # Citations for reference figures; empty for tools over the user's own data.
     sources: list[AdvisorSource] = field(default_factory=list)
 
-    def context(self) -> str:
-        """Serialize only aggregate facts, never raw records or identity fields."""
+    def context(self, masking: "MaskingSession | None" = None) -> str:
+        """Serialize only aggregate facts, never raw records or identity fields.
 
-        label = (
-            "Trusted official reference figure supplied by the backend"
-            if self.tool == "figure_lookup"
-            else "Trusted FireBuddy data calculated by the backend"
-        )
-        return trusted_data_block(self.facts, label=label)
+        With a masking session every figure and user-entered name becomes a
+        placeholder. Official reference figures are public and stay in clear.
+        """
+
+        if self.tool == "figure_lookup":
+            return trusted_data_block(self.facts, label="Trusted official reference figure supplied by the backend")
+        facts = masking.mask_facts(self.facts) if masking is not None else self.facts
+        return trusted_data_block(facts, label="Trusted FireBuddy data calculated by the backend")
 
 
 def _money(value: Decimal | str | int) -> str:

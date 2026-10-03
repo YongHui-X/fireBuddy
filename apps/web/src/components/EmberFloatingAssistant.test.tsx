@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
 
 import type { RagStreamHandlers } from '../api';
 import { clearEmberAppActions, recordEmberAppAction } from '../app/emberAppContext';
@@ -7,6 +8,8 @@ import { EmberFloatingAssistant } from './EmberFloatingAssistant';
 
 const mocks = vi.hoisted(() => ({
   streamFinancialAdvisor: vi.fn(),
+  aiPreference: 'personalised' as 'off' | 'guide' | 'personalised',
+  setAiPreference: vi.fn(),
 }));
 
 vi.mock('../api', async () => {
@@ -16,7 +19,7 @@ vi.mock('../api', async () => {
 
 vi.mock('../app/fireBuddyContext', async () => {
   const actual = await vi.importActual<typeof import('../app/fireBuddyContext')>('../app/fireBuddyContext');
-  return { ...actual, useFireBuddy: () => ({ session: { access_token: 'access-token' } }) };
+  return { ...actual, useFireBuddy: () => ({ session: { access_token: 'access-token' }, aiPreference: mocks.aiPreference, aiPreferenceStatus: 'ready', setAiPreference: mocks.setAiPreference }) };
 });
 
 describe('floating Ember assistant', () => {
@@ -24,7 +27,19 @@ describe('floating Ember assistant', () => {
     window.localStorage.clear();
     clearEmberAppActions();
     mocks.streamFinancialAdvisor.mockReset();
+    mocks.aiPreference = 'personalised';
+    mocks.setAiPreference.mockReset().mockResolvedValue(undefined);
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
+  });
+
+  it('replaces the quick chat with the consent panel when AI is off', () => {
+    mocks.aiPreference = 'off';
+    render(<MemoryRouter><EmberFloatingAssistant pathname="/" onOpenFullEmber={vi.fn()} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Ember about Home dashboard' }));
+
+    expect(screen.getByRole('heading', { name: 'Turn on Ember' })).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: 'Ask about this page' })).toBeNull();
+    expect(mocks.streamFinancialAdvisor).not.toHaveBeenCalled();
   });
 
   it('opens from the page-labelled launcher and discloses shared context', async () => {
@@ -39,7 +54,7 @@ describe('floating Ember assistant', () => {
     const drawer = screen.getByRole('dialog', { name: 'Ask Ember' });
     expect(within(drawer).getByText(/Using context from Transactions/i)).toBeTruthy();
     fireEvent.click(within(drawer).getByText(/Using context from Transactions/i));
-    expect(within(drawer).getByText(/backend may also calculate read only aggregates for your signed in account/i)).toBeTruthy();
+    expect(within(drawer).getByText(/backend may also use a masked summary of your signed in account/i)).toBeTruthy();
     expect(within(drawer).getByText('Added a transaction')).toBeTruthy();
     await waitFor(() => expect(document.activeElement).toBe(within(drawer).getByRole('textbox', { name: 'Ask about this page' })));
   });

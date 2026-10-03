@@ -14,8 +14,17 @@ import { ageAt, describeAssets, describeIncome, describeSpending, describeTimeli
 import { useDraftProjection } from '../app/useDraftProjection';
 
 const steps = [{ title: 'Your timeline' }, { title: 'Spending and savings' }, { title: 'Retirement assets' }, { title: 'Retirement income' }, { title: 'Assumptions and review' }];
+// FIRE styles are presets on retirement spending as a share of today's expenses. Nothing is stored:
+// the active style is read back from the spending figure, so a typed amount simply reads as Custom.
+// Coast and Barista change how you get there (contribution, part-time income), not how much you spend.
+const fireStyles = [
+  { key: 'lean', label: 'Lean', ratio: 0.6, blurb: 'Frugal retirement, about 60% of what you spend now.' },
+  { key: 'regular', label: 'Regular', ratio: 1, blurb: 'Keep your current lifestyle in retirement.' },
+  { key: 'fat', label: 'Fat', ratio: 1.5, blurb: 'A more comfortable retirement, about 150% of what you spend now.' },
+] as const;
+const otherStylesHint = 'Coast FIRE: set your monthly investment to 0 in step 3. Barista FIRE: add part-time income in step 4.';
 // Product defaults from initialRetirementPlan, shown beside each assumption so a person knows what they changed.
-const assumptionDefaults = { beforeReturn: 0.05, afterReturn: 0.03, inflation: 0.025 } as const;
+const assumptionDefaults = { beforeReturn: 0.05, afterReturn: 0.03, inflation: 0.03 } as const;
 const assumptionHelp = {
   beforeReturn: 'Nominal yearly growth of your portfolio while you are still investing.',
   afterReturn: 'Nominal yearly growth once you are drawing down, usually lower for a safer mix.',
@@ -45,6 +54,7 @@ function GuidedSetup() {
   const isWideSetup = useMediaQuery(mq.setupWide);
   const prefersReducedMotion = useMediaQuery(mq.reducedMotion);
   const stepsRef = useRef<HTMLElement | null>(null);
+  const spendingRef = useRef<HTMLInputElement | null>(null);
   const [step, setStep] = useState(() => { const fromUrl = Number(params.get('step')); return fromUrl >= 1 && fromUrl <= 5 ? fromUrl - 1 : Math.min(4, Math.max(0, restored?.step ?? profile?.draftPlan?.step ?? 0)); });
   useEffect(() => { if (params.get('step') !== String(step + 1)) setParams({ step: String(step + 1) }, { replace: true }); }, [params, setParams, step]);
   const [busy, setBusy] = useState(false);
@@ -177,8 +187,19 @@ function GuidedSetup() {
             <label>Your monthly savings (SGD)<input type="number" step="1" value={savingsOverride ?? ''} placeholder={income === null || expenses === null ? 'Enter income and expenses' : `Calculated: ${income - expenses}`} onChange={e => setSavingsOverride(parse(e.target.value))} /></label>
           </div>
           {overridden && <div className="retirement-actions"><button type="button" className="text-button" onClick={() => { setIncomeOverride(null); setExpensesOverride(null); setSavingsOverride(null); }}>Reset to recorded averages</button></div>}
-          <label>How much will you spend during retirement? (per month, today’s SGD)<input type="number" required min="0" step="1" value={plan.monthlySpending} onChange={e => change('monthlySpending', Math.ceil(Number(e.target.value)))} /></label>
-          {expenses !== null && <div className="retirement-actions"><button type="button" className="secondary-button" onClick={() => change('monthlySpending', Math.ceil(expenses))}>Use recorded {formatSGD(expenses, 0)}</button>{expenses > 0 && <button type="button" className="secondary-button" onClick={() => change('monthlySpending', Math.ceil(expenses * 0.8))}>Use 80% of recorded</button>}</div>}
+          <h3>Which kind of FIRE are you aiming for?</h3>
+          {(() => {
+            const presetsAvailable = expenses !== null && expenses > 0;
+            const activeStyle = presetsAvailable ? fireStyles.find(style => Math.ceil(expenses * style.ratio) === plan.monthlySpending) ?? null : null;
+            return <>
+              <div className="transaction-type-toggle" role="group" aria-label="FIRE style">
+                {fireStyles.map(style => <button key={style.key} type="button" className={activeStyle?.key === style.key ? 'active' : ''} aria-pressed={activeStyle?.key === style.key} disabled={!presetsAvailable} title={presetsAvailable ? `${formatSGD(Math.ceil(expenses * style.ratio), 0)} a month` : 'Enter your monthly expenses first'} onClick={() => change('monthlySpending', Math.ceil(expenses! * style.ratio))}>{style.label}</button>)}
+                <button type="button" className={activeStyle ? '' : 'active'} aria-pressed={!activeStyle} onClick={() => spendingRef.current?.focus()}>Custom</button>
+              </div>
+              <p className="retirement-note">{activeStyle ? activeStyle.blurb : presetsAvailable ? 'Your own figure.' : 'Enter your monthly expenses above to unlock the Lean, Regular and Fat presets, or type your own figure below.'} {otherStylesHint}</p>
+            </>;
+          })()}
+          <label>How much will you spend during retirement? (per month, today’s SGD)<input ref={spendingRef} type="number" required min="0" step="1" value={plan.monthlySpending} onChange={e => change('monthlySpending', Math.ceil(Number(e.target.value)))} /></label>
         </>}
 
         {step === 2 && <>
@@ -212,10 +233,10 @@ function GuidedSetup() {
             return <div className={`retirement-insight retirement-preview${funded ? '' : ' retirement-preview-shortfall'}`} role="status">
               <strong>{funded ? `Funded through age ${plan.endAge} under these assumptions` : `Shortfall of ${formatSGD(Number(preview.fundingGap ?? 0), 0)} at retirement`}</strong>
               <dl className="retirement-preview-facts">
-                <div><dt>Required at retirement</dt><dd>{formatSGD(Number(preview.fiTarget ?? 0), 0)}</dd></div>
-                <div><dt>Projected at retirement</dt><dd>{formatSGD(Number(preview.projectedPortfolio ?? 0), 0)}</dd></div>
+                <div><dt>Amount needed for retirement</dt><dd>{formatSGD(Number(preview.fiTarget ?? 0), 0)}</dd></div>
+                <div><dt>Projected portfolio at retirement</dt><dd>{formatSGD(Number(preview.projectedPortfolio ?? 0), 0)}</dd></div>
                 <div><dt>Funded</dt><dd>{(Number(preview.progressRate ?? 0) * 100).toFixed(0)}%</dd></div>
-                <div><dt>Earliest funded retirement</dt><dd>{earliest ? `${monthLabel(earliest)}${earliestAge !== null ? ` (age ${earliestAge})` : ''}` : `Not before age ${plan.endAge}`}</dd></div>
+                <div><dt>Earliest you could retire</dt><dd>{earliest ? `${monthLabel(earliest)}${earliestAge !== null ? ` (age ${earliestAge})` : ''}` : `Not before age ${plan.endAge}`}</dd></div>
               </dl>
               <dl className="retirement-preview-facts retirement-preview-inputs">
                 <div><dt>Starting portfolio</dt><dd>{formatSGD(selectedAssets, 0)}</dd></div>

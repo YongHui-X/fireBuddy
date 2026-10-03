@@ -1,6 +1,6 @@
 # FireBuddy Product Requirements Document
 
-Last updated: 4 September 2026
+Last updated: 29 September 2026
 
 ## 1. Purpose and ownership
 
@@ -334,6 +334,35 @@ All **Current**, **Next**, and **Later** work keeps these constraints:
 8. Financial records and secrets are not written to application logs.
 9. AI output is educational. Projections are estimates, not guarantees or regulated advice.
 
+### 11.1 Hosting, cost, and data protection plan
+
+Decided 29 September 2026 after comparing managed cloud, a self hosted mini PC, and on device only storage for a production launch with real users. The target monthly platform cost is about 5 USD plus OpenAI usage.
+
+| Piece | Choice | Tier | Monthly |
+| --- | --- | --- | --- |
+| Database, Auth, pgvector | Supabase, Singapore region (`ap-southeast-1`) | Free | 0 USD |
+| FastAPI backend | Railway, Singapore region (existing `apps/backend/railway.toml`) | Hobby | 5 USD |
+| Web build | Cloudflare Pages preferred, Vercel Hobby acceptable for non commercial use | Free | 0 USD |
+| AI models | OpenAI `gpt-4o-mini` and `text-embedding-3-small`, bounded by the advisor and AI suggestion rate limits | Usage | 2 to 10 USD |
+
+Why managed cloud: user financial records need in region storage, encryption at rest, row level security, and a recovery path that does not depend on one machine or one home network. A self hosted box on a residential connection fails uptime, exposure, and PDPA reasonable security expectations for other people's data. On device only storage would require a sync engine and account recovery before anything else and would remove the server side aggregates Ember's data mode depends on.
+
+Why the free Supabase tier is acceptable at launch: the knowledge base is well under 50 MB with its HNSW index, user rows are small against the 500 MB limit, and the 50,000 monthly active user Auth allowance is not a constraint. The free tier has two production gaps, and both are closed by requirements below rather than by paying for Pro.
+
+Requirements before public launch:
+
+1. The Supabase project runs in the Singapore region. If the current project is elsewhere, create a new project there and apply the migrations.
+2. A nightly `pg_dump` of the Supabase database runs from a scheduled GitHub Actions workflow and uploads the compressed dump to free object storage (Cloudflare R2 or Backblaze B2). The workflow must not depend on the mini PC being online.
+3. A restore of the latest dump into a local Supabase instance is tested and documented before launch, then repeated after any migration that changes user tables.
+4. A scheduled GitHub Actions keep alive runs at least every three days and calls a backend route that touches the database, so the free project never pauses for inactivity.
+5. The advisor and AI suggestion rate limits stay enabled in production because OpenAI usage is the only cost that scales with users.
+6. Raw transactions, balances, and memos never leave the database for the AI layer. Implemented: aggregates are masked into placeholder tokens plus coarse bands before any OpenAI call, the question and history are scrubbed of amounts and user-entered names, the planner cannot emit SQL or user identifiers, every call sets `store=False`, and the invariant is stated in the privacy notice. AI is off per user until consented (`profiles.ai_preference`). See `docs/PRIVACY.md`.
+7. Users can export their data and delete their account end to end, which the PDPA access and correction obligations require. Implemented: `GET /account/export` and `DELETE /account`, surfaced on Profile as Download my data and Delete account.
+
+The mini PC is limited to workloads that never hold user data: staging, the eval suite, the monthly knowledge base refresh, and optional local model experiments. It does not serve production traffic and does not hold production backups as the only copy.
+
+Upgrade trigger: move Supabase to Pro (about 25 USD, daily backups, optional point in time recovery) the first time a day of lost user entries would be unacceptable, or when database size approaches 400 MB. An opt in local mode that keeps records on device with reduced Ember features is a **Later** privacy tier built on top of the cloud product, never a replacement for it.
+
 ## 12. Functional reference boundaries
 
 [WealthWise](https://github.com/hoangsonww/WealthWise-Finance-Tracker) is a functional benchmark only. FireBuddy may learn from its dashboard hierarchy, budgets, goals, recurring detection, analytics, CSV review, and data grounded assistance.
@@ -354,6 +383,8 @@ These capabilities are **Excluded**:
 8. MCP tool sprawl, multiple user facing agent services, graph infrastructure, Kubernetes, Terraform, or multi cloud work added for feature count
 9. Telegram integration and iOS App Store submission in the active roadmap
 10. External product source copying or pixel for pixel replication
+11. Serving production traffic or storing production user data on home hardware
+12. On device only storage as the primary data store
 
 ## 14. Delivery roadmap
 
@@ -407,6 +438,7 @@ Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivi
 10. Route and migration security tests prove account isolation for all new identifiers.
 11. Existing web, shared type, backend, migration, and Ember regressions remain green.
 12. A localhost smoke journey covers auth, transaction entry, wealth setup, snapshot update, contribution entry, FIRE assumptions, dashboard reconciliation, responsive layouts, and sign out.
+13. The section 11.1 launch requirements are met: Singapore region confirmed, nightly backup workflow green with at least one dump in object storage, a tested restore, the keep alive workflow scheduled, rate limits enabled, and export and account deletion verified.
 
 ### 15.3 Calculation tests
 

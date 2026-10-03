@@ -136,6 +136,9 @@ class FakeSupabase:
         self.rows = deepcopy(rows or {})
         self.max_rows = max_rows
         self.next_id = 1
+        self.deleted_users: list[str] = []
+        self.fail_auth_delete = False
+        self.auth = FakeAuth(self)
 
     def table(self, table_name: str) -> FakeQuery:
         return FakeQuery(self, table_name)
@@ -203,6 +206,25 @@ class FakeSupabase:
             return {"created_at": now, **values}
 
         return {"id": generated_id, **values}
+
+
+class FakeAuthAdmin:
+    """Record admin sign-in deletions and simulate an upstream failure."""
+
+    def __init__(self, client: FakeSupabase):
+        self.client = client
+
+    def delete_user(self, user_id: str):
+        self.client.deleted_users.append(user_id)
+        if self.client.fail_auth_delete:
+            raise RuntimeError("Auth deletion failed")
+
+
+class FakeAuth:
+    """Expose the nested auth admin API used by account deletion."""
+
+    def __init__(self, client: FakeSupabase):
+        self.admin = FakeAuthAdmin(client)
 
 
 class FakeRpcQuery:

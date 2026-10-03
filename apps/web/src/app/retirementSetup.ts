@@ -19,13 +19,13 @@ export function initialRetirementPlan(profile: FireProfile | null, positions: We
     monthlySpending: Number(profile?.retirementSpendingOverride ?? 0), monthlyContribution: Number(profile?.monthlyContribution ?? 0),
     assetIds: positions.filter(p => eligibleRetirementAsset(p) && p.includeInFi).map(p => p.id), portfolioOverride: null,
     cpfPlan: 'unknown', cpfStartAge: 65, cpfMonthlyPayout: 0, otherIncome: [],
-    beforeReturn: Number(profile?.expectedReturnRate ?? 0.05), afterReturn: 0.03, inflation: Number(profile?.inflationRate ?? 0.025),
+    beforeReturn: Number(profile?.expectedReturnRate ?? 0.05), afterReturn: 0.03, inflation: Number(profile?.inflationRate ?? 0.03),
     provenance: { birthMonth: 'assumed', retirementMonth: 'recorded', monthlySpending: 'user-entered', monthlyContribution: 'user-entered', assetIds: 'recorded', cpfMonthlyPayout: 'user-entered', beforeReturn: 'assumed', afterReturn: 'assumed', inflation: 'assumed', endAge: 'assumed' },
   };
 }
 /** Preserve legacy columns for compatibility and review. */
 export function legacyProfileValues(profile: FireProfile | null) {
-  return { monthlyContribution: profile?.monthlyContribution ?? '0', expectedReturnRate: profile?.expectedReturnRate ?? '0.05', inflationRate: profile?.inflationRate ?? '0.025', withdrawalRate: profile?.withdrawalRate ?? '0.04', retirementSpendingOverride: profile?.retirementSpendingOverride ?? null, targetFiDate: profile?.targetFiDate ?? null, birthYear: profile?.birthYear ?? null };
+  return { monthlyContribution: profile?.monthlyContribution ?? '0', expectedReturnRate: profile?.expectedReturnRate ?? '0.05', inflationRate: profile?.inflationRate ?? '0.03', withdrawalRate: profile?.withdrawalRate ?? '0.04', retirementSpendingOverride: profile?.retirementSpendingOverride ?? null, targetFiDate: profile?.targetFiDate ?? null, birthYear: profile?.birthYear ?? null };
 }
 /** Translate a confirmed age into its Singapore calendar month. */
 export function retirementAtAge(birth: string, age: number) {

@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AddExpense from './AddExpense';
+import { ApiRequestError } from '../api';
 
 
 const mocks = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   categories: [] as Array<Record<string, unknown>>,
   accounts: [] as Array<Record<string, unknown>>,
   tags: [] as Array<Record<string, unknown>>,
+  aiPreference: 'personalised' as 'off' | 'guide' | 'personalised',
 }));
 
 const categories = [
@@ -43,11 +45,13 @@ vi.mock('../app/fireBuddyContext', async () => {
       tags: mocks.tags,
       session: { access_token: 'access-token' },
       syncStatus: 'ready',
+      aiPreference: mocks.aiPreference,
     }),
   };
 });
 
-vi.mock('../api', () => ({
+vi.mock('../api', async () => ({
+  ...await vi.importActual<typeof import('../api')>('../api'),
   suggestExpenseCategory: mocks.suggestExpenseCategory,
 }));
 
@@ -61,6 +65,22 @@ describe('AddExpense', () => {
     mocks.categories = [...categories];
     mocks.accounts = [...accounts];
     mocks.tags = [];
+    mocks.aiPreference = 'personalised';
+  });
+
+  it('hides Autodetect category unless the level is personalised', () => {
+    mocks.aiPreference = 'guide';
+    render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+    expect(screen.queryByRole('button', { name: 'Autodetect category' })).toBeNull();
+  });
+
+  it('shows the ai_disabled message when the server refuses', async () => {
+    mocks.suggestExpenseCategory.mockRejectedValue(new ApiRequestError('AI suggestions are off', 403, 'ai_disabled'));
+    render(<MemoryRouter initialEntries={['/add']}><AddExpense /></MemoryRouter>);
+
+    fireEvent.change(screen.getByPlaceholderText('Netflix'), { target: { value: 'Dinner' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Autodetect category' }));
+    expect(await screen.findByText('AI suggestions are off. Turn them on in Profile.')).toBeTruthy();
   });
 
   it('presents the transaction form as a labelled modal dialog', () => {

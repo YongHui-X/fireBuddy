@@ -12,9 +12,9 @@ Current repo state:
 - The repo now uses the root monorepo shape with `apps/`, `packages/`, and `docs/`.
 - `apps/web/` is the active React and Vite frontend.
 - `apps/web/` includes Supabase auth, typed income and expense transactions, read-only system categories, custom category management, persisted accounts, expense-only insights, optional AI category suggestions, financial advisor chat history, and explicit demo-only local state.
-- `apps/backend/` is the FastAPI backend with mounted health, accounts, transactions, compatibility expenses, categories, AI suggestion, and financial advisor RAG routes.
-- `apps/mobile/` contains the Expo app with the web design system ported (`constants/tokens.ts`), a safe-area-aware shell, the four tabs and the Add transaction sheet on local demo data from `packages/shared`. Supabase and backend wiring are still pending.
-- `packages/shared/` contains shared TypeScript contracts for accounts, categories, transactions, expenses, AI, and RAG, plus category data, add-expense helpers, API route constants, and the modules both frontends share: formatters (`format.ts`), the demo dataset (`demo-data.ts`), ledger maths (`ledger.ts`), donut geometry (`charts.ts`), category icon ids (`category-icons.ts`) and the transaction draft (`transaction-draft.ts`).
+- `apps/backend/` is the FastAPI backend with mounted health, accounts, transactions, compatibility expenses, categories, AI suggestion, financial advisor RAG, profile (AI consent level), and account export and deletion routes.
+- `apps/mobile/` contains the Expo app with the web design system ported (`constants/tokens.ts`), a safe-area-aware shell, the four tabs, the Add transaction sheet, and the secondary Wealth, FIRE Planner, Insights, Accounts, Plan, Ember and Goals screens on local demo data from `packages/shared`. Ember needs a configured API base URL and token; Supabase auth and backend data wiring are still pending.
+- `packages/shared/` contains shared TypeScript contracts for accounts, categories, transactions, expenses, AI, and RAG, plus category data, add-expense helpers, API route constants, and the modules both frontends share: formatters (`format.ts`), the demo dataset (`demo-data.ts`), ledger maths (`ledger.ts`), Insights ranges and series (`insights.ts`), the CSV export builder (`transaction-export.ts`), essential-spending maths (`essential.ts`), donut geometry (`charts.ts`), category icon ids (`category-icons.ts`), the transaction draft (`transaction-draft.ts`), the client-side masking session (`masking.ts`), the device snapshot builder (`personal-snapshot.ts`) and the encrypted backup format (`backup.ts`).
 - `supabase/` contains timestamped SQL migrations for UUID alignment, profiles, typed categories, persisted accounts, income and expense transactions, security, and private hybrid RAG storage.
 
 Ongoing repo direction:
@@ -89,6 +89,7 @@ Root orchestration direction:
 - When adapting the current Expo code in `apps/mobile` toward the target architecture, optimise for later reuse in `packages/shared`.
 - For backend changes, keep JWT verification in FastAPI for protected app data routes and keep Supabase Auth as the only auth system.
 - For RAG changes, keep ingestion, retrieval, advisor response generation, and knowledge-base refresh concerns separated unless a small integration change requires touching multiple layers.
+- Every OpenAI call must set `store=False` and may receive only scrubbed or masked text: route new calls through `services/ember_masking.py` and check `services/ai_preference.py` first. Never add a code path that sends an exact user figure, a transaction description, or a user-entered name to the provider. See `docs/PRIVACY.md`.
 
 ## Frontend Workflow
 For new screens or flows, prefer this sequence unless the user asks otherwise:

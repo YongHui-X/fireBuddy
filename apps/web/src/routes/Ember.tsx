@@ -35,6 +35,7 @@ import { useFireBuddy } from '../app/fireBuddyContext';
 import { mq } from '../app/breakpoints';
 import { useMediaQuery } from '../app/useMediaQuery';
 import { getEmberSuggestedQuestions } from '../app/emberSuggestions';
+import { EmberConsentPanel } from '../components/EmberConsentPanel';
 import { useAccessibleDialog } from '../components/useAccessibleDialog';
 import {
   EMBER_ACTIVE_TOPIC_STORAGE_KEY,
@@ -297,7 +298,7 @@ export default function Ember({
   onToggleMainSidebar = () => undefined,
   appContextPathname,
 }: EmberProps) {
-  const { session } = useFireBuddy();
+  const { session, aiPreference, setAiPreference } = useFireBuddy();
   const storageUserId = session?.user?.id;
   const initialStateRef = useRef(loadEmberState(window.localStorage, storageUserId));
   const loadedStorageUserIdRef = useRef(storageUserId);
@@ -491,7 +492,8 @@ export default function Ember({
   /** Submit one question and update its stable assistant message as SSE events arrive. */
   async function submitQuestion(rawQuestion: string, retryError?: EmberMessage) {
     const trimmedQuestion = rawQuestion.trim();
-    if (!trimmedQuestion || trimmedQuestion.length > MAX_QUESTION_LENGTH) {
+    // Consent gate: while AI is off, nothing leaves the browser.
+    if (aiPreference === 'off' || !trimmedQuestion || trimmedQuestion.length > MAX_QUESTION_LENGTH) {
       return;
     }
 
@@ -749,7 +751,7 @@ export default function Ember({
                   : undefined}
               />
             ))}
-            {activeTopic.messages.length === 0 ? (
+            {activeTopic.messages.length === 0 && aiPreference !== 'off' ? (
               <section className="ember-starters" aria-labelledby="ember-starters-title">
                 <div className="ember-empty-introduction">
                   <span className="ember-empty-mark"><EmberMark size={30} /></span>
@@ -782,6 +784,9 @@ export default function Ember({
             ) : null}
           </div>
 
+          {aiPreference === 'off' ? (
+            <EmberConsentPanel onChoose={(level) => setAiPreference(level)} />
+          ) : (
           <form className="ember-composer" onSubmit={handleSubmit}>
             <label className="visually-hidden" htmlFor="ember-question">Ask Ember</label>
             <div className="ember-composer-field">
@@ -806,6 +811,7 @@ export default function Ember({
               <span id="ember-character-count">{question.length.toLocaleString('en-SG')} / {MAX_QUESTION_LENGTH.toLocaleString('en-SG')}</span>
             </div>
           </form>
+          )}
         </section>
 
         <aside

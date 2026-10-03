@@ -10,6 +10,7 @@ import {
 } from '../app/emberAppContext';
 import { EmberMark } from '../app/BrandMarks';
 import { EmberRichText } from '../app/emberRichText';
+import { EmberConsentPanel } from './EmberConsentPanel';
 import { useFireBuddy } from '../app/fireBuddyContext';
 import {
   EMBER_ACTIVE_TOPIC_STORAGE_KEY,
@@ -76,7 +77,7 @@ type EmberFloatingAssistantProps = {
 
 /** Render Ember as a persistent, page-aware quick-chat drawer alongside the full route. */
 export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloatingAssistantProps) {
-  const { session } = useFireBuddy();
+  const { session, aiPreference, setAiPreference } = useFireBuddy();
   const storageUserId = session?.user?.id;
   const initialStateRef = useRef(loadEmberState(window.localStorage, storageUserId));
   const loadedStorageUserIdRef = useRef(storageUserId);
@@ -96,7 +97,8 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
   const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
   const appContext = useMemo(() => buildEmberAppContext(pathname), [actionRevision, pathname]);
   const pageSuggestion = getEmberPageSuggestion(pathname);
-  const canSend = Boolean(session?.access_token) && question.trim().length > 0
+  const aiOff = aiPreference === 'off';
+  const canSend = !aiOff && Boolean(session?.access_token) && question.trim().length > 0
     && question.length <= MAX_QUESTION_LENGTH;
 
   useEffect(() => subscribeToEmberAppActions(() => setActionRevision((current) => current + 1)), []);
@@ -167,7 +169,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
   async function submitQuestion(rawQuestion: string) {
     const trimmedQuestion = rawQuestion.trim();
     const topicSnapshot = topics.find((topic) => topic.id === activeTopicId);
-    if (!trimmedQuestion || !topicSnapshot || !session?.access_token) {
+    if (aiOff || !trimmedQuestion || !topicSnapshot || !session?.access_token) {
       return;
     }
 
@@ -291,9 +293,13 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
             <div><EmberMark size={24} /><span><strong id="ember-floating-title">Ask Ember</strong></span></div>
             <button type="button" onClick={closeAssistant} aria-label="Close Ember"><X size={18} /></button>
           </header>
+          {aiOff ? (
+            <EmberConsentPanel compact onChoose={(level) => setAiPreference(level)} />
+          ) : (
+          <>
           <details className="ember-floating-context">
             <summary><Sparkles size={14} />Using context from {appContext.currentPage}</summary>
-            <p>The page and generic action labels help interpret the question. If you ask about your finances, the backend may also calculate read only aggregates for your signed in account.</p>
+            <p>The page and generic action labels help interpret the question. If you ask about your finances, the backend may also use a masked summary of your signed in account; exact figures never leave FireBuddy.</p>
             {appContext.recentActions.length > 0 ? (
               <ul>{appContext.recentActions.map((action) => <li key={`${action.occurredAt}-${action.label}`}>{action.label}</li>)}</ul>
             ) : <p>No recent actions recorded in this session.</p>}
@@ -325,6 +331,8 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
               <button type="submit" disabled={!canSend} aria-label="Send question to Ember"><ArrowUp size={17} /></button>
             </div>
           </form>
+          </>
+          )}
           <footer>
             <span>Educational information only</span>
             <button type="button" onClick={() => { closeAssistant(); onOpenFullEmber(); }}>Open full Ember</button>

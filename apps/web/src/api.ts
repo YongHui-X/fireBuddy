@@ -27,7 +27,9 @@ import {
   type TransactionExportFilters,
   type UpdateCategoryInput,
   type UpdateAccountInput,
+  type UpdateAiPreferenceInput,
   type UpdateTransactionInput,
+  type UserProfile,
   type UpdateFireProfileInput,
   type UpdateWealthContributionInput,
   type UpdateWealthPositionInput,
@@ -116,16 +118,52 @@ async function readApiError(response: Response): Promise<ApiRequestError> {
   const message = await response.text();
   let errorMessage = message || `Request failed with ${response.status}`;
 
+  let code: string | undefined;
+
   try {
     const parsed = JSON.parse(message) as { detail?: unknown };
     if (typeof parsed.detail === 'string') {
       errorMessage = parsed.detail;
+    } else if (parsed.detail && typeof parsed.detail === 'object') {
+      // Structured refusals such as {"code": "ai_disabled", "message": "..."}.
+      const detail = parsed.detail as { code?: unknown; message?: unknown };
+      if (typeof detail.message === 'string') errorMessage = detail.message;
+      if (typeof detail.code === 'string') code = detail.code;
     }
   } catch {
     // Keep the raw message when the response is not JSON.
   }
 
-  return new ApiRequestError(errorMessage, response.status);
+  return new ApiRequestError(errorMessage, response.status, code);
+}
+
+export function getProfile(token: string) {
+  return request<UserProfile>(apiRoutes.profile, token);
+}
+
+export function updateAiPreference(token: string, input: UpdateAiPreferenceInput) {
+  return request<UserProfile>(apiRoutes.profileAiPreference, token, { method: 'PUT', body: JSON.stringify(input) });
+}
+
+/** Download everything FireBuddy holds for the signed-in user, keeping the backend filename. */
+export async function exportAccount(token: string) {
+  const response = await fetch(`${API_BASE_URL}${apiRoutes.accountExport}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  if (!response.ok) throw await readApiError(response);
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? 'firebuddy-export.json';
+  return { blob: await response.blob(), filename };
+}
+
+/** Delete the account, its rows and its sign-in. A missing account counts as already deleted. */
+export async function deleteAccountPermanently(token: string) {
+  try {
+    await request<void>(apiRoutes.account, token, { method: 'DELETE' });
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) return;
+    throw error;
+  }
 }
 
 export function getCategories(token: string) {

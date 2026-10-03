@@ -45,12 +45,39 @@ class AdvisorAppContext(BaseModel):
   )
 
 
+MAX_CLIENT_SNAPSHOT_CHARS = 3600
+
+
+class AdvisorClientSnapshot(BaseModel):
+  """A snapshot the device computed and masked itself. Only placeholders and bands should be inside."""
+
+  model_config = ConfigDict(populate_by_name=True)
+
+  effective_date: str = Field(..., alias="effectiveDate", min_length=10, max_length=10)
+  facts: dict
+
+  @field_validator("facts")
+  @classmethod
+  def bound_facts(cls, value: dict):
+    """Refuse oversized or non-JSON blocks; the backend never inspects the figures themselves."""
+
+    import json
+
+    if len(json.dumps(value)) > MAX_CLIENT_SNAPSHOT_CHARS:
+      raise ValueError("Client snapshot is too large")
+    return value
+
+
 class AdvisorRequest(BaseModel):
   model_config = ConfigDict(populate_by_name=True)
 
   question: str = Field(..., min_length=1, max_length=2000)
   history: list[ChatMessage] = Field(default_factory=list, max_length=20)
   app_context: AdvisorAppContext | None = Field(default=None, alias="appContext")
+  # Set by a device that keeps the records: it scrubbed the text and masked the snapshot itself,
+  # so the backend forwards tokens untouched and the device restores the values.
+  client_masked: bool = Field(default=False, alias="clientMasked")
+  client_snapshot: AdvisorClientSnapshot | None = Field(default=None, alias="clientSnapshot")
 
   @field_validator("question")
   @classmethod
