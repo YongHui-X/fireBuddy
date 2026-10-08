@@ -1,5 +1,5 @@
 import { X } from 'lucide-react-native';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
@@ -70,7 +70,7 @@ export function BottomSheet({
   const { height: windowHeight } = useWindowDimensions();
   const [mounted, setMounted] = useState(open);
   const [keyboardInset, setKeyboardInset] = useState(0);
-  const progress = useRef(new Animated.Value(0)).current;
+  const [progress] = useState(() => new Animated.Value(0));
 
   const [iosKeyboard, setIosKeyboard] = useState(0);
 
@@ -98,9 +98,11 @@ export function BottomSheet({
     };
   }, [fill]);
 
+  // Mount as soon as the sheet opens; unmount only after the closing animation has finished.
+  if (open && !mounted) setMounted(true);
+
   useEffect(() => {
     if (open) {
-      setMounted(true);
       Animated.timing(progress, { toValue: 1, duration: DURATION, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
       return;
     }

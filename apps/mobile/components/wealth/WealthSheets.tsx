@@ -17,12 +17,13 @@ import {
   type WealthPositionKind,
   type WealthPositionType,
 } from '@firebuddy/shared';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { spacing } from '@/constants/tokens';
 import { usePrivacy } from '@/lib/privacy';
 import { useRegion } from '@/lib/user-profile';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 import { ActionSheet } from '../ui/ActionSheet';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -130,14 +131,13 @@ export function WealthAddSheet({ open, initialTab, fiAssets, onClose, onAddPosit
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
+  useResetWhen(open, () => {
     setTab(initialTab);
     setName(''); setAssetType('cash'); setDebtType('loan'); setAmount('');
     setIncludeInFi(true); setLocked(false); setEmergency(false);
     setRate(''); setPayment(''); setNextPayment(''); setOriginal(''); setTarget('');
     setAssetId(fiAssets[0]?.id ?? ''); setDate(today); setNote(''); setError(null);
-  }, [open, initialTab, fiAssets, today]);
+  });
 
   function submit() {
     setError(null);
@@ -270,7 +270,8 @@ export function PositionEditSheet({ position, latestAmount, latestDate, onClose,
   const [goalMonth, setGoalMonth] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Reseed the form each time a position is opened for editing.
+  useResetWhen(position?.id ?? null, () => {
     if (!position) return;
     setName(position.name);
     setPositionType(position.positionType);
@@ -286,7 +287,7 @@ export function PositionEditSheet({ position, latestAmount, latestDate, onClose,
     setOriginalLoan(moneyText(position.originalPrincipal));
     setGoalMonth(position.payoffTargetMonth ?? '');
     setError(null);
-  }, [position, latestAmount, today]);
+  });
 
   function submit() {
     if (!position) return;

@@ -1,7 +1,7 @@
 import { formatDateLabel, formatMonthLabel, formatShortDate, type LedgerFilters, type Transaction } from '@firebuddy/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Copy, Download, Ellipsis, Pencil, Repeat, SlidersHorizontal, Tags, Trash2, Wallet } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
 import { Screen, useScreenInsets } from '@/components/layout/Screen';
@@ -27,6 +27,7 @@ import { shareTransactionsCsv } from '@/lib/export-csv';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
 import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 const emptyFilters: LedgerFilterDraft = { transactionType: null, categoryId: null, accountId: null, tagId: null, startDate: null, endDate: null };
 
@@ -40,7 +41,9 @@ export default function TransactionsScreen() {
   const { transactions, categories, accounts, tags, recurringRules, getCategoryById, getAccountById, deleteTransaction, duplicateTransaction, addTag, renameTag, deleteTag, updateRecurringRule, deleteRecurringRule, notify } = useFireBuddy();
   const latestMonth = useCurrentMonth();
   const months = useTransactionMonths();
-  const [month, setMonth] = useState(latestMonth);
+  const [pickedMonth, setMonth] = useState(latestMonth);
+  // A month with no entries left (say, after deleting its last one) falls back to the newest month.
+  const month = months.includes(pickedMonth) ? pickedMonth : (months[0] ?? latestMonth);
   const [search, setSearch] = useState('');
   const [draft, setDraft] = useState<LedgerFilterDraft>(emptyFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -53,22 +56,15 @@ export default function TransactionsScreen() {
   const [recurringOpen, setRecurringOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    if (typeof q === 'string' && q) setSearch(q);
-  }, [q]);
+  useResetWhen(typeof q === 'string' && q ? q : null, () => setSearch(q as string));
 
   // Arriving from a save: show that month with no filters so the new entry is on screen.
-  useEffect(() => {
-    if (typeof requestedMonth === 'string' && /^\d{4}-\d{2}$/.test(requestedMonth)) {
-      setMonth(requestedMonth);
-      setDraft(emptyFilters);
-      setSearch('');
-    }
-  }, [requestedMonth, saved]);
-
-  useEffect(() => {
-    if (!months.includes(month)) setMonth(months[0] ?? latestMonth);
-  }, [months, month, latestMonth]);
+  const arrival = typeof requestedMonth === 'string' && /^\d{4}-\d{2}$/.test(requestedMonth) ? `${requestedMonth}|${saved ?? ''}` : null;
+  useResetWhen(arrival, () => {
+    setMonth(requestedMonth as string);
+    setDraft(emptyFilters);
+    setSearch('');
+  });
 
   const filters = useMemo<LedgerFilters>(() => ({ ...draft, search, monthKey: month }), [draft, search, month]);
   const ledger = useFilteredLedger(filters);

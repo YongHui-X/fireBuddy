@@ -1,10 +1,11 @@
 import type { Tag } from '@firebuddy/shared';
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
@@ -34,12 +35,11 @@ export function TagsSheet({ open, tags, usageCounts, onClose, onCreate, onRename
   const [deleting, setDeleting] = useState<Tag | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
+  useResetWhen(open, () => {
     setDraft('');
     setEditingId(null);
     setError(null);
-  }, [open]);
+  });
 
   const duplicate = (name: string, exceptId?: string) => tags.some((tag) => tag.id !== exceptId && tag.name.toLowerCase() === name.toLowerCase());
 

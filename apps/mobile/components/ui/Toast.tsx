@@ -1,5 +1,5 @@
 import { Check, X } from 'lucide-react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,7 +19,7 @@ export interface ToastProps {
 export function Toast({ message, onDismiss, aboveTabBar = true }: ToastProps) {
   const { theme, shadows } = useTheme();
   const insets = useSafeAreaInsets();
-  const opacity = useRef(new Animated.Value(0)).current;
+  const [opacity] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (!message) return;

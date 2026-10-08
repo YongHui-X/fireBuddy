@@ -1,11 +1,12 @@
 import { MIN_PASSPHRASE_LENGTH } from '@firebuddy/shared';
 import { KeyRound } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { spacing } from '@/constants/tokens';
 import type { BackupStep } from '@/hooks/use-backup';
 import { useTheme } from '@/lib/theme';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
@@ -28,12 +29,11 @@ export function BackupSheet({ mode, step, onClose, onSubmit }: BackupSheetProps)
   const [error, setError] = useState<string | null>(null);
   const busy = step !== 'idle';
 
-  useEffect(() => {
-    if (!mode) return;
+  useResetWhen(mode, () => {
     setPassphrase('');
     setConfirm('');
     setError(null);
-  }, [mode]);
+  });
 
   async function submit() {
     if (mode === 'backup' && passphrase !== confirm) {

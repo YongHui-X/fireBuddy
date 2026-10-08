@@ -1,11 +1,12 @@
 import { categoryColors, categoryIconOptions, sanitizeAmountInput, type Category, type CreateCategoryInput, type TransactionType } from '@firebuddy/shared';
 import { Check, Trash2 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { radii, spacing, tint } from '@/constants/tokens';
 import { getIconById } from '@/lib/category-icons';
 import { useTheme } from '@/lib/theme';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
@@ -36,15 +37,14 @@ export function CategorySheet({ open, mode, categoryType, initial, onClose, onSa
   const [budget, setBudget] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
+  useResetWhen(open, () => {
     setName(initial?.name ?? '');
     setType(initial?.categoryType ?? categoryType);
     setIcon(initial?.icon ?? (categoryType === 'income' ? 'income' : 'others'));
     setColor(initial?.color ?? categoryColors[0]);
     setBudget(initial && Number(initial.monthlyBudget) > 0 ? String(Number(initial.monthlyBudget)) : '');
     setError(null);
-  }, [open, initial, categoryType]);
+  });
 
   function save() {
     const trimmed = name.trim();

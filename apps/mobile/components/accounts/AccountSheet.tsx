@@ -1,10 +1,11 @@
 import { accountTypeLabels, categoryColors, type Account, type AccountType, type CreateAccountInput } from '@firebuddy/shared';
 import { Banknote, Building2, Check, CreditCard, Smartphone, Star, Trash2, WalletCards, type LucideIcon } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { radii, spacing, tint } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
@@ -44,14 +45,13 @@ export function AccountSheet({ open, mode, initial, deleteBlockedReason = null, 
   const [lastFour, setLastFour] = useState('');
   const [errors, setErrors] = useState<{ name?: string; lastFour?: string }>({});
 
-  useEffect(() => {
-    if (!open) return;
+  useResetWhen(open, () => {
     setName(initial?.name ?? '');
     setType(initial?.type ?? 'bank');
     setColor(initial?.color ?? categoryColors[0]);
     setLastFour(initial?.lastFour ?? '');
     setErrors({});
-  }, [open, initial]);
+  });
 
   function save() {
     const next: typeof errors = {};

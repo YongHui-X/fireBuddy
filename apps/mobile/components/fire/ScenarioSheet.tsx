@@ -1,11 +1,12 @@
 import { monthIndex, sanitizeAmountInput, type FireCalculationResult, type RetirementPlan } from '@firebuddy/shared';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { spacing } from '@/constants/tokens';
 import { fireMonthLabel, pct, useFireProjection, type PlanOverrides } from '@/hooks/use-fire-plan';
 import { useTheme } from '@/lib/theme';
 import { usePrivacy } from '@/lib/privacy';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
@@ -73,12 +74,11 @@ export function ScenarioSheet({ open, baseline, onClose }: ScenarioSheetProps) {
   const [error, setError] = useState<string | null>(null);
   const scenario = useFireProjection(overrides ?? undefined);
 
-  useEffect(() => {
-    if (!open) return;
+  useResetWhen(open, () => {
     setDraft(draftFrom(plan));
     setOverrides(null);
     setError(null);
-  }, [open, plan]);
+  });
 
   const set = (key: keyof Draft) => (text: string) => {
     setOverrides(null);

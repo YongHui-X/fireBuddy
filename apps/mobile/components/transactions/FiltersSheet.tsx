@@ -1,9 +1,10 @@
 import { formatLongDate, getDeviceDateKey, getDeviceMonthKey, shiftMonthKey, type LedgerFilters, type TransactionType } from '@firebuddy/shared';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { spacing } from '@/constants/tokens';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { useResetWhen } from '@/hooks/use-reset-when';
 
 import { ActionSheet, type SheetAction } from '../ui/ActionSheet';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -37,9 +38,7 @@ export function FiltersSheet({ open, value, onClose, onApply }: FiltersSheetProp
   const [draft, setDraft] = useState<LedgerFilterDraft>(value);
   const [picker, setPicker] = useState<Picker>(null);
 
-  useEffect(() => {
-    if (open) setDraft(value);
-  }, [open, value]);
+  useResetWhen(open, () => setDraft(value));
 
   const typeChoice: TypeChoice = draft.transactionType ?? 'all';
   const visibleCategories = draft.transactionType ? categories.filter((category) => category.categoryType === draft.transactionType) : categories;
