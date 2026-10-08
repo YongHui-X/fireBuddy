@@ -129,6 +129,7 @@ The repository has web Vitest coverage, backend `unittest` coverage, migration s
 - For backend work, run targeted tests or `python -m unittest discover apps/backend/tests -v`, plus Python compile checks where practical
 - Local unit tests use fakes and placeholder credentials where possible. Live RAG ingestion and evaluation still require valid Supabase and OpenAI credentials
 - CI currently typechecks shared and web code, builds and tests the web app, lints mobile, runs backend tests, and compiles key backend modules
+- The Security workflow (`.github/workflows/security.yml`) runs Gitleaks, Semgrep (OWASP Top 10), Bandit, pip-audit, npm audit and an OWASP ZAP API scan; see `docs/SECURITY_TESTING.md`. Pin new GitHub actions to a commit SHA
 - For monorepo work, document which app or package owns each test command
 
 ## Commit And Pull Request Guidelines

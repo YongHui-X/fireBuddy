@@ -213,7 +213,7 @@ Why each claim holds:
 ## Operational checklist (not enforced by code)
 
 - [x] Data Protection Officer: the owner (8 Oct 2026), reached at `firebuddyapp@gmail.com` and named by role in the phone privacy policy.
-- [ ] Create the `firebuddyapp@gmail.com` inbox and forward it; it is the
+- [x] Create the `firebuddyapp@gmail.com` inbox (done 8 Oct 2026); it is the
       published support and data protection contact.
 - [ ] Request zero data retention on the OpenAI API organisation, or move the
       client to Azure OpenAI in the Southeast Asia region. Until one is in

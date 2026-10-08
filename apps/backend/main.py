@@ -5,6 +5,7 @@ import sys
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from config import settings
 from lib.auth import require_registered_user
@@ -60,6 +61,31 @@ app.add_middleware(
     allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allow_headers=['Authorization', 'Content-Type'],
 )
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add the OWASP baseline response headers for a JSON API.
+
+    Answers carry personal finance context, so nothing may be cached or framed. The strict CSP
+    is skipped on the local-only API docs, which load Swagger UI from a CDN.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        headers = response.headers
+        headers.setdefault('X-Content-Type-Options', 'nosniff')
+        headers.setdefault('X-Frame-Options', 'DENY')
+        headers.setdefault('Referrer-Policy', 'no-referrer')
+        headers.setdefault('Cache-Control', 'no-store')
+        headers.setdefault('Cross-Origin-Resource-Policy', 'same-origin')
+        if not request.url.path.startswith(('/docs', '/redoc')):
+            headers.setdefault('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'")
+        if _public_deploy:
+            headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.exception_handler(Exception)

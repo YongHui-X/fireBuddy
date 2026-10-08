@@ -1,0 +1,8 @@
+# Reviewed Gitleaks findings (8 Oct 2026). Anything not listed here fails the security workflow.
+# False positives: the FastAPI title and a README sentence about the backup key.
+105ed58940d39055c19559905047f63d4741f1e2:apps/backend/main.py:generic-api-key:50
+f3ca1efd708ae4ec60d413f50ce5fa85d07031a0:apps/mobile/README.md:generic-api-key:50
+# An old apps/web/.env.local held only the Supabase publishable key, which ships in the web
+# bundle by design. No service-role or OpenAI key was ever committed.
+f7c24662abdf11924594832036d5bd106d789ffd:apps/web/.env.local:generic-api-key:2
+58a91e67c2d65964fbf47cfd7e63041594a08103:apps/web/.env.local:generic-api-key:2
