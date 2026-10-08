@@ -1,0 +1,833 @@
+{
+  "label": "v1",
+  "todayKey": "2026-10-04",
+  "apiBase": "http://127.0.0.1:8000",
+  "total": 24,
+  "passed": 23,
+  "results": [
+    {
+      "id": "personal_current_spending",
+      "question": "How much have I spent this month so far? State the total and the covered period.",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much have I spent this month so far? State the total and the covered period.",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- You have spent a total of S$1,176 this month so far.\n- The covered period is from 2026-10-01 to 2026-10-04.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "CPF Basic Healthcare Sum by Year",
+          "path": "manual/cpf/cpf-healthcare-sums.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        }
+      ],
+      "latencyMs": 5438,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_top_categories",
+      "question": "What are my three largest spending categories this month? Give each category name and amount.",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "What are my three largest spending categories this month? Give each category name and amount.",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- Your three largest spending categories this month are:\n  - Food & Drink: S$517\n  - Bills & Utilities: S$187\n  - Shopping: S$148",
+      "sources": [
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        },
+        {
+          "title": "FI Calc",
+          "path": "manual/fire/sources/fi-calc.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        }
+      ],
+      "latencyMs": 4774,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_spending_comparison",
+      "question": "Compare my spending this month so far with last month. Give both totals and say whether the periods cover the same number of days.",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "Compare my spending this month so far with last month. Give both totals and say whether the periods cover the same number of days.",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- Your spending this month so far (from 2026-10-01 to 2026-10-04) totals S$1,176.\n- Last month's total (from 2026-09-01 to 2026-09-30) was S$3,817.\n- The periods do not cover the same number of days; this month has 4 days recorded, while last month had 30 days.",
+      "sources": [
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        },
+        {
+          "title": "Tree of Wealth Singapore FIRE Planner",
+          "path": "manual/fire/sources/tree-of-wealth.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "FI Calc",
+          "path": "manual/fire/sources/fi-calc.md"
+        }
+      ],
+      "sourceExpectation": "Use the snapshot periods, distinguishing a partial current month from a complete previous month; do not describe the totals as a comparison of equal-length periods.",
+      "latencyMs": 5660,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_income_and_savings",
+      "question": "What are my recorded income, savings amount and savings rate this month?",
+      "usedSections": [
+        "cashflow"
+      ],
+      "maskedQuestion": "What are my recorded income, savings amount and savings rate this month?",
+      "maskedContextChars": 266,
+      "mode": "hybrid",
+      "answer": "- Your recorded income this month is S$5,200.\n- Your savings amount this month is S$4,024.\n- Your savings rate this month is 77.4%.",
+      "sources": [
+        {
+          "title": "CPF Interest Rates and Extra Interest",
+          "path": "manual/cpf/cpf-interest-rates.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        },
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "Cpfis Instruments And Limits",
+          "path": "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+        }
+      ],
+      "latencyMs": 5161,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_net_worth_makeup",
+      "question": "Explain my net worth and its make-up: state net worth, total liabilities and investable assets, and say which asset breakdowns are not available in the summary.",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "Explain my net worth and its make-up: state net worth, total liabilities and investable assets, and say which asset breakdowns are not available in the summary.",
+      "maskedContextChars": 231,
+      "mode": "hybrid",
+      "answer": "- Your net worth is S$80,000.\n- Total liabilities amount to S$365,000.\n- Your investable assets are valued at S$65,000.\n\nThe summary does not include specific breakdowns of your asset categories, such as cash, equities, or other investments.",
+      "sources": [
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        },
+        {
+          "title": "SG FIRE Planner",
+          "path": "manual/fire/sources/sg-fire-planner.md"
+        },
+        {
+          "title": "Tree of Wealth Singapore FIRE Planner",
+          "path": "manual/fire/sources/tree-of-wealth.md"
+        },
+        {
+          "title": "FI Calc",
+          "path": "manual/fire/sources/fi-calc.md"
+        }
+      ],
+      "sourceExpectation": "Use only the aggregate snapshot; investable assets are not total assets, and the summary does not supply individual holdings or account balances.",
+      "latencyMs": 7607,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_debt_totals",
+      "question": "How much debt do I have in total, and what is my recorded monthly debt service?",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "How much debt do I have in total, and what is my recorded monthly debt service?",
+      "maskedContextChars": 231,
+      "mode": "knowledge",
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "sources": [],
+      "latencyMs": 3118,
+      "dataChecks": [
+        "missing liabilityTotal: expected one of S$365,000 | $365,000",
+        "missing monthlyDebtService: expected one of S$1,650 | $1,650"
+      ],
+      "pass": false
+    },
+    {
+      "id": "personal_emergency_runway",
+      "question": "What is my emergency fund runway in months, and what average monthly essential spending is used for it?",
+      "usedSections": [
+        "spending",
+        "emergency"
+      ],
+      "maskedQuestion": "What is my emergency fund runway in months, and what average monthly essential spending is used for it?",
+      "maskedContextChars": 1007,
+      "mode": "hybrid",
+      "answer": "- Your emergency fund runway is 17.1 months, which exceeds the recommended 3 to 6 months of expenses.\n- Your average monthly essential spending is S$1,056. This figure is used to determine how much you should ideally have saved for emergencies.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "FI Calc",
+          "path": "manual/fire/sources/fi-calc.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        }
+      ],
+      "latencyMs": 5109,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_essential_spending_targets",
+      "question": "Using my average monthly essential spending, state that monthly amount and my saved three-month and six-month emergency fund targets.",
+      "usedSections": [
+        "spending",
+        "cashflow",
+        "emergency"
+      ],
+      "maskedQuestion": "Using my average monthly essential spending, state that monthly amount and my saved three-month and six-month emergency fund targets.",
+      "maskedContextChars": 1218,
+      "mode": "hybrid",
+      "answer": "- Your average monthly essential spending is S$1,056.\n- Your three-month emergency fund target is S$3,167.\n- Your six-month emergency fund target is S$6,333.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "FI Calc",
+          "path": "manual/fire/sources/fi-calc.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        }
+      ],
+      "latencyMs": 4914,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_fire_target_progress",
+      "question": "What are my recorded FIRE target, progress percentage and funding status? Use the plan's recorded progress rather than recalculating it.",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "What are my recorded FIRE target, progress percentage and funding status? Use the plan's recorded progress rather than recalculating it.",
+      "maskedContextChars": 335,
+      "mode": "hybrid",
+      "answer": "- Your recorded FIRE target is S$2,565,681.\n- Your progress percentage towards that target is 94.7%.\n- Your funding status is currently a shortfall.",
+      "sources": [
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        },
+        {
+          "title": "Dr Wealth, Financial Independence Retire Early Guide",
+          "path": "manual/fire/sources/dr-wealth.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        }
+      ],
+      "latencyMs": 6242,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "personal_fire_investment_and_year",
+      "question": "For my FIRE plan, state the required monthly investment and estimated retirement year. Are these a projection or a guarantee?",
+      "usedSections": [
+        "netWorth",
+        "fire"
+      ],
+      "maskedQuestion": "For my FIRE plan, state the required monthly investment and estimated retirement year. Are these a projection or a guarantee?",
+      "maskedContextChars": 509,
+      "mode": "hybrid",
+      "answer": "- Your required monthly investment for your FIRE plan is S$2,136.\n- Your estimated retirement year is 2055.\n- These figures are projections, not guarantees.",
+      "sources": [
+        {
+          "title": "SG FIRE Planner",
+          "path": "manual/fire/sources/sg-fire-planner.md"
+        },
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        },
+        {
+          "title": "RemarkRemedy fireplanner source repository",
+          "path": "manual/fire/sources/sg-fire-planner-repository.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        }
+      ],
+      "latencyMs": 5472,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "hybrid_emergency_moneysense",
+      "question": "Is my emergency fund enough by MoneySense's rule? State my runway in months and the saved lower and upper emergency targets, and explain the limits of that comparison.",
+      "usedSections": [
+        "cashflow",
+        "emergency"
+      ],
+      "maskedQuestion": "Is my emergency fund enough by MoneySense's rule? State my runway in months and the saved lower and upper emergency targets, and explain the limits of that comparison.",
+      "maskedContextChars": 500,
+      "mode": "hybrid",
+      "answer": "- Your emergency runway is 17.1 months months, which is over 12 months.\n- The lower target for a three-month emergency fund is S$3,167, and the upper target for a six-month emergency fund is S$6,333.\n\nThe MoneySense guideline suggests having at least 3 to 6 months' worth of expenses saved as an emergency fund. Since your runway exceeds 12 months, you are well above the recommended range. However, the adequacy of emergency funds can vary based on individual circumstances, such as income stability and personal financial situations.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "Dr Wealth, Financial Independence Retire Early Guide",
+          "path": "manual/fire/sources/dr-wealth.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        }
+      ],
+      "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"Setting aside at least 3 - 6 months’ worth of expenses as emergency funds is generally an accepted rule of thumb\" and \"the adequacy of emergency funds could differ from person to person and the emergency situation.\" Compare the recorded runway with this benchmark, explaining that the device uses essential spending rather than asserting that all household commitments are covered.",
+      "latencyMs": 6862,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "hybrid_srs_income",
+      "question": "Should I top up SRS given my recorded monthly income and savings amount? State both figures, explain the contribution caps and liquidity trade-off, and ask what else is needed before judging the tax benefit.",
+      "usedSections": [
+        "cashflow"
+      ],
+      "maskedQuestion": "Should I top up SRS given my recorded monthly income and savings amount? State both figures, explain the contribution caps and liquidity trade-off, and ask what else is needed before judging the tax benefit.",
+      "maskedContextChars": 266,
+      "mode": "hybrid",
+      "answer": "- Your recorded monthly income is S$5,200.\n- Your recorded savings amount is S$4,024.\n\n- The SRS has an annual contribution limit of $15,300 for Singapore Citizens and Permanent Residents. Contributions to the SRS reduce your taxable income for the following Year of Assessment, which can lead to significant tax benefits, especially for high-income earners.\n\n- However, funds in the SRS are illiquid until retirement age, meaning they cannot be easily accessed without incurring penalties. Early withdrawals are fully taxable and incur a 5% penalty.\n\nWhat additional information do you need to assess the potential tax benefit of topping up your SRS?",
+      "sources": [
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "IRAS Individual Income Tax Reliefs",
+          "path": "manual/iras/tax-reliefs.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        },
+        {
+          "title": "Singapore Savings Bonds Faqs",
+          "path": "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+        },
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        }
+      ],
+      "sourceExpectation": "manual/iras/tax-reliefs.md: \"| SRS contributions, Singapore Citizens and Permanent Residents | $15,300 |\", \"| SRS contributions, foreigners | $35,700 |\" and \"The overall personal income tax relief cap is $80,000 per Year of Assessment.\" manual/investing/investing-in-singapore.md: \"Early withdrawals can create tax and penalty consequences.\" Do not infer residency, annual taxable income, existing reliefs or a marginal tax rate from recorded monthly income.",
+      "latencyMs": 5932,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "hybrid_savings_guideline",
+      "question": "How does my current savings rate compare with the MoneySense guideline? State my savings rate and explain whether saving the money proves I meet that guideline.",
+      "usedSections": [
+        "cashflow"
+      ],
+      "maskedQuestion": "How does my current savings rate compare with the MoneySense guideline? State my savings rate and explain whether saving the money proves I meet that guideline.",
+      "maskedContextChars": 266,
+      "mode": "hybrid",
+      "answer": "- Your current savings rate is 77.4%.\n- The MoneySense guideline recommends setting aside at least 10% of your income for investments.\n- Since your savings rate significantly exceeds this guideline, you are well above the recommended minimum for saving and investing.",
+      "sources": [
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        }
+      ],
+      "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"the Guide’s rule of thumb is that you set aside at least 10% of your income to invest in your near- and long-term future.\" markdown-cache/moneysense/basic-financial-planning-guide.md: \"After deducting CPF contributions\" qualifies the income basis. Distinguish the recorded savings rate from actual investing, and do not assume the snapshot income has the same CPF treatment.",
+      "latencyMs": 4926,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "hybrid_emergency_ssb_liquidity",
+      "question": "My emergency runway looks comfortable. State the runway and explain the liquidity trade-offs of keeping an emergency buffer in Singapore Savings Bonds rather than immediately accessible cash.",
+      "usedSections": [
+        "emergency"
+      ],
+      "maskedQuestion": "My emergency runway looks comfortable. State the runway and explain the liquidity trade-offs of keeping an emergency buffer in Singapore Savings Bonds rather than immediately accessible cash.",
+      "maskedContextChars": 291,
+      "mode": "hybrid",
+      "answer": "Your emergency runway is recorded as 17.1 months, which indicates a comfortable buffer according to general financial guidelines.\n\nKeeping an emergency buffer in Singapore Savings Bonds (SSBs) rather than immediately accessible cash involves some liquidity trade-offs:\n\n- SSBs can be redeemed in any month without penalty, providing high liquidity for a bond.\n- However, they cannot be traded or pledged as collateral, limiting immediate access to funds compared to cash.\n- While SSBs offer step-up interest and are fully backed by the government, they may not be as liquid as cash in urgent situations.\n- Cash provides immediate access without any redemption process, making it preferable for urgent expenses.\n\nIn your situation, while your runway is strong, consider how quickly you might need access to funds when deciding between cash and SSBs.",
+      "sources": [
+        {
+          "title": "Singapore Savings Bonds Faqs",
+          "path": "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+        },
+        {
+          "title": "Singapore Savings Bonds, Product Terms",
+          "path": "manual/mas/singapore-savings-bonds.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        }
+      ],
+      "sourceExpectation": "manual/mas/singapore-savings-bonds.md: \"| Redemption | Any month before maturity, with no penalty, in multiples of $500 |\", \"| Redemption proceeds | Principal plus accrued interest, by the 2nd business day of the following month |\" and \"| Transaction fee | $2 for each application and $2 for each redemption request |\". Explain why no redemption penalty does not mean instant access or no transaction fee.",
+      "latencyMs": 7091,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "hybrid_fire_cpf_bridge",
+      "question": "State my FIRE target and estimated retirement year, then explain why a Singapore FIRE plan needs a bridge before CPF LIFE begins. Do not assume my age or CPF balances.",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "State my FIRE target and estimated retirement year, then explain why a Singapore FIRE plan needs a bridge before CPF LIFE begins. Do not assume my age or CPF balances.",
+      "maskedContextChars": 335,
+      "mode": "hybrid",
+      "answer": "- Your FIRE target is S$2,565,681, and your estimated retirement year is July 2055.\n- A Singapore FIRE plan needs a bridge before CPF LIFE begins because CPF LIFE payouts start at age 65, which may not align with your desired retirement age.\n- This gap means you will need to rely on non-CPF assets to fund your expenses until CPF LIFE provides income, creating a need for a phased approach to manage your finances effectively during this period.",
+      "sources": [
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        },
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        }
+      ],
+      "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"Pre-55 phase: CPF is mostly locked.\" and \"CPF LIFE starts from age 65, with possible deferral to age 70.\" Explain the need for liquid bridge funds without inventing the user's age, CPF balances or bridge duration.",
+      "latencyMs": 7160,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "hybrid_debt_priority",
+      "question": "Given my total debts and monthly debt service, what should I check before choosing which debt to repay first? State both recorded amounts and relate the answer to MoneySense guidance.",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "Given my total debts and monthly debt service, what should I check before choosing which debt to repay first? State both recorded amounts and relate the answer to MoneySense guidance.",
+      "maskedContextChars": 231,
+      "mode": "hybrid",
+      "answer": "- Before choosing which debt to repay first, consider the interest rates on your debts, the total amount owed, and any penalties for early repayment.\n- Your total liabilities are recorded as S$365,000, and your monthly debt service is S$1,650.\n- MoneySense guidance suggests prioritizing high-interest debts, such as credit cards, as they can accumulate costs quickly.\n- Additionally, ensure that repaying debt does not compromise your ability to meet essential expenses or savings goals.\n- It's also wise to check if any of your debts have early repayment penalties, as this could affect your decision.",
+      "sources": [
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        }
+      ],
+      "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide.md: \"Prioritise paying off high interest debts\". The aggregate snapshot supplies no individual loan rates or balances, so request those details rather than naming a specific debt as the most expensive.",
+      "latencyMs": 6424,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "knowledge_cpf_rates",
+      "question": "What are the CPF contribution rates from January 2026 by age for Singapore Citizens and PRs from their third year earning above $750 a month? Separate employer and employee shares.",
+      "usedSections": [],
+      "maskedQuestion": "What are the CPF contribution rates from January 2026 by age for Singapore Citizens and PRs from their third year earning above {{Q1}} a month? Separate employer and employee shares.",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- From 1 January 2026, CPF contribution rates for Singapore Citizens and Permanent Residents earning more than $750 a month are as follows:\n\n- For employees aged 55 and below:\n  - Total CPF contribution: 37%\n  - Employee's share: 20%\n  - Employer's share: 17%\n\n- For employees aged above 55 to 60:\n  - Total CPF contribution: 34%\n  - Employee's share: 18%\n  - Employer's share: 16%\n\n- For employees aged above 60 to 65:\n  - Total CPF contribution: 25%\n  - Employee's share: 12.5%\n  - Employer's share: 12.5%\n\n- For employees aged above 65 to 70:\n  - Total CPF contribution: 16.5%\n  - Employee's share: 7.5%\n  - Employer's share: 9%\n\n- For employees aged above 70:\n  - Total CPF contribution: 12.5%\n  - Employee's share: 5%\n  - Employer's share: 7.5%",
+      "sources": [
+        {
+          "title": "CPF Contribution Rates from 1 January 2026",
+          "path": "manual/cpf/cpf-contribution-rates-2026.md"
+        },
+        {
+          "title": "CPF Allocation Rates from 1 January 2026",
+          "path": "manual/cpf/cpf-allocation-rates-2026.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "SG FIRE Planner",
+          "path": "manual/fire/sources/sg-fire-planner.md"
+        },
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        }
+      ],
+      "sourceExpectation": "manual/cpf/cpf-contribution-rates-2026.md, columns employee age, total contribution, employee share, employer share: \"| 55 and below | 37% | 20% | 17% |\", \"| Above 55 to 60 | 34% | 18% | 16% |\", \"| Above 60 to 65 | 25% | 12.5% | 12.5% |\", \"| Above 65 to 70 | 16.5% | 7.5% | 9% |\", \"| Above 70 | 12.5% | 5% | 7.5% |\". Apply the stated wage and residency conditions; do not add the total to its component shares.",
+      "latencyMs": 7024,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "knowledge_srs_caps",
+      "question": "What are the annual SRS contribution caps for Singapore Citizens or Permanent Residents and foreigners, and what overall personal tax relief cap applies?",
+      "usedSections": [],
+      "maskedQuestion": "What are the annual SRS contribution caps for Singapore Citizens or Permanent Residents and foreigners, and what overall personal tax relief cap applies?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- Annual SRS contribution caps are:\n  - Singapore Citizens & Permanent Residents: $15,300/year\n  - Foreigners: $35,700/year\n\n- The overall personal tax relief cap is $80,000 per Year of Assessment.",
+      "sources": [
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "IRAS Individual Income Tax Reliefs",
+          "path": "manual/iras/tax-reliefs.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        },
+        {
+          "title": "CPF Contribution Rates from 1 January 2026",
+          "path": "manual/cpf/cpf-contribution-rates-2026.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        }
+      ],
+      "sourceExpectation": "manual/iras/tax-reliefs.md: \"| SRS contributions, Singapore Citizens and Permanent Residents | $15,300 |\", \"| SRS contributions, foreigners | $35,700 |\" and \"The overall personal income tax relief cap is $80,000 per Year of Assessment.\" Distinguish a contribution cap from the overall relief cap and from a tax refund.",
+      "latencyMs": 5561,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "knowledge_ssb_limits",
+      "question": "What are the Singapore Savings Bonds minimum purchase and individual holding limit? Is there a separate holding limit for cash and SRS?",
+      "usedSections": [],
+      "maskedQuestion": "What are the Singapore Savings Bonds minimum purchase and individual holding limit? Is there a separate holding limit for cash and SRS?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- The minimum purchase amount for Singapore Savings Bonds is $500, with subsequent investments in multiples of $500.\n- The individual holding limit for Savings Bonds is $200,000 at any one time.\n- There are no separate holding limits for cash and SRS purchases; the $200,000 limit applies to the total across both cash and SRS accounts.",
+      "sources": [
+        {
+          "title": "Singapore Savings Bonds Faqs",
+          "path": "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+        },
+        {
+          "title": "Singapore Savings Bonds, Product Terms",
+          "path": "manual/mas/singapore-savings-bonds.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        }
+      ],
+      "sourceExpectation": "manual/mas/singapore-savings-bonds.md: \"| Minimum investment | $500, and in multiples of $500 thereafter |\" and \"| Individual Limit | $200,000 held at any one time, across cash and SRS combined |\". The limit is combined rather than a separate allowance for each funding source.",
+      "latencyMs": 6075,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "knowledge_cpf_frs_and_life_basis",
+      "question": "What is the Full Retirement Sum for members turning 55 in 2026, and when does CPF LIFE start? If quoting a payout example, distinguish its cohort and estimate date from the current FRS.",
+      "usedSections": [],
+      "maskedQuestion": "What is the Full Retirement Sum for members turning 55 in 2026, and when does CPF LIFE start? If quoting a payout example, distinguish its cohort and estimate date from the current FRS.",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- The Full Retirement Sum (FRS) for members turning 55 in 2026 is $220,400.\n- CPF LIFE monthly payouts start at age 65, but members can defer them until as late as age 70 for higher payouts.",
+      "sources": [
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        },
+        {
+          "title": "CPF LIFE Payout Examples",
+          "path": "manual/cpf/cpf-life-payout-examples.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        }
+      ],
+      "sourceExpectation": "manual/cpf/cpf-retirement-sums.md, columns cohort year, BRS, FRS, ERS: \"| 2026 | $110,200 | $220,400 | $440,800 |\". manual/cpf/cpf-life-payout-examples.md: \"CPF LIFE pays a monthly income for life from age 65.\" If using its payout table, preserve the basis \"members who turn 65 in 2035,\" and \"computed as of 2025.\" Do not present the older payout example as a guaranteed payout for the current FRS.",
+      "latencyMs": 4934,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "knowledge_medisave_bhs",
+      "question": "What is the MediSave Basic Healthcare Sum for 2026, and does it keep rising after a member turns 65?",
+      "usedSections": [],
+      "maskedQuestion": "What is the MediSave Basic Healthcare Sum for 2026, and does it keep rising after a member turns 65?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- The MediSave Basic Healthcare Sum (BHS) for 2026 is $79,000.\n- The BHS increases annually for members under 65.\n- Once a member turns 65, their BHS is fixed for life at the value for the year they turned 65.",
+      "sources": [
+        {
+          "title": "CPF Basic Healthcare Sum by Year",
+          "path": "manual/cpf/cpf-healthcare-sums.md"
+        },
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        },
+        {
+          "title": "CPF Allocation Rates from 1 January 2026",
+          "path": "manual/cpf/cpf-allocation-rates-2026.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        }
+      ],
+      "sourceExpectation": "manual/cpf/cpf-healthcare-sums.md: \"The BHS for 2026 is $79,000.\" and \"Once a member turns 65\ntheir BHS is fixed for the rest of their life at the value for the year they\nturned 65.\" Explain the distinction between members below that age and a fixed cohort amount; this is not an outpatient withdrawal limit.",
+      "latencyMs": 6328,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "knowledge_emergency_guidance",
+      "question": "What emergency fund rule of thumb does MoneySense give, and how might it differ for someone with unpredictable freelance earnings?",
+      "usedSections": [],
+      "maskedQuestion": "What emergency fund rule of thumb does MoneySense give, and how might it differ for someone with unpredictable freelance earnings?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- MoneySense suggests setting aside at least 3 to 6 months' worth of expenses as an emergency fund, which is a widely accepted rule of thumb.\n- This amount is generally considered sufficient to provide a buffer during emergencies such as medical incidents or job loss.\n- For individuals with unpredictable freelance earnings, it may be advisable to set aside a higher amount than the standard 3 to 6 months to account for potential income fluctuations and unexpected lulls in work.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        },
+        {
+          "title": "FI Calc",
+          "path": "manual/fire/sources/fi-calc.md"
+        },
+        {
+          "title": "Dr Wealth, Financial Independence Retire Early Guide",
+          "path": "manual/fire/sources/dr-wealth.md"
+        }
+      ],
+      "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"Setting aside at least 3 - 6 months’ worth of expenses as emergency funds is generally an accepted rule of thumb\" and \"a freelancer with unpredictable income may want to set aside a higher amount for emergency funds\". Present a guideline that depends on circumstances, without requesting or assuming this user's records.",
+      "latencyMs": 5835,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "edge_followup_without_fresh_snapshot",
+      "question": "And last month?",
+      "usedSections": [],
+      "maskedQuestion": "And last month?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "sources": [],
+      "sourceExpectation": "The current question selects no snapshot sections and the supplied history contains only the current-month total. A safe answer asks for the previous-month spending context or an explicit personal spending question; it must not invent, retrieve from another account, or reuse the current-month total as last month's amount.",
+      "latencyMs": 3007,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "edge_unavailable_pet_care_category",
+      "question": "How much have I spent on Pet care this month? Give a figure only if that category is explicitly present; otherwise say the summary cannot establish it.",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much have I spent on Pet care this month? Give a figure only if that category is explicitly present; otherwise say the summary cannot establish it.",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- The summary cannot establish how much you have spent on Pet care this month, as that category is not explicitly present in your spending records.",
+      "sources": [
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        },
+        {
+          "title": "CPF Basic Healthcare Sum by Year",
+          "path": "manual/cpf/cpf-healthcare-sums.md"
+        }
+      ],
+      "sourceExpectation": "Pet care is absent from the supplied top-category summary, which is not a complete category ledger. Say the amount cannot be established; do not equate absence with zero or substitute another category's amount.",
+      "latencyMs": 4841,
+      "dataChecks": [],
+      "pass": true
+    }
+  ]
+}

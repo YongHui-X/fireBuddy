@@ -9,8 +9,15 @@ import {
   demoCategoryIds,
   demoProfile,
   demoTags,
+  dedupeSameDaySnapshots,
+  deleteAccountMoving,
   demoUserId,
   getDeviceDateKey,
+  initialDataset,
+  materialiseRecurring,
+  createRecurringRule,
+  type RecurringFrequency,
+  type RecurringRule,
   type Account,
   type Category,
   type CreateAccountInput,
@@ -29,10 +36,12 @@ import {
   type WealthContribution,
   type WealthPosition,
   type WealthPositionSnapshot,
+  upgradeDefaultCategoryColors,
 } from '@firebuddy/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
+import { AppState } from 'react-native';
 
-import { refreshDemoSlices } from './demo-refresh';
+import { hasDemoTransactions, refreshDemoSlices } from './demo-refresh';
 import { DEMO_STORAGE_KEYS, STORAGE_KEYS } from './storage-keys';
 
 /**
@@ -50,8 +59,10 @@ export interface Records {
   snapshots: WealthPositionSnapshot[];
   contributions: WealthContribution[];
   retirementPlan: RetirementPlan | null;
-  /** Expense categories the emergency reserve must cover; drives the Plan screen and runway maths. */
+  /** Expense categories the emergency reserve must cover; drives the Budgets screen and runway maths. */
   essentialCategoryIds: string[];
+  /** Repeating transactions (salary, rent, subscriptions); due copies are added when the app opens. */
+  recurringRules: RecurringRule[];
 }
 
 const RECORD_KEYS: readonly (keyof Records)[] = ['categories', 'accounts', 'transactions', 'tags', 'positions', 'snapshots', 'contributions', 'retirementPlan', 'essentialCategoryIds'];
@@ -85,6 +96,11 @@ type Action =
   | { type: 'addAccount'; account: Account }
   | { type: 'updateAccount'; id: string; updates: UpdateAccountInput }
   | { type: 'deleteAccount'; id: string }
+  | { type: 'applyAccountDeletion'; accounts: Account[]; transactions: Transaction[]; recurringRules?: RecurringRule[] }
+  | { type: 'runRecurring'; today: string }
+  | { type: 'addRecurringRule'; rule: RecurringRule }
+  | { type: 'updateRecurringRule'; rule: RecurringRule }
+  | { type: 'deleteRecurringRule'; id: string }
   | { type: 'setEssentialCategoryIds'; ids: string[] }
   | { type: 'addPosition'; position: WealthPosition; snapshot: WealthPositionSnapshot }
   | { type: 'updatePosition'; id: string; updates: UpdateWealthPositionInput }
@@ -96,6 +112,30 @@ type Action =
   | { type: 'setRetirementPlan'; plan: RetirementPlan | null }
   | { type: 'notify'; message: string }
   | { type: 'dismissNotification' };
+
+/**
+ * `seededOn` value for a dataset the person started empty ("Start fresh" in Profile). The demo
+ * calendar refresh skips it, so the sample transactions never come back on their own.
+ */
+export const FRESH_DATASET = 'fresh';
+
+/** An empty start for a new user: standard categories, one Cash account, nothing recorded yet. */
+function freshState(): Records & { seededOn: string } {
+  const cash = demoAccounts.find((account) => account.type === 'cash');
+  return {
+    seededOn: FRESH_DATASET,
+    categories: [...demoCategories],
+    accounts: cash ? [{ ...cash, isDefault: true }] : [],
+    transactions: [],
+    tags: [],
+    positions: [],
+    snapshots: [],
+    contributions: [],
+    retirementPlan: null,
+    essentialCategoryIds: [demoCategoryIds.food, demoCategoryIds.utilities, demoCategoryIds.health],
+    recurringRules: [],
+  };
+}
 
 /** Build every dated demo slice from one device date so their refresh marker agrees. */
 function seedState(todayKey = getDeviceDateKey()): Records & { seededOn: string } {
@@ -112,6 +152,7 @@ function seedState(todayKey = getDeviceDateKey()): Records & { seededOn: string 
     retirementPlan: createDemoRetirementPlan(todayKey),
     // The same starting selection the web demo uses: food, bills and healthcare.
     essentialCategoryIds: [demoCategoryIds.food, demoCategoryIds.utilities, demoCategoryIds.health],
+    recurringRules: [],
   };
 }
 
@@ -147,6 +188,9 @@ function reducer(state: StoreState, action: Action): StoreState {
           transaction.categoryId === action.id ? { ...transaction, categoryId: null, updatedAt: now } : transaction,
         ),
         essentialCategoryIds: state.essentialCategoryIds.filter((id) => id !== action.id),
+        recurringRules: state.recurringRules.map((rule) =>
+          rule.template.categoryId === action.id ? { ...rule, template: { ...rule.template, categoryId: null }, updatedAt: now } : rule,
+        ),
       };
     case 'addTag':
       return { ...state, tags: [...state.tags, action.tag] };
@@ -160,6 +204,9 @@ function reducer(state: StoreState, action: Action): StoreState {
         transactions: state.transactions.map((transaction) =>
           transaction.tagIds.includes(action.id) ? { ...transaction, tagIds: transaction.tagIds.filter((id) => id !== action.id), updatedAt: now } : transaction,
         ),
+        recurringRules: state.recurringRules.map((rule) =>
+          rule.template.tagIds.includes(action.id) ? { ...rule, template: { ...rule.template, tagIds: rule.template.tagIds.filter((id) => id !== action.id) }, updatedAt: now } : rule,
+        ),
       };
     case 'addAccount':
       return { ...state, accounts: [...state.accounts, action.account] };
@@ -170,6 +217,21 @@ function reducer(state: StoreState, action: Action): StoreState {
       };
     case 'deleteAccount':
       return { ...state, accounts: state.accounts.filter((account) => account.id !== action.id) };
+    case 'applyAccountDeletion':
+      return { ...state, accounts: action.accounts, transactions: action.transactions, recurringRules: action.recurringRules ?? state.recurringRules };
+    case 'runRecurring': {
+      // Silent on purpose (owner, 6 Oct 2026): due copies simply appear in the ledger.
+      const result = materialiseRecurring(state.recurringRules, action.today, now);
+      if (result.inputs.length === 0) return state;
+      const added = result.inputs.map((input) => createLocalTransaction(input, demoUserId));
+      return { ...state, recurringRules: result.rules, transactions: [...added.reverse(), ...state.transactions] };
+    }
+    case 'addRecurringRule':
+      return { ...state, recurringRules: [...state.recurringRules, action.rule] };
+    case 'updateRecurringRule':
+      return { ...state, recurringRules: state.recurringRules.map((rule) => (rule.id === action.rule.id ? action.rule : rule)) };
+    case 'deleteRecurringRule':
+      return { ...state, recurringRules: state.recurringRules.filter((rule) => rule.id !== action.id) };
     case 'setEssentialCategoryIds':
       return { ...state, essentialCategoryIds: action.ids };
     case 'addPosition':
@@ -188,8 +250,13 @@ function reducer(state: StoreState, action: Action): StoreState {
           ? { ...state.retirementPlan, assetIds: state.retirementPlan.assetIds.filter((id) => id !== action.id) }
           : null,
       };
-    case 'addSnapshot':
-      return { ...state, snapshots: [...state.snapshots, action.snapshot] };
+    case 'addSnapshot': {
+      // One value per position per date: re-saving a date replaces that day's value.
+      const sameDay = state.snapshots.find((item) => item.wealthPositionId === action.snapshot.wealthPositionId && item.valueDate === action.snapshot.valueDate);
+      return sameDay
+        ? { ...state, snapshots: state.snapshots.map((item) => (item.id === sameDay.id ? { ...item, amount: action.snapshot.amount, updatedAt: action.snapshot.updatedAt } : item)) }
+        : { ...state, snapshots: [...state.snapshots, action.snapshot] };
+    }
     case 'deleteSnapshot':
       return { ...state, snapshots: state.snapshots.filter((snapshot) => snapshot.id !== action.id) };
     case 'addContribution':
@@ -247,7 +314,8 @@ export interface FireBuddyStore extends StoreState {
   addAccount: (input: CreateAccountInput) => Account;
   updateAccount: (id: string, updates: UpdateAccountInput) => void;
   /** Refuses the default account and any account still referenced by a transaction; returns whether it was removed. */
-  deleteAccount: (id: string) => boolean;
+  deleteAccount: (id: string, moveTo?: string | null) => boolean;
+  setDefaultAccount: (id: string) => void;
   setEssentialCategoryIds: (ids: string[]) => void;
   /** Every record slice, for the encrypted backup file. */
   exportRecords: () => Records;
@@ -264,9 +332,19 @@ export interface FireBuddyStore extends StoreState {
   addContribution: (input: CreateWealthContributionInput) => WealthContribution;
   deleteContribution: (id: string) => void;
   setRetirementPlan: (plan: RetirementPlan | null) => void;
+  /** Save a transaction and make it repeat; it becomes occurrence 0 of the new rule. */
+  addRecurringTransaction: (input: CreateTransactionInput, frequency: RecurringFrequency, endDate: string | null) => { transaction: Transaction; rule: RecurringRule };
+  /** Replace a rule (template, schedule, pause state); past copies are left as they are. */
+  updateRecurringRule: (rule: RecurringRule) => void;
+  /** Stop a rule. Copies already recorded stay in the ledger. */
+  deleteRecurringRule: (id: string) => void;
   notify: (message: string) => void;
   dismissNotification: () => void;
   clearDemoData: () => Promise<void>;
+  /** Empty every record for a clean start; `clearDemoData` brings the demo dataset back. */
+  startFresh: () => Promise<void>;
+  /** True when the records began from "Start fresh" rather than the demo dataset. */
+  isFreshDataset: boolean;
 }
 
 const StoreContext = createContext<FireBuddyStore | null>(null);
@@ -284,6 +362,7 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
     contributions: [],
     retirementPlan: null,
     essentialCategoryIds: [],
+    recurringRules: [],
     notification: null,
   });
   useEffect(() => {
@@ -292,19 +371,27 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
       .then((entries) => {
         if (cancelled) return;
         const stored = Object.fromEntries(entries) as Partial<Record<string, string | null>>;
-        const seed = seedState();
+        const start = initialDataset({ hasStoredRecords: entries.some(([, value]) => value != null), isDev: __DEV__ });
+        // A brand-new production install starts empty; development builds start on the demo data.
+        const seed = start === 'fresh' ? freshState() : seedState();
         const records: Records = {
-          categories: parseStored(stored[STORAGE_KEYS.categories], seed.categories),
+          // Default categories saved before the multi-colour chart palette move onto it once.
+          categories: upgradeDefaultCategoryColors(parseStored(stored[STORAGE_KEYS.categories], seed.categories)),
           accounts: parseStored(stored[STORAGE_KEYS.accounts], seed.accounts),
           transactions: parseStored(stored[STORAGE_KEYS.transactions], seed.transactions),
           tags: parseStored(stored[STORAGE_KEYS.tags], seed.tags),
           positions: parseStored(stored[STORAGE_KEYS.positions], seed.positions),
-          snapshots: parseStored(stored[STORAGE_KEYS.snapshots], seed.snapshots),
+          // Same-day duplicates from before re-saving a date replaced it collapse to the newest.
+          snapshots: [...dedupeSameDaySnapshots(parseStored(stored[STORAGE_KEYS.snapshots], seed.snapshots))],
           contributions: parseStored(stored[STORAGE_KEYS.contributions], seed.contributions),
           retirementPlan: parseStoredObject(stored[STORAGE_KEYS.retirementPlan], seed.retirementPlan),
           essentialCategoryIds: parseStored(stored[STORAGE_KEYS.essentialCategories], seed.essentialCategoryIds),
+          recurringRules: parseStored(stored[STORAGE_KEYS.recurringRules], seed.recurringRules),
         };
-        const refreshed = refreshDemoSlices(records, stored[STORAGE_KEYS.seededOn], seed.seededOn);
+        // A fresh dataset is the person's own; only the demo dataset follows the calendar.
+        const refreshed = start === 'fresh' || stored[STORAGE_KEYS.seededOn] === FRESH_DATASET
+          ? { seededOn: FRESH_DATASET }
+          : refreshDemoSlices(records, stored[STORAGE_KEYS.seededOn], seed.seededOn);
         dispatch({
           type: 'hydrate',
           payload: {
@@ -314,7 +401,7 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
         });
       })
       .catch(() => {
-        if (!cancelled) dispatch({ type: 'hydrate', payload: seedState() });
+        if (!cancelled) dispatch({ type: 'hydrate', payload: __DEV__ ? seedState() : freshState() });
       });
     return () => {
       cancelled = true;
@@ -335,8 +422,20 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
       [STORAGE_KEYS.contributions, JSON.stringify(state.contributions)],
       [STORAGE_KEYS.retirementPlan, JSON.stringify(state.retirementPlan)],
       [STORAGE_KEYS.essentialCategories, JSON.stringify(state.essentialCategoryIds)],
+      [STORAGE_KEYS.recurringRules, JSON.stringify(state.recurringRules)],
     ]).catch(() => undefined);
-  }, [state.hydrated, state.seededOn, state.transactions, state.categories, state.accounts, state.tags, state.positions, state.snapshots, state.contributions, state.retirementPlan, state.essentialCategoryIds]);
+  }, [state.hydrated, state.seededOn, state.transactions, state.categories, state.accounts, state.tags, state.positions, state.snapshots, state.contributions, state.retirementPlan, state.essentialCategoryIds, state.recurringRules]);
+
+  // Add due recurring copies once the records are loaded, and again whenever the app comes back
+  // to the foreground (a new day may have started while it sat in the background).
+  useEffect(() => {
+    if (!state.hydrated) return undefined;
+    dispatch({ type: 'runRecurring', today: getDeviceDateKey() });
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') dispatch({ type: 'runRecurring', today: getDeviceDateKey() });
+    });
+    return () => subscription.remove();
+  }, [state.hydrated]);
 
   const { categories, accounts, transactions } = state;
 
@@ -419,11 +518,26 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAccount = useCallback((id: string, updates: UpdateAccountInput) => dispatch({ type: 'updateAccount', id, updates }), []);
-  const deleteAccount = useCallback((id: string) => {
-    const account = accounts.find((item) => item.id === id);
-    if (!account || account.isDefault || transactions.some((transaction) => transaction.accountId === id)) return false;
-    dispatch({ type: 'deleteAccount', id });
+  // Moves the account's transactions (and the default flag) to `moveTo` first when it needs a successor.
+  const deleteAccount = useCallback((id: string, moveTo?: string | null) => {
+    const now = new Date().toISOString();
+    const result = deleteAccountMoving(accounts, transactions, id, moveTo, now, state.recurringRules.map((rule) => rule.template.accountId));
+    if (!result) return false;
+    // Rules follow their transactions, so no future copy is ever recorded on the deleted account.
+    const recurringRules = moveTo
+      ? state.recurringRules.map((rule) => (rule.template.accountId === id ? { ...rule, template: { ...rule.template, accountId: moveTo }, updatedAt: now } : rule))
+      : state.recurringRules;
+    dispatch({ type: 'applyAccountDeletion', accounts: result.accounts, transactions: result.transactions, recurringRules });
     return true;
+  }, [accounts, transactions, state.recurringRules]);
+  const setDefaultAccount = useCallback((id: string) => {
+    const timestamp = new Date().toISOString();
+    if (!accounts.some((account) => account.id === id)) return;
+    dispatch({
+      type: 'applyAccountDeletion',
+      accounts: accounts.map((account) => (account.isDefault === (account.id === id) ? account : { ...account, isDefault: account.id === id, updatedAt: timestamp })),
+      transactions,
+    });
   }, [accounts, transactions]);
   const setEssentialCategoryIds = useCallback((ids: string[]) => dispatch({ type: 'setEssentialCategoryIds', ids }), []);
 
@@ -461,6 +575,22 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
   const deleteContribution = useCallback((id: string) => dispatch({ type: 'deleteContribution', id }), []);
   const setRetirementPlan = useCallback((plan: RetirementPlan | null) => dispatch({ type: 'setRetirementPlan', plan }), []);
 
+  const addRecurringTransaction = useCallback((input: CreateTransactionInput, frequency: RecurringFrequency, endDate: string | null) => {
+    const now = new Date().toISOString();
+    const rule = createRecurringRule(input, frequency, endDate, newId('recurring'), now);
+    const transaction = createLocalTransaction({ ...input, recurringId: rule.id }, demoUserId);
+    dispatch({ type: 'addTransaction', transaction });
+    dispatch({ type: 'addRecurringRule', rule });
+    // A start date in the past may already have later copies due.
+    dispatch({ type: 'runRecurring', today: getDeviceDateKey() });
+    return { transaction, rule };
+  }, []);
+  const updateRecurringRule = useCallback((rule: RecurringRule) => {
+    dispatch({ type: 'updateRecurringRule', rule });
+    dispatch({ type: 'runRecurring', today: getDeviceDateKey() });
+  }, []);
+  const deleteRecurringRule = useCallback((id: string) => dispatch({ type: 'deleteRecurringRule', id }), []);
+
   const exportRecords = useCallback((): Records => ({
     categories: state.categories,
     accounts: state.accounts,
@@ -471,18 +601,29 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
     contributions: state.contributions,
     retirementPlan: state.retirementPlan,
     essentialCategoryIds: state.essentialCategoryIds,
-  }), [state.categories, state.accounts, state.transactions, state.tags, state.positions, state.snapshots, state.contributions, state.retirementPlan, state.essentialCategoryIds]);
+    recurringRules: state.recurringRules,
+  }), [state.categories, state.accounts, state.transactions, state.tags, state.positions, state.snapshots, state.contributions, state.retirementPlan, state.essentialCategoryIds, state.recurringRules]);
 
   const replaceRecords = useCallback(async (records: Records) => {
     // Restored rows keep their own dates; the seed marker moves to today so the calendar
-    // refresh never re-dates them as if they were demo rows from an older month.
-    dispatch({ type: 'hydrate', payload: { ...records, seededOn: getDeviceDateKey() } });
+    // refresh never re-dates them as if they were demo rows from an older month. A backup with
+    // no demo rows at all is the person's own dataset, so it is marked fresh: otherwise the next
+    // launch would treat it as an old demo generation and add the sample ledger to it.
+    const seededOn = hasDemoTransactions(records.transactions) ? getDeviceDateKey() : FRESH_DATASET;
+    // Backups made before recurring rules existed have none.
+    const recurringRules = Array.isArray(records.recurringRules) ? records.recurringRules : [];
+    dispatch({ type: 'hydrate', payload: { ...records, recurringRules, seededOn } });
   }, []);
 
   const clearDemoData = useCallback(async () => {
     await AsyncStorage.multiRemove(DEMO_STORAGE_KEYS).catch(() => undefined);
     dispatch({ type: 'hydrate', payload: seedState() });
-    dispatch({ type: 'notify', message: 'Data reset to the starting dataset.' });
+    dispatch({ type: 'notify', message: 'Demo data loaded.' });
+  }, []);
+
+  const startFresh = useCallback(async () => {
+    await AsyncStorage.multiRemove(DEMO_STORAGE_KEYS).catch(() => undefined);
+    dispatch({ type: 'hydrate', payload: freshState() });
   }, []);
 
   const value = useMemo<FireBuddyStore>(
@@ -502,6 +643,7 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
       deleteTag,
       addAccount,
       updateAccount,
+      setDefaultAccount,
       deleteAccount,
       setEssentialCategoryIds,
       exportRecords,
@@ -516,11 +658,16 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
       addContribution,
       deleteContribution,
       setRetirementPlan,
+      addRecurringTransaction,
+      updateRecurringRule,
+      deleteRecurringRule,
       notify,
       dismissNotification,
       clearDemoData,
+      startFresh,
+      isFreshDataset: state.seededOn === FRESH_DATASET,
     }),
-    [state, addTransaction, updateTransaction, deleteTransaction, duplicateTransaction, addCategory, updateCategory, deleteCategory, addTag, renameTag, deleteTag, addAccount, updateAccount, deleteAccount, setEssentialCategoryIds, exportRecords, replaceRecords, getCategoryById, getAccountById, addPosition, updatePosition, archivePosition, addSnapshot, deleteSnapshot, addContribution, deleteContribution, setRetirementPlan, notify, dismissNotification, clearDemoData],
+    [state, addTransaction, updateTransaction, deleteTransaction, duplicateTransaction, addCategory, updateCategory, deleteCategory, addTag, renameTag, deleteTag, addAccount, updateAccount, deleteAccount, setDefaultAccount, setEssentialCategoryIds, exportRecords, replaceRecords, getCategoryById, getAccountById, addPosition, updatePosition, archivePosition, addSnapshot, deleteSnapshot, addContribution, deleteContribution, setRetirementPlan, addRecurringTransaction, updateRecurringRule, deleteRecurringRule, notify, dismissNotification, clearDemoData, startFresh],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

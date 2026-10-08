@@ -79,6 +79,8 @@ export interface Transaction {
   createdAt: string;
   updatedAt: string;
   tagIds: UUID[];
+  /** Set on mobile copies added by a recurring rule (`recurring.ts`); absent everywhere else. */
+  recurringId?: string;
 }
 
 export interface CreateTransactionInput {
@@ -89,6 +91,7 @@ export interface CreateTransactionInput {
   date: string;
   transactionType: TransactionType;
   tagIds: UUID[];
+  recurringId?: string;
 }
 
 export interface UpdateTransactionInput {
@@ -210,6 +213,8 @@ export interface RagAppContext {
   currentPage: string;
   currentPath: string;
   recentActions: RagAppAction[];
+  /** ISO country code; outside Singapore DouDou answers generally and never applies CPF/SRS rules. */
+  country?: string;
 }
 
 /** A snapshot computed and masked on the device; the backend forwards it to the model as-is. */
@@ -298,6 +303,8 @@ export interface WealthPosition {
   monthlyPayment: string | null;
   nextPaymentDate: string | null;
   originalPrincipal: string | null;
+  /** Mobile only: the YYYY-MM the user wants a debt cleared by, for the required monthly payment. */
+  payoffTargetMonth?: string | null;
   isArchived: boolean;
   archivedAt: string | null;
   latestSnapshot: WealthPositionSnapshot | null;
@@ -347,7 +354,7 @@ export interface WealthContribution {
   updatedAt: string;
 }
 
-type DebtTermFields = 'interestRate' | 'monthlyPayment' | 'nextPaymentDate' | 'originalPrincipal';
+type DebtTermFields = 'interestRate' | 'monthlyPayment' | 'nextPaymentDate' | 'originalPrincipal' | 'payoffTargetMonth';
 export type CreateWealthPositionInput = Omit<
   WealthPosition,
   'id' | 'userId' | 'isArchived' | 'archivedAt' | 'latestSnapshot' | 'createdAt' | 'updatedAt' | DebtTermFields
@@ -364,7 +371,12 @@ export interface RetirementIncome {
   startMonth: string;
   endMonth: string;
   annualGrowth: number;
+  /** 'barista' marks the part-time income the Barista FIRE type adds; absent for the user's own entries. */
+  source?: 'barista';
 }
+
+/** Which kind of FIRE the plan aims for. Saved with the plan so the choice is never guessed back. */
+export type FireType = 'lean' | 'regular' | 'fat' | 'coast' | 'barista' | 'custom';
 
 export interface RetirementPlan {
   version: 2;
@@ -384,6 +396,8 @@ export interface RetirementPlan {
   afterReturn: number;
   inflation: number;
   provenance: Record<string, 'recorded' | 'user-entered' | 'assumed'>;
+  /** Mobile only; older plans and the web leave it out and read as 'custom'. */
+  fireType?: FireType;
 }
 
 export interface RetirementDraft { step: number; inputs: RetirementPlan }

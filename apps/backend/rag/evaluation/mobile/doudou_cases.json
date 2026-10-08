@@ -1,0 +1,399 @@
+[
+  {
+    "id": "personal_current_spending",
+    "question": "How much have I spent this month so far? State the total and the covered period.",
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "spending.currentMonth.total",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "personal_top_categories",
+    "question": "What are my three largest spending categories this month? Give each category name and amount.",
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "spending.currentMonth.topCategories.0.category",
+        "format": "text"
+      },
+      {
+        "path": "spending.currentMonth.topCategories.0.amount",
+        "format": "money"
+      },
+      {
+        "path": "spending.currentMonth.topCategories.1.category",
+        "format": "text"
+      },
+      {
+        "path": "spending.currentMonth.topCategories.1.amount",
+        "format": "money"
+      },
+      {
+        "path": "spending.currentMonth.topCategories.2.category",
+        "format": "text"
+      },
+      {
+        "path": "spending.currentMonth.topCategories.2.amount",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "personal_spending_comparison",
+    "question": "Compare my spending this month so far with last month. Give both totals and say whether the periods cover the same number of days.",
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "spending.currentMonth.total",
+        "format": "money"
+      },
+      {
+        "path": "spending.previousMonth.total",
+        "format": "money"
+      }
+    ],
+    "sourceExpectation": "Use the snapshot periods, distinguishing a partial current month from a complete previous month; do not describe the totals as a comparison of equal-length periods."
+  },
+  {
+    "id": "personal_income_and_savings",
+    "question": "What are my recorded income, savings amount and savings rate this month?",
+    "expectedSections": [
+      "cashflow"
+    ],
+    "requiredFacts": [
+      {
+        "path": "monthlyPulse.income",
+        "format": "money"
+      },
+      {
+        "path": "monthlyPulse.savingsAmount",
+        "format": "money"
+      },
+      {
+        "path": "monthlyPulse.savingsRate",
+        "format": "percent"
+      }
+    ]
+  },
+  {
+    "id": "personal_net_worth_makeup",
+    "question": "Explain my net worth and its make-up: state net worth, total liabilities and investable assets, and say which asset breakdowns are not available in the summary.",
+    "expectedSections": [
+      "netWorth"
+    ],
+    "requiredFacts": [
+      {
+        "path": "netWorth",
+        "format": "money"
+      },
+      {
+        "path": "liabilityTotal",
+        "format": "money"
+      },
+      {
+        "path": "investableAssets",
+        "format": "money"
+      }
+    ],
+    "sourceExpectation": "Use only the aggregate snapshot; investable assets are not total assets, and the summary does not supply individual holdings or account balances."
+  },
+  {
+    "id": "personal_debt_totals",
+    "question": "How much debt do I have in total, and what is my recorded monthly debt service?",
+    "expectedSections": [
+      "netWorth"
+    ],
+    "requiredFacts": [
+      {
+        "path": "liabilityTotal",
+        "format": "money"
+      },
+      {
+        "path": "monthlyDebtService",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "personal_emergency_runway",
+    "question": "What is my emergency fund runway in months, and what average monthly essential spending is used for it?",
+    "expectedSections": [
+      "spending",
+      "emergency"
+    ],
+    "requiredFacts": [
+      {
+        "path": "emergencyRunwayMonths",
+        "format": "months"
+      },
+      {
+        "path": "averageMonthlyEssentialSpending",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "personal_essential_spending_targets",
+    "question": "Using my average monthly essential spending, state that monthly amount and my saved three-month and six-month emergency fund targets.",
+    "expectedSections": [
+      "spending",
+      "cashflow",
+      "emergency"
+    ],
+    "requiredFacts": [
+      {
+        "path": "averageMonthlyEssentialSpending",
+        "format": "money"
+      },
+      {
+        "path": "derived.emergencyFundTarget3Months",
+        "format": "money"
+      },
+      {
+        "path": "derived.emergencyFundTarget6Months",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "personal_fire_target_progress",
+    "question": "What are my recorded FIRE target, progress percentage and funding status? Use the plan's recorded progress rather than recalculating it.",
+    "expectedSections": [
+      "fire"
+    ],
+    "requiredFacts": [
+      {
+        "path": "fire.fiTarget",
+        "format": "money"
+      },
+      {
+        "path": "fire.fundingStatus",
+        "format": "text"
+      }
+    ],
+    "mustContainAny": [
+      "94.7%",
+      "95%",
+      "2.5%"
+    ]
+  },
+  {
+    "id": "personal_fire_investment_and_year",
+    "question": "For my FIRE plan, state the required monthly investment and estimated retirement year. Are these a projection or a guarantee?",
+    "expectedSections": [
+      "netWorth",
+      "fire"
+    ],
+    "requiredFacts": [
+      {
+        "path": "fire.requiredMonthlyInvestment",
+        "format": "money"
+      },
+      {
+        "path": "fire.estimatedFiYear",
+        "format": "text"
+      }
+    ],
+    "forbidden": [
+      "guaranteed retirement",
+      "guaranteed to retire"
+    ]
+  },
+  {
+    "id": "hybrid_emergency_moneysense",
+    "question": "Is my emergency fund enough by MoneySense's rule? State my runway in months and the saved lower and upper emergency targets, and explain the limits of that comparison.",
+    "expectedSections": [
+      "cashflow",
+      "emergency"
+    ],
+    "requiredFacts": [
+      {
+        "path": "emergencyRunwayMonths",
+        "format": "months"
+      },
+      {
+        "path": "derived.emergencyFundTarget3Months",
+        "format": "money"
+      },
+      {
+        "path": "derived.emergencyFundTarget6Months",
+        "format": "money"
+      }
+    ],
+    "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"Setting aside at least 3 - 6 months’ worth of expenses as emergency funds is generally an accepted rule of thumb\" and \"the adequacy of emergency funds could differ from person to person and the emergency situation.\" Compare the recorded runway with this benchmark, explaining that the device uses essential spending rather than asserting that all household commitments are covered."
+  },
+  {
+    "id": "hybrid_srs_income",
+    "question": "How would SRS top-ups work for me, given my recorded monthly income and savings amount? State both figures, explain the contribution caps and liquidity trade-off, and ask what else is needed before judging the tax benefit.",
+    "expectedSections": [
+      "cashflow"
+    ],
+    "requiredFacts": [
+      {
+        "path": "monthlyPulse.income",
+        "format": "money"
+      },
+      {
+        "path": "monthlyPulse.savingsAmount",
+        "format": "money"
+      }
+    ],
+    "sourceExpectation": "manual/iras/tax-reliefs.md: \"| SRS contributions, Singapore Citizens and Permanent Residents | $15,300 |\", \"| SRS contributions, foreigners | $35,700 |\" and \"The overall personal income tax relief cap is $80,000 per Year of Assessment.\" manual/investing/investing-in-singapore.md: \"Early withdrawals can create tax and penalty consequences.\" Do not infer residency, annual taxable income, existing reliefs or a marginal tax rate from recorded monthly income."
+  },
+  {
+    "id": "hybrid_savings_guideline",
+    "question": "How does my current savings rate compare with the MoneySense guideline? State my savings rate and explain whether saving the money proves I meet that guideline.",
+    "expectedSections": [
+      "cashflow"
+    ],
+    "requiredFacts": [
+      {
+        "path": "monthlyPulse.savingsRate",
+        "format": "percent"
+      }
+    ],
+    "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"the Guide’s rule of thumb is that you set aside at least 10% of your income to invest in your near- and long-term future.\" markdown-cache/moneysense/basic-financial-planning-guide.md: \"After deducting CPF contributions\" qualifies the income basis. Distinguish the recorded savings rate from actual investing, and do not assume the snapshot income has the same CPF treatment."
+  },
+  {
+    "id": "hybrid_emergency_ssb_liquidity",
+    "question": "My emergency runway looks comfortable. State the runway and explain the liquidity trade-offs of keeping an emergency buffer in Singapore Savings Bonds rather than immediately accessible cash.",
+    "expectedSections": [
+      "emergency"
+    ],
+    "requiredFacts": [
+      {
+        "path": "emergencyRunwayMonths",
+        "format": "months"
+      }
+    ],
+    "sourceExpectation": "manual/mas/singapore-savings-bonds.md: \"| Redemption | Any month before maturity, with no penalty, in multiples of $500 |\", \"| Redemption proceeds | Principal plus accrued interest, by the 2nd business day of the following month |\" and \"| Transaction fee | $2 for each application and $2 for each redemption request |\". Explain why no redemption penalty does not mean instant access or no transaction fee."
+  },
+  {
+    "id": "hybrid_fire_cpf_bridge",
+    "question": "State my FIRE target and estimated retirement year, then explain why a Singapore FIRE plan needs a bridge before CPF LIFE begins. Do not assume my age or CPF balances.",
+    "expectedSections": [
+      "fire"
+    ],
+    "requiredFacts": [
+      {
+        "path": "fire.fiTarget",
+        "format": "money"
+      },
+      {
+        "path": "fire.estimatedFiYear",
+        "format": "text"
+      }
+    ],
+    "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"Pre-55 phase: CPF is mostly locked.\" and \"CPF LIFE starts from age 65, with possible deferral to age 70.\" Explain the need for liquid bridge funds without inventing the user's age, CPF balances or bridge duration."
+  },
+  {
+    "id": "hybrid_debt_priority",
+    "question": "Given my total debts and monthly debt service, what should I check before choosing which debt to repay first? State both recorded amounts and relate the answer to MoneySense guidance.",
+    "expectedSections": [
+      "netWorth"
+    ],
+    "requiredFacts": [
+      {
+        "path": "liabilityTotal",
+        "format": "money"
+      },
+      {
+        "path": "monthlyDebtService",
+        "format": "money"
+      }
+    ],
+    "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide.md: \"Prioritise paying off high interest debts\". The aggregate snapshot supplies no individual loan rates or balances, so request those details rather than naming a specific debt as the most expensive."
+  },
+  {
+    "id": "knowledge_cpf_rates",
+    "question": "What are the CPF contribution rates from January 2026 by age for Singapore Citizens and PRs from their third year earning above $750 a month? Separate employer and employee shares.",
+    "expectedSections": [],
+    "sourceExpectation": "manual/cpf/cpf-contribution-rates-2026.md, columns employee age, total contribution, employee share, employer share: \"| 55 and below | 37% | 20% | 17% |\", \"| Above 55 to 60 | 34% | 18% | 16% |\", \"| Above 60 to 65 | 25% | 12.5% | 12.5% |\", \"| Above 65 to 70 | 16.5% | 7.5% | 9% |\", \"| Above 70 | 12.5% | 5% | 7.5% |\". Apply the stated wage and residency conditions; do not add the total to its component shares."
+  },
+  {
+    "id": "knowledge_srs_caps",
+    "question": "What are the annual SRS contribution caps for Singapore Citizens or Permanent Residents and foreigners, and what overall personal tax relief cap applies?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/iras/tax-reliefs.md: \"| SRS contributions, Singapore Citizens and Permanent Residents | $15,300 |\", \"| SRS contributions, foreigners | $35,700 |\" and \"The overall personal income tax relief cap is $80,000 per Year of Assessment.\" Distinguish a contribution cap from the overall relief cap and from a tax refund."
+  },
+  {
+    "id": "knowledge_ssb_limits",
+    "question": "What are the Singapore Savings Bonds minimum purchase and individual holding limit? Is there a separate holding limit for cash and SRS?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/mas/singapore-savings-bonds.md: \"| Minimum investment | $500, and in multiples of $500 thereafter |\" and \"| Individual Limit | $200,000 held at any one time, across cash and SRS combined |\". The limit is combined rather than a separate allowance for each funding source."
+  },
+  {
+    "id": "knowledge_cpf_frs_and_life_basis",
+    "question": "What is the Full Retirement Sum for members turning 55 in 2026, and when does CPF LIFE start? If quoting a payout example, distinguish its cohort and estimate date from the current FRS.",
+    "expectedSections": [],
+    "sourceExpectation": "manual/cpf/cpf-retirement-sums.md, columns cohort year, BRS, FRS, ERS: \"| 2026 | $110,200 | $220,400 | $440,800 |\". manual/cpf/cpf-life-payout-examples.md: \"CPF LIFE pays a monthly income for life from age 65.\" If using its payout table, preserve the basis \"members who turn 65 in 2035,\" and \"computed as of 2025.\" Do not present the older payout example as a guaranteed payout for the current FRS."
+  },
+  {
+    "id": "knowledge_medisave_bhs",
+    "question": "What is the MediSave Basic Healthcare Sum for 2026, and does it keep rising after a member turns 65?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/cpf/cpf-healthcare-sums.md: \"The BHS for 2026 is $79,000.\" and \"Once a member turns 65\ntheir BHS is fixed for the rest of their life at the value for the year they\nturned 65.\" Explain the distinction between members below that age and a fixed cohort amount; this is not an outpatient withdrawal limit."
+  },
+  {
+    "id": "knowledge_emergency_guidance",
+    "question": "What emergency fund rule of thumb does MoneySense give, and how might it differ for someone with unpredictable freelance earnings?",
+    "expectedSections": [],
+    "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"Setting aside at least 3 - 6 months’ worth of expenses as emergency funds is generally an accepted rule of thumb\" and \"a freelancer with unpredictable income may want to set aside a higher amount for emergency funds\". Present a guideline that depends on circumstances, without requesting or assuming this user's records."
+  },
+  {
+    "id": "edge_followup_last_month",
+    "question": "And last month?",
+    "history": [
+      {
+        "role": "user",
+        "content": "How much have I spent this month?"
+      },
+      {
+        "role": "assistant",
+        "content": "Your recorded spending this month so far is S$1,176."
+      }
+    ],
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "spending.previousMonth.total",
+        "format": "money"
+      }
+    ],
+    "forbidden": [
+      "S$1,176 last month",
+      "S$0"
+    ],
+    "sourceExpectation": "A short follow-up reuses the previous question's topic (spending), so the phone sends the spending section and the answer states last month's total from the snapshot, not this month's."
+  },
+  {
+    "id": "edge_unavailable_pet_care_category",
+    "question": "How much have I spent on Pet care this month? Give a figure only if that category is explicitly present; otherwise say the summary cannot establish it.",
+    "expectedSections": [
+      "spending"
+    ],
+    "forbidden": [
+      "S$0",
+      "$0",
+      "S$200",
+      "$200",
+      "S$517",
+      "$517",
+      "516.85",
+      "you spent nothing",
+      "no spending on pet care"
+    ],
+    "sourceExpectation": "Pet care is absent from the supplied top-category summary, which is not a complete category ledger. Say the amount cannot be established; do not equate absence with zero or substitute another category's amount."
+  }
+]

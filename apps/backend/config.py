@@ -71,7 +71,8 @@ class Settings:
     """Load backend settings once for API, auth, and advisor controls."""
 
     def __init__(self) -> None:
-        self.supabase_url = os.getenv("SUPABASE_URL", "").strip()
+        # A trailing slash would change the token issuer and reject every login.
+        self.supabase_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
         self.supabase_key = (
             os.getenv("SUPABASE_SECRET_KEY", "").strip()
             or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()

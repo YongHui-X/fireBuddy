@@ -1,0 +1,24 @@
+{
+  "label": "debtcheck",
+  "todayKey": "2026-10-04",
+  "apiBase": "http://127.0.0.1:8000",
+  "total": 1,
+  "passed": 1,
+  "results": [
+    {
+      "id": "personal_debt_totals",
+      "question": "How much debt do I have in total, and what is my recorded monthly debt service?",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "How much debt do I have in total, and what is my recorded monthly debt service?",
+      "maskedContextChars": 231,
+      "mode": "hybrid",
+      "answer": "- Your total debt is recorded as S$365,000.\n- Your recorded monthly debt service is S$1,650.",
+      "sources": [],
+      "latencyMs": 5864,
+      "dataChecks": [],
+      "pass": true
+    }
+  ]
+}

@@ -234,7 +234,7 @@ class RagRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(
             response.json()["detail"],
-            "Ember is temporarily unavailable.",
+            "DouDou is temporarily unavailable.",
         )
         self.assertNotIn("secret upstream detail", response.text)
 
@@ -252,7 +252,7 @@ class RagRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 429)
         self.assertEqual(
             response.json()["detail"],
-            "Ember request limit reached. Try again shortly.",
+            "DouDou request limit reached. Try again shortly.",
         )
         self.assertEqual(response.headers["retry-after"], "42")
 

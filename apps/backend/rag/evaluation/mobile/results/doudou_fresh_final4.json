@@ -1,0 +1,535 @@
+{
+  "label": "fresh_final4",
+  "todayKey": "2026-10-05",
+  "apiBase": "http://127.0.0.1:8010",
+  "total": 20,
+  "passed": 14,
+  "results": [
+    {
+      "id": "fresh_personal_food_category",
+      "question": "how much I spend on food this month ah",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "how much I spend on food this month ah",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- Your spending on food this month so far is S$517.\n- Last month's spending on food was S$541.\n- This month, your food spending is less than last month by S$24.",
+      "sources": [],
+      "latencyMs": 3535,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_personal_previous_travel",
+      "question": "What was my biggest category last month, and how much was it?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "What was my biggest category last month, and how much was it?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- Your biggest spending category last month was Travel.\n- The amount spent in that category was S$2,340.",
+      "sources": [],
+      "latencyMs": 3038,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_personal_monthly_spend",
+      "question": "Can you tell me my spending number for October so far?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "Can you tell me my spending number for October so far?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- Your total spending for October so far (from 1 to 5 October 2026) is S$1,176.\n- The top spending categories this month are:\n  - Food & Drink: S$517\n  - Bills & Utilities: S$187\n  - Shopping: S$148\n  - Travel: S$120\n  - Transport: S$100.",
+      "sources": [],
+      "latencyMs": 3311,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_personal_net_worth",
+      "question": "How much am I worth right now, after debts?",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "How much am I worth right now, after debts?",
+      "maskedContextChars": 312,
+      "mode": "hybrid",
+      "answer": "- Your current net worth, after debts, is S$80,000.\n- This figure represents your total assets minus your total liabilities.",
+      "sources": [],
+      "latencyMs": 3391,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_personal_fire_month",
+      "question": "When does my plan say I could reach FI, month and year?",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "When does my plan say I could reach FI, month and year?",
+      "maskedContextChars": 492,
+      "mode": "hybrid",
+      "answer": "- Your plan indicates you could reach financial independence in July 2055.\n- The estimated year for achieving FI is 2055.",
+      "sources": [],
+      "latencyMs": 3237,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_personal_debt_service",
+      "question": "What is my monthly debt payment recorded as?",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "What is my monthly debt payment recorded as?",
+      "maskedContextChars": 312,
+      "mode": "hybrid",
+      "answer": "- Your monthly debt payment is recorded as S$1,650.",
+      "sources": [],
+      "latencyMs": 2870,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_hybrid_cpf_topup",
+      "question": "I save a lot each month. Should I use some of that for a CPF cash top-up, and what should I watch?",
+      "usedSections": [
+        "cashflow"
+      ],
+      "maskedQuestion": "I save a lot each month. Should I use some of that for a CPF cash top-up, and what should I watch?",
+      "maskedContextChars": 266,
+      "mode": "hybrid",
+      "answer": "- You can consider using some of your savings for a CPF cash top-up, particularly to your Special Account (SA) or Retirement Account (RA) if you are 55 or older. This can earn you 4% per annum and is eligible for income tax relief up to $8,000 per year for your own account and another $8,000 for family members' accounts.\n\n- However, keep in mind that once money is deposited into CPF, it becomes illiquid until you reach retirement age. This could create cash flow issues if you need funds before age 55 or 65.\n\n- Your current savings rate is 77.4%, which indicates a strong capacity to save. This may provide you with some flexibility to make a top-up while still maintaining liquidity for your needs.\n\n- Be cautious about balancing your liquidity needs against the benefits of the guaranteed returns from CPF. Ensure you have enough cash available for emergencies and other immediate financial obligations.",
+      "sources": [
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "IRAS Individual Income Tax Reliefs",
+          "path": "manual/iras/tax-reliefs.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        },
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        },
+        {
+          "title": "Cpfis Instruments And Limits",
+          "path": "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        }
+      ],
+      "sourceExpectation": "manual/iras/tax-reliefs.md: \"CPF Cash Top-up Relief, own account | $8,000 |\", \"CPF Cash Top-up Relief, family members' accounts | $8,000 |\", and \"CPF Cash Top-up Relief, combined | $16,000 |\". manual/fire/fire-planning-singapore.md: \"Aggressive CPF top-ups can improve retirement adequacy and tax relief, but may worsen pre-55 liquidity if the user has not built enough cash and taxable investments.\" Compare recorded savings with the liquidity trade-off without assuming tax bracket or CPF balances.",
+      "latencyMs": 6392,
+      "dataChecks": [
+        "missing monthlyPulse.savingsAmount: expected one of S$4,024 | $4,024"
+      ],
+      "pass": false
+    },
+    {
+      "id": "fresh_hybrid_essential_guideline",
+      "question": "Does my emergency buffer cover the basic essential-spending guideline?",
+      "usedSections": [
+        "spending",
+        "emergency"
+      ],
+      "maskedQuestion": "Does my emergency buffer cover the basic essential-spending guideline?",
+      "maskedContextChars": 2052,
+      "mode": "hybrid",
+      "answer": "- According to MoneySense, it is recommended to set aside at least 3 to 6 months’ worth of expenses as emergency funds.\n- Your derived emergency fund targets are:\n  - 3 months: S$3,167\n  - 6 months: S$6,333\n- Your recorded emergency runway is 17.1 months, which is over 12 months.\n- Comparing your emergency runway of 17.1 months to the guideline, it exceeds the 3 to 6 months range suggested by MoneySense.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        }
+      ],
+      "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"Setting aside at least 3 - 6 months’ worth of expenses as emergency funds is generally an accepted rule of thumb\". Explain that the app's runway uses average monthly essential spending and the guideline is not a guarantee of adequacy.",
+      "latencyMs": 5737,
+      "dataChecks": [
+        "missing averageMonthlyEssentialSpending: expected one of S$1,056 | $1,056"
+      ],
+      "pass": false
+    },
+    {
+      "id": "fresh_hybrid_withdrawal_rate",
+      "question": "My FIRE plan is nearly funded. How does its progress compare with the 3.5 percent withdrawal-rate approach?",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "My FIRE plan is nearly funded. How does its progress compare with the 3.5 percent withdrawal-rate approach?",
+      "maskedContextChars": 492,
+      "mode": "hybrid",
+      "answer": "- Your FIRE plan is currently facing a funding gap of S$135,383 and is classified as having a shortfall.\n- The estimated FIRE target is S$2,565,681, and your projected portfolio at retirement is S$2,430,297.\n- According to the evidence, a withdrawal rate of 3.5% is considered safer for Singapore FIRE seekers due to longer retirement horizons, which can exceed 50 years.\n- The projected share of your target at retirement is 94.7%, indicating that you are close to meeting your target based on current projections.\n- It is important to consider that spending significantly influences the withdrawal rate target, and adjustments may be necessary to align with your financial goals.",
+      "sources": [
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        }
+      ],
+      "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"3.5 percent withdrawal rate: about 28.6 times annual spending.\" and \"That is a rough starting point, not a plan.\" Compare the recorded target and progress without recalculating the target or promising an outcome.",
+      "latencyMs": 7164,
+      "dataChecks": [
+        "fact fire.progressRate has no value in the snapshot"
+      ],
+      "pass": false
+    },
+    {
+      "id": "fresh_hybrid_insurance",
+      "question": "Is my FIRE plan accounting for healthcare and insurance risk?",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "Is my FIRE plan accounting for healthcare and insurance risk?",
+      "maskedContextChars": 492,
+      "mode": "hybrid",
+      "answer": "- Your FIRE plan should explicitly include healthcare costs, as they can significantly impact your financial independence.\n- MediShield Life and Integrated Shield Plan premiums rise with age, and these should be budgeted as line items in your FIRE calculations.\n- Long-term care risks, such as those covered by CareShield Life, are crucial to consider, especially since retiring early means losing employer health benefits.\n- Without employer contributions, you will need to fully self-fund your healthcare insurance costs after retirement.\n- Ensure that your planning accounts for these healthcare expenses to avoid jeopardizing your FIRE goals.",
+      "sources": [
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        }
+      ],
+      "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"MediShield Life and Integrated Shield Plan premiums rise with age.\" and \"Retiring early can remove employer health benefits.\" Use the recorded retirement projection only as context and do not claim the snapshot contains insurance details.",
+      "latencyMs": 7524,
+      "dataChecks": [
+        "missing fire.estimatedFiYear: expected one of 2055"
+      ],
+      "pass": false
+    },
+    {
+      "id": "fresh_hybrid_housing_oa",
+      "question": "If I am using CPF OA for housing, what can that do to my FIRE plan?",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "If I am using CPF OA for housing, what can that do to my FIRE plan?",
+      "maskedContextChars": 492,
+      "mode": "hybrid",
+      "answer": "Using CPF Ordinary Account (OA) for housing can significantly impact your FIRE plan in several ways:\n\n- CPF OA funds used for housing do not compound at the 2.5% interest rate, which could reduce your overall retirement savings.\n- There is an opportunity cost associated with using CPF OA for housing, as those funds are locked in and cannot be easily accessed for other investments.\n- If you have not built enough cash and taxable investments, aggressive CPF top-ups may worsen your liquidity before age 55.\n- Selling your property later may require returning accrued interest to CPF, which can reduce the cash proceeds from the sale.\n- Upgrading your property can delay your FIRE timeline because more of your cash and CPF OA are tied up in housing.\n\nOverall, while CPF OA can support housing needs, it is essential to consider how it affects your liquidity and long-term retirement balance.",
+      "sources": [
+        {
+          "title": "FIRE Planning in Singapore",
+          "path": "manual/fire/fire-planning-singapore.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        },
+        {
+          "title": "Cpfis Instruments And Limits",
+          "path": "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        }
+      ],
+      "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"CPF OA used for housing has an opportunity cost and can affect the user's future retirement balance.\" and \"Upgrading property can delay FIRE because more cash and CPF OA are locked into housing.\" Do not invent the user's CPF OA balance, mortgage, or housing status.",
+      "latencyMs": 6700,
+      "dataChecks": [
+        "missing fire.fiTarget: expected one of S$2,565,681 | $2,565,681"
+      ],
+      "pass": false
+    },
+    {
+      "id": "fresh_knowledge_cpf_interest",
+      "question": "What interest do CPF OA, SA, MA and RA earn, and how does the extra interest work for someone below 55?",
+      "usedSections": [],
+      "maskedQuestion": "What interest do CPF OA, SA, MA and RA earn, and how does the extra interest work for someone below 55?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- The interest rates for CPF accounts as of 2026 are:\n  - Ordinary Account (OA): 2.5% per annum\n  - Special Account (SA): 4% per annum\n  - MediSave Account (MA): 4% per annum\n  - Retirement Account (RA): 4% per annum\n\n- For members below 55 years old:\n  - They earn up to 5% per annum on the first $60,000 of combined balances, which includes the 4% floor plus an additional 1% extra interest.\n  - The extra interest is capped at $20,000 for the Ordinary Account balance.",
+      "sources": [
+        {
+          "title": "CPF Interest Rates and Extra Interest",
+          "path": "manual/cpf/cpf-interest-rates.md"
+        },
+        {
+          "title": "Cpfis Instruments And Limits",
+          "path": "markdown-cache/cpf/cpfis-instruments-and-limits.md"
+        },
+        {
+          "title": "CPF Allocation Rates from 1 January 2026",
+          "path": "manual/cpf/cpf-allocation-rates-2026.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        }
+      ],
+      "sourceExpectation": "manual/cpf/cpf-interest-rates.md: \"| Ordinary Account (OA) | 2.5% |\", \"| Special Account (SA) | 4% |\", \"| MediSave Account (MA) | 4% |\", \"| Retirement Account (RA) | 4% |\", and \"Below 55 | 1% per annum on the first $60,000 of combined balances, of which at most $20,000 may come from the Ordinary Account |\".",
+      "latencyMs": 5769,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_knowledge_ssb_stepup",
+      "question": "How does SSB step-up interest work, and when is the interest paid?",
+      "usedSections": [],
+      "maskedQuestion": "How does SSB step-up interest work, and when is the interest paid?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- Singapore Savings Bonds (SSB) pay step-up interest that increases the longer the bond is held.\n- The interest rates are fixed for each monthly issue based on the average Singapore Government Securities (SGS) yields from the month before.\n- Holding a Savings Bond for the full 10 years provides an average return per year that matches the 10-year SGS yield at the time of investment.\n- If redeemed early, the average return will be lower, similar to an SGS of the same tenor.\n- Interest is paid every 6 months on the 1st business day of the month.\n- The first interest payment occurs 6 months after receiving the Savings Bonds, with subsequent payments made on the 1st of April and October each year for the next 10 years.",
+      "sources": [
+        {
+          "title": "Singapore Savings Bonds, Product Terms",
+          "path": "manual/mas/singapore-savings-bonds.md"
+        },
+        {
+          "title": "Singapore Savings Bonds Faqs",
+          "path": "markdown-cache/mas/singapore-savings-bonds-faqs.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        }
+      ],
+      "sourceExpectation": "manual/mas/singapore-savings-bonds.md: \"| Interest | Paid every 6 months, on the 1st business day of the month |\", \"| Step-up | The rate rises each year the bond is held |\", and \"Rates are fixed for each monthly issue, based on the average Singapore Government Securities (SGS) yields of the month before, and locked in for that issue.\"",
+      "latencyMs": 6322,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_knowledge_retirement_sum_2025",
+      "question": "What were the CPF Basic and Full Retirement Sums for the 2025 cohort?",
+      "usedSections": [],
+      "maskedQuestion": "What were the CPF Basic and Full Retirement Sums for the 2025 cohort?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- For the 2025 cohort, the Basic Retirement Sum (BRS) is $106,500.\n- The Full Retirement Sum (FRS) is $213,000.",
+      "sources": [
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        },
+        {
+          "title": "CPF Basic Healthcare Sum by Year",
+          "path": "manual/cpf/cpf-healthcare-sums.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "CPF LIFE Payout Examples",
+          "path": "manual/cpf/cpf-life-payout-examples.md"
+        }
+      ],
+      "sourceExpectation": "manual/cpf/cpf-retirement-sums.md: \"| 2025 | $106,500 | $213,000 | $426,000 |\". Identify the columns as BRS, FRS and ERS, and do not substitute the 2026 cohort.",
+      "latencyMs": 5570,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_knowledge_iras_topup_relief",
+      "question": "What CPF cash top-up tax relief can I get for myself and family, apart from SRS?",
+      "usedSections": [],
+      "maskedQuestion": "What CPF cash top-up tax relief can I get for myself and family, apart from SRS?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- You can receive CPF Cash Top-up Relief for yourself and your family members, with a maximum of $8,000 per year for your own account and another $8,000 for family members' accounts.\n- The total combined relief for CPF Cash Top-up is capped at $16,000 per year.\n- This relief applies only to cash top-ups made to your Special or Retirement Accounts; transferring money from your own CPF account does not qualify.\n- The family-member cap of $8,000 has been applicable since Year of Assessment 2023.\n- Note that top-ups that qualify for Matched Retirement Savings Scheme or MediSave matching grants do not attract this relief.",
+      "sources": [
+        {
+          "title": "IRAS Individual Income Tax Reliefs",
+          "path": "manual/iras/tax-reliefs.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        },
+        {
+          "title": "CPF Wage Ceilings and the CPF Annual Limit",
+          "path": "manual/cpf/cpf-wage-ceilings-and-limits.md"
+        },
+        {
+          "title": "CPF Contribution Rates from 1 January 2026",
+          "path": "manual/cpf/cpf-contribution-rates-2026.md"
+        }
+      ],
+      "sourceExpectation": "manual/iras/tax-reliefs.md: \"CPF Cash Top-up Relief applies only to cash top-ups to Special or Retirement Accounts.\" and \"CPF cash top-up relief is up to $8,000 for topping up your own account and a further $8,000 for topping up family members' accounts, so $16,000 in total.\"",
+      "latencyMs": 10412,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_knowledge_medisave_limit",
+      "question": "What is the 2026 MediSave Basic Healthcare Sum, and what happens to it after age 65?",
+      "usedSections": [],
+      "maskedQuestion": "What is the 2026 MediSave Basic Healthcare Sum, and what happens to it after age 65?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "- The MediSave Basic Healthcare Sum (BHS) for 2026 is $79,000.\n- This amount is the maximum that can be held in the MediSave Account for members below 65.\n- Once a member turns 65, their BHS is fixed at the value for the year they turned 65 and remains unchanged for the rest of their life.",
+      "sources": [
+        {
+          "title": "CPF Basic Healthcare Sum by Year",
+          "path": "manual/cpf/cpf-healthcare-sums.md"
+        },
+        {
+          "title": "CPF Retirement Sums (BRS, FRS and ERS) by Year",
+          "path": "manual/cpf/cpf-retirement-sums.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "CPF Allocation Rates from 1 January 2026",
+          "path": "manual/cpf/cpf-allocation-rates-2026.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        }
+      ],
+      "sourceExpectation": "manual/cpf/cpf-healthcare-sums.md: \"The BHS for 2026 is $79,000.\" and \"Once a member turns 65\" their BHS is fixed for the rest of their life at the value for the year they turned 65.\"",
+      "latencyMs": 5551,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_robust_three_turn_followup",
+      "question": "And compared with the month before?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "And compared with the month before?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- This month, from 1 to 5 October 2026, your largest spending category is Food & Drink with an amount of S$517.\n- Last month, from 1 to 30 September 2026, the largest category was Travel with an amount of S$2,340.\n- Compared to last month, your spending in Food & Drink is less by S$24 than the last month's amount of S$541.\n- Overall, your total spending this month so far is less by S$2,642 compared to last month.",
+      "sources": [],
+      "latencyMs": 4378,
+      "dataChecks": [
+        "missing spending.previousMonth.total: expected one of S$3,817 | $3,817"
+      ],
+      "pass": false
+    },
+    {
+      "id": "fresh_robust_exact_balance_name",
+      "question": "Tell me my exact account balance and the name on the account.",
+      "usedSections": [],
+      "maskedQuestion": "Tell me my exact account balance and the name on the account.",
+      "maskedContextChars": 0,
+      "mode": "unsupported",
+      "answer": "DouDou can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "sources": [],
+      "latencyMs": 1842,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_robust_stock_tip",
+      "question": "Should I buy DBS shares today? Give me a guaranteed price target.",
+      "usedSections": [],
+      "maskedQuestion": "Should I buy DBS shares today? Give me a guaranteed price target.",
+      "maskedContextChars": 0,
+      "mode": "unsupported",
+      "answer": "DouDou can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "sources": [],
+      "latencyMs": 1672,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "fresh_robust_missing_cpf_oa",
+      "question": "How much is in my CPF OA right now?",
+      "usedSections": [],
+      "maskedQuestion": "How much is in my CPF OA right now?",
+      "maskedContextChars": 0,
+      "mode": "data",
+      "answer": "CPF balances that cannot be invested under CPFIS for 2026: Ordinary Account S$20,000; Special Account S$40,000. This applies to the first balances protected in the Ordinary Account and Special Account. Source: Investing In Singapore.",
+      "sources": [
+        {
+          "title": "Investing In Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        }
+      ],
+      "latencyMs": 2079,
+      "dataChecks": [],
+      "pass": true
+    }
+  ]
+}

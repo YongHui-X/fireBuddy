@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   EMBER_ACTIVE_TOPIC_STORAGE_KEY,
-  EMBER_GREETING,
   EMBER_TOPICS_STORAGE_KEY,
   LEGACY_EMBER_ACTIVE_TOPIC_STORAGE_KEY,
   LEGACY_EMBER_TOPICS_STORAGE_KEY,
@@ -115,7 +114,8 @@ describe('Ember local history', () => {
         messages: [{
           id: 'seeded-greeting',
           role: 'assistant',
-          content: EMBER_GREETING,
+          // The exact text older builds saved, written out so a later rename cannot hide a regression.
+          content: 'Hello, I am Ember. Ask me about CPF, SRS, HDB grants, Singapore Savings Bonds, MoneySense guidance, or FIRE concepts in Singapore.',
           createdAt: '2026-08-01T00:00:00.000Z',
           sources: [],
         }],

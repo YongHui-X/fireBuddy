@@ -35,9 +35,9 @@ describe('floating Ember assistant', () => {
   it('replaces the quick chat with the consent panel when AI is off', () => {
     mocks.aiPreference = 'off';
     render(<MemoryRouter><EmberFloatingAssistant pathname="/" onOpenFullEmber={vi.fn()} /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Ember about Home dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Doudou about Home dashboard' }));
 
-    expect(screen.getByRole('heading', { name: 'Turn on Ember' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Turn on Doudou' })).toBeTruthy();
     expect(screen.queryByRole('textbox', { name: 'Ask about this page' })).toBeNull();
     expect(mocks.streamFinancialAdvisor).not.toHaveBeenCalled();
   });
@@ -46,12 +46,12 @@ describe('floating Ember assistant', () => {
     recordEmberAppAction('create', 'Added a transaction', new Date('2026-09-03T08:00:00.000Z'));
     render(<EmberFloatingAssistant pathname="/transactions" onOpenFullEmber={vi.fn()} />);
 
-    const launcher = screen.getByRole('button', { name: 'Ask Ember about Transactions' });
+    const launcher = screen.getByRole('button', { name: 'Ask Doudou about Transactions' });
     expect(launcher.querySelector('svg')).toBeTruthy();
     expect(launcher.querySelector('.lucide-sparkles')).toBeNull();
     fireEvent.click(launcher);
 
-    const drawer = screen.getByRole('dialog', { name: 'Ask Ember' });
+    const drawer = screen.getByRole('dialog', { name: 'Ask Doudou' });
     expect(within(drawer).getByText(/Using context from Transactions/i)).toBeTruthy();
     fireEvent.click(within(drawer).getByText(/Using context from Transactions/i));
     expect(within(drawer).getByText(/backend may also use a masked summary of your signed in account/i)).toBeTruthy();
@@ -61,7 +61,7 @@ describe('floating Ember assistant', () => {
 
   it('fills the page-aware prompt without submitting', () => {
     render(<EmberFloatingAssistant pathname="/wealth" onOpenFullEmber={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Ember about Wealth' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Doudou about Wealth' }));
 
     fireEvent.click(screen.getByRole('button', { name: /How should liquidity and CPF restrictions/i }));
     expect((screen.getByRole('textbox', { name: 'Ask about this page' }) as HTMLTextAreaElement).value)
@@ -78,7 +78,7 @@ describe('floating Ember assistant', () => {
       handlers.onDone?.();
     });
     render(<EmberFloatingAssistant pathname="/fire" onOpenFullEmber={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Ask Ember about FIRE Planner' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Doudou about FIRE Planner' }));
     const composer = screen.getByRole('textbox', { name: 'Ask about this page' });
     fireEvent.change(composer, { target: { value: 'What should I review here?' } });
 
@@ -103,19 +103,19 @@ describe('floating Ember assistant', () => {
   it('closes with Escape, restores focus, and links to the full route', async () => {
     const onOpenFullEmber = vi.fn();
     render(<EmberFloatingAssistant pathname="/" onOpenFullEmber={onOpenFullEmber} />);
-    const launcher = screen.getByRole('button', { name: 'Ask Ember about Home dashboard' });
+    const launcher = screen.getByRole('button', { name: 'Ask Doudou about Home dashboard' });
     fireEvent.click(launcher);
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(document.activeElement).toBe(launcher));
 
     fireEvent.click(launcher);
-    fireEvent.click(screen.getByRole('button', { name: 'Open full Ember' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open full chat' }));
     expect(onOpenFullEmber).toHaveBeenCalledOnce();
   });
 
   it('stays hidden on the full Ember page', () => {
     render(<EmberFloatingAssistant pathname="/ember" onOpenFullEmber={vi.fn()} />);
     expect(screen.queryByRole('button')).toBeNull();
-    expect(screen.queryByRole('dialog', { name: 'Ask Ember' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Ask Doudou' })).toBeNull();
   });
 });

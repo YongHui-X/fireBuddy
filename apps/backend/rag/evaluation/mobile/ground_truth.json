@@ -1,0 +1,141 @@
+{
+  "todayKey": "2026-10-08",
+  "effectiveDate": "2026-10-08",
+  "facts": {
+    "effectiveDate": "2026-10-08",
+    "snapshotStatus": "current",
+    "netWorth": "80000.00",
+    "liabilityTotal": "365000.00",
+    "assetTotal": "445000.00",
+    "monthlyDebtService": "1650.00",
+    "debtToIncome": "0.317308",
+    "investableAssets": "65000.00",
+    "emergencyRunwayMonths": "17.053529",
+    "averageMonthlyEssentialSpending": "1055.50",
+    "derived": {
+      "emergencyFundTarget3Months": "3166.50",
+      "emergencyFundTarget6Months": "6333.00"
+    },
+    "monthlyPulse": {
+      "month": "2026-10",
+      "income": "5200.00",
+      "spending": "1175.71",
+      "savingsAmount": "4024.29",
+      "savingsRate": "0.773902",
+      "completeness": "complete"
+    },
+    "fire": {
+      "fundingStatus": "shortfall",
+      "fiTarget": "2565680.66",
+      "projectedShareOfTargetAtRetirement": "0.947233",
+      "projectedPortfolio": "2430297.28",
+      "fundingGap": "135383.38",
+      "gapFromTodayAssets": "2500680.66",
+      "progressToday": "0.025334",
+      "requiredMonthlyInvestment": "2135.52",
+      "estimatedFiYear": 2055,
+      "earliestRetirementMonth": "2055-07"
+    },
+    "recommendedAction": null,
+    "anomalyCounts": {
+      "possible_duplicate": 0,
+      "high_category_amount": 0
+    },
+    "warningCodes": [
+      "smooth_returns",
+      "selected_assets"
+    ],
+    "spending": {
+      "currentMonth": {
+        "period": "2026-10-01 to 2026-10-08",
+        "total": "1175.71",
+        "topCategories": [
+          {
+            "category": "Food & Drink",
+            "amount": "516.85",
+            "share": "0.439607"
+          },
+          {
+            "category": "Bills & Utilities",
+            "amount": "187.30",
+            "share": "0.159308"
+          },
+          {
+            "category": "Shopping",
+            "amount": "147.50",
+            "share": "0.125456"
+          },
+          {
+            "category": "Travel",
+            "amount": "120.00",
+            "share": "0.102066"
+          },
+          {
+            "category": "Transport",
+            "amount": "99.80",
+            "share": "0.084885"
+          }
+        ]
+      },
+      "previousMonth": {
+        "period": "2026-09-01 to 2026-09-30",
+        "total": "3817.36",
+        "topCategories": [
+          {
+            "category": "Travel",
+            "amount": "2340.00",
+            "share": "0.612989"
+          },
+          {
+            "category": "Food & Drink",
+            "amount": "541.30",
+            "share": "0.141800"
+          },
+          {
+            "category": "Transport",
+            "amount": "417.60",
+            "share": "0.109395"
+          }
+        ]
+      },
+      "comparison": {
+        "thisMonthSoFarVersusLastMonth": {
+          "direction": "less",
+          "difference": "2641.65"
+        },
+        "categoryChanges": [
+          {
+            "category": "Food & Drink",
+            "lastMonthAmount": "541.30",
+            "direction": "less",
+            "difference": "24.45"
+          },
+          {
+            "category": "Bills & Utilities",
+            "lastMonthAmount": "203.60",
+            "direction": "less",
+            "difference": "16.30"
+          },
+          {
+            "category": "Shopping",
+            "lastMonthAmount": "184.50",
+            "direction": "less",
+            "difference": "37.00"
+          },
+          {
+            "category": "Travel",
+            "lastMonthAmount": "2340.00",
+            "direction": "less",
+            "difference": "2220.00"
+          },
+          {
+            "category": "Transport",
+            "lastMonthAmount": "417.60",
+            "direction": "less",
+            "difference": "317.80"
+          }
+        ]
+      }
+    }
+  }
+}

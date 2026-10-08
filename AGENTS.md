@@ -6,15 +6,15 @@
 - If `PROJECT_BRIEF.md` and the current file tree differ, call out the gap clearly and work within the user's requested scope. The root monorepo migration is complete, but individual features may still be in transition.
 
 ## Project Direction
-FireBuddy is a Singapore-focused personal finance and FIRE tracker. The repository is a Turborepo monorepo with a web-first build for early public deployment and job applications, while mobile is deferred until later.
+FireBuddy is a Singapore-focused personal finance and FIRE tracker. The repository is a Turborepo monorepo. The web app was built first and stays deployed, but mobile is now the active focus (October 2026) and web work is paused unless the owner asks for it.
 
 Current repo state:
 - The repo now uses the root monorepo shape with `apps/`, `packages/`, and `docs/`.
 - `apps/web/` is the active React and Vite frontend.
 - `apps/web/` includes Supabase auth, typed income and expense transactions, read-only system categories, custom category management, persisted accounts, expense-only insights, optional AI category suggestions, financial advisor chat history, and explicit demo-only local state.
 - `apps/backend/` is the FastAPI backend with mounted health, accounts, transactions, compatibility expenses, categories, AI suggestion, financial advisor RAG, profile (AI consent level), and account export and deletion routes.
-- `apps/mobile/` contains the Expo app with the web design system ported (`constants/tokens.ts`), a safe-area-aware shell, the four tabs, the Add transaction sheet, and the secondary Wealth, FIRE Planner, Insights, Accounts, Plan, Ember and Goals screens on local demo data from `packages/shared`. Ember needs a configured API base URL and token; Supabase auth and backend data wiring are still pending.
-- `packages/shared/` contains shared TypeScript contracts for accounts, categories, transactions, expenses, AI, and RAG, plus category data, add-expense helpers, API route constants, and the modules both frontends share: formatters (`format.ts`), the demo dataset (`demo-data.ts`), ledger maths (`ledger.ts`), Insights ranges and series (`insights.ts`), the CSV export builder (`transaction-export.ts`), essential-spending maths (`essential.ts`), donut geometry (`charts.ts`), category icon ids (`category-icons.ts`), the transaction draft (`transaction-draft.ts`), the client-side masking session (`masking.ts`), the device snapshot builder (`personal-snapshot.ts`) and the encrypted backup format (`backup.ts`).
+- `apps/mobile/` contains the Expo app with the web design system ported (`constants/tokens.ts`), a safe-area-aware shell, the four tabs, the Add transaction sheet, and the secondary Wealth, FIRE Planner, Insights, Accounts, Budgets (`app/plan.tsx`) and Ember screens with every record kept on the device, plus a first-run welcome that asks for an on-device nickname and country, and a DouDou spotlight tutorial (`app/welcome.tsx`, `components/tour/`, `lib/user-profile.tsx`). Singapore gets the full app; other countries get a general mode (chosen currency, no CPF/SRS/HDB). Production installs start empty and the demo dataset is development-only. Recurring transactions and an opt-in 9pm local reminder are on-device features. There is no sign-in screen and no mobile data route. Ember is a single Off/On consent: Off makes no network calls; On creates an invisible anonymous Supabase session and sends only the masked snapshot sections the question needs. See the mobile privacy direction in `PROJECT_BRIEF.md`.
+- `packages/shared/` contains shared TypeScript contracts for accounts, categories, transactions, expenses, AI, and RAG, plus category data, add-expense helpers, API route constants, and the modules both frontends share: account deletion rules (`accounts.ts`), formatters (`format.ts`), the demo dataset (`demo-data.ts`), ledger maths (`ledger.ts`), Insights ranges and series (`insights.ts`), the CSV export builder (`transaction-export.ts`), essential-spending maths (`essential.ts`), donut geometry (`charts.ts`), category icon ids (`category-icons.ts`), the transaction draft (`transaction-draft.ts`), the client-side masking session (`masking.ts`), the device snapshot builder (`personal-snapshot.ts`) and the encrypted backup format (`backup.ts`), and the phone's Terms of use and Privacy policy (`legal.ts`).
 - `supabase/` contains timestamped SQL migrations for UUID alignment, profiles, typed categories, persisted accounts, income and expense transactions, security, and private hybrid RAG storage.
 
 Ongoing repo direction:
@@ -61,6 +61,7 @@ Current commands that exist today:
 - `npm run dev:web`
 - `npm run dev:mobile`
 - `npm run dev:backend`
+- `npm run dev:backend:phone` (backend listening on the LAN, so a phone running Expo Go can reach DouDou)
 - `npm run build:web`
 - `npm run lint:web`
 - `npm run android`
@@ -82,7 +83,9 @@ Root orchestration direction:
 - Confirm the exact workspace and Turbo commands from `package.json` and `turbo.json` before instructing the user to run them
 
 ## Architecture Guidance
-- Prioritise the web app first. Mobile is a later phase unless the user explicitly asks to work on it.
+- Prioritise the mobile app. Touch the web app only when the user explicitly asks.
+- On mobile, keep records on the device. Do not add code that writes mobile records to Supabase or the backend.
+- On mobile, send the AI relevant data only when the question needs it, otherwise none. Select snapshot sections on the device before masking, and never send a full snapshot by default.
 - Preserve a shared-logic-first architecture. Business logic should live in hooks, lib modules, backend services, or `packages/shared`, not inside UI components.
 - Keep components presentation-only whenever practical. They should render UI and call hooks instead of owning business logic.
 - Treat Figma Make output as a visual reference only. Do not copy-paste generated Vite, Tailwind, or shadcn code into the project unless the user explicitly asks for a careful adaptation.

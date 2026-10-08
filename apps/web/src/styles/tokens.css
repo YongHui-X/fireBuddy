@@ -103,9 +103,10 @@
 
   /* Brand marks */
   --brand-mark-fill: var(--forest-800);
-  --brand-mark-sun: var(--lime-500);
-  --brand-mark-line: #ffffff;
   --ember-mark-symbol: #d9782d;
+  /* Doudou, the mascot: a soft lime tile behind it and its ground shadow. */
+  --doudou-tint: color-mix(in srgb, var(--lime-500) 30%, var(--surface));
+  --doudou-shadow: rgba(22, 58, 44, 0.12);
 
   /* Aliases still referenced by component code */
   --background: var(--bg);
@@ -172,6 +173,8 @@
 
   --brand-mark-fill: #1f4d3a;
   --ember-mark-symbol: #f0a068;
+  --doudou-tint: color-mix(in srgb, var(--lime-500) 16%, var(--surface));
+  --doudou-shadow: rgba(0, 0, 0, 0.35);
   --primary-dark: #a9e0bc;
   --primary-soft: #1c3226;
   --secondary: #8fd1a8;

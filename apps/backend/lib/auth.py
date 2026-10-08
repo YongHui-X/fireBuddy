@@ -17,6 +17,8 @@ jwks_client = PyJWKClient(settings.supabase_jwks_url)
 class AuthenticatedUser:
     id: str
     email: str | None = None
+    # True for the invisible session the phone creates when DouDou is turned on.
+    is_anonymous: bool = False
 
 
 def get_current_user(
@@ -86,4 +88,23 @@ def get_current_user(
     return AuthenticatedUser(
         id=user_id,
         email=payload.get("email"),
+        is_anonymous=payload.get("is_anonymous") is True,
     )
+
+
+def require_registered_user(
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+) -> AuthenticatedUser:
+    """Keep anonymous phone sessions to DouDou chat, consent and account deletion.
+
+    The phone keeps every record on the device, so an anonymous token never needs
+    the record routes. Anyone holding the public anon key can mint one, so they
+    must not be able to write rows or spend OpenAI calls outside DouDou.
+    """
+
+    if user.is_anonymous:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This route needs a signed-in account",
+        )
+    return user

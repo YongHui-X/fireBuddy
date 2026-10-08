@@ -13,6 +13,7 @@ import {
 import { useMemo } from 'react';
 
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { useRegion } from '@/lib/user-profile';
 
 /** Overrides the temporary scenario sheet can apply without saving the plan. */
 export type PlanOverrides = Partial<Pick<RetirementPlan, 'retirementMonth' | 'monthlyContribution' | 'monthlySpending' | 'beforeReturn' | 'afterReturn' | 'inflation'>>;
@@ -82,12 +83,15 @@ export function describeFire(fire: FireCalculationResult) {
  */
 export function useFireProjection(overrides?: PlanOverrides) {
   const { positions, snapshots, retirementPlan } = useFireBuddy();
+  const { isSingapore } = useRegion();
   const today = useMemo(() => getDeviceDateKey(), []);
   const overrideKey = JSON.stringify(overrides ?? null);
 
   return useMemo(() => {
     const parsed = JSON.parse(overrideKey) as PlanOverrides | null;
-    const plan = retirementPlan ? { ...retirementPlan, ...parsed } : null;
+    // CPF LIFE is Singapore's: a plan saved before the user moved to the general mode keeps its
+    // CPF values on disk, but they never count while the app is in general mode.
+    const plan = retirementPlan ? { ...retirementPlan, ...parsed, ...(isSingapore ? {} : { cpfPlan: 'unknown' as const, cpfMonthlyPayout: 0 }) } : null;
     const latest = latestSnapshotByPosition(snapshots, today);
     const startingAssets = plan ? eligibleAssetTotal(positions, latest, plan.assetIds) : null;
     let result: FireCalculationResult;
@@ -105,5 +109,5 @@ export function useFireProjection(overrides?: PlanOverrides) {
       ready: Boolean(plan) && result.fundingStatus !== 'review_required',
       today,
     };
-  }, [positions, snapshots, retirementPlan, today, overrideKey]);
+  }, [positions, snapshots, retirementPlan, today, overrideKey, isSingapore]);
 }

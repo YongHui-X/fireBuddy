@@ -1,7 +1,79 @@
 import { describe, expect, it } from 'vitest';
-import { MaskingSession, moneyBand, monthsBand, percentBand } from '@firebuddy/shared';
+import { MaskingSession, formatMaskedMoney, moneyBand, monthsBand, percentBand } from '@firebuddy/shared';
 
 describe('shared masking', () => {
+  it.each([
+    ['is represented by the debtToIncome ratio of 31.7%', 'is 31.7%'],
+    ['17.1 months, which is over 12 months.', '17.1 months.'],
+    ['This is represented by a pie chart.', 'This is represented by a pie chart.'],
+    ['Your spending is S$517 (under 1k).', 'Your spending is S$517.'],
+    ['Your net worth is S$75,000, which falls within the range of 50k-100k.', 'Your net worth is S$75,000.'],
+    ['The range for your net worth is 50k-100k.', ''],
+    ['- This total falls within the range of 1k to 5k.', ''],
+    ['17.1 months (over 12 months)', '17.1 months'],
+    ['MoneySense suggests 3 to 6 months of expenses', 'MoneySense suggests 3 to 6 months of expenses'],
+    ['MoneySense suggests 3-6 months of expenses', 'MoneySense suggests 3-6 months of expenses'],
+    ['Consider a range of options.', 'Consider a range of options.'],
+    ['Your net worth is S$75,000, which falls within the range of 50k–100k.', 'Your net worth is S$75,000.'],
+    ['Your net worth is S$75,000, which is in the 50k-100k bracket.', 'Your net worth is S$75,000.'],
+    ['Your net worth is S$75,000, which falls between 50k and 100k.', 'Your net worth is S$75,000.'],
+    ['Your spending is S$517 (1k–5k).', 'Your spending is S$517.'],
+    ['Aim for between 50k and 100k in savings.', 'Aim for between 50k and 100k in savings.'],
+  ])('cleans finished answers without removing guidance: %s', (input, expected) => {
+    expect(new MaskingSession().unmaskFinal(input)).toBe(expected);
+  });
+
+  it('preserves the real figure when a band sentence also contains a restored token', () => {
+    const session = new MaskingSession({}, { wholeDollars: true });
+    session.maskFacts({ netWorth: '75000' });
+    const answer = session.unmaskFinal('Your net worth is {{M1}} and the range is 50k-100k.');
+    expect(answer).toContain('S$75,000');
+    expect(answer).not.toContain('50k-100k');
+  });
+
+  it('formats money as whole dollars when requested', () => {
+    expect(formatMaskedMoney(516.85, 0)).toBe('S$517');
+  });
+
+  it('formats money with cents by default', () => {
+    expect(formatMaskedMoney(1240.71)).toBe('S$1,240.71');
+  });
+
+  it('omits the minus sign when whole dollars round to zero', () => {
+    expect(formatMaskedMoney(-0.4, 0)).toBe('S$0');
+  });
+
+  it('restores money tokens as whole dollars when the session requests it', () => {
+    const session = new MaskingSession({}, { wholeDollars: true });
+    const facts = session.maskFacts({ amount: '516.85' });
+    expect(facts.amount).toBe('{{M1}} (range: under 1k)');
+    expect(session.unmask(facts.amount)).toBe('S$517');
+    expect(session.unmask('{{M1}}')).toBe('S$517');
+  });
+
+  it('removes a stray range after intervening sentence text', () => {
+    const session = new MaskingSession();
+    expect(session.maskFacts({ amount: '1240.71' }).amount).toBe('{{M1}} (range: 1k-5k)');
+    const restored = session.unmask('You spent {{M1}} this month (range: 1k-5k).');
+    expect(restored).not.toContain('(range');
+    expect(restored).toBe('You spent S$1,240.71 this month.');
+  });
+
+  it('removes a range directly after its money token', () => {
+    const session = new MaskingSession();
+    expect(session.maskFacts({ amount: '1240.71' }).amount).toBe('{{M1}} (range: 1k-5k)');
+    expect(session.unmask('You spent {{M1}} (range: 1k-5k) this month.')).toBe('You spent S$1,240.71 this month.');
+  });
+
+  it('holds back unfinished tokens and bands while unmasking partial text', () => {
+    const session = new MaskingSession({}, { wholeDollars: true });
+    const facts = session.maskFacts({ amount: '1176.00' });
+    expect(facts.amount).toBe('{{M1}} (range: 1k-5k)');
+    expect(session.unmaskPartial('You spent {{M')).toBe('You spent ');
+    expect(session.unmaskPartial('You spent {{M1}} (range: 1k')).toMatch(/^You spent S\$1,176\s*$/);
+    expect(session.unmaskPartial('You spent {{M1}} (range: 1k-5k)')).toBe(session.unmask('You spent {{M1}} (range: 1k-5k)'));
+  });
+
   it.each([
     [0, 'zero'], [999.99, 'under 1k'], [1000, '1k-5k'],
     [999999.99, '500k-1M'], [1000000, 'over 1M'],

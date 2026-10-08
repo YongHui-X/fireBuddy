@@ -1,10 +1,11 @@
 import { useFocusEffect, useSegments } from 'expo-router';
-import { setStatusBarStyle } from 'expo-status-bar';
-import { useCallback, type ReactNode } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layout, radii, spacing } from '@/constants/tokens';
+import { useLaunchFinished } from '@/lib/launch-state';
 import { useTheme } from '@/lib/theme';
 
 export interface ScreenProps {
@@ -38,24 +39,26 @@ export function useScreenInsets() {
 
 /** Every screen starts with a status-bar inset in the canvas colour, or in forest when it carries a hero. */
 export function Screen({ scroll = true, hero, contentStyle, children }: ScreenProps) {
-  const { theme, scheme } = useTheme();
+  const { theme } = useTheme();
   const insets = useScreenInsets();
   const content = [styles.content, { paddingBottom: insets.contentBottom }, contentStyle];
 
   // The forest hero sits under the status bar, so its icons go light while this screen is in
-  // front and return to the theme's style when it leaves. Keyed on whether a hero exists, not
-  // the node itself, so a re-render never re-runs the effect.
-  const hasHero = Boolean(hero);
+  // front. A mounted StatusBar sits on top of the root one and pops off when the screen leaves;
+  // it waits for the launch screen, which owns the status bar until it has gone.
+  const [focused, setFocused] = useState(false);
   useFocusEffect(
     useCallback(() => {
-      if (!hasHero) return undefined;
-      setStatusBarStyle('light');
-      return () => setStatusBarStyle(scheme === 'dark' ? 'light' : 'dark');
-    }, [hasHero, scheme]),
+      setFocused(true);
+      return () => setFocused(false);
+    }, []),
   );
+  const launchFinished = useLaunchFinished();
+  const lightStatusBar = Boolean(hero) && focused && launchFinished;
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.bg }]}>
+      {lightStatusBar ? <StatusBar style="light" /> : null}
       <View style={{ height: insets.top, backgroundColor: hero ? theme.heroBg : theme.bg }} />
       {scroll ? (
         <ScrollView

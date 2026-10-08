@@ -18,32 +18,41 @@ forest-and-lime design system as the web app: `constants/tokens.ts` mirrors
 - **Tab screens**: Home (net worth hero, Money Pulse, category budgets, spending donut, recent
   transactions), Transactions (period stepper, search, Filters sheet, day-grouped ledger with
   details, edit, duplicate and delete; the overflow menu holds Manage tags, Export CSV and
-  Accounts), Categories (cards, breakdown, add/edit sheet), Profile (money tools, appearance,
-  reset data). `app/add-transaction.tsx` is the Add/Edit sheet.
+  Accounts, plus a Recurring view for repeating transactions), Categories (cards, breakdown,
+  add/edit sheet), Profile (money tools, country and currency, appearance, daily reminder, Replay
+  Tutorial, and "Delete all my data"; "Start fresh" and "Load demo data" show only in development
+  builds). `app/add-transaction.tsx` is the Add/Edit sheet; its account list ends with "Add account"
+  and it can make the transaction repeat.
 - **Secondary screens** (pushed over the tabs, each with a back chevron): `wealth` (positions,
   dated values, contributions), `fire-planner` and `fire-plan-edit` (projection, scenario sheet,
   plan editor), `insights` (Day / Week / Month / Year or one chosen month, breakdown donut, trend
   bars in `components/charts/TrendChart.tsx`, top spending, CSV export), `accounts` (payment
-  account labels, add/edit/delete), `plan` (essential spending categories and their monthly
-  average), `ember` (chat transcript and composer), and `goals` (roadmap placeholder, as on web).
-- **Data**: records live only on the phone. `lib/fire-buddy-store.tsx` seeds from
-  `@firebuddy/shared` (`demo-data.ts`) and persists to AsyncStorage. Ledger maths, Insights
+  account labels, add/edit/make default, and delete with a "move transactions to" step), `plan` (essential spending categories and their monthly
+  average), and `ember` (chat transcript and composer). Life Goals has no mobile screen yet.
+- **Data**: records live only on the phone. `lib/fire-buddy-store.tsx` persists to AsyncStorage.
+  A new install starts empty in production; development builds seed the shared demo dataset
+  (`demo-data.ts`). Recurring rules are stored beside the records and due copies are added on app
+  open. Singapore users get the full app; other countries get the general mode described in
+  `PROJECT_BRIEF.md` (chosen currency, no CPF/SRS/HDB). Ledger maths, Insights
   ranges and series, the CSV builder, essential-spending maths, formatters and the transaction
-  draft live in `packages/shared` so web and mobile agree. Supabase auth and the FastAPI data
-  routes are not wired yet.
+  draft live in `packages/shared` so web and mobile agree. Records never go to Supabase or the
+  backend, and there is no sign-in screen.
 - **Ember**: `hooks/use-ember.ts` keeps the transcript on the device and `lib/ember-api.ts` calls
-  `POST /api/chat/financial-advisor`. That route needs a Supabase JWT, so Ember only answers when
-  `EXPO_PUBLIC_API_BASE_URL` and, until sign-in exists, `EXPO_PUBLIC_DEV_ACCESS_TOKEN` are set
-  (see `.env.example`); otherwise the screen explains that and keeps the composer disabled.
+  `POST /api/chat/financial-advisor`. That route needs a Supabase JWT, which comes from an
+  invisible anonymous session created only when the user turns Ember on (`lib/ember-session.ts`,
+  stored with `expo-secure-store`). Without the env values below, the screen explains that and
+  keeps the composer disabled.
 - **CSV export**: `lib/export-csv.ts` writes the file with `expo-file-system` and opens the system
   share sheet with `expo-sharing`, the phone equivalent of the web download.
-- **AI consent**: `lib/ai-preference.tsx` stores the Off / Guide / Personalised level on the device
-  (off by default). The Ember screen shows a consent card until a level is chosen, and Profile
-  carries the control. Once the phone sends a JWT the backend enforces the same level from the
-  profile row; until then the device setting is the only gate.
-- **Ember masks on the device**: `hooks/use-ember.ts` scrubs the question and history with the
-  shared `MaskingSession`, and at Personalised builds the snapshot from the records on the phone
-  (`buildPersonalSnapshot` in `packages/shared`) and masks it before sending. The request carries
+- **AI consent**: one Off/On choice, off by default (`lib/ai-preference.tsx`). Off means no account
+  and no network calls. "Turn on DouDou" shows the plain-language consent text, creates the
+  anonymous session and saves `personalised` to the profile row, which the backend enforces.
+  Turning it off deletes the anonymous user through `DELETE /account`. Profile carries an On/Off
+  switch, and Reset data also turns Ember off. The web's Guide level is not offered on the phone.
+- **Ember masks on the device and sends only what is needed**: `hooks/use-ember.ts` scrubs the
+  question and history with the shared `MaskingSession`, picks the snapshot sections the question
+  needs (`selectSnapshotSections` in `packages/shared`), and builds and masks only those. A general
+  question sends no figures. The answer notes what was used. The request carries
   `clientMasked: true`, the backend forwards tokens untouched, and the phone restores the real
   figures from its own map. Exact figures never leave the device.
 - **Encrypted backup**: `hooks/use-backup.ts` and `components/profile/BackupSheet.tsx`. Profile has
@@ -96,7 +105,7 @@ Everything runs in Expo Go. The `app.json` settings (app icon, splash colour, ad
 
 ## Brand assets
 
-`scripts/render-brand-assets.mjs` rasterises the sun-on-horizon mark into `assets/images/*.png`
+`scripts/render-brand-assets.mjs` rasterises DouDou, the FireBuddy mark, into `assets/images/*.png`
 (icon, adaptive icon foreground and monochrome layers, splash, favicon). Re-run it when the mark
 changes:
 
@@ -106,14 +115,55 @@ npx --yes --package sharp node scripts/render-brand-assets.mjs
 
 ## Environment
 
-Copy `.env.example` to `.env.local` when you want Ember to reach a running backend. Both values
-are optional; every other screen runs on local demo data.
+Copy `.env.example` to `.env.local` when you want Ember to reach a running backend. Every other
+screen works without them.
+
+| Variable | Purpose |
+|---|---|
+| `EXPO_PUBLIC_API_BASE_URL` | FastAPI origin. Use HTTPS for any build that leaves development |
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL, for the anonymous session |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key, for the anonymous session |
+
+Enable Anonymous sign-ins in the Supabase dashboard under Auth providers. For local Supabase this is
+`enable_anonymous_sign_ins = true` in `supabase/config.toml`, already set; restart with
+`npx supabase stop` and `npx supabase start` after changing it.
+
+A phone cannot reach `localhost`. In development builds the app swaps `localhost` and `127.0.0.1`
+in both URLs for the computer's Wi-Fi address that Metro reports (`lib/dev-url.ts`), so either form
+works in `.env.local`. Release builds use the URLs exactly as written. The backend must listen on
+the network, not just on the computer itself, so start it from the repo root with:
+
+```powershell
+npm run dev:backend:phone
+```
+
+If DouDou still says it cannot connect, allow Python and port 8000 (and 54321 for local Supabase)
+through Windows Firewall on private networks. Metro's log shows a `[DouDou]` warning naming the step
+that failed.
+
+If the phone cannot reach the computer over Wi-Fi at all (a Wi-Fi network marked Public in Windows,
+or a router that keeps devices apart), use a USB cable instead. Forward the three ports and open
+Expo Go on the forwarded address:
+
+```powershell
+adb reverse tcp:8081 tcp:8081
+adb reverse tcp:8000 tcp:8000
+adb reverse tcp:54321 tcp:54321
+```
+
+Keep `127.0.0.1` in both `.env.local` URLs. Metro then reports `127.0.0.1` too, so the app leaves the
+URLs unchanged and every request goes through the cable. Restart Metro with `npx expo start -c`
+after changing `.env.local`.
+
+Expo Go already includes `expo-secure-store`, so scanning the QR code from `npm run dev:mobile` is
+enough to test DouDou. Restart Metro after changing `.env.local`. The old
+`EXPO_PUBLIC_DEV_ACCESS_TOKEN` is retired.
 
 ## Next steps
 
-- Wire Supabase auth, then the `/transactions`, `/categories`, `/accounts`, `/wealth` and `/fire`
-  APIs behind the same store interface, replacing the development token for Ember.
-- Stream Ember answers over the SSE route once auth is in place.
+- Records stay on the device, so the backend data routes are not wired on mobile.
+- Stream Ember answers over the SSE route.
+- Category autodetect on the Add transaction sheet, available only while Ember is on.
 - Life Goals and period-based Spending Plan limits follow the web roadmap.
 
 Project references: [`../../PROJECT_BRIEF.md`](../../PROJECT_BRIEF.md), [`../../AGENTS.md`](../../AGENTS.md), [`../../DESIGN.md`](../../DESIGN.md).

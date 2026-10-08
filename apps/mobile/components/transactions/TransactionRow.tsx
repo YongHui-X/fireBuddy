@@ -1,5 +1,5 @@
 import type { Account, Category, Transaction } from '@firebuddy/shared';
-import { Ellipsis } from 'lucide-react-native';
+import { Ellipsis, Repeat } from 'lucide-react-native';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -42,7 +42,11 @@ export const TransactionRow = memo(function TransactionRow({ transaction, catego
           <CategoryAvatar category={category} size="row" />
           <View style={styles.copy}>
             <AppText variant="bodySemibold" numberOfLines={1}>{transaction.description}</AppText>
-            <AppText variant="caption" tone="ink2" numberOfLines={1}>{secondary}</AppText>
+            <View style={styles.metaRow}>
+              {/* Copies made by a repeating rule carry a small repeat mark. */}
+              {transaction.recurringId ? <Repeat size={12} color={theme.ink3} strokeWidth={2.2} accessibilityLabel="Repeats" /> : null}
+              <AppText variant="caption" tone="ink2" numberOfLines={1} style={styles.meta}>{secondary}</AppText>
+            </View>
           </View>
           <AmountText amount={transaction.amount} transactionType={transaction.transactionType} />
           {onMenu ? (
@@ -66,6 +70,14 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  meta: {
+    flexShrink: 1,
   },
   menu: {
     marginRight: -10,

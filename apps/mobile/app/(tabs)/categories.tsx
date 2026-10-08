@@ -15,6 +15,7 @@ import { ProgressTrack } from '@/components/ui/ProgressTrack';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { AppText } from '@/components/ui/Text';
 import { layout, radii, spacing } from '@/constants/tokens';
+import { useGridItemWidth } from '@/hooks/use-grid-item-width';
 import { useCurrentMonth } from '@/hooks/use-ledger';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
 import { usePrivacy } from '@/lib/privacy';
@@ -30,6 +31,7 @@ export default function CategoriesScreen() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const grid = useGridItemWidth(2, spacing.md);
 
   const rows = useMemo(() => {
     const visible = categories.filter((category) => category.categoryType === type);
@@ -56,14 +58,14 @@ export default function CategoriesScreen() {
         onChange={setType}
         accessibilityLabel="Category type"
       />
-      <View style={styles.grid}>
+      <View style={styles.grid} onLayout={grid.onLayout}>
         {rows.map(({ category, spent, budget, ratio }) => (
           <Pressable
             key={category.id}
             accessibilityRole="button"
             accessibilityLabel={category.isDefault ? `${category.name}, system category` : `Edit ${category.name}`}
             onPress={() => setEditing(category)}
-            style={[styles.card, shadows.card, { backgroundColor: theme.surface, borderColor: theme.line }]}
+            style={[styles.card, shadows.card, { backgroundColor: theme.surface, borderColor: theme.line }, grid.itemWidth ? { width: grid.itemWidth } : null]}
           >
             {({ pressed }) => (
               <>
@@ -157,9 +159,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.md,
   },
+  // Half width before the first layout; then the measured column width, so a lone last card stays its own size.
   card: {
-    width: '48%',
-    flexGrow: 1,
+    width: '47%',
     padding: layout.cardPad - 2,
     borderRadius: radii.card,
     borderWidth: StyleSheet.hairlineWidth,

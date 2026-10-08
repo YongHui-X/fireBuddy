@@ -108,3 +108,35 @@ export function highestInterestLiability(summary: DebtSummary): DebtPayoffSummar
   if (!candidates.length) return null;
   return candidates.reduce((best, item) => (Number(item.interestRate) > Number(best.interestRate) ? item : best));
 }
+
+export type PayoffGoalResult =
+  | { status: 'ok'; monthlyPayment: number; months: number }
+  | { status: 'paid_off' | 'past' | 'missing_rate' };
+
+/**
+ * The fixed monthly payment that clears `balance` by `targetMonth` (YYYY-MM), under the same
+ * monthly compounding and cent rounding as `calculateDebtPayoff`: the first payment lands one month
+ * after `asOf`, so a target n months ahead allows n payments. Starts from the annuity formula
+ * balance × r ÷ (1 − (1 + r)^−n) rounded up to the cent, then nudges up a cent at a time until the
+ * projection really finishes by the target (rounding can leave a few cents over).
+ *
+ * Mobile only: the FastAPI debt calculator does not mirror this helper.
+ */
+export function requiredPaymentForTarget(balance: number, annualRate: number | null, asOf: string, targetMonth: string): PayoffGoalResult {
+  if (!(balance > 0)) return { status: 'paid_off' };
+  if (annualRate === null || !Number.isFinite(annualRate) || annualRate < 0) return { status: 'missing_rate' };
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(targetMonth)) return { status: 'past' };
+  const toIndex = (key: string) => Number(key.slice(0, 4)) * 12 + Number(key.slice(5, 7)) - 1;
+  const months = toIndex(targetMonth) - toIndex(asOf.slice(0, 7));
+  if (months < 1) return { status: 'past' };
+  if (months > MAX_PAYOFF_MONTHS) return { status: 'past' };
+  const monthlyRate = annualRate / 12;
+  const exact = monthlyRate === 0 ? balance / months : (balance * monthlyRate) / (1 - (1 + monthlyRate) ** -months);
+  let payment = Math.ceil(exact * 100 - 1e-6) / 100;
+  for (let guard = 0; guard < 500; guard += 1) {
+    const projection = calculateDebtPayoff(balance, annualRate, payment, asOf);
+    if (projection.status === 'projected' && projection.payoffMonth !== null && projection.payoffMonth <= targetMonth) break;
+    payment = roundCents(payment + 0.01);
+  }
+  return { status: 'ok', monthlyPayment: payment, months };
+}

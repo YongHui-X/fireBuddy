@@ -4,11 +4,11 @@ import { ChevronRight, Plus, Wallet } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AccountDeleteSheet } from '@/components/accounts/AccountDeleteSheet';
 import { AccountSheet, accountTypeIcons } from '@/components/accounts/AccountSheet';
 import { Screen } from '@/components/layout/Screen';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { PageToolbar } from '@/components/ui/PageToolbar';
@@ -23,11 +23,12 @@ import { useTheme } from '@/lib/theme';
 export default function AccountsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { accounts, addAccount, updateAccount, deleteAccount, notify } = useFireBuddy();
+  const { accounts, transactions, recurringRules, addAccount, updateAccount, deleteAccount, setDefaultAccount, notify } = useFireBuddy();
   const { usage, deleteBlockedReason } = useAccountUsage();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Held apart from `editing` so the edit sheet closes before the delete sheet opens (one modal at a time).
+  const [deleting, setDeleting] = useState<Account | null>(null);
 
   return (
     <Screen>
@@ -102,20 +103,31 @@ export default function AccountsScreen() {
           }
           setEditing(null);
         }}
-        onDelete={() => setConfirmDelete(true)}
-      />
-      <ConfirmDialog
-        open={confirmDelete}
-        title="Delete account?"
-        message={editing ? `Delete “${editing.name}”? No transactions use it, so nothing else changes.` : ''}
-        confirmLabel="Delete"
-        onCancel={() => setConfirmDelete(false)}
-        onConfirm={() => {
-          if (editing) {
-            notify(deleteAccount(editing.id) ? `${editing.name} deleted.` : `${editing.name} is still in use and was kept.`);
-          }
-          setConfirmDelete(false);
+        onDelete={() => {
+          setDeleting(editing);
           setEditing(null);
+        }}
+        onMakeDefault={() => {
+          if (editing) {
+            setDefaultAccount(editing.id);
+            notify(`${editing.name} is now your default account.`);
+          }
+          setEditing(null);
+        }}
+      />
+      <AccountDeleteSheet
+        account={deleting}
+        accounts={accounts}
+        transactions={transactions}
+        ruleAccountIds={recurringRules.map((rule) => rule.template.accountId)}
+        onCancel={() => setDeleting(null)}
+        onConfirm={(moveTo) => {
+          if (deleting) {
+            const target = moveTo ? accounts.find((account) => account.id === moveTo) : null;
+            const deleted = deleteAccount(deleting.id, moveTo);
+            notify(!deleted ? `${deleting.name} was kept.` : target ? `${deleting.name} deleted. Its transactions moved to ${target.name}.` : `${deleting.name} deleted.`);
+          }
+          setDeleting(null);
         }}
       />
     </Screen>

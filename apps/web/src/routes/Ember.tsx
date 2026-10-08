@@ -23,11 +23,12 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import type { RagChatSource, RagDataEvidence } from '@firebuddy/shared';
+import { selectDoudouMessageId, type RagChatSource, type RagDataEvidence } from '@firebuddy/shared';
 
 import { ApiRequestError, streamFinancialAdvisor } from '../api';
 import { classifyEmberFailure } from '../app/emberFailure';
-import { EmberMark } from '../app/BrandMarks';
+import { DoudouMark } from '../app/BrandMarks';
+import { Doudou } from '../components/Doudou';
 import { formatEmberConversationMarkdown, getEmberExportFilename } from '../app/emberExport';
 import { buildEmberAppContext } from '../app/emberAppContext';
 import { EmberRichText } from '../app/emberRichText';
@@ -185,7 +186,7 @@ function DataEvidence({ message }: { message: EmberMessage }) {
   if (evidence.tool === 'personal_context') {
     return (
       <p className="ember-data-personalisation">
-        <em>Ember's response is customised to your existing data</em>
+        <em>Doudou's response is customised to your existing data</em>
       </p>
     );
   }
@@ -209,6 +210,7 @@ function ConversationMessage({
   onCopy,
   onSelectSuggestion,
   responseStartRef,
+  showDoudou = false,
 }: {
   message: EmberMessage;
   isAsking: boolean;
@@ -217,11 +219,13 @@ function ConversationMessage({
   onCopy: (message: EmberMessage) => void;
   onSelectSuggestion: (question: string) => void;
   responseStartRef?: (node: HTMLElement | null) => void;
+  /** This turn carries the screen's one full Doudou while it prepares or after it fails. */
+  showDoudou?: boolean;
 }) {
   if (message.error) {
     return (
       <article className="ember-inline-error" data-error-kind={message.error.kind}>
-        <AlertCircle size={18} aria-hidden="true" />
+        {showDoudou ? <Doudou pose="oops" size={44} /> : <AlertCircle size={18} aria-hidden="true" />}
         <div>
           <strong>Answer interrupted</strong>
           <p>{message.error.message}</p>
@@ -233,7 +237,7 @@ function ConversationMessage({
     );
   }
 
-  const messageOwner = message.role === 'user' ? 'your message' : 'Ember message';
+  const messageOwner = message.role === 'user' ? 'your message' : 'Doudou message';
   const copyLabel = copyStatus === 'copied'
     ? `Copied ${messageOwner}`
     : copyStatus === 'error'
@@ -244,7 +248,7 @@ function ConversationMessage({
     <article ref={responseStartRef} className={`ember-message ember-message-${message.role}`}>
       <div className="ember-message-meta">
         <span className="ember-message-author">
-          {message.role === 'user' ? 'You' : <><EmberMark size={18} /> Ember</>}
+          {message.role === 'user' ? 'You' : <><DoudouMark size={20} /> Doudou</>}
         </span>
         <button
           className={`ember-copy-button ${copyStatus ? `ember-copy-button-${copyStatus}` : ''}`.trim()}
@@ -262,7 +266,7 @@ function ConversationMessage({
         {message.role === 'assistant' ? (
           message.content ? <EmberRichText content={message.content} /> : (
             <p className="ember-stream-placeholder">
-              <Sparkles size={16} aria-hidden="true" />
+              {showDoudou ? <Doudou pose="think" size={40} motion="think" /> : <Sparkles size={16} aria-hidden="true" />}
               {message.streamStatus === 'preparing' ? 'Preparing your answer...' : 'Understanding your question...'}
             </p>
           )
@@ -334,6 +338,12 @@ export default function Ember({
   });
 
   const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
+  // With AI off the consent panel shows Doudou, so no message may show a second one.
+  const doudouMessageId = aiPreference === 'off' ? null : selectDoudouMessageId(
+    activeTopic.messages,
+    (message) => message.role === 'assistant' && message.status === 'streaming' && !message.content,
+    (message) => Boolean(message.error),
+  );
   const filteredTopics = useMemo(() => {
     const normalizedQuery = historyQuery.trim().toLocaleLowerCase('en-SG');
     return normalizedQuery
@@ -679,9 +689,9 @@ export default function Ember({
               >
                 {isMainSidebarOpen ? <PanelLeftClose size={19} /> : <PanelLeftOpen size={19} />}
               </button>
-              <span className="ember-header-mark"><EmberMark size={26} /></span>
+              <span className="ember-header-mark"><DoudouMark size={30} /></span>
               <div>
-                <h2>Ember</h2>
+                <h2>Doudou</h2>
               </div>
             </div>
             <div className="ember-conversation-header-actions">
@@ -746,6 +756,7 @@ export default function Ember({
                 copyStatus={copyFeedback?.messageId === message.id ? copyFeedback.status : undefined}
                 onCopy={(selectedMessage) => void copyConversationMessage(selectedMessage)}
                 onSelectSuggestion={selectStarterPrompt}
+                showDoudou={message.id === doudouMessageId}
                 responseStartRef={message.id === responseStartMessageId
                   ? (node) => { responseStartElementRef.current = node; }
                   : undefined}
@@ -754,10 +765,10 @@ export default function Ember({
             {activeTopic.messages.length === 0 && aiPreference !== 'off' ? (
               <section className="ember-starters" aria-labelledby="ember-starters-title">
                 <div className="ember-empty-introduction">
-                  <span className="ember-empty-mark"><EmberMark size={30} /></span>
+                  <Doudou pose="hello" size={76} motion="idle" />
                   <div>
-                    <h3>Your Singapore finance guide</h3>
-                    <p>Ember can explain your FireBuddy spending and FIRE results, then connect them to curated Singapore finance guidance.</p>
+                    <h3>Hi, I'm Doudou, your Singapore finance guide</h3>
+                    <p>I can explain your FireBuddy spending and FIRE results, then connect them to curated Singapore finance guidance.</p>
                     <p>It uses read only calculations, cannot change records or retrieve live prices, and does not provide regulated financial advice.</p>
                   </div>
                 </div>
@@ -788,7 +799,7 @@ export default function Ember({
             <EmberConsentPanel onChoose={(level) => setAiPreference(level)} />
           ) : (
           <form className="ember-composer" onSubmit={handleSubmit}>
-            <label className="visually-hidden" htmlFor="ember-question">Ask Ember</label>
+            <label className="visually-hidden" htmlFor="ember-question">Ask Doudou</label>
             <div className="ember-composer-field">
               <textarea
                 id="ember-question"
@@ -801,12 +812,12 @@ export default function Ember({
                 rows={1}
                 aria-describedby="ember-composer-help ember-character-count"
               />
-              <button type="submit" disabled={!canSend} aria-label="Send question to Ember"><ArrowUp size={18} /></button>
+              <button type="submit" disabled={!canSend} aria-label="Send question to Doudou"><ArrowUp size={18} /></button>
             </div>
             <div className="ember-composer-meta">
               <div className="ember-composer-guidance">
                 <span id="ember-composer-help">Enter to send. Shift+Enter for a new line.</span>
-                <small className="ember-education-note">Educational information only, not financial advice. Ember provides customised experiences according to your existing data and public data.</small>
+                <small className="ember-education-note">Educational information only, not financial advice. Doudou provides customised experiences according to your existing data and public data.</small>
               </div>
               <span id="ember-character-count">{question.length.toLocaleString('en-SG')} / {MAX_QUESTION_LENGTH.toLocaleString('en-SG')}</span>
             </div>
@@ -878,7 +889,7 @@ export default function Ember({
                   onClick={() => setTopicPendingDeletion(topic)}
                   disabled={isAsking}
                   aria-label={`Delete conversation ${topic.title}`}
-                  title={isAsking ? 'Wait for Ember to finish before deleting a conversation' : `Delete ${topic.title}`}
+                  title={isAsking ? 'Wait for Doudou to finish before deleting a conversation' : `Delete ${topic.title}`}
                 >
                   <Trash2 size={15} aria-hidden="true" />
                 </button>

@@ -1,0 +1,73 @@
+[
+  {
+    "id": "phone_spend_this_month_and_july",
+    "question": "How much did I spend this month and in july",
+    "expectedSections": ["spending"],
+    "requiredFacts": [
+      { "path": "spending.currentMonth.total", "format": "money" },
+      { "path": "spending.otherMonths.0.total", "format": "money" }
+    ],
+    "mustContain": ["July"],
+    "sourceExpectation": "Owner screenshot 4 Oct 2026: July was ignored and September given instead. The phone now sends July's spending block; the answer must state July's total, not September's."
+  },
+  {
+    "id": "phone_spend_top_categories",
+    "question": "How much have I spent this month, and which categories are highest?",
+    "expectedSections": ["spending"],
+    "requiredFacts": [
+      { "path": "spending.currentMonth.total", "format": "money" },
+      { "path": "spending.currentMonth.topCategories.0.amount", "format": "money" }
+    ],
+    "expectNoSources": true,
+    "sourceExpectation": "Owner screenshot: correct figures but unrelated FIRE articles cited and a raw 2026-10-01 date. A pure data answer should cite nothing and write dates in words."
+  },
+  {
+    "id": "phone_how_are_you",
+    "question": "How are you",
+    "expectedSections": [],
+    "mustContain": ["DouDou"],
+    "forbidden": ["FIRE stands for", "Financial Independence"],
+    "expectNoSources": true,
+    "sourceExpectation": "Owner screenshot: answered with a FIRE definition. Small talk gets a friendly fixed reply."
+  },
+  {
+    "id": "phone_hi",
+    "question": "hi",
+    "expectedSections": [],
+    "mustContain": ["DouDou"],
+    "expectNoSources": true
+  },
+  {
+    "id": "phone_thanks",
+    "question": "thanks!",
+    "expectedSections": [],
+    "mustContain": ["Glad to help"],
+    "expectNoSources": true
+  },
+  {
+    "id": "phone_leetcode",
+    "question": "Do the leetcode two sum problem",
+    "expectedSections": [],
+    "forbidden": ["def ", "return [", "hash map"],
+    "expectNoSources": true,
+    "sourceExpectation": "Owner screenshot: correctly declined. Keep it that way."
+  },
+  {
+    "id": "phone_exact_net_worth",
+    "question": "What's my exact balance net worth",
+    "expectedSections": ["netWorth"],
+    "requiredFacts": [{ "path": "netWorth", "format": "money" }],
+    "expectNoSources": true,
+    "sourceExpectation": "Owner screenshot: stated the figure correctly but leaked the internal range '50k-100k' and cited unrelated FIRE articles."
+  },
+  {
+    "id": "phone_spend_in_may_and_march",
+    "question": "What did I spend in May and in March?",
+    "expectedSections": ["spending"],
+    "requiredFacts": [
+      { "path": "spending.otherMonths.0.total", "format": "money" },
+      { "path": "spending.otherMonths.1.total", "format": "money" }
+    ],
+    "mustContain": ["May", "March"]
+  }
+]

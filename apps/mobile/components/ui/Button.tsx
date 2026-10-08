@@ -8,7 +8,8 @@ import { useTheme } from '@/lib/theme';
 import { PressOverlay } from './PressOverlay';
 import { AppText } from './Text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'text';
+/** `tonal` is a filled neutral, used where two side-by-side buttons should carry equal weight. */
+export type ButtonVariant = 'primary' | 'secondary' | 'tonal' | 'danger' | 'text';
 
 export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
   label: string;
@@ -29,7 +30,7 @@ export function Button({ label, variant = 'secondary', size = 'default', icon: I
   const { theme } = useTheme();
   const isDisabled = disabled || loading;
 
-  const fill = variant === 'primary' ? theme.primary : variant === 'danger' ? theme.dangerFill : 'transparent';
+  const fill = variant === 'primary' ? theme.primary : variant === 'danger' ? theme.dangerFill : variant === 'tonal' ? theme.surface3 : 'transparent';
   const inkColor = variant === 'primary' ? theme.onPrimary : variant === 'danger' ? theme.onDanger : variant === 'text' ? theme.accentText : theme.ink;
   const border = variant === 'secondary' ? theme.lineStrong : 'transparent';
   const minHeight = size === 'compact' ? layout.touchCompact : layout.touch;

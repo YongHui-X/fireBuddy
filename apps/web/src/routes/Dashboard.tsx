@@ -18,6 +18,7 @@ import { getDisplayName } from '../app/displayName';
 import { useMediaQuery } from '../app/useMediaQuery';
 import { mq } from '../app/breakpoints';
 import { MoneyPulseBars } from '../components/MoneyPulseBars';
+import { Doudou } from '../components/Doudou';
 import { PageToolbar } from '../components/PageToolbar';
 import { SpendingPieChart, groupSpendingPieData, type SpendingPieDatum } from '../components/SpendingPieChart';
 
@@ -480,6 +481,7 @@ export default function Dashboard({ onSelectTransaction }: DashboardProps) {
               )
               : (
                 <div className="dashboard-empty-action">
+                  <Doudou pose="peek" size={72} />
                   <p className="dashboard-empty-copy">No transactions yet. Add one to build your monthly pulse.</p>
                   <button className="secondary-button" type="button" onClick={() => navigate('/add')}>Add transaction</button>
                 </div>

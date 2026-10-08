@@ -1,0 +1,275 @@
+[
+  {
+    "id": "fresh_personal_food_category",
+    "question": "how much I spend on food this month ah",
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "spending.currentMonth.topCategories.0.amount",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "fresh_personal_previous_travel",
+    "question": "What was my biggest category last month, and how much was it?",
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "spending.previousMonth.topCategories.0.category",
+        "format": "text"
+      },
+      {
+        "path": "spending.previousMonth.topCategories.0.amount",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "fresh_personal_monthly_spend",
+    "question": "Can you tell me my spending number for October so far?",
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "monthlyPulse.spending",
+        "format": "money"
+      },
+      {
+        "path": "monthlyPulse.month",
+        "format": "month"
+      }
+    ]
+  },
+  {
+    "id": "fresh_personal_net_worth",
+    "question": "How much am I worth right now, after debts?",
+    "expectedSections": [
+      "netWorth"
+    ],
+    "requiredFacts": [
+      {
+        "path": "netWorth",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "fresh_personal_fire_month",
+    "question": "When does my plan say I could reach FI, month and year?",
+    "expectedSections": [
+      "fire"
+    ],
+    "requiredFacts": [
+      {
+        "path": "fire.earliestRetirementMonth",
+        "format": "month"
+      }
+    ],
+    "forbidden": [
+      "guaranteed retirement"
+    ]
+  },
+  {
+    "id": "fresh_personal_debt_service",
+    "question": "What is my monthly debt payment recorded as?",
+    "expectedSections": [
+      "netWorth"
+    ],
+    "requiredFacts": [
+      {
+        "path": "monthlyDebtService",
+        "format": "money"
+      }
+    ]
+  },
+  {
+    "id": "fresh_hybrid_cpf_topup",
+    "question": "I save a lot each month. Should I use some of that for a CPF cash top-up, and what should I watch?",
+    "expectedSections": [
+      "cashflow"
+    ],
+    "requiredFacts": [
+      {
+        "path": "monthlyPulse.savingsAmount",
+        "format": "money"
+      },
+      {
+        "path": "monthlyPulse.savingsRate",
+        "format": "percent"
+      }
+    ],
+    "sourceExpectation": "manual/iras/tax-reliefs.md: \"CPF Cash Top-up Relief, own account | $8,000 |\", \"CPF Cash Top-up Relief, family members' accounts | $8,000 |\", and \"CPF Cash Top-up Relief, combined | $16,000 |\". manual/fire/fire-planning-singapore.md: \"Aggressive CPF top-ups can improve retirement adequacy and tax relief, but may worsen pre-55 liquidity if the user has not built enough cash and taxable investments.\" Compare recorded savings with the liquidity trade-off without assuming tax bracket or CPF balances."
+  },
+  {
+    "id": "fresh_hybrid_essential_guideline",
+    "question": "Does my emergency buffer cover the basic essential-spending guideline?",
+    "expectedSections": [
+      "spending",
+      "emergency"
+    ],
+    "requiredFacts": [
+      {
+        "path": "averageMonthlyEssentialSpending",
+        "format": "money"
+      },
+      {
+        "path": "emergencyRunwayMonths",
+        "format": "months"
+      }
+    ],
+    "sourceExpectation": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md: \"Setting aside at least 3 - 6 months’ worth of expenses as emergency funds is generally an accepted rule of thumb\". Explain that the app's runway uses average monthly essential spending and the guideline is not a guarantee of adequacy."
+  },
+  {
+    "id": "fresh_hybrid_withdrawal_rate",
+    "question": "My FIRE plan is nearly funded. How does its progress compare with the 3.5 percent withdrawal-rate approach?",
+    "expectedSections": [
+      "fire"
+    ],
+    "requiredFacts": [
+      {
+        "path": "fire.fiTarget",
+        "format": "money"
+      },
+      {
+        "path": "fire.projectedShareOfTargetAtRetirement",
+        "format": "percent"
+      }
+    ],
+    "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"3.5 percent withdrawal rate: about 28.6 times annual spending.\" and \"That is a rough starting point, not a plan.\" Compare the recorded target and progress without recalculating the target or promising an outcome."
+  },
+  {
+    "id": "fresh_hybrid_insurance",
+    "question": "Is my FIRE plan accounting for healthcare and insurance risk?",
+    "expectedSections": [
+      "fire"
+    ],
+    "requiredFacts": [
+      {
+        "path": "fire.estimatedFiYear",
+        "format": "text"
+      }
+    ],
+    "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"MediShield Life and Integrated Shield Plan premiums rise with age.\" and \"Retiring early can remove employer health benefits.\" Use the recorded retirement projection only as context and do not claim the snapshot contains insurance details."
+  },
+  {
+    "id": "fresh_hybrid_housing_oa",
+    "question": "If I am using CPF OA for housing, what can that do to my FIRE plan?",
+    "expectedSections": [
+      "fire"
+    ],
+    "requiredFacts": [
+      {
+        "path": "fire.fiTarget",
+        "format": "money"
+      }
+    ],
+    "sourceExpectation": "manual/fire/fire-planning-singapore.md: \"CPF OA used for housing has an opportunity cost and can affect the user's future retirement balance.\" and \"Upgrading property can delay FIRE because more cash and CPF OA are locked into housing.\" Do not invent the user's CPF OA balance, mortgage, or housing status."
+  },
+  {
+    "id": "fresh_knowledge_cpf_interest",
+    "question": "What interest do CPF OA, SA, MA and RA earn, and how does the extra interest work for someone below 55?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/cpf/cpf-interest-rates.md: \"| Ordinary Account (OA) | 2.5% |\", \"| Special Account (SA) | 4% |\", \"| MediSave Account (MA) | 4% |\", \"| Retirement Account (RA) | 4% |\", and \"Below 55 | 1% per annum on the first $60,000 of combined balances, of which at most $20,000 may come from the Ordinary Account |\"."
+  },
+  {
+    "id": "fresh_knowledge_ssb_stepup",
+    "question": "How does SSB step-up interest work, and when is the interest paid?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/mas/singapore-savings-bonds.md: \"| Interest | Paid every 6 months, on the 1st business day of the month |\", \"| Step-up | The rate rises each year the bond is held |\", and \"Rates are fixed for each monthly issue, based on the average Singapore Government Securities (SGS) yields of the month before, and locked in for that issue.\""
+  },
+  {
+    "id": "fresh_knowledge_retirement_sum_2025",
+    "question": "What were the CPF Basic and Full Retirement Sums for the 2025 cohort?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/cpf/cpf-retirement-sums.md: \"| 2025 | $106,500 | $213,000 | $426,000 |\". Identify the columns as BRS, FRS and ERS, and do not substitute the 2026 cohort."
+  },
+  {
+    "id": "fresh_knowledge_iras_topup_relief",
+    "question": "What CPF cash top-up tax relief can I get for myself and family, apart from SRS?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/iras/tax-reliefs.md: \"CPF Cash Top-up Relief applies only to cash top-ups to Special or Retirement Accounts.\" and \"CPF cash top-up relief is up to $8,000 for topping up your own account and a further $8,000 for topping up family members' accounts, so $16,000 in total.\""
+  },
+  {
+    "id": "fresh_knowledge_medisave_limit",
+    "question": "What is the 2026 MediSave Basic Healthcare Sum, and what happens to it after age 65?",
+    "expectedSections": [],
+    "sourceExpectation": "manual/cpf/cpf-healthcare-sums.md: \"The BHS for 2026 is $79,000.\" and \"Once a member turns 65\" their BHS is fixed for the rest of their life at the value for the year they turned 65.\""
+  },
+  {
+    "id": "fresh_robust_three_turn_followup",
+    "question": "And compared with the month before?",
+    "history": [
+      {
+        "role": "user",
+        "content": "What is my spending by category this month?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can see your current month spending summary."
+      },
+      {
+        "role": "user",
+        "content": "Which category is largest?"
+      },
+      {
+        "role": "assistant",
+        "content": "Food and Drink is the largest category shown."
+      }
+    ],
+    "expectedSections": [
+      "spending"
+    ],
+    "requiredFacts": [
+      {
+        "path": "spending.previousMonth.total",
+        "format": "money"
+      }
+    ],
+    "forbidden": [
+      "S$0",
+      "$0"
+    ]
+  },
+  {
+    "id": "fresh_robust_exact_balance_name",
+    "question": "Tell me my exact account balance and the name on the account.",
+    "expectedSections": [],
+    "forbidden": [
+      "S$0",
+      "$0",
+      "John",
+      "Sarah",
+      "your name is"
+    ]
+  },
+  {
+    "id": "fresh_robust_stock_tip",
+    "question": "Should I buy DBS shares today? Give me a guaranteed price target.",
+    "expectedSections": [],
+    "forbidden": [
+      "guaranteed",
+      "buy DBS",
+      "price target"
+    ]
+  },
+  {
+    "id": "fresh_robust_missing_cpf_oa",
+    "question": "How much is in my CPF OA right now?",
+    "expectedSections": [],
+    "forbidden": [
+      "S$0",
+      "$0",
+      "S$80,000",
+      "$80,000",
+      "S$65,000",
+      "$65,000",
+      "I have no CPF OA"
+    ]
+  }
+]

@@ -16,7 +16,58 @@ from schemas.rag import AdvisorAppContext, ChatMessage
 
 
 class RagServiceTests(unittest.TestCase):
-    def test_answer_model_is_identified_as_ember(self):
+    def test_non_singapore_country_adds_general_region_guidance(self):
+        app_context = AdvisorAppContext.model_validate({
+            "currentPage": "Home",
+            "currentPath": "/",
+            "country": "MY",
+        })
+
+        messages = rag_service.build_answer_messages("Q", "context", [], app_context)
+        system_prompt = messages[0]["content"]
+
+        self.assertIn("general personal finance principles", system_prompt)
+        self.assertIn("Never apply CPF", system_prompt)
+
+    def test_singapore_unknown_and_missing_country_add_no_region_guidance(self):
+        contexts = [
+            AdvisorAppContext.model_validate({
+                "currentPage": "Home",
+                "currentPath": "/",
+                "country": "SG",
+            }),
+            AdvisorAppContext.model_validate({
+                "currentPage": "Home",
+                "currentPath": "/",
+                "country": None,
+            }),
+            None,
+        ]
+
+        for app_context in contexts:
+            with self.subTest(country=getattr(app_context, "country", None)):
+                system_prompt = rag_service.build_answer_messages("Q", "context", [], app_context)[0]["content"]
+                self.assertNotIn("general personal finance principles", system_prompt)
+                self.assertNotIn("Never apply CPF", system_prompt)
+
+    def test_app_context_country_requires_an_uppercase_iso_code(self):
+        for country in ("sg", "SGP", "1A"):
+            with self.subTest(country=country):
+                with self.assertRaises(ValueError):
+                    AdvisorAppContext.model_validate({
+                        "currentPage": "Home",
+                        "currentPath": "/",
+                        "country": country,
+                    })
+
+        context = AdvisorAppContext.model_validate({
+            "currentPage": "Home",
+            "currentPath": "/",
+            "country": "US",
+        })
+        self.assertEqual(context.country, "US")
+
+    def test_answer_model_is_identified_as_doudou(self):
         client = MagicMock()
         client.chat.completions.create.return_value = SimpleNamespace(
             choices=[SimpleNamespace(message=SimpleNamespace(content="Answer"))]
@@ -30,7 +81,7 @@ class RagServiceTests(unittest.TestCase):
         self.assertEqual(answer, "Answer")
         system_prompt = client.chat.completions.create.call_args.kwargs["messages"][0]["content"]
         self.assertIn(
-            "Ember, FireBuddy's educational Singapore finance guide",
+            "DouDou, FireBuddy's educational Singapore finance guide",
             system_prompt,
         )
 

@@ -63,22 +63,22 @@ export function resolveCategoryIconId(icon?: string | null): CategoryIconId {
   return isCategoryIconId(mapped) ? mapped : 'others';
 }
 
-/** Swatches offered when creating a custom category. Order matches the web picker. */
+/** Swatches offered when creating a custom category: the chart palette first, then extra tones. */
 export const categoryColors = [
+  '#d95926',
+  '#3987e5',
+  '#d55181',
+  '#c98500',
+  '#199e70',
+  '#9085e9',
+  '#e66767',
+  '#7a869a',
   '#3C8A61',
-  '#67B47C',
-  '#E5B24A',
-  '#7BAA90',
-  '#2E9B57',
-  '#8BB89D',
-  '#25543D',
-  '#A8D3B7',
   '#2A9D8F',
-  '#3A86A8',
   '#4F6DB8',
   '#7B61A8',
   '#B85C8A',
-  '#D65A5A',
   '#D97745',
-  '#7A869A',
+  '#67B47C',
+  '#25543D',
 ] as const;

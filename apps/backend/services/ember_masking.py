@@ -52,9 +52,14 @@ MONEY_KEYS = {
     "fundingGap", "targetToday", "portfolioToday", "monthlySpending",
     "monthlyContribution", "cpfMonthlyPayout", "balance", "expenseTotal",
     "annualisedSpending", "emergencyFundTarget3Months", "emergencyFundTarget6Months",
-    "totalMonthlyDebtService", "monthlyPayment", "originalPrincipal",
+    "totalMonthlyDebtService", "monthlyPayment", "originalPrincipal", "assetTotal",
+    "gapFromTodayAssets", "lastMonthAmount",
 }
-RATIO_KEYS = {"savingsRate", "progressRate", "progressRateCapped", "beforeReturn", "afterReturn", "inflation", "interestRate", "debtToIncome", "highestInterestRate"}
+RATIO_KEYS = {
+    "savingsRate", "progressRate", "progressRateCapped", "projectedShareOfTargetAtRetirement",
+    "progressToday", "share", "beforeReturn", "afterReturn", "inflation", "interestRate",
+    "debtToIncome", "highestInterestRate",
+}
 PERCENT_KEYS = {"changePercent"}
 MONTH_KEYS = {"emergencyRunwayMonths", "emergencyRunwayMonthsWithDebt", "estimatedMonths", "monthsRemaining"}
 CATEGORY_KEYS = {"category"}
@@ -65,9 +70,57 @@ PASSTHROUGH_KEYS = {
     "destination", "ruleId", "actionType", "calculationVersion", "estimatedFiYear",
     "earliestRetirementMonth", "retirementMonth", "endAge", "cpfStartAge", "cpfPlan",
     "provenance", "recordCount", "completedMonths", "evidencePeriod", "startDate", "endDate",
-    "figure", "year", "value", "unit", "availableYears", "sourceTitle", "payoffMonth",
+    "figure", "year", "value", "unit", "availableYears", "sourceTitle", "payoffMonth", "direction",
 }
 NUMERIC_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+
+# Band clean-up after restoring, kept in step with packages/shared/src/masking.ts. Bands are for
+# the model only, so any wording that repeats one ("which falls within the range of 50k-100k")
+# is removed while real guidance such as "3-6 months of expenses" stays.
+MONEY_BAND = r"(?:under 1k|over 1M|\d+k\s*(?:-|–|—|to)\s*\d+(?:k|M))"
+BAND_LEAD = r",?\s*(?:(?:which|and|this|that|it)\s+)*"
+STRAY_BAND_RE = re.compile(r"\s*\(range:[^)]*\)", re.I)
+STRAY_MONEY_BAND_RE = re.compile(rf"\s*\({MONEY_BAND}\)", re.I)
+BAND_CLAUSE_RE = re.compile(rf"{BAND_LEAD}(?:falls|sits|lies|is)?\s*(?:with)?in\s+(?:the\s+|a\s+)?range\s+of\s+{MONEY_BAND}", re.I)
+BRACKET_CLAUSE_RE = re.compile(rf"{BAND_LEAD}(?:falls|sits|lies|is)?\s*(?:with)?in\s+the\s+{MONEY_BAND}\s+(?:bracket|band|range)", re.I)
+BETWEEN_CLAUSE_RE = re.compile(rf"{BAND_LEAD}(?:falls|sits|lies|is)\s+(?:somewhere\s+)?between\s+\d+k\s+and\s+\d+(?:k|M)", re.I)
+PERCENT_BAND_CLAUSE_RE = re.compile(r",?\s*which\s+(?:is|falls|sits)\s+(?:with)?in\s+(?:the\s+)?range\s+of\s+\d+\s*-\s*\d+%", re.I)
+MONTHS_BAND_CLAUSE_RE = re.compile(r",?\s*which\s+is\s+(?:over 12 months|(?:with)?in\s+the\s+(?:range\s+of\s+)?(?:0-1|1-3|3-6|6-12) months(?:\s+range)?)", re.I)
+REPRESENTED_BY_RE = re.compile(r"\b(?:is\s+)?represented\s+by\s+(?:the\s+)?(?:placeholder\s+|[a-z]+[A-Z][A-Za-z]*\s+(?:ratio\s+|figure\s+|value\s+)?(?:of\s+)?)?(?=S\$|\$|\d)")
+BAND_PHRASE_RE = re.compile(rf",?\s*(?:(?:and|with|but)\s+)?(?:(?:the|a|its|your)\s+)?range\s+(?:is|of|being)?\s*{MONEY_BAND}", re.I)
+REAL_FIGURE_RE = re.compile(r"S\$\s?\d|\d(?:\.\d+)?%|\d(?:\.\d+)? months")
+BAND_SENTENCE_RE = re.compile(rf"[^.\n]*\brange\b[^.\n]{{0,40}}\b{MONEY_BAND}\b[^.\n]*\.?", re.I)
+FIGURE_BAND_RE = re.compile(r"(\d(?:\.\d+)? months|\d(?:\.\d+)?%)\s*\((?:0-1 months|1-3 months|3-6 months|6-12 months|over 12 months|\d+-\d+%|over 100%)\)", re.I)
+EMPTY_BULLET_RE = re.compile(r"^[ \t]*-[ \t]*(?:(?:this|that|it)(?:[ \t]+(?:total|figure|amount|value|number))?)?[ \t]*[.,;:]?[ \t]*(?:\r?\n|$)", re.I | re.M)
+# A sentence still being streamed that may be turning into band wording, held back until it ends.
+BAND_HINT_RE = re.compile(r"\b(?:range|between|bracket|band|which|falls|sits|lies|within)\b", re.I)
+# A sentence ending mid-word ("…within the ra") is held too when the word could become a hint.
+BAND_HINT_WORDS = ("range", "between", "bracket", "band", "which", "falls", "within")
+MAX_HELD_SENTENCE = 240
+
+
+def _strip_band_sentence(match: re.Match[str]) -> str:
+    """Keep a sentence that states a real figure, minus its range wording; drop one that is only a range."""
+
+    sentence = match.group(0)
+    return BAND_PHRASE_RE.sub("", sentence) if REAL_FIGURE_RE.search(sentence) else ""
+
+
+def strip_bands(text: str) -> str:
+    """Remove any band wording the model echoed into an answer whose tokens are already restored."""
+
+    text = STRAY_BAND_RE.sub("", text)
+    text = STRAY_MONEY_BAND_RE.sub("", text)
+    text = BAND_CLAUSE_RE.sub("", text)
+    text = BRACKET_CLAUSE_RE.sub("", text)
+    text = BETWEEN_CLAUSE_RE.sub("", text)
+    text = PERCENT_BAND_CLAUSE_RE.sub("", text)
+    text = MONTHS_BAND_CLAUSE_RE.sub("", text)
+    text = REPRESENTED_BY_RE.sub("is ", text)
+    text = BAND_SENTENCE_RE.sub(_strip_band_sentence, text)
+    text = FIGURE_BAND_RE.sub(r"\1", text)
+    text = EMPTY_BULLET_RE.sub("", text)
+    return re.sub(r"(\d months) months\b", r"\1", text)
 
 # Scrubber patterns for free text typed by the user.
 CURRENCY_RE = re.compile(r"(?:S\$|SGD\s?|\$)\s?-?\d[\d,]*(?:\.\d+)?(?:\s?[kKmM]\b)?")
@@ -325,11 +378,11 @@ class MaskingSession:
     # -- restoring ----------------------------------------------------------------
 
     def unmask(self, text: str | None) -> str | None:
-        """Put the real values back. An id the session never issued becomes a neutral marker."""
+        """Put the real values back and drop echoed bands. An id the session never issued becomes a neutral marker."""
 
         if text is None:
             return None
-        return TOKEN_WITH_BAND_RE.sub(lambda match: self._values.get(match.group(1), UNAVAILABLE), text)
+        return strip_bands(TOKEN_WITH_BAND_RE.sub(lambda match: self._values.get(match.group(1), UNAVAILABLE), text))
 
     def unmasker(self) -> "StreamingUnmasker":
         return StreamingUnmasker(self)
@@ -352,6 +405,15 @@ class StreamingUnmasker:
             emit, self.buffer = text[:index], text[index:]
         else:
             emit, self.buffer = text, ""
+        # An unfinished sentence that mentions a range, an open bracket or a fresh bullet waits for
+        # its end, so the band clean-up sees it whole rather than in pieces.
+        start = max(emit.rfind(". "), emit.rfind("\n")) + 1
+        tail = emit[start:]
+        open_bracket = tail.rfind("(") != -1 and ")" not in tail[tail.rfind("("):]
+        last_word = tail.split()[-1].lower() if tail.strip() and not tail[-1].isspace() else ""
+        hint_starting = bool(last_word) and any(word.startswith(last_word) for word in BAND_HINT_WORDS)
+        if len(tail) <= MAX_HELD_SENTENCE and (BAND_HINT_RE.search(tail) or hint_starting or open_bracket or tail.lstrip(" \t").startswith("-")):
+            emit, self.buffer = emit[:start], tail + self.buffer
         return self.session.unmask(emit) or ""
 
     def flush(self) -> str:

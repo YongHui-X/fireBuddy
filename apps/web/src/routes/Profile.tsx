@@ -143,7 +143,7 @@ export default function Profile({ onRequestLogout }: ProfileProps) {
           <div className="setting-row setting-row-static">
             <span className="setting-icon"><Sparkles size={20} /></span>
             <div>
-              <strong id="ai-settings-title">Ember and AI</strong>
+              <strong id="ai-settings-title">Doudou and AI</strong>
               <p className="setting-description">Choose how much the AI guide may see. Off until you decide.</p>
             </div>
             <span className="setting-state">{aiPreferenceStatus === 'loading' && !demoMode ? 'Loading' : AI_LEVEL_COPY[aiPreference].title}</span>

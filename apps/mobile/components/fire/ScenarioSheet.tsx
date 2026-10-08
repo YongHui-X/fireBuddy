@@ -65,7 +65,7 @@ function parseDraft(draft: Draft, plan: RetirementPlan, today: string): { overri
 /** Compare one unsaved change set against the saved plan. Nothing here writes to the store. */
 export function ScenarioSheet({ open, baseline, onClose }: ScenarioSheetProps) {
   const { theme } = useTheme();
-  const { money } = usePrivacy();
+  const { money, currency } = usePrivacy();
   const amount = (value: string | null | undefined) => (value == null ? 'Unavailable' : money(Number(value), 0));
   const plan = baseline.plan!;
   const [draft, setDraft] = useState<Draft>(() => draftFrom(plan));
@@ -129,8 +129,8 @@ export function ScenarioSheet({ open, baseline, onClose }: ScenarioSheetProps) {
     >
       <View style={styles.form}>
         {field('retirementMonth', 'Retirement month', `${fireMonthLabel(plan.retirementMonth)} (type as YYYY-MM)`, 'default')}
-        {field('monthlyContribution', 'Monthly investment (SGD)', money(plan.monthlyContribution, 0))}
-        {field('monthlySpending', 'Monthly spending today (SGD)', money(plan.monthlySpending, 0))}
+        {field('monthlyContribution', `Monthly investment (${currency})`, money(plan.monthlyContribution, 0))}
+        {field('monthlySpending', `Monthly spending today (${currency})`, money(plan.monthlySpending, 0))}
         {field('beforeReturn', 'Return before retirement (%)', pct(plan.beforeReturn))}
         {field('afterReturn', 'Return after retirement (%)', pct(plan.afterReturn))}
         {field('inflation', 'Inflation (%)', pct(plan.inflation))}

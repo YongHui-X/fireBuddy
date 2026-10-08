@@ -7,8 +7,11 @@ are put back into the answer here, before anything is returned or streamed.
 """
 
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
+import re
+import time
 
 from rag.retrieval import RagStoreUnavailableError, retrieve_chunks
 from schemas.profile import AiPreference
@@ -19,6 +22,7 @@ from schemas.rag import (
     AdvisorResponse,
     ChatMessage,
 )
+from services.advice_boundary import ADVICE_BOUNDARY_ANSWER, is_personal_advice_request
 from services.ai_preference import AI_DISABLED_ANSWER, GUIDE_ONLY_DATA_ANSWER, load_ai_preference
 from services.ember_data_tools import EmberDataResult, run_ember_data_tool
 from services.ember_masking import MAX_MASKED_CONTEXT_CHARS, MaskingSession, load_user_names
@@ -43,6 +47,81 @@ from services.rag_service import (
 
 logger = logging.getLogger(__name__)
 
+# A guideline search per topic the phone attached figures for. One query per question ranks the
+# main topic's articles first, so a mixed question ("Are Savings Bonds good for my emergency
+# fund?") could miss the guideline the user's figure is compared with (DouDou mobile eval, 4 Oct 2026).
+GUIDELINE_QUERIES: dict[str, str] = {
+    "emergencyRunwayMonths": "MoneySense emergency fund rule of thumb months of expenses",
+    "monthlyPulse": "MoneySense basic financial planning how much of income to save and invest",
+}
+GUIDELINE_MATCH_COUNT = 2
+
+# Greetings and thanks get a friendly fixed reply: no planner, no search, no model call, no cost.
+# Before this, "How are you" was answered with a definition of FIRE (owner's test, 4 Oct 2026).
+_SMALL_TALK_RE = re.compile(
+    r"^\s*(?:hi|hello|hey|hiya|yo|good (?:morning|afternoon|evening)|how are you(?: doing)?|"
+    r"how r u|how'?s it going|what'?s up|sup|thanks|thank you|thx|ty|ok(?:ay)?|cool|nice|bye|goodbye)"
+    r"(?:\s+doudou)?[\s!.?~]*$",
+    re.IGNORECASE,
+)
+_THANKS_RE = re.compile(r"^\s*(?:thanks|thank you|thx|ty|ok(?:ay)?|cool|nice)\b", re.IGNORECASE)
+
+
+def small_talk_reply(question: str) -> str | None:
+    """A friendly reply to a greeting or thanks, or None for a real question."""
+
+    if not _SMALL_TALK_RE.match(question or ""):
+        return None
+    if _THANKS_RE.match(question):
+        return "Glad to help! Ask me about your spending, CPF, SRS or your FIRE plan whenever you like."
+    opener = "I'm doing well, thanks for asking!" if re.search(r"how|what'?s up|sup", question, re.IGNORECASE) else "Hi there!"
+    return (
+        f"{opener} I'm DouDou, your Singapore money guide. "
+        "Ask me about your spending, CPF, SRS, Singapore Savings Bonds or your FIRE plan."
+    )
+# Guideline queries never change, so their results are reused for an hour instead of costing an
+# embedding call and a database search on every question (time to first word on the phone).
+GUIDELINE_CACHE_SECONDS = 3600
+_guideline_cache: dict[str, tuple[float, list[dict]]] = {}
+
+
+def _guideline_matches(query: str) -> list[dict]:
+    cached = _guideline_cache.get(query)
+    if cached is not None and time.monotonic() - cached[0] < GUIDELINE_CACHE_SECONDS:
+        return cached[1]
+    matches = retrieve_chunks(query, match_count=GUIDELINE_MATCH_COUNT)
+    _guideline_cache[query] = (time.monotonic(), matches)
+    return matches
+
+
+def _matches_with_guidelines(
+    retrieval_query: str,
+    snapshot: AdvisorClientSnapshot | None,
+    app_context: AdvisorAppContext | None,
+) -> list[dict] | None:
+    """Main search plus guideline searches for the attached topics; None keeps the normal path."""
+
+    queries = [query for key, query in GUIDELINE_QUERIES.items() if snapshot is not None and key in snapshot.facts]
+    if not queries:
+        return None
+    try:
+        # The main search and any uncached guideline searches run at the same time.
+        with ThreadPoolExecutor(max_workers=1 + len(queries)) as pool:
+            main = pool.submit(retrieve_chunks, build_contextual_retrieval_question(retrieval_query, app_context))
+            guides = [pool.submit(_guideline_matches, query) for query in queries]
+            matches = list(main.result())
+            extra = [match for future in guides for match in future.result()]
+        seen = {match.get("id") for match in matches}
+        for match in extra:
+            if match.get("id") not in seen:
+                matches.append(match)
+                seen.add(match.get("id"))
+        return matches
+    except Exception:
+        # The normal path retries the main search and reports a store outage properly.
+        logger.exception("ember_guideline_retrieval_failed")
+        return None
+
 
 def _unsupported_plan() -> EmberPlan:
     """Build the fixed refusal plan used when the keyword screen rejects a question."""
@@ -62,7 +141,8 @@ def _plan(
     *,
     allow_personalise: bool,
     client_masked: bool = False,
-) -> EmberPlan:
+    has_client_snapshot: bool = False,
+) -> tuple[EmberPlan, bool]:
     """
     Screen obvious non-finance and live-price questions before the planner.
 
@@ -72,8 +152,12 @@ def _plan(
     """
 
     if is_clearly_out_of_scope(raw_question):
-        return _unsupported_plan()
+        return _unsupported_plan(), False
     plan = plan_ember_question(question, history)
+    # The planner's own verdict that this is purely about the user's records ("What is my net
+    # worth?"). With the device's figures attached, such an answer needs no article search, so it
+    # is faster and cites no unrelated sources. The second value of the returned pair says so.
+    data_only = client_masked and has_client_snapshot and plan.mode == "data" and plan.tool != "figure_lookup"
     # Tokens echoed by the planner are restored here, unless the device holds the map.
     if not client_masked:
         plan = plan.model_copy(update={
@@ -84,10 +168,14 @@ def _plan(
     # masked snapshot carries the same aggregates, so every question becomes a knowledge answer.
     if client_masked and plan.mode in {"data", "hybrid"} and plan.tool != "figure_lookup":
         plan = plan.model_copy(update={"mode": "knowledge", "tool": None, "figure_key": None, "figure_year": None})
+    # The planner cannot see the device's snapshot, so it may ask "what is your emergency buffer?"
+    # when the phone already sent it. With figures attached, answer from them instead.
+    if client_masked and has_client_snapshot and plan.mode == "clarification":
+        plan = plan.model_copy(update={"mode": "knowledge", "clarification_question": None})
     # A personalised account tailors every knowledge answer to the masked snapshot.
     if plan.mode == "knowledge":
         plan = plan.model_copy(update={"personalise": allow_personalise})
-    return plan
+    return plan, data_only
 
 
 def _personal_context(user_id: str, session: MaskingSession) -> EmberPersonalContext | None:
@@ -197,19 +285,28 @@ def _execute_plan(
     *,
     client_masked: bool = False,
     client_snapshot: AdvisorClientSnapshot | None = None,
+    data_only: bool = False,
 ) -> AdvisorResponse:
     """Execute one branch only. There is no iterative or autonomous tool loop."""
 
     if plan.mode == "knowledge":
+        retrieval_query = session.retrieval_text(plan.retrieval_query or question)
+        retrieved = None
+        skip_retrieval = False
         if client_masked:
             personal_context = _client_context(client_snapshot) if plan.personalise else None
+            skip_retrieval = data_only and personal_context is not None
+            if personal_context is not None and not skip_retrieval:
+                retrieved = _matches_with_guidelines(retrieval_query, client_snapshot, app_context)
         else:
             personal_context = _personal_context(user_id, session) if plan.personalise else None
         return answer_financial_advisor_question(
             question,
             history,
             app_context,
-            retrieval_query=session.retrieval_text(plan.retrieval_query or question),
+            retrieval_query=retrieval_query,
+            retrieved_matches=retrieved,
+            skip_retrieval=skip_retrieval,
             personal_context=personal_context,
             # With a device-held map the server has nothing to restore; tokens pass through.
             masking=None if client_masked else session,
@@ -264,15 +361,22 @@ def answer_ember_question(
     level = preference or load_ai_preference(user_id)
     if level == "off":
         return AdvisorResponse(answer=AI_DISABLED_ANSWER, mode="unsupported")
+    greeting = small_talk_reply(question)
+    if greeting is not None:
+        return AdvisorResponse(answer=greeting, mode="knowledge")
+    # A request for a personal investment decision gets the fixed boundary reply, with no AI call.
+    if is_personal_advice_request(question):
+        return AdvisorResponse(answer=ADVICE_BOUNDARY_ANSWER, mode="unsupported")
 
     bounded_history = history or []
     session, scrubbed_question, scrubbed_history = _prepare(user_id, question, bounded_history, client_masked=client_masked)
-    plan = _plan(question, scrubbed_question, scrubbed_history, session, allow_personalise=level == "personalised", client_masked=client_masked)
+    plan, data_only = _plan(question, scrubbed_question, scrubbed_history, session, allow_personalise=level == "personalised", client_masked=client_masked, has_client_snapshot=client_snapshot is not None)
     if level == "guide" and _guide_only_refusal(plan):
         return AdvisorResponse(answer=GUIDE_ONLY_DATA_ANSWER, mode="unsupported")
     return _execute_plan(
         user_id, scrubbed_question, plan, scrubbed_history, app_context, session,
         client_masked=client_masked, client_snapshot=client_snapshot if level == "personalised" else None,
+        data_only=data_only,
     )
 
 
@@ -298,15 +402,22 @@ def stream_ember_question(
     bounded_history = history or []
     yield {
         "event": "status",
-        "data": {"status": "searching", "message": "Understanding your question"},
+        "data": {"status": "searching", "message": "Reading your question"},
     }
     level = preference or load_ai_preference(user_id)
     if level == "off":
         yield from _static_stream(AI_DISABLED_ANSWER)
         return
+    greeting = small_talk_reply(question)
+    if greeting is not None:
+        yield from _static_stream(greeting)
+        return
+    if is_personal_advice_request(question):
+        yield from _static_stream(ADVICE_BOUNDARY_ANSWER)
+        return
 
     session, scrubbed_question, scrubbed_history = _prepare(user_id, question, bounded_history, client_masked=client_masked)
-    plan = _plan(question, scrubbed_question, scrubbed_history, session, allow_personalise=level == "personalised", client_masked=client_masked)
+    plan, data_only = _plan(question, scrubbed_question, scrubbed_history, session, allow_personalise=level == "personalised", client_masked=client_masked, has_client_snapshot=client_snapshot is not None)
     if level == "guide" and _guide_only_refusal(plan):
         yield from _static_stream(GUIDE_ONLY_DATA_ANSWER)
         return
@@ -314,17 +425,26 @@ def stream_ember_question(
 
     if plan.mode == "knowledge":
         personal_context = None
+        yield {
+            "event": "status",
+            "data": {"status": "preparing", "message": "Breaking it down into steps"},
+        }
         if plan.personalise:
-            yield {
-                "event": "status",
-                "data": {"status": "preparing", "message": "Reading your FireBuddy data"},
-            }
             personal_context = _client_context(snapshot) if client_masked else _personal_context(user_id, session)
+        retrieval_query = session.retrieval_text(plan.retrieval_query or scrubbed_question)
+        skip_retrieval = data_only and client_masked and personal_context is not None
+        retrieved = (
+            _matches_with_guidelines(retrieval_query, snapshot, app_context)
+            if client_masked and personal_context is not None and not skip_retrieval
+            else None
+        )
         yield from stream_financial_advisor_question(
             scrubbed_question,
             scrubbed_history,
             app_context,
-            retrieval_query=session.retrieval_text(plan.retrieval_query or scrubbed_question),
+            retrieval_query=retrieval_query,
+            retrieved_matches=retrieved,
+            skip_retrieval=skip_retrieval,
             personal_context=personal_context,
             masking=None if client_masked else session,
         )
@@ -334,7 +454,7 @@ def stream_ember_question(
         "event": "status",
         "data": {
             "status": "preparing",
-            "message": "Reading your FireBuddy data" if plan.mode in {"data", "hybrid"} else "Preparing an answer",
+            "message": "Breaking it down into steps",
         },
     }
     response = _execute_plan(

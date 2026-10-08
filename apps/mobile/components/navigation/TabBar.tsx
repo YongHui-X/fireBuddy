@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, radii } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
+import { useTourTarget } from '../tour/TourProvider';
 import { PressOverlay } from '../ui/PressOverlay';
 import { AppText } from '../ui/Text';
 
@@ -35,6 +36,12 @@ export function TabBar({ state, descriptors, navigation }: ExpoTabBarProps) {
   const { theme, shadows } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const addTarget = useTourTarget('add');
+  const tabTargets: Record<string, ReturnType<typeof useTourTarget>> = {
+    transactions: useTourTarget('transactions'),
+    categories: useTourTarget('categories'),
+    profile: useTourTarget('profile'),
+  };
 
   const renderTab = (routeIndex: number) => {
     const route = state.routes[routeIndex];
@@ -66,10 +73,13 @@ export function TabBar({ state, descriptors, navigation }: ExpoTabBarProps) {
           <>
             <PressOverlay pressed={pressed} />
             {focused ? <View style={[styles.indicator, { backgroundColor: theme.accentText }]} /> : null}
-            <Icon size={20} color={focused ? theme.accentText : theme.ink3} strokeWidth={focused ? 2.2 : 1.6} />
-            <AppText variant="tabLabel" tone={focused ? 'accentText' : 'ink3'} numberOfLines={1}>
-              {label}
-            </AppText>
+            {/* The tour circles just the icon and label, not the whole slot, which is wide on big screens. */}
+            <View {...tabTargets[route.name]} style={styles.tabContent}>
+              <Icon size={20} color={focused ? theme.accentText : theme.ink3} strokeWidth={focused ? 2.2 : 1.6} />
+              <AppText variant="tabLabel" tone={focused ? 'accentText' : 'ink3'} numberOfLines={1}>
+                {label}
+              </AppText>
+            </View>
           </>
         )}
       </Pressable>
@@ -85,6 +95,7 @@ export function TabBar({ state, descriptors, navigation }: ExpoTabBarProps) {
         <View style={styles.group}>{[0, 1].map(renderTab)}</View>
         <View style={styles.addSlot}>
           <Pressable
+            {...addTarget}
             accessibilityRole="button"
             accessibilityLabel="Add transaction"
             hitSlop={6}
@@ -134,8 +145,11 @@ const styles = StyleSheet.create({
     minHeight: layout.touch,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
     overflow: 'hidden',
+  },
+  tabContent: {
+    alignItems: 'center',
+    gap: 4,
   },
   indicator: {
     position: 'absolute',

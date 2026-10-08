@@ -1,0 +1,214 @@
+{
+  "label": "placeholder_v3",
+  "todayKey": "2026-10-05",
+  "apiBase": "http://127.0.0.1:8010",
+  "total": 10,
+  "passed": 9,
+  "results": [
+    {
+      "id": "ph_direct_spend",
+      "question": "How much have I spent this month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much have I spent this month?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- You have spent a total of S$1,176 this month so far, covering the period from 1 to 5 October 2026.\n- Your spending categories this month include:\n  - Food & Drink: S$517\n  - Bills & Utilities: S$187\n  - Shopping: S$148\n  - Travel: S$120\n  - Transport: S$100",
+      "sources": [],
+      "sourceExpectation": "Direct lookup: S$1,176.",
+      "latencyMs": 4629,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_savings_rate",
+      "question": "What is my savings rate this month?",
+      "usedSections": [
+        "cashflow"
+      ],
+      "maskedQuestion": "What is my savings rate this month?",
+      "maskedContextChars": 266,
+      "mode": "hybrid",
+      "answer": "- Your savings rate this month is 77.4%.\n- Your income is S$5,200.\n- Your spending is S$1,176.\n- The savings amount is S$4,024.",
+      "sources": [],
+      "sourceExpectation": "Precomputed ratio: 77.4% (S$4,024 of S$5,200).",
+      "latencyMs": 3965,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_emergency_vs_guideline",
+      "question": "Is my emergency fund within MoneySense's 3 to 6 months?",
+      "usedSections": [
+        "emergency"
+      ],
+      "maskedQuestion": "Is my emergency fund within MoneySense's 3 to 6 months?",
+      "maskedContextChars": 291,
+      "mode": "hybrid",
+      "answer": "- According to MoneySense, setting aside at least 3 to 6 months’ worth of expenses as emergency funds is generally an accepted rule of thumb.\n- Your derived emergency fund targets are:\n  - 3 months: S$3,167\n  - 6 months: S$6,333\n- Your recorded emergency runway is 17.1 months, which exceeds the 3 to 6 months guideline.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        }
+      ],
+      "sourceExpectation": "Runway 17.1 months, above six months; targets S$3,167 and S$6,333.",
+      "latencyMs": 6187,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_order_months",
+      "question": "Did I spend more this month or last month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "Did I spend more this month or last month?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- You spent less this month compared to last month.\n- The total spending this month so far is S$1,176.\n- The total spending last month was S$3,817.\n- The difference in spending is S$2,642, indicating a decrease.",
+      "sources": [],
+      "sourceExpectation": "Less this month: S$1,176 vs S$3,817 (different range bands).",
+      "latencyMs": 3454,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_difference_months",
+      "question": "How much less did I spend this month than last month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much less did I spend this month than last month?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- You spent less this month than last month.\n- The total spending difference is S$2,642.\n- Your spending in the top categories also decreased:\n  - Food & Drink: S$24 less than last month (last month amount: S$541)\n  - Bills & Utilities: S$16 less than last month (last month amount: S$204)\n  - Shopping: S$37 less than last month (last month amount: S$185)\n  - Travel: S$2,220 less than last month (last month amount: S$2,340)\n  - Transport: S$318 less than last month (last month amount: S$418)",
+      "sources": [],
+      "sourceExpectation": "Difference not precomputed: S$3,817 - S$1,176 = S$2,642 less.",
+      "latencyMs": 4218,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_order_same_band",
+      "question": "Did I spend more on Food & Drink this month or last month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "Did I spend more on Food & Drink this month or last month?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- You spent less on Food & Drink this month compared to last month.\n- This month, your spending on Food & Drink is S$517.\n- Last month, your spending on Food & Drink was S$541.",
+      "sources": [],
+      "sourceExpectation": "Both under 1k, so the bands cannot order them: S$517 this month is less than S$541 last month.",
+      "latencyMs": 4044,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_sum_assets",
+      "question": "What are my total assets?",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "What are my total assets?",
+      "maskedContextChars": 312,
+      "mode": "hybrid",
+      "answer": "- Your total assets amount to S$445,000.\n- Your net worth is S$80,000.\n- Your total liabilities are S$365,000.\n- Your investable assets are S$65,000.",
+      "sources": [],
+      "sourceExpectation": "Sum not precomputed: net worth S$80,000 + debts S$365,000 = S$445,000.",
+      "latencyMs": 3297,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_ratio_category_share",
+      "question": "What share of this month's spending went to Food & Drink?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "What share of this month's spending went to Food & Drink?",
+      "maskedContextChars": 1813,
+      "mode": "hybrid",
+      "answer": "- The share of this month's spending that went to Food & Drink is 44.0%.\n- The amount spent on Food & Drink this month so far is S$517.",
+      "sources": [],
+      "sourceExpectation": "Ratio not precomputed: S$517 of S$1,176, about 44%.",
+      "latencyMs": 3221,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_difference_fi_gap",
+      "question": "How much more do I need to reach my FI target?",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "How much more do I need to reach my FI target?",
+      "maskedContextChars": 492,
+      "mode": "hybrid",
+      "answer": "- Your FIRE target is S$2,565,681.\n- You currently have a funding gap of S$135,383.\n- To reach your FI target, you need to cover this funding gap.\n- Your gap from today's assets is S$2,500,681.\n- Your projected portfolio at retirement is S$2,430,297.\n- FireBuddy's suggested next step is to consider your required monthly investment of S$2,136.",
+      "sources": [
+        {
+          "title": "Dr Wealth, Financial Independence Retire Early Guide",
+          "path": "manual/fire/sources/dr-wealth.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        }
+      ],
+      "sourceExpectation": "Difference not precomputed: FI target S$2,565,681 minus investable assets S$65,000 = S$2,500,681.",
+      "latencyMs": 4817,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_ratio_debt_service",
+      "question": "What is my monthly debt service as a share of my income?",
+      "usedSections": [
+        "cashflow",
+        "netWorth"
+      ],
+      "maskedQuestion": "What is my monthly debt service as a share of my income?",
+      "maskedContextChars": 521,
+      "mode": "hybrid",
+      "answer": "- Your monthly debt service is represented by S$1,650.\n- Your income is represented by S$5,200.\n- The debt service as a share of your income is represented by 31.7%.",
+      "sources": [],
+      "sourceExpectation": "Ratio not precomputed: S$1,650 of S$5,200, about 32%.",
+      "latencyMs": 3207,
+      "dataChecks": [
+        "contains forbidden \"represented by\""
+      ],
+      "pass": false
+    }
+  ]
+}

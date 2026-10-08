@@ -30,12 +30,12 @@ export function formatEmberConversationMarkdown(topic: EmberTopic, exportedAt = 
         })
       : [];
     const sources = sourceLines.length > 0 ? `\n\nSources:\n${sourceLines.join('\n')}` : '';
-    return [`## ${message.role === 'user' ? 'You' : 'Ember'}\n\n${message.content.trim()}${sources}`];
+    return [`## ${message.role === 'user' ? 'You' : 'Doudou'}\n\n${message.content.trim()}${sources}`];
   });
 
   return [
     `# ${topic.title}`,
-    `Exported from FireBuddy Ember on ${formatLocalDate(exportedAt)}.`,
+    `Exported from FireBuddy Doudou on ${formatLocalDate(exportedAt)}.`,
     ...sections,
     `> ${EMBER_EDUCATIONAL_NOTICE}`,
     '',

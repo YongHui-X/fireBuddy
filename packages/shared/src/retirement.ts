@@ -1,4 +1,4 @@
-import type { FireCalculationResult, RetirementPlan } from './types';
+import type { FireCalculationResult, FireType, RetirementPlan } from './types';
 
 export const CALCULATION_VERSION = 'sg-monthly.v2' as const;
 /** Convert a Singapore calendar month to an integer without timezone arithmetic. */
@@ -14,10 +14,16 @@ const money = (value: number) => (Math.round((value + Number.EPSILON) * 100) / 1
 /** Validate confirmed inputs before any projection or activation. */
 export function validateRetirementPlan(plan: RetirementPlan, asOf: string): string | null {
   const month = (v: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
-  if (plan.version !== 2 || !month(plan.birthMonth) || !month(plan.retirementMonth)) return 'Enter a valid birth and retirement month.';
+  if (plan.version !== 2 || !month(plan.birthMonth)) return 'Enter your birth year and month.';
+  if (!month(plan.retirementMonth)) return 'Enter the age you would like to retire at.';
   if (!month(plan.spendingMonth) || plan.spendingMonth > asOf.slice(0, 7)) return 'Confirm the month used for today’s spending values.';
   const now = monthIndex(asOf), birth = monthIndex(plan.birthMonth), retirement = monthIndex(plan.retirementMonth);
-  if (birth >= now || !Number.isInteger(plan.endAge) || plan.endAge < 50 || plan.endAge > 120 || retirement < now || retirement >= birth + plan.endAge * 12 || birth + plan.endAge * 12 - now > 1440) return 'Retirement must be this month or later and before the planning end age.';
+  // One message per rule, so the person knows which field to fix.
+  if (birth >= now) return 'Your birth month must be in the past.';
+  if (!Number.isInteger(plan.endAge) || plan.endAge < 50 || plan.endAge > 120) return 'Plan through an age between 50 and 120.';
+  if (retirement < now) return 'Your retirement age has already passed. Choose an age from this month onwards.';
+  if (retirement >= birth + plan.endAge * 12) return 'Retire before the age you plan through.';
+  if (birth + plan.endAge * 12 - now > 1440) return 'The plan can look at most 120 years ahead. Lower the age you plan through.';
   if (![plan.monthlySpending, plan.monthlyContribution].every(v => Number.isFinite(v) && v >= 0 && v <= 99999999)) return 'Enter valid spending and contribution amounts.';
   if (![plan.beforeReturn, plan.afterReturn].every(v => Number.isFinite(v) && v >= -0.2 && v <= 0.3) || !Number.isFinite(plan.inflation) || plan.inflation < 0 || plan.inflation > 0.2) return 'Returns must be between -20% and 30%, inflation between 0% and 20%.';
   if (!['unknown', 'standard', 'escalating', 'basic'].includes(plan.cpfPlan) || !Number.isInteger(plan.cpfStartAge) || plan.cpfStartAge < 65 || plan.cpfStartAge > 70 || !Number.isFinite(plan.cpfMonthlyPayout) || plan.cpfMonthlyPayout < 0) return 'Review CPF payout and commencement age.';
@@ -91,4 +97,38 @@ export function calculateRetirement(plan: RetirementPlan | null | undefined, ass
   if (plan.cpfPlan === 'unknown' || plan.cpfPlan === 'basic') warn('cpf_not_included', plan.cpfPlan === 'basic' ? 'CPF income not included: Basic declining payouts are not modelled.' : 'CPF income not included: payout is not yet known.');
   if (plan.portfolioOverride && (Date.parse(effectiveDate) - Date.parse(plan.portfolioOverride.date)) / 86400000 > 35) warn('stale_snapshot', 'The planning-only portfolio total is older than 35 days; it is not automatically grown to today.');
   return result;
+}
+
+/** The FIRE types the planner offers. Lean, Regular and Fat scale recent spending; the rest are explained. */
+export const FIRE_TYPES: readonly { key: FireType; label: string; ratio: number | null; blurb: string }[] = [
+  { key: 'lean', label: 'Lean FIRE', ratio: 0.6, blurb: 'A frugal retirement on about 60% of what you spend now.' },
+  { key: 'regular', label: 'Regular FIRE', ratio: 1, blurb: 'Keep your current lifestyle in retirement.' },
+  { key: 'fat', label: 'Fat FIRE', ratio: 1.5, blurb: 'A more comfortable retirement on about 150% of what you spend now.' },
+  { key: 'coast', label: 'Coast FIRE', ratio: null, blurb: 'Invest enough early, then stop adding: growth alone carries the pot to your retirement age.' },
+  { key: 'barista', label: 'Barista FIRE', ratio: null, blurb: 'Retire from full-time work but keep some part-time income, so you need a smaller pot.' },
+  { key: 'custom', label: 'Custom', ratio: null, blurb: 'Your own spending figure.' },
+];
+
+/**
+ * Spending for a Lean, Regular or Fat preset. `base` is recent average spending; without recorded
+ * expenses the current figure is the base, read back through the current type's share so that
+ * switching Lean to Fat and back returns the same number.
+ */
+export function presetSpending(type: FireType, recordedAverage: number | null, currentSpending: number, currentType: FireType): number | null {
+  const ratio = FIRE_TYPES.find((item) => item.key === type)?.ratio ?? null;
+  if (ratio === null) return null;
+  const currentRatio = FIRE_TYPES.find((item) => item.key === currentType)?.ratio ?? 1;
+  const base = recordedAverage ?? (Number.isFinite(currentSpending) && currentSpending > 0 ? currentSpending / currentRatio : null);
+  return base === null ? null : Math.ceil(base * ratio);
+}
+
+/**
+ * Coast FIRE number: what the portfolio must hold today to grow, with no further contributions,
+ * into `targetAtRetirement` by retirement at `beforeReturn` a year (compounded monthly, as the
+ * engine does). Null when the inputs cannot give a sensible figure.
+ */
+export function coastNumber(targetAtRetirement: number, monthsToRetirement: number, beforeReturn: number): number | null {
+  if (!Number.isFinite(targetAtRetirement) || targetAtRetirement < 0 || !Number.isFinite(monthsToRetirement) || monthsToRetirement < 0 || !Number.isFinite(beforeReturn) || beforeReturn <= -1) return null;
+  const monthly = (1 + beforeReturn) ** (1 / 12);
+  return Math.ceil(targetAtRetirement / monthly ** monthsToRetirement);
 }

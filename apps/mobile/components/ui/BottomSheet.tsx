@@ -37,6 +37,8 @@ export interface BottomSheetProps {
   bodyStyle?: StyleProp<ViewStyle>;
   /** Fraction of the window the sheet may grow to. */
   maxHeightRatio?: number;
+  /** Take the full screen height below the status bar, for long forms, instead of sizing to the content. */
+  fill?: boolean;
   /** Disables backdrop and back-button dismissal while a save is in flight. */
   dismissable?: boolean;
   children: ReactNode;
@@ -59,6 +61,7 @@ export function BottomSheet({
   scroll = true,
   bodyStyle,
   maxHeightRatio = 0.92,
+  fill = false,
   dismissable = true,
   children,
 }: BottomSheetProps) {
@@ -68,6 +71,8 @@ export function BottomSheet({
   const [mounted, setMounted] = useState(open);
   const [keyboardInset, setKeyboardInset] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
+
+  const [iosKeyboard, setIosKeyboard] = useState(0);
 
   // A native Modal on Android ignores `softwareKeyboardLayoutMode`, so the sheet lifts itself by
   // the keyboard's height; iOS is handled by the KeyboardAvoidingView below.
@@ -80,6 +85,18 @@ export function BottomSheet({
       hide.remove();
     };
   }, []);
+
+  // On iOS the KeyboardAvoidingView pads the bottom, so a filled sheet with a fixed height must
+  // shrink by the same amount or its header is pushed off the top of the screen.
+  useEffect(() => {
+    if (Platform.OS !== 'ios' || !fill) return undefined;
+    const show = Keyboard.addListener('keyboardWillShow', (event) => setIosKeyboard(event.endCoordinates.height));
+    const hide = Keyboard.addListener('keyboardWillHide', () => setIosKeyboard(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, [fill]);
 
   useEffect(() => {
     if (open) {
@@ -102,7 +119,12 @@ export function BottomSheet({
   const headerInk = tone === 'forest' ? theme.railInk : theme.ink;
   const headerMuted = tone === 'forest' ? theme.railInkMuted : theme.ink2;
   const handleColor = tone === 'forest' ? 'rgba(255,255,255,0.35)' : theme.lineStrong;
-  const bottomPad = keyboardInset > 0 ? spacing.md : Math.max(insets.bottom, spacing.lg);
+  // Clear of the navigation bar with room to spare: buttons sat right on top of it before (5 Oct 2026, raised 6 Oct).
+  const bottomPad = keyboardInset > 0 ? spacing.md : insets.bottom + spacing.xxl;
+  // A filled sheet stops just under the status bar, leaving a sliver of backdrop so it still reads as a sheet.
+  const sheetHeight = fill
+    ? { height: windowHeight - insets.top - spacing.sm - keyboardInset - iosKeyboard }
+    : { maxHeight: windowHeight * maxHeightRatio - insets.top - keyboardInset };
 
   return (
     <Modal
@@ -127,7 +149,7 @@ export function BottomSheet({
               {
                 backgroundColor: theme.surface,
                 borderColor: theme.line,
-                maxHeight: windowHeight * maxHeightRatio - insets.top - keyboardInset,
+                ...sheetHeight,
                 transform: [{ translateY }],
               },
             ]}
@@ -146,6 +168,7 @@ export function BottomSheet({
             </View>
             {scroll ? (
               <ScrollView
+                style={fill ? styles.fillBody : undefined}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={[styles.body, { paddingBottom: footer ? spacing.lg : bottomPad }, bodyStyle]}
                 bounces={false}
@@ -222,6 +245,9 @@ const styles = StyleSheet.create({
   },
   bodyStatic: {
     flexShrink: 1,
+  },
+  fillBody: {
+    flex: 1,
   },
   footer: {
     paddingHorizontal: spacing.lg + 2,

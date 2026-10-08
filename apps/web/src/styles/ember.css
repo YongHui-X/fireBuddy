@@ -84,7 +84,7 @@
   width: 38px;
   height: 38px;
   border-radius: var(--r-tile);
-  background: color-mix(in srgb, var(--ember-mark-symbol) 14%, var(--surface));
+  background: var(--doudou-tint);
 }
 
 .ember-conversation-header-actions {
@@ -210,7 +210,7 @@
   height: 50px;
   flex: 0 0 auto;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--ember-mark-symbol) 14%, var(--surface));
+  background: var(--doudou-tint);
 }
 
 .ember-empty-introduction h3 {
@@ -388,7 +388,11 @@
   font-size: 0.9rem;
 }
 
-.ember-stream-placeholder svg {
+.ember-stream-placeholder .doudou {
+  margin-block: -8px;
+}
+
+.ember-stream-placeholder > svg:not(.doudou) {
   color: var(--ember-mark-symbol);
   animation: pulse-dot 1.2s ease-in-out infinite;
 }

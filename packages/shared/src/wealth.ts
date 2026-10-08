@@ -1,4 +1,6 @@
-import { calculateDebtPayoff } from './debt';
+import { calculateDebtPayoff, requiredPaymentForTarget } from './debt';
+import { formatShortMonthLabel } from './format';
+import { formatMoney } from './region';
 import type {
   CreateWealthPositionInput,
   FirePathPoint,
@@ -39,15 +41,45 @@ export function isLockedPosition(position: WealthPosition) {
 }
 
 /** The newest snapshot per position dated on or before `asOf` (all snapshots when omitted). */
+/**
+ * Each position's latest value on or before `asOf`. Two values on the same date resolve to the one
+ * saved last (by `updatedAt`, then `createdAt`, then list order), so editing a balance twice in a
+ * day shows the newer figure instead of snapping back to the first.
+ */
 export function latestSnapshotByPosition(snapshots: readonly WealthPositionSnapshot[], asOf?: string) {
   const result = new Map<string, WealthPositionSnapshot>();
-  [...snapshots]
-    .filter((item) => !asOf || item.valueDate <= asOf)
-    .sort((a, b) => b.valueDate.localeCompare(a.valueDate))
-    .forEach((item) => {
+  snapshots
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => !asOf || item.valueDate <= asOf)
+    .sort((a, b) => b.item.valueDate.localeCompare(a.item.valueDate)
+      || (b.item.updatedAt ?? '').localeCompare(a.item.updatedAt ?? '')
+      || (b.item.createdAt ?? '').localeCompare(a.item.createdAt ?? '')
+      || b.index - a.index)
+    .forEach(({ item }) => {
       if (!result.has(item.wealthPositionId)) result.set(item.wealthPositionId, item);
     });
   return result;
+}
+
+/**
+ * One value per position per date, keeping the one saved last (the same rule as
+ * `latestSnapshotByPosition`). Cleans up duplicates saved before re-saving a date replaced it.
+ * Returns the same array when there is nothing to remove.
+ */
+export function dedupeSameDaySnapshots<T extends WealthPositionSnapshot>(snapshots: readonly T[]): readonly T[] {
+  const keep = new Map<string, { item: T; index: number }>();
+  snapshots.forEach((item, index) => {
+    const key = `${item.wealthPositionId}|${item.valueDate}`;
+    const current = keep.get(key);
+    const newer = !current
+      || (item.updatedAt ?? '').localeCompare(current.item.updatedAt ?? '') > 0
+      || ((item.updatedAt ?? '') === (current.item.updatedAt ?? '') && ((item.createdAt ?? '').localeCompare(current.item.createdAt ?? '') > 0
+        || (item.createdAt ?? '') === (current.item.createdAt ?? '')));
+    if (newer) keep.set(key, { item, index });
+  });
+  if (keep.size === snapshots.length) return snapshots;
+  const kept = new Set([...keep.values()].map((entry) => entry.index));
+  return snapshots.filter((_, index) => kept.has(index));
 }
 
 export interface WealthSummary {
@@ -103,8 +135,16 @@ export interface DebtPayoffLine {
   payoffMonth: string | null;
 }
 
-/** One-line payoff outlook for a liability from its latest balance and saved terms. */
-export function describeDebtPayoff(position: WealthPosition, balance: number | null, asOf: string): DebtPayoffLine {
+/**
+ * One-line payoff outlook for a liability from its latest balance and saved terms. `formatAmount`
+ * writes the interest figure, so callers can use the user's currency and hide amounts when asked.
+ */
+export function describeDebtPayoff(
+  position: WealthPosition,
+  balance: number | null,
+  asOf: string,
+  formatAmount: (value: number) => string = (value) => formatMoney(value, 'SGD', 0),
+): DebtPayoffLine {
   if (balance === null) return { text: 'Add a dated balance to see payoff', warning: false, payoffMonth: null };
   if (position.interestRate === null || position.monthlyPayment === null) return { text: 'Add rate and payment to see payoff', warning: false, payoffMonth: null };
   const payoff = calculateDebtPayoff(balance, Number(position.interestRate), Number(position.monthlyPayment), asOf);
@@ -113,10 +153,58 @@ export function describeDebtPayoff(position: WealthPosition, balance: number | n
   if (payoff.status === 'missing_terms') return { text: 'Add rate and payment to see payoff', warning: false, payoffMonth: null };
   const interest = Number(payoff.totalInterest);
   return {
-    text: `S$${Math.round(interest).toLocaleString('en-SG')} interest left`,
+    // Read after "Paid off by <month> · ", so it says what the interest is: the total still to pay on top of the balance.
+    text: `${formatAmount(Math.round(interest))} more in interest until then`,
     warning: false,
     payoffMonth: payoff.payoffMonth,
   };
+}
+
+/**
+ * How much of a loan is repaid: the original amount borrowed minus what is still owed, in cents-safe
+ * money, with the share of the original. Null when the original is missing or not above zero.
+ * Never negative: a balance above the original (fees, redraws) counts as nothing repaid yet.
+ */
+export function repaidSoFar(original: number | null | undefined, balance: number | null | undefined): { amount: number; share: number } | null {
+  if (original == null || !Number.isFinite(original) || original <= 0 || balance == null || !Number.isFinite(balance)) return null;
+  const amount = Math.max(0, Math.round((original - balance) * 100) / 100);
+  return { amount, share: Math.min(1, amount / original) };
+}
+
+export interface DebtGoalLine {
+  text: string;
+  /** True when the current payment already clears the debt by the goal month. */
+  onTrack: boolean;
+  /** Payment needed per month to hit the goal, or null when it cannot be worked out. */
+  requiredPayment: number | null;
+}
+
+/**
+ * The "pay it off by" line for a debt with a goal month: what it takes each month, how that compares
+ * with today's payment, or what is missing. Null when there is no goal or nothing is owed.
+ */
+export function describeDebtGoal(
+  position: Pick<WealthPosition, 'interestRate' | 'monthlyPayment' | 'payoffTargetMonth'>,
+  balance: number | null,
+  asOf: string,
+  formatAmount: (value: number) => string = (value) => formatMoney(value, 'SGD', 0),
+): DebtGoalLine | null {
+  const target = position.payoffTargetMonth;
+  if (!target || balance === null || balance <= 0) return null;
+  const by = formatShortMonthLabel(target);
+  const result = requiredPaymentForTarget(balance, position.interestRate === null ? null : Number(position.interestRate), asOf, target);
+  if (result.status === 'paid_off') return null;
+  if (result.status === 'missing_rate') return { text: `Add the interest rate to plan paying it off by ${by}.`, onTrack: false, requiredPayment: null };
+  if (result.status !== 'ok') {
+    const tooFar = target > asOf.slice(0, 7);
+    return { text: tooFar ? 'Pick a pay-off month within the next 50 years.' : 'Pick a pay-off month after this one.', onTrack: false, requiredPayment: null };
+  }
+  const current = position.monthlyPayment === null ? null : Number(position.monthlyPayment);
+  if (current !== null && current >= result.monthlyPayment) {
+    return { text: `On track to be debt-free by ${by}: your ${formatAmount(current)} a month already does it.`, onTrack: true, requiredPayment: result.monthlyPayment };
+  }
+  const gap = current === null ? '' : ` (${formatAmount(Math.ceil(result.monthlyPayment - current))} more than now)`;
+  return { text: `To be debt-free by ${by}: ${formatAmount(Math.ceil(result.monthlyPayment))} a month${gap}.`, onTrack: false, requiredPayment: result.monthlyPayment };
 }
 
 /** Share of the original principal already repaid, or null when the terms are unknown. */

@@ -16,7 +16,34 @@ The product supports:
 
 Build strategy:
 - Web first for early deployment and job applications
-- Mobile later, after the core web experience and shared contracts are stable
+- Mobile is now the active focus (October 2026). Web work is paused until the owner resumes it; the web app stays deployed as is
+
+## Mobile privacy direction (October 2026)
+
+The phone app is private by default and collects nothing unless the user turns AI on.
+
+- **Records stay on the phone.** Every transaction, account, position, snapshot and plan lives in on-device storage. The phone never writes records to Supabase, and there are no mobile data routes to wire. Backup is a passphrase-encrypted file the user saves themselves.
+- **No sign-in screen.** Users never create an account or give an email. On first launch DouDou asks "How should we address you?"; the answer is an optional nickname stored only on the phone (`firebuddy_mobile_profile_v1`), never sent to DouDou or the backend, and kept when data is reset.
+- **First run and tour.** After the launch intro, a welcome screen asks for the nickname, then the country (and currency), then offers an eight-step spotlight tutorial led by DouDou (Add, Wealth, Planner, Insights, DouDou, Transactions, Categories, Profile) with Skip, Back and Next. Home greets the user by nickname on every launch and shows one dismissible DouDou tip a day. Profile lets the user change the name, country and currency, and "Replay Tutorial".
+- **Terms and privacy.** The welcome's first step has two stacked tick boxes, "I agree to the Terms of use" and "I've read the Privacy policy" (plus a "not financial advice" line); Continue stays off until both are ticked, each document ends with a Back button, and finishing the welcome records the accepted version on the phone. Installs that accepted an older version, or none, see a one-time "We've updated our terms" sheet. Both documents open from Profile → About, which also has Contact us. The privacy policy leads with an "At a glance" summary: records stay on the phone, no account, no trackers, DouDou off until turned on. Copy lives in `packages/shared/src/legal.ts` and still needs legal review before public launch.
+- **AI is one choice: Off or On.** The phone does not show the three web levels. Off is the default.
+  - **Off:** no account exists and the app makes no network calls.
+  - **On:** tapping "Turn on DouDou" after reading the consent text creates an invisible anonymous Supabase session. It holds a random id, the AI level (`personalised`) and the consent time, and exists only so the backend can rate-limit each phone and check consent. A user who never turns Ember on never gets a session; one who turns it on and later off has it deleted through `DELETE /account`.
+- **AI gets relevant data only when needed, otherwise none.** The phone decides per question which parts of the aggregate snapshot the question needs (spending, cash flow, net worth, emergency fund, FIRE) and sends only those, masked as tokens with a rough range. A general question sends no figures at all. Transaction descriptions, account names and exact amounts never leave the phone.
+- **Security of the anonymous session:** a signed Supabase JWT verified by FastAPI, kept in the phone's Keychain or Keystore, refreshed hourly, sent only over HTTPS in production. Anyone can mint anonymous sessions, so Supabase's per-IP anonymous sign-in limit applies now and a CAPTCHA on "Turn on DouDou" is the fallback if abuse appears.
+- See `docs/PRIVACY.md` for the user-facing consent text and the data flow.
+
+## Mobile direction update (6 October 2026)
+
+Decided by the owner after the first-run test round. Mobile only; the web app is unchanged.
+
+- **Singapore first, a general mode for everyone else.** The welcome asks "Where do you live?" right after the nickname. Singapore keeps the full app: CPF, SRS and HDB positions, CPF LIFE income in the FIRE Planner, Singapore tips and a Singapore DouDou. Any other country gets the general mode: the user confirms a currency (pre-filled from the country) and every amount is shown in it; CPF, SRS and HDB position types, the CPF LIFE block and Singapore tips are hidden; "Other retirement income" is labelled "Pension and other income"; DouDou answers from general principles, says its sources are Singapore-focused, and never applies CPF or SRS rules. Country and currency are stored on the phone with the nickname, sent to DouDou only as the country code, and can be changed in Profile. Existing users without a country are treated as Singapore. Per-country rule packs (for example Malaysia EPF) are a later option, not part of this change.
+- **Real users start empty.** A new production install starts with no records (standard categories and one Cash account). The demo dataset, "Start fresh" and "Load demo data" exist only in development builds, for testing. Production Profile offers "Delete all my data" instead.
+- **Recurring transactions.** When adding a transaction the user can set it to repeat weekly, monthly or yearly, with an optional end date (salary, rent, subscriptions). Due copies are added automatically and silently the next time the app opens, including any periods missed while the app was closed; a monthly rule on the 31st lands on the last day of shorter months. Rules are managed on the Transactions tab (a Recurring view): edit (including adding, changing or removing the end date), pause, resume or stop. Transactions created by a rule carry a small repeat mark. This records transactions only; FireBuddy never moves money.
+- **Daily reminder.** An opt-in local notification at 9pm asks, in DouDou's playful voice, whether today's spending has been logged. It is skipped on days where something is already logged, never mentions amounts, and is scheduled on the phone (no push server, nothing leaves the device). It can be turned off in Profile. Expo Go (SDK 53+) cannot load `expo-notifications`, so the reminder, its prompt and its Profile switch exist only in development and release builds; in Expo Go they are hidden.
+- **FIRE types.** The planner offers Lean (60% of recent spending), Regular (100%), Fat (150%), Coast, Barista and Custom, chosen from a dropdown and saved with the plan. Coast FIRE shows the "coast number": the portfolio needed today that would grow to the full target by retirement with no further contributions, and whether it has been reached. Barista FIRE adds part-time income from retirement until a chosen age, which lowers the target. The birth date is a year plus a month chosen from a list (the month only shifts ages by up to 11 months, but keeps CPF and retirement dates exact). CPF LIFE copy and maths were checked against the CPF Board on 6 October 2026 ([CPF LIFE](https://www.cpf.gov.sg/member/retirement-income/monthly-payouts/cpf-life), [deferring payouts](https://www.cpf.gov.sg/member/infohub/educational-resources/should-you-defer-your-cpf-life-payouts)): payouts start from 65 and can be deferred to 70 for up to 7% more a year (up to 35%); the Escalating plan starts lower and rises 2% a year for life; the Standard plan pays a level amount; the Basic plan pays less and declines once balances run low, so it is still not modelled. The 5% before-retirement return, 3% after-retirement return and 3% inflation defaults stay as editable, deliberately conservative assumptions.
+- **Debts.** A debt records the balance owed (each change is a dated value; re-saving a date replaces that day's value), an optional original loan amount (repaid = original minus owed, shown as "% repaid"; there is deliberately no separate "amount repaid" input), and an optional "Pay it off by" month. With an interest rate, FireBuddy works out the fixed monthly payment that clears the debt by that month (same monthly compounding as the payoff projection, rounded up to the cent) and compares it with the current payment.
+- **Accounts.** Accounts can be added straight from the transaction form (always the last option in the account list), edited, made the default, and deleted. Deleting an account that transactions use, or the default, first asks which account takes its transactions over.
 
 ## Retirement planner update (September 2026)
 
@@ -30,7 +57,7 @@ Current repo state:
 - `apps/web/` is the active React and Vite frontend
 - `apps/web/` includes Supabase auth, income and expense tracking, read-only system categories, persisted accounts, expense-only insights, wealth and FIRE setup, a real data dashboard, optional expense category suggestions, Ember with streamed cited answers and a page-aware quick-chat launcher, and versioned demo-only local state
 - `apps/backend/` is a FastAPI backend with mounted accounts, typed transactions, compatibility expenses, categories, wealth, FIRE, analytics, AI suggestion, health, and Ember JSON and SSE RAG routes
-- `apps/mobile/` contains the Expo app: the design-system shell (four tabs with the lime Add tile, bottom sheets), Home, Transactions, Categories, Profile, Add transaction, Wealth, FIRE Planner, Insights, Accounts, Plan, Ember chat and a Goals placeholder on local demo data, with Supabase auth and the backend data routes still to wire
+- `apps/mobile/` contains the Expo app: the design-system shell (four tabs with the lime Add tile, bottom sheets), Home, Transactions, Categories, Profile, Add transaction, Wealth, FIRE Planner, Insights, Accounts, Plan and Ember chat, with every record kept on the device. The mobile app ships no placeholder screens: Life Goals waits until after the first Play Store test, and the only notification is the opt-in 9pm logging reminder. Ember's Off/On consent, anonymous session and per-question data selection follow the mobile privacy direction above
 - `packages/shared/` contains shared TypeScript contracts, deterministic demo FIRE calculations, category data, add-expense helpers, API route constants, the client-side masking session, the device snapshot builder, and the encrypted backup format
 - `supabase/` contains timestamped SQL migrations for the UUID-aligned app schema, persisted accounts, typed transactions, wealth and FIRE records, security, HNSW indexing, and private hybrid RAG retrieval
 - `docs/Figmamake/` remains a visual reference, not production source code
@@ -38,7 +65,7 @@ Current repo state:
 
 Ongoing repo direction:
 - `apps/web` remains the active React and Vite frontend
-- `apps/mobile` remains the Expo and React Native mobile app after web-first flows are stable
+- `apps/mobile` is the active Expo and React Native app, local-only for records, with Ember as the only network feature
 - `apps/backend` remains the FastAPI API, business logic, AI, and RAG layer
 - `packages/shared` grows into the shared TypeScript type, helper, Supabase utility, and API wrapper layer used by both frontends
 
@@ -46,7 +73,7 @@ Ongoing repo direction:
 | Layer | Technology | Purpose |
 |---|---|---|
 | Frontend (web) | React + Vite (TypeScript) | Active public-facing web app and resume URL |
-| Frontend (mobile) | Expo + React Native (TypeScript) | Mobile app after the web version is established |
+| Frontend (mobile) | Expo + React Native (TypeScript) | Active app; records on the device, Ember optional |
 | Backend | FastAPI (Python) | API layer, business logic, and AI feature hosting |
 | Database | Supabase (Postgres) | Data storage, auth, and row level security |
 | AI - Current RAG | OpenAI embeddings and chat, Supabase pgvector, Postgres full text search | Ember, a source-backed educational Singapore finance guide |
@@ -68,7 +95,7 @@ Visual style:
 - Revolut-inspired restraint
 
 Colour palette:
-- Canvas: `#F7F8F5`
+- Canvas: light cream `#F7F3EA` on mobile (owner, 6 October 2026), with lines `#E9E3D7`; the paused web app keeps its pale green-white `#F2F4EC` until web work resumes
 - White work surfaces: `#FFFFFF`
 - Primary text: `#202820`
 - Secondary text: `#626B63`
@@ -248,7 +275,7 @@ Current:
 - Ember requests may include bounded interface context: the current route label and up to five generic action labels from the current browser session. This context never includes amounts, descriptions, account names, or record IDs, and is used only to tailor answer emphasis.
 - Ember opens with an empty transcript and supported starter questions. It streams search status, grounded answer text, and citations without automatically submitting a starter or greeting the user.
 - Ember uses one structured planning call to select a fixed read-only expense summary, spending comparison, financial summary, FIRE projection, financial health review, curated finance RAG, or a hybrid of data and RAG. FastAPI injects the authenticated user ID, tools scope every query to that ID, and only aggregate tool results can enter the answer prompt.
-- Every AI call runs behind the user's consent level (`profiles.ai_preference`: `off` by default, `guide`, or `personalised`) and a per-request masking session (`services/ember_masking.py`). The question and history are scrubbed of amounts and the user's own account, position and custom category names; at `personalised` every figure in the aggregate snapshot and tool results becomes a placeholder token plus a coarse band, the model is told to copy tokens verbatim, and the backend restores the real values in the answer, including across streamed deltas. Exact figures, transaction descriptions and user-entered names never reach the provider. Every OpenAI call sets `store=False`. The phone goes one step further: it keeps every record on the device, computes and masks the snapshot itself (`buildPersonalSnapshot` and `MaskingSession` in `packages/shared`), sends `clientMasked` requests the backend forwards untouched, and offers a passphrase-encrypted backup file instead of cloud storage. See `docs/PRIVACY.md`.
+- Every AI call runs behind the user's consent level (`profiles.ai_preference`: `off` by default, `guide`, or `personalised`) and a per-request masking session (`services/ember_masking.py`). The question and history are scrubbed of amounts and the user's own account, position and custom category names; at `personalised` every figure in the aggregate snapshot and tool results becomes a placeholder token plus a coarse band, the model is told to copy tokens verbatim, and the backend restores the real values in the answer, including across streamed deltas. Exact figures, transaction descriptions and user-entered names never reach the provider. Every OpenAI call sets `store=False`. The phone goes one step further: it keeps every record on the device, computes and masks the snapshot itself (`buildPersonalSnapshot` and `MaskingSession` in `packages/shared`), sends `clientMasked` requests the backend forwards untouched, and offers a passphrase-encrypted backup file instead of cloud storage. On the phone the consent is a single Off/On choice stored as `off` or `personalised`, and only the snapshot sections a question needs are attached. See the mobile privacy direction above and `docs/PRIVACY.md`.
 - Knowledge answers that would benefit from the user's own numbers (emergency fund sizing, savings rate, FIRE timeline, retirement adequacy, budgeting) attach a bounded aggregate snapshot built from one `build_financial_summary` call and return mode `hybrid` with a `personal_context` evidence entry. The snapshot holds aggregates and the deterministic recommended action only; never transactions, descriptions, or identifiers.
 - Ember can explain saved deterministic personal results but cannot change records, generate SQL, run an iterative tool loop, retrieve live prices, or provide regulated financial advice.
 - Authenticated category suggestions at `POST /ai/parse-input`, limited to 10 requests per user per 60 seconds by default, available only at the `personalised` level because the typed description leaves FireBuddy (amounts are scrubbed first)
@@ -309,8 +336,8 @@ Current, routed Ember:
 Later, planning depth:
 - Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivity ranges, resilience modelling, and progress history
 
-After shared web contracts are stable:
-- Continue evolving the Expo app in `apps/mobile` around shared logic extracted into `packages/shared`
+Mobile, now:
+- Ship the Off/On Ember consent, the anonymous session and per-question data selection in `apps/mobile`, keeping shared logic in `packages/shared`
 
 ## Local Development Direction
 Use root scripts as the main entrypoints:
@@ -333,7 +360,7 @@ npm run test:web
 python -m unittest discover apps/backend/tests -v
 ```
 
-Mobile now mirrors the web screens on local demo data; Ember on the phone needs a configured API base URL and a signed-in token, and sign-in itself is the next mobile milestone. `apps/mobile/` shares the web design system and the shared demo dataset, so mobile work builds on that shell rather than on a preserved reference.
+Mobile now mirrors the web screens with records kept on the device. Ember on the phone needs a configured API base URL plus the Supabase URL and anon key; there is no sign-in screen, and the anonymous session is created only when the user turns Ember on. `apps/mobile/` shares the web design system and the shared demo dataset, so mobile work builds on that shell rather than on a preserved reference.
 
 ## Deployment Direction
 - Web: Vercel Hobby, built from the repository root using `vercel.json`
@@ -360,7 +387,7 @@ RAG:
 - AWS-heavy infrastructure work
 - Direct bank connections, stored banking credentials, market feeds, payment execution, investment execution, and generic brokerage portfolio management
 - Transfers and automatic reconciliation between payment accounts, wealth positions, and contributions in the first dashboard foundation
-- Recurring payment scheduling or execution
+- Payment execution or bank-side scheduling (mobile recurring transactions only record entries on the phone)
 - Ember write tools, generated SQL, autonomous tool loops, and access to raw records in answer prompts
 - Regulated financial advice and silent AI changes to financial records
 - MCP tool sprawl, graph context infrastructure, multiple agent services, Kubernetes, Terraform, and multi-cloud deployment

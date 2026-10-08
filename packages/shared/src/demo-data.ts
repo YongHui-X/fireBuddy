@@ -1,3 +1,4 @@
+import { CATEGORY_CHART_PALETTE, CATEGORY_NEUTRAL_COLOR } from './category-palette';
 import { getDeviceDateKey } from './format';
 import type { Account, Category, RetirementPlan, Tag, Transaction, WealthContribution, WealthPosition, WealthPositionSnapshot } from './types';
 
@@ -48,14 +49,14 @@ function demoCategory(
 }
 
 export const demoCategories: readonly Category[] = [
-  demoCategory(demoCategoryIds.food, 'Food & Drink', '#3C8A61', 'food', 600, 'expense'),
-  demoCategory(demoCategoryIds.transport, 'Transport', '#67B47C', 'transport', 250, 'expense'),
-  demoCategory(demoCategoryIds.shopping, 'Shopping', '#E5B24A', 'shopping', 300, 'expense'),
-  demoCategory(demoCategoryIds.utilities, 'Bills & Utilities', '#7BAA90', 'utilities', 150, 'expense'),
-  demoCategory(demoCategoryIds.health, 'Healthcare', '#2E9B57', 'health', 150, 'expense'),
-  demoCategory(demoCategoryIds.entertainment, 'Entertainment', '#8BB89D', 'entertainment', 200, 'expense'),
-  demoCategory(demoCategoryIds.travel, 'Travel', '#25543D', 'travel', 400, 'expense'),
-  demoCategory(demoCategoryIds.others, 'Others', '#A8D3B7', 'shapes', 200, 'expense'),
+  demoCategory(demoCategoryIds.food, 'Food & Drink', CATEGORY_CHART_PALETTE[0], 'food', 600, 'expense'),
+  demoCategory(demoCategoryIds.transport, 'Transport', CATEGORY_CHART_PALETTE[1], 'transport', 250, 'expense'),
+  demoCategory(demoCategoryIds.shopping, 'Shopping', CATEGORY_CHART_PALETTE[2], 'shopping', 300, 'expense'),
+  demoCategory(demoCategoryIds.utilities, 'Bills & Utilities', CATEGORY_CHART_PALETTE[3], 'utilities', 150, 'expense'),
+  demoCategory(demoCategoryIds.health, 'Healthcare', CATEGORY_CHART_PALETTE[4], 'health', 150, 'expense'),
+  demoCategory(demoCategoryIds.entertainment, 'Entertainment', CATEGORY_CHART_PALETTE[5], 'entertainment', 200, 'expense'),
+  demoCategory(demoCategoryIds.travel, 'Travel', CATEGORY_CHART_PALETTE[6], 'travel', 400, 'expense'),
+  demoCategory(demoCategoryIds.others, 'Others', CATEGORY_NEUTRAL_COLOR, 'shapes', 200, 'expense'),
   demoCategory(demoCategoryIds.salary, 'Salary', '#3C8A61', 'salary', 0, 'income'),
   demoCategory(demoCategoryIds.bonus, 'Bonus', '#E5B24A', 'bonus', 0, 'income'),
   demoCategory(demoCategoryIds.dividends, 'Dividends', '#67B47C', 'dividends', 0, 'income'),

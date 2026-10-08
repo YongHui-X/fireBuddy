@@ -1,6 +1,6 @@
-import { formatMonthLabel } from '@firebuddy/shared';
+import { formatMonthLabel, formatShortMonthLabel } from '@firebuddy/shared';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { layout, radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
@@ -17,6 +17,9 @@ export interface MonthStepperProps {
   onOpenPicker?: () => void;
   /** Overrides the month text, e.g. "3 Sep – 27 Sep" for a custom range. */
   valueLabel?: string;
+  /** Short "Sep 2026" label in body type, for sharing a row with other controls. */
+  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -24,7 +27,7 @@ export interface MonthStepperProps {
  * Tapping the name opens the full month picker. No enclosing frame, so it reads as a heading
  * rather than a form control.
  */
-export function MonthStepper({ months, value, onChange, onOpenPicker, valueLabel }: MonthStepperProps) {
+export function MonthStepper({ months, value, onChange, onOpenPicker, valueLabel, compact = false, style }: MonthStepperProps) {
   const { theme } = useTheme();
   const index = months.indexOf(value);
   const older = index >= 0 ? months[index + 1] : undefined;
@@ -49,7 +52,7 @@ export function MonthStepper({ months, value, onChange, onOpenPicker, valueLabel
   );
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact ? styles.rowCompact : null, style]}>
       {step('Show previous month', ChevronLeft, older)}
       <Pressable
         accessibilityRole={onOpenPicker ? 'button' : undefined}
@@ -62,7 +65,9 @@ export function MonthStepper({ months, value, onChange, onOpenPicker, valueLabel
           <>
             <PressOverlay pressed={pressed && Boolean(onOpenPicker)} radius={radii.control} />
             <View style={styles.valueRow}>
-              <AppText variant="cardTitle" numberOfLines={1}>{valueLabel ?? formatMonthLabel(value)}</AppText>
+              <AppText variant={compact ? 'bodySemibold' : 'cardTitle'} numberOfLines={1} style={styles.valueText}>
+                {valueLabel ?? (compact ? formatShortMonthLabel(value) : formatMonthLabel(value))}
+              </AppText>
               {onOpenPicker ? <ChevronDown size={16} color={theme.ink3} strokeWidth={2.2} /> : null}
             </View>
           </>
@@ -78,6 +83,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  rowCompact: {
+    gap: 0,
+  },
+  valueText: {
+    flexShrink: 1,
   },
   stepTarget: {
     width: layout.touchCompact,

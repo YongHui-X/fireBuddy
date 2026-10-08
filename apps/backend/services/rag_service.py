@@ -11,6 +11,7 @@ This version performs the first complete RAG flow:
 import hashlib
 import logging
 import os
+import re
 import time
 from collections.abc import Iterator
 from datetime import date
@@ -22,6 +23,7 @@ from config import settings
 from lib.clock import singapore_today
 from rag.retrieval import RagStoreUnavailableError, retrieve_chunks
 from schemas.rag import AdvisorAppContext, AdvisorResponse, AdvisorSource, ChatMessage
+from services.advice_boundary import ADVICE_BOUNDARY_GUIDANCE
 from services.source_metadata import source_as_of
 
 if TYPE_CHECKING:  # pragma: no cover - typing only, keeps this module free of Supabase imports
@@ -59,7 +61,7 @@ LOW_CONFIDENCE_ANSWER = (
     "investing basics."
 )
 OUT_OF_SCOPE_ANSWER = (
-    "Ember can only help with the Singapore personal-finance topics covered by "
+    "DouDou can only help with the Singapore personal-finance topics covered by "
     "FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, "
     "IRAS reliefs, investing basics, and FIRE planning."
 )
@@ -97,14 +99,52 @@ PERSONALISED_ANSWER_GUIDANCE = (
     "user's current recorded aggregates: monthly pulse, savings rate, emergency "
     "runway, net worth, FIRE progress, FireBuddy's recommended next action, derived "
     "guideline targets, and a spending block with this month's and last month's "
-    "totals and top categories. Every figure in that block is a placeholder like "
-    "{{M1}} followed by a rough range. Tailor every answer to the user's situation: "
+    "totals and top categories, plus any other months the user named under "
+    "otherMonths. The block also holds ready-made answers that FireBuddy computed: "
+    "spending.comparison (this month so far against last month, with direction and "
+    "difference, overall and for each top category with lastMonthAmount), each top "
+    "category's share of the month, assetTotal, debtToIncome, and in fire the "
+    "fundingGap (the shortfall at the planned retirement date), gapFromTodayAssets "
+    "(the target minus today's investable assets), progressToday (today's investable "
+    "assets as a share of the target) and "
+    "projectedShareOfTargetAtRetirement (the projected portfolio at retirement as a "
+    "share of the target, not progress today). Quote these figures and their direction "
+    "words instead of combining figures yourself; if a question needs a figure the "
+    "block does not hold, say FireBuddy did not share it rather than estimate. Write "
+    "each figure as if it were the number itself: never mention placeholders, tokens "
+    "or masking, never write field names such as debtToIncome, and never say a "
+    "figure is 'represented by' anything. Every "
+    "figure in that block is a placeholder like "
+    "{{M1}} followed by a rough range. The ranges are for your reasoning only: never "
+    "write a range such as 50k-100k or 'falls within the range of' in the answer. "
+    "Write dates and periods in words, such as '1 to 4 October 2026', never as "
+    "2026-10-01. If the user asks about a month or period the block does not hold, "
+    "say FireBuddy shared figures only for the months listed and name them, instead "
+    "of answering a different period. Tailor every answer to the user's situation; "
+    "when the question is about the user's own plan, savings or spending, open with at "
+    "least one relevant placeholder from the block: "
     "state the guideline from the curated sources, then apply it by quoting the "
     "relevant placeholders verbatim and by comparing the bracketed ranges with the "
     "guideline in words, for example 'your runway of {{N1}} is below the three to six "
     "months MoneySense suggests' when the range makes that clear; if the range "
     "straddles the guideline, say the records are close to it rather than above or "
-    "below. For a question about improving, reducing or budgeting spending, name the "
+    "below. State such comparisons literally and do not add verdicts the curated "
+    "sources do not make, such as 'more than sufficient', 'healthy' or 'within a "
+    "reasonable range'. If the user's figure is measured on a different basis from "
+    "the guideline, say so in one sentence: the emergency runway is based on essential "
+    "spending, while MoneySense counts all monthly expenses, including loan "
+    "repayments, insurance premiums and taxes. Compare a user figure with a guideline "
+    "only when both measure the same thing: the savings rate is income left after "
+    "spending, not money invested, so against an investing guideline such as "
+    "MoneySense's 10% (of income after CPF contributions) say the records show saving "
+    "rather than investing, do not claim the guideline is met, and mention that the "
+    "guideline counts income after CPF contributions. If judging the "
+    "user's case needs facts the records do not hold, such as individual loan interest "
+    "rates, residency or annual taxable income, name those missing facts instead of "
+    "guessing or offering further help. The spending block lists only the top "
+    "categories, so if a category the user asks about is not listed, say it is not "
+    "among their top categories for that period rather than that they have no "
+    "spending in it. For a question about improving, reducing or budgeting spending, name the "
     "user's largest categories by the labels in the block and quote their "
     "placeholders, and compare this month with last month using the two totals' "
     "placeholders and ranges. For an emergency-fund question, quote the derived "
@@ -121,6 +161,27 @@ PERSONALISED_ANSWER_GUIDANCE = (
     "rules, rates, limits or policies: if the curated sources do not contain the "
     "information the question asks for, reply with the exact insufficient-evidence "
     "sentence alone, as above, and never embed that sentence inside a longer answer. "
+)
+
+# Added after the DouDou mobile eval (4 Oct 2026, apps/backend/rag/evaluation/mobile): the model
+# credited a FIRE community savings target to MoneySense, dropped caps and fees the sources gave,
+# and ended answers by quizzing the user.
+SOURCE_FIDELITY_GUIDANCE = (
+    "Attribute every rule, rate or target to the organisation or source that states it "
+    "in the context, and never present one source's figure as another's; a FIRE "
+    "community savings target, for example, is not a MoneySense guideline. State a "
+    "guideline, benchmark or rule only if the curated context contains it, even when it "
+    "is well known, and write 'according to' a source only for what that source "
+    "actually says; leave out generic suggestions of your own rather than attribute "
+    "them to a source. When the "
+    "question asks about limits, caps, fees, waiting periods or eligibility, include "
+    "every one the context gives that applies to the question, including the variants "
+    "for different groups such as citizens, permanent residents and foreigners, and any "
+    "overall cap that also applies. Copy timings, deadlines, fees and amounts word for "
+    "word from the context, for example 'by the 2nd business day of the following "
+    "month', and never shorten them into a different period. Do not "
+    "end with a question to the user unless the answer cannot be given without more "
+    "information. "
 )
 
 MASKED_FIGURES_GUIDANCE = (
@@ -192,7 +253,7 @@ def build_answer_messages(
         {
             "role": "system",
             "content": (
-                "You are Ember, FireBuddy's educational Singapore finance guide. "
+                "You are DouDou, FireBuddy's educational Singapore finance guide. "
                 "Answer only using the supplied evidence context. It may contain "
                 "trusted FireBuddy aggregates calculated by the backend, curated "
                 "educational sources, or both. If the evidence context does "
@@ -204,11 +265,14 @@ def build_answer_messages(
                 "appear in the context, and read each table value from its "
                 "own row and column. Answer only the breakdowns the question "
                 "asks for. "
+                + SOURCE_FIDELITY_GUIDANCE
                 + MASKED_FIGURES_GUIDANCE
                 + (source_dating_guidance(current_date) if has_curated_sources(context) else "")
                 + "You may explain the user's supplied FireBuddy aggregates, but do "
                 "not recommend specific financial products or present projections "
-                "as guarantees. Do not include "
+                "as guarantees. "
+                + ADVICE_BOUNDARY_GUIDANCE
+                + "Do not include "
                 "source numbers in the answer; citations are returned "
                 "separately by the API. Interface context contains only "
                 "page and generic activity labels. Use it to tailor emphasis, "
@@ -216,6 +280,7 @@ def build_answer_messages(
                 "Only a clearly labelled trusted FireBuddy data block may support "
                 "claims about the user's records. "
                 + (PERSONALISED_ANSWER_GUIDANCE if personalised else "")
+                + region_guidance(app_context)
             ),
         },
         {
@@ -285,6 +350,25 @@ def get_rag_min_similarity_with_keyword() -> float:
         return float(raw_value)
     except ValueError:
         return DEFAULT_RAG_MIN_SIMILARITY_WITH_KEYWORD
+
+
+_BAND_RE = re.compile(r"\s*\((?:range|approx\.?|about)[^)]*\)", re.IGNORECASE)
+
+
+def personal_data_block(text: str, data_only: bool) -> str:
+    """
+    The user's data block as the model sees it. Rough ranges exist so a figure can be compared
+    with a guideline; a pure data answer has no guideline, and the model then tends to quote the
+    ranges back ("falls within the range of 50k-100k"), so they are left out there.
+    """
+
+    return _BAND_RE.sub("", text) if data_only else text
+
+
+def join_personal_context(curated: str, personal: str) -> str:
+    """Append the user's data block to the curated context; with no curated context, it stands alone."""
+
+    return f"{curated}\n\n---\n\n{personal}" if curated else personal
 
 
 def is_insufficient_evidence_answer(answer: str) -> bool:
@@ -455,6 +539,22 @@ def select_recent_chat_history(history: list[ChatMessage]) -> list[ChatMessage]:
     return history[-MAX_HISTORY_MESSAGES:]
 
 
+def region_guidance(app_context: AdvisorAppContext | None) -> str:
+    """Extra rules for a user outside Singapore; empty for Singapore or an unknown country."""
+
+    country = app_context.country if app_context is not None else None
+    if not country or country == "SG":
+        return ""
+    return (
+        f"The user lives outside Singapore (country code {country}). FireBuddy's curated sources "
+        "are Singapore-focused, so answer from general personal finance principles: budgeting, "
+        "saving, emergency funds, debt, investing basics and FIRE. Never apply CPF, SRS, CPF LIFE, "
+        "HDB or other Singapore-only rules, rates or schemes to them, and when a source is "
+        "Singapore-specific, say so briefly and do not present it as applying to them. Do not "
+        "assume Singapore dollars. "
+    )
+
+
 def format_app_context(app_context: AdvisorAppContext | None) -> str:
     """Format bounded, nonfinancial interface metadata for answer tailoring."""
 
@@ -609,6 +709,7 @@ def stream_financial_advisor_question(
     app_context: AdvisorAppContext | None = None,
     *,
     retrieved_matches: list[dict] | None = None,
+    skip_retrieval: bool = False,
     retrieval_query: str | None = None,
     personal_context: "EmberPersonalContext | None" = None,
     masking: "MaskingSession | None" = None,
@@ -634,7 +735,7 @@ def stream_financial_advisor_question(
     }
 
     if not cleaned_question:
-        answer = "Please ask Ember a question before requesting an answer."
+        answer = "Please ask DouDou a question before requesting an answer."
         for text in chunk_static_answer(answer):
             yield {"event": "delta", "data": {"text": text}}
         yield {"event": "sources", "data": {"sources": []}}
@@ -656,14 +757,15 @@ def stream_financial_advisor_question(
         return
 
     try:
-        matches = (
+        # A question purely about the user's own figures needs no article search.
+        matches = [] if skip_retrieval else (
             retrieved_matches
             if retrieved_matches is not None
             else retrieve_chunks(
                 build_contextual_retrieval_question(search_question, app_context)
             )
         )
-        if not matches:
+        if not matches and not skip_retrieval:
             raise RagStoreUnavailableError(
                 "The RAG service received no retrieved matches."
             )
@@ -676,7 +778,7 @@ def stream_financial_advisor_question(
             "event": "error",
             "data": {
                 "code": "knowledge_base_unavailable",
-                "message": "Ember's curated sources are temporarily unavailable.",
+                "message": "DouDou's curated sources are temporarily unavailable.",
                 "retryable": True,
                 "status": 503,
             },
@@ -691,7 +793,7 @@ def stream_financial_advisor_question(
             "event": "error",
             "data": {
                 "code": "retrieval",
-                "message": "Ember could not search the curated sources.",
+                "message": "DouDou could not search the curated sources.",
                 "retryable": True,
                 "status": 502,
             },
@@ -700,10 +802,11 @@ def stream_financial_advisor_question(
     source_details = build_unique_sources(matches)
     yield {
         "event": "status",
-        "data": {"status": "preparing", "message": "Preparing a grounded answer"},
+        "data": {"status": "preparing", "message": "Writing your answer"},
     }
 
-    if not retrieval_is_confident(matches):
+    confident = retrieval_is_confident(matches)
+    if not confident and personal_context is None:
         log_rag_event(
             question=cleaned_question,
             matches=matches,
@@ -717,9 +820,13 @@ def stream_financial_advisor_question(
         yield {"event": "done", "data": {}}
         return
 
-    context = format_retrieved_context(matches)
+    if not confident:
+        # Weak retrieval with the user's figures attached: answer from the data block alone,
+        # citing no sources (same rule as answer_financial_advisor_question).
+        source_details = []
+    context = format_retrieved_context(matches) if confident else ""
     source_payload = [source.model_dump() for source in source_details]
-    if not context:
+    if confident and not context:
         answer = "I found matching records, but they did not contain readable context to answer from."
         for text in chunk_static_answer(answer):
             yield {"event": "delta", "data": {"text": text}}
@@ -728,7 +835,7 @@ def stream_financial_advisor_question(
         return
 
     if personal_context is not None:
-        context += "\n\n---\n\n" + personal_context.context(masking)
+        context = join_personal_context(context, personal_data_block(personal_context.context(masking), skip_retrieval))
 
     # A placeholder can arrive split across deltas; the un-masker holds the
     # partial token back so the client only ever sees restored text.
@@ -759,7 +866,7 @@ def stream_financial_advisor_question(
             "event": "error",
             "data": {
                 "code": "empty_response",
-                "message": "Ember returned an empty answer.",
+                "message": "DouDou returned an empty answer.",
                 "retryable": True,
                 "status": 204,
             },
@@ -794,6 +901,7 @@ def answer_financial_advisor_question(
     app_context: AdvisorAppContext | None = None,
     *,
     retrieved_matches: list[dict] | None = None,
+    skip_retrieval: bool = False,
     retrieval_query: str | None = None,
     personal_context: "EmberPersonalContext | None" = None,
     masking: "MaskingSession | None" = None,
@@ -823,7 +931,7 @@ def answer_financial_advisor_question(
             started_at=started_at,
         )
         return AdvisorResponse(
-            answer="Please ask Ember a question before requesting an answer.",
+            answer="Please ask DouDou a question before requesting an answer.",
             sources=[],
             source_details=[],
         )
@@ -842,7 +950,8 @@ def answer_financial_advisor_question(
             source_details=[],
         )
 
-    matches = (
+    # A question purely about the user's own figures needs no article search.
+    matches = [] if skip_retrieval else (
         retrieved_matches
         if retrieved_matches is not None
         else retrieve_chunks(
@@ -850,14 +959,15 @@ def answer_financial_advisor_question(
         )
     )
 
-    if not matches:
+    if not matches and not skip_retrieval:
         raise RagStoreUnavailableError(
             "The RAG service received no retrieved matches."
         )
 
     source_details = build_unique_sources(matches)
+    confident = retrieval_is_confident(matches)
 
-    if not retrieval_is_confident(matches):
+    if not confident and personal_context is None:
         log_rag_event(
             question=cleaned_question,
             matches=matches,
@@ -871,10 +981,15 @@ def answer_financial_advisor_question(
             source_details=[],
         )
 
+    if not confident:
+        # Weak retrieval, but the user's own figures are attached ("How much debt do I have?").
+        # Answer from the data block alone, citing no sources; the system prompt still
+        # makes the model refuse when the question needs a rule or rate the sources lack.
+        source_details = []
     sources = [format_source_label(source) for source in source_details]
-    context = format_retrieved_context(matches)
+    context = format_retrieved_context(matches) if confident else ""
 
-    if not context:
+    if confident and not context:
         log_rag_event(
             question=cleaned_question,
             matches=matches,
@@ -892,7 +1007,7 @@ def answer_financial_advisor_question(
         )
 
     if personal_context is not None:
-        context += "\n\n---\n\n" + personal_context.context(masking)
+        context = join_personal_context(context, personal_data_block(personal_context.context(masking), skip_retrieval))
 
     bounded_history = select_recent_chat_history(history or [])
     answer = generate_grounded_answer(

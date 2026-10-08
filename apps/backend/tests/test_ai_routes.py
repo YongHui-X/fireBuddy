@@ -156,6 +156,26 @@ class AiRouteTests(unittest.TestCase):
         self.assertEqual(malformed_response.status_code, 502)
         self.assertNotIn("not-json", malformed_response.text)
 
+    def test_foreign_category_is_neither_sent_to_model_nor_suggested(self):
+        """A valid category belonging to another user is unavailable to this caller."""
+        from unittest.mock import MagicMock
+        foreign_id = "20000000-0000-4000-8000-000000000099"
+        self.supabase.rows["categories"].append({
+            "id": foreign_id, "user_id": "10000000-0000-4000-8000-000000000002",
+            "name": "Private hobby", "is_default": False, "category_type": "expense",
+        })
+        client = MagicMock()
+        client.chat.completions.create.return_value = model_response(
+            '{"categoryId":"' + foreign_id + '","confidence":"high","reason":"Guess"}'
+        )
+        with patch.object(ai_router, "OpenAI", return_value=client):
+            response = self.client.post("/ai/parse-input", json={"description": "Lunch"})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertIsNone(response.json()["categoryId"])
+        prompt = str(client.chat.completions.create.call_args.kwargs["messages"])
+        self.assertNotIn(foreign_id, prompt)
+        self.assertNotIn("Private hobby", prompt)
+
     def test_discards_category_outside_available_list(self):
         client = SimpleNamespace(
             chat=SimpleNamespace(

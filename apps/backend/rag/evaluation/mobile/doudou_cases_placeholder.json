@@ -1,0 +1,139 @@
+[
+  {
+    "id": "ph_direct_spend",
+    "question": "How much have I spent this month?",
+    "requiredFacts": [
+      {
+        "path": "spending.currentMonth.total",
+        "format": "money"
+      }
+    ],
+    "sourceExpectation": "Direct lookup: S$1,176.",
+    "forbidden": [
+      "placeholder"
+    ]
+  },
+  {
+    "id": "ph_savings_rate",
+    "question": "What is my savings rate this month?",
+    "requiredFacts": [
+      {
+        "path": "monthlyPulse.savingsRate",
+        "format": "percent"
+      }
+    ],
+    "sourceExpectation": "Precomputed ratio: 77.4% (S$4,024 of S$5,200).",
+    "forbidden": [
+      "placeholder"
+    ]
+  },
+  {
+    "id": "ph_emergency_vs_guideline",
+    "question": "Is my emergency fund within MoneySense's 3 to 6 months?",
+    "requiredFacts": [
+      {
+        "path": "emergencyRunwayMonths",
+        "format": "months"
+      }
+    ],
+    "forbidden": [
+      "below the three",
+      "below 3",
+      "short of",
+      "placeholder"
+    ],
+    "sourceExpectation": "Runway 17.1 months, above six months; targets S$3,167 and S$6,333."
+  },
+  {
+    "id": "ph_order_months",
+    "question": "Did I spend more this month or last month?",
+    "requiredFacts": [
+      {
+        "path": "spending.currentMonth.total",
+        "format": "money"
+      },
+      {
+        "path": "spending.previousMonth.total",
+        "format": "money"
+      }
+    ],
+    "forbidden": [
+      "more this month",
+      "spent more in October",
+      "placeholder"
+    ],
+    "sourceExpectation": "Less this month: S$1,176 vs S$3,817 (different range bands)."
+  },
+  {
+    "id": "ph_difference_months",
+    "question": "How much less did I spend this month than last month?",
+    "mustContain": [
+      "2,642"
+    ],
+    "sourceExpectation": "Difference not precomputed: S$3,817 - S$1,176 = S$2,642 less.",
+    "forbidden": [
+      "placeholder"
+    ]
+  },
+  {
+    "id": "ph_order_same_band",
+    "question": "Did I spend more on Food & Drink this month or last month?",
+    "mustContain": [
+      "517",
+      "541"
+    ],
+    "forbidden": [
+      "more on Food & Drink this month",
+      "more this month",
+      "placeholder"
+    ],
+    "sourceExpectation": "Both under 1k, so the bands cannot order them: S$517 this month is less than S$541 last month."
+  },
+  {
+    "id": "ph_sum_assets",
+    "question": "What are my total assets?",
+    "mustContain": [
+      "445,000"
+    ],
+    "sourceExpectation": "Sum not precomputed: net worth S$80,000 + debts S$365,000 = S$445,000.",
+    "forbidden": [
+      "placeholder"
+    ]
+  },
+  {
+    "id": "ph_ratio_category_share",
+    "question": "What share of this month's spending went to Food & Drink?",
+    "mustContain": [
+      "44"
+    ],
+    "sourceExpectation": "Ratio not precomputed: S$517 of S$1,176, about 44%.",
+    "forbidden": [
+      "placeholder"
+    ]
+  },
+  {
+    "id": "ph_difference_fi_gap",
+    "question": "How much more do I need to reach my FI target?",
+    "sourceExpectation": "Ambiguous: S$135,383 short at the planned retirement date (fundingGap), or S$2,500,681 from today's investable assets (gapFromTodayAssets). Either is correct; both is best.",
+    "forbidden": [
+      "placeholder"
+    ],
+    "mustContainAny": [
+      "135,383",
+      "2,500,681"
+    ]
+  },
+  {
+    "id": "ph_ratio_debt_service",
+    "question": "What is my monthly debt service as a share of my income?",
+    "mustContain": [
+      "31.7"
+    ],
+    "sourceExpectation": "Ratio not precomputed: S$1,650 of S$5,200, about 32%.",
+    "forbidden": [
+      "placeholder",
+      "represented by",
+      "did not share"
+    ]
+  }
+]

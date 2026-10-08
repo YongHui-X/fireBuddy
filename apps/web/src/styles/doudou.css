@@ -1,0 +1,110 @@
+/* Doudou, the mascot. Motion is small and only on purpose: idle float and blink, a thinking sway,
+   a celebration jump, wiggling leaves, and sleepy breathing. All of it stops under reduced motion. */
+
+.doudou {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.doudou .doudou-figure,
+.doudou .doudou-eyes,
+.doudou .doudou-leaves,
+.doudou .doudou-extras {
+  transform-box: fill-box;
+}
+
+.doudou .doudou-figure,
+.doudou .doudou-leaves {
+  transform-origin: 50% 100%;
+}
+
+.doudou .doudou-eyes {
+  transform-origin: 50% 50%;
+}
+
+.doudou-motion-idle .doudou-figure,
+.doudou-motion-grow .doudou-figure {
+  animation: doudou-bob 3.2s ease-in-out infinite;
+}
+
+.doudou-motion-idle .doudou-eyes,
+.doudou-motion-think .doudou-eyes {
+  animation: doudou-blink 4s infinite;
+}
+
+.doudou-motion-think .doudou-figure {
+  animation: doudou-sway 2.4s ease-in-out infinite;
+}
+
+.doudou-motion-think .doudou-extras {
+  animation: doudou-pulse 1.2s ease-in-out infinite;
+}
+
+.doudou-motion-celebrate .doudou-figure {
+  animation: doudou-jump 1.8s cubic-bezier(0.3, 0.7, 0.4, 1) infinite;
+}
+
+.doudou-motion-grow .doudou-leaves {
+  animation: doudou-wiggle 1.6s ease-in-out infinite;
+}
+
+.doudou-motion-sleep .doudou-figure {
+  animation: doudou-breathe 3.6s ease-in-out infinite;
+}
+
+.doudou-motion-sleep .doudou-extras {
+  animation: doudou-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes doudou-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes doudou-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.1); }
+}
+
+@keyframes doudou-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+@keyframes doudou-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@keyframes doudou-jump {
+  0%, 60%, 100% { transform: translateY(0) scale(1, 1); }
+  8% { transform: translateY(0) scale(1.08, 0.9); }
+  22% { transform: translateY(-16px) scale(0.94, 1.07); }
+  38% { transform: translateY(0) scale(1.07, 0.93); }
+  48% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes doudou-wiggle {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(7deg); }
+}
+
+@keyframes doudou-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.03, 0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doudou .doudou-figure,
+  .doudou .doudou-eyes,
+  .doudou .doudou-leaves,
+  .doudou .doudou-extras {
+    animation: none;
+  }
+}
+
+/* The app icon tile sits on forest chrome in the sidebar and mobile topbar, so lift it one step. */
+.sidebar-logo,
+.mobile-brand {
+  --brand-mark-fill: var(--forest-700);
+}

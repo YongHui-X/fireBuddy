@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { ShieldCheck } from 'lucide-react';
 import type { AiPreference } from '@firebuddy/shared';
 
-import { EmberMark } from '../app/BrandMarks';
+import { Doudou } from './Doudou';
 
 type EmberConsentPanelProps = {
   onChoose: (preference: Exclude<AiPreference, 'off'>) => Promise<void> | void;
@@ -15,7 +15,7 @@ type EmberConsentPanelProps = {
 export const AI_LEVEL_COPY: Record<AiPreference, { title: string; summary: string }> = {
   off: {
     title: 'Off',
-    summary: 'Ember and category suggestions are switched off. Nothing is sent to the AI provider.',
+    summary: 'Doudou and category suggestions are switched off. Nothing is sent to the AI provider.',
   },
   guide: {
     title: 'Guide',
@@ -46,11 +46,11 @@ export function EmberConsentPanel({ onChoose, compact = false }: EmberConsentPan
   return (
     <section className={`ember-consent ${compact ? 'ember-consent-compact' : ''}`.trim()} aria-labelledby="ember-consent-title">
       <div className="ember-consent-heading">
-        <span className="ember-empty-mark"><EmberMark size={compact ? 22 : 30} /></span>
+        <Doudou pose="shh" size={compact ? 52 : 76} />
         <div>
-          <h3 id="ember-consent-title">Turn on Ember</h3>
+          <h3 id="ember-consent-title">Turn on Doudou</h3>
           <p>
-            Ember uses a third-party AI provider hosted outside Singapore. You choose how much it may see,
+            Doudou uses a third-party AI provider hosted outside Singapore. You choose how much it may see,
             and you can change this any time under Profile.
           </p>
         </div>

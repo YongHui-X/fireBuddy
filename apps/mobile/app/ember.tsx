@@ -1,10 +1,13 @@
 import { useRouter } from 'expo-router';
-import { ArrowUp, Eraser, PlugZap, ShieldCheck } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowUp, History, PlugZap, SquarePen } from 'lucide-react-native';
+import { selectDoudouMessageId } from '@firebuddy/shared';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { EmberMark } from '@/components/brand/BrandMarks';
+import { Doudou } from '@/components/brand/Doudou';
+import { DoudouConsentDialog } from '@/components/ember/DoudouConsent';
 import { EmberBubble } from '@/components/ember/EmberBubble';
+import { EmberHistorySheet } from '@/components/ember/EmberHistorySheet';
 import { Screen, useScreenInsets } from '@/components/layout/Screen';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -15,23 +18,36 @@ import { PressOverlay } from '@/components/ui/PressOverlay';
 import { AppText } from '@/components/ui/Text';
 import { fonts, layout, radii, spacing } from '@/constants/tokens';
 import { useEmber } from '@/hooks/use-ember';
-import { AI_LEVEL_COPY } from '@/lib/ai-preference';
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset';
+import { useAiPreference } from '@/lib/ai-preference';
 import { MAX_EMBER_QUESTION_LENGTH } from '@/lib/ember-api';
 import { useTheme } from '@/lib/theme';
+import { useRegion } from '@/lib/user-profile';
 
 /**
- * Ember, the Singapore finance guide, as a phone chat: transcript above, composer pinned to the
+ * DouDou, the Singapore finance guide, as a phone chat: transcript above, composer pinned to the
  * keyboard. Starter cards fill the composer and nothing is sent until the person taps Send.
- * Answers come from the FastAPI RAG route and need a signed-in session; see `lib/ember-api.ts`.
+ * While DouDou is off the consent popup opens on arrival and nothing leaves the phone.
+ * Answers come from the FastAPI RAG route over the anonymous session; see `lib/ember-session.ts`.
  */
 export default function EmberScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const insets = useScreenInsets();
   const ember = useEmber();
+  const consent = useAiPreference();
+  const { isSingapore } = useRegion();
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
-  const [confirmClear, setConfirmClear] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const keyboardInset = useKeyboardInset();
+  // While DouDou is off the consent popup greets the person on arrival; "Not now" leaves the screen.
+  const [consentOpen, setConsentOpen] = useState(true);
+  const doudouMessageId = useMemo(
+    () => selectDoudouMessageId(ember.messages, (message) => message.status === 'pending', (message) => message.status === 'error'),
+    [ember.messages],
+  );
   const canSend = !ember.aiOff && ember.availability.available && ember.draft.trim().length > 0 && !ember.busy;
 
   // Keep the newest turn in view as answers arrive.
@@ -40,43 +56,33 @@ export default function EmberScreen() {
     return () => clearTimeout(timer);
   }, [ember.messages]);
 
-  const fill = (question: string) => {
-    ember.setDraft(question);
-    inputRef.current?.focus();
-  };
+  // Fills the composer only; the keyboard stays down so the person can read it and tap Send.
+  const fill = (question: string) => ember.setDraft(question);
+  const deleting = ember.conversations.find((chat) => chat.id === deletingId);
 
   return (
     <Screen scroll={false}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView ref={scrollRef} style={styles.flex} contentContainerStyle={styles.transcript} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
           <PageToolbar
-            title="Ask Ember"
-            description="Grounded answers on CPF, SRS, savings and FIRE, with sources."
+            title="Ask DouDou"
+            description={isSingapore ? 'Grounded answers on CPF, SRS, savings and FIRE, with sources.' : 'Answers on budgeting, saving and FIRE, with sources.'}
             onBack={() => router.back()}
-            trailing={ember.messages.length ? <IconButton icon={Eraser} accessibilityLabel="Clear conversation" onPress={() => setConfirmClear(true)} /> : undefined}
+            trailing={ember.aiOff ? undefined : (
+              <View style={styles.toolbarActions}>
+                {ember.conversations.length ? <IconButton icon={History} accessibilityLabel="Past chats" onPress={() => setHistoryOpen(true)} /> : null}
+                {ember.messages.length ? <IconButton icon={SquarePen} accessibilityLabel="New chat" onPress={ember.newChat} /> : null}
+              </View>
+            )}
           />
 
-          {ember.aiOff ? (
-            <Card style={styles.consent}>
-              <View style={styles.intro}>
-                <View style={[styles.introMark, { backgroundColor: theme.surface2 }]}>
-                  <EmberMark size={26} />
-                </View>
-                <View style={styles.introCopy}>
-                  <AppText variant="cardTitle">Turn on Ember</AppText>
-                  <AppText variant="bodySmall" tone="ink2">Ember uses a third-party AI provider hosted outside Singapore. You choose how much it may see, and you can change this any time in Profile.</AppText>
-                </View>
-              </View>
-              {(['guide', 'personalised'] as const).map((level) => (
-                <View key={level} style={[styles.consentOption, { backgroundColor: theme.surface2 }]}>
-                  <AppText variant="bodySemibold">{AI_LEVEL_COPY[level].title}</AppText>
-                  <AppText variant="caption" tone="ink2">{AI_LEVEL_COPY[level].summary}</AppText>
-                  <Button label={`Use ${AI_LEVEL_COPY[level].title}`} variant={level === 'personalised' ? 'primary' : 'secondary'} onPress={() => ember.setAiPreference(level)} style={styles.consentButton} />
-                </View>
-              ))}
-              <View style={styles.consentFootnote}>
-                <ShieldCheck size={14} color={theme.ink3} strokeWidth={2} />
-                <AppText variant="caption" tone="ink3" style={styles.consentFootnoteText}>{"Requests are not used to train the provider's models. Exact figures and transactions never leave FireBuddy."}</AppText>
+          {ember.aiOff && consent.hydrated ? (
+            <Card tone="muted" style={styles.notice}>
+              <Doudou pose="sleep" size={56} />
+              <View style={styles.noticeCopy}>
+                <AppText variant="bodySemibold">DouDou is off</AppText>
+                <AppText variant="bodySmall" tone="ink2">Nothing leaves this phone while DouDou is off.</AppText>
+                <Button label="Turn on DouDou" variant="secondary" size="compact" onPress={() => setConsentOpen(true)} style={styles.noticeAction} />
               </View>
             </Card>
           ) : null}
@@ -87,12 +93,8 @@ export default function EmberScreen() {
                 <PlugZap size={20} color={theme.ink2} strokeWidth={1.9} />
               </View>
               <View style={styles.noticeCopy}>
-                <AppText variant="bodySemibold">Ember is not connected on this phone yet</AppText>
-                <AppText variant="bodySmall" tone="ink2">
-                  {ember.availability.reason === 'no-api'
-                    ? 'Answers come from the FireBuddy API with a signed-in account. Sign-in is next for mobile; until then Ember is available in the web app.'
-                    : 'The API is configured but there is no signed-in session. Sign-in is next for mobile; until then Ember is available in the web app.'}
-                </AppText>
+                <AppText variant="bodySemibold">DouDou is not set up in this version</AppText>
+                <AppText variant="bodySmall" tone="ink2">This build has no connection details for DouDou. Everything else in FireBuddy works as normal.</AppText>
               </View>
             </Card>
           ) : null}
@@ -100,12 +102,12 @@ export default function EmberScreen() {
           {ember.aiOff ? null : ember.messages.length === 0 ? (
             <View style={styles.empty}>
               <View style={styles.intro}>
-                <View style={[styles.introMark, { backgroundColor: theme.surface2 }]}>
-                  <EmberMark size={30} />
-                </View>
+                <Doudou pose="hello" size={80} motion="idle" />
                 <View style={styles.introCopy}>
-                  <AppText variant="cardTitle">Ask about Singapore money matters</AppText>
-                  <AppText variant="bodySmall" tone="ink2">Ember explains CPF, SRS, Savings Bonds and your own FireBuddy figures, and cites where each answer comes from. It never changes your records or gives regulated advice.</AppText>
+                  <AppText variant="cardTitle">Hi, I&apos;m DouDou!</AppText>
+                  <AppText variant="bodySmall" tone="ink2">{isSingapore
+                    ? 'I explain CPF, SRS, Savings Bonds and your own FireBuddy figures, and show where each answer comes from. I never change your records or give regulated advice.'
+                    : 'I explain budgeting, saving, investing basics, FIRE and your own FireBuddy figures. My sources are Singapore-focused, so I keep advice general for you. I never change your records or give regulated advice.'}</AppText>
                 </View>
               </View>
               <AppText variant="overline" tone="ink2">Not sure where to start? Try a guided question</AppText>
@@ -125,7 +127,7 @@ export default function EmberScreen() {
             </View>
           ) : (
             <View style={styles.messages}>
-              {ember.messages.map((message) => <EmberBubble key={message.id} message={message} onRetry={ember.retry} />)}
+              {ember.messages.map((message) => <EmberBubble key={message.id} message={message} onRetry={ember.retry} showDoudou={message.id === doudouMessageId} />)}
               {!ember.busy && ember.followUps.length ? (
                 <View style={styles.followUps}>
                   <AppText variant="caption" tone="ink2">You could also ask</AppText>
@@ -142,14 +144,15 @@ export default function EmberScreen() {
           )}
         </ScrollView>
 
-        <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, spacing.md), borderTopColor: theme.line, backgroundColor: theme.bg }]}>
+        {/* Clear of the navigation bar when the keyboard is down; lifted above the keyboard when it is up. */}
+        <View style={[styles.composer, { paddingBottom: keyboardInset > 0 ? keyboardInset + spacing.sm : insets.bottom + spacing.lg, borderTopColor: theme.line, backgroundColor: theme.bg }]}>
           <View style={[styles.inputWell, { backgroundColor: theme.surface, borderColor: theme.lineStrong }]}>
             <TextInput
               ref={inputRef}
-              accessibilityLabel="Your question for Ember"
+              accessibilityLabel="Your question for DouDou"
               value={ember.draft}
               onChangeText={(text) => ember.setDraft(text.slice(0, MAX_EMBER_QUESTION_LENGTH))}
-              placeholder={ember.aiOff ? 'Turn on Ember above to ask a question' : ember.availability.available ? 'Ask about CPF, SRS, savings or FIRE…' : 'Ember needs a signed-in account'}
+              placeholder={ember.aiOff ? 'Turn on DouDou above to ask a question' : ember.availability.available ? (isSingapore ? 'Ask about CPF, SRS, savings or FIRE…' : 'Ask about budgeting, saving or FIRE…') : 'DouDou is not set up in this version'}
               placeholderTextColor={theme.ink3}
               editable={!ember.aiOff && ember.availability.available}
               multiline
@@ -172,19 +175,41 @@ export default function EmberScreen() {
         </View>
       </KeyboardAvoidingView>
 
+      <DoudouConsentDialog
+        open={ember.aiOff && consent.hydrated && consentOpen}
+        onAccept={() => void consent.turnOn()}
+        onDecline={() => {
+          setConsentOpen(false);
+          router.back();
+        }}
+        working={consent.status === 'working'}
+        error={consent.error}
+      />
+      <EmberHistorySheet
+        open={historyOpen}
+        conversations={ember.conversations}
+        activeId={ember.activeId}
+        onClose={() => setHistoryOpen(false)}
+        onOpen={(id) => { ember.openChat(id); setHistoryOpen(false); }}
+        onNewChat={() => { ember.newChat(); setHistoryOpen(false); }}
+        onDelete={setDeletingId}
+      />
       <ConfirmDialog
-        open={confirmClear}
-        title="Clear this conversation?"
-        message="The transcript on this phone is removed. Ember keeps no copy of it."
-        confirmLabel="Clear"
-        onCancel={() => setConfirmClear(false)}
-        onConfirm={() => { ember.clear(); setConfirmClear(false); }}
+        open={Boolean(deleting)}
+        title="Delete this chat?"
+        message={deleting ? `“${deleting.title}” is removed from this phone. DouDou keeps no copy of it.` : ''}
+        confirmLabel="Delete"
+        onCancel={() => setDeletingId(null)}
+        onConfirm={() => { if (deletingId) ember.deleteChat(deletingId); setDeletingId(null); }}
       />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  toolbarActions: {
+    flexDirection: 'row',
+  },
   flex: {
     flex: 1,
   },
@@ -193,25 +218,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
     gap: spacing.lg,
-  },
-  consent: {
-    gap: spacing.md,
-  },
-  consentOption: {
-    padding: 14,
-    borderRadius: radii.tile,
-    gap: 6,
-  },
-  consentButton: {
-    marginTop: spacing.xs,
-  },
-  consentFootnote: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
-  },
-  consentFootnoteText: {
-    flex: 1,
   },
   notice: {
     flexDirection: 'row',
@@ -230,21 +236,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 4,
   },
+  noticeAction: {
+    marginTop: spacing.xs,
+  },
   empty: {
     gap: spacing.md,
   },
   intro: {
     flexDirection: 'row',
     gap: spacing.md,
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  introMark: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.tile,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: spacing.sm,
   },
   introCopy: {
     flex: 1,

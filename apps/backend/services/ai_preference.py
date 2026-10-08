@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 AI_PREFERENCES: tuple[AiPreference, ...] = ("off", "guide", "personalised")
 
 AI_DISABLED_ANSWER = (
-    "Ember is switched off for your account. Choose Guide or Personalised under "
-    "Profile, Ember and AI, to turn it on."
+    "DouDou is switched off for your account. Choose Guide or Personalised under "
+    "Profile, DouDou and AI, to turn it on."
 )
 GUIDE_ONLY_DATA_ANSWER = (
-    "Your Ember setting is Guide, so I can explain Singapore finance topics but cannot "
-    "read your FireBuddy records. Switch to Personalised under Profile, Ember and AI, "
+    "Your DouDou setting is Guide, so I can explain Singapore finance topics but cannot "
+    "read your FireBuddy records. Switch to Personalised under Profile, DouDou and AI, "
     "if you want answers about your own figures."
 )
 

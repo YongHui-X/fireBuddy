@@ -80,7 +80,7 @@ def financial_advisor(body: AdvisorRequest, current_user: CurrentUser):
     if not decision.allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Ember request limit reached. Try again shortly.",
+            detail="DouDou request limit reached. Try again shortly.",
             headers={"Retry-After": str(decision.retry_after_seconds)},
         )
 
@@ -109,7 +109,7 @@ def financial_advisor(body: AdvisorRequest, current_user: CurrentUser):
         logger.exception("rag_advisor_failed", extra={"user_id": current_user.id})
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Ember is temporarily unavailable.",
+            detail="DouDou is temporarily unavailable.",
         ) from exc
 
 
@@ -131,7 +131,7 @@ def financial_advisor_stream(body: AdvisorRequest, current_user: StreamUser):
     if not decision.allowed:
         return error_stream(
             code="rate_limit",
-            message="Ember request limit reached. Try again shortly.",
+            message="DouDou request limit reached. Try again shortly.",
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             retryable=True,
             headers={"Retry-After": str(decision.retry_after_seconds)},
@@ -158,7 +158,7 @@ def financial_advisor_stream(body: AdvisorRequest, current_user: StreamUser):
                 "error",
                 {
                     "code": "unavailable",
-                    "message": "Ember is temporarily unavailable.",
+                    "message": "DouDou is temporarily unavailable.",
                     "retryable": True,
                     "status": status.HTTP_503_SERVICE_UNAVAILABLE,
                 },

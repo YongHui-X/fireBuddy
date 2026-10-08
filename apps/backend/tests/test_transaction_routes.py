@@ -81,6 +81,19 @@ class TransactionRouteTests(unittest.TestCase):
         self.patcher.stop()
         self.expense_patcher.stop()
 
+    def test_hides_and_rejects_another_users_transaction(self):
+        """Foreign transactions cannot be listed, edited, or deleted by identifier."""
+        foreign_id = "30000000-0000-4000-8000-000000000099"
+        foreign = {**transaction_row(), "id": foreign_id, "user_id": OTHER_USER_ID,
+                   "account_id": OTHER_ACCOUNT_ID}
+        self.supabase.rows["expenses"].append(dict(foreign))
+        response = self.client.get("/transactions")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.json()], [EXPENSE_ID])
+        self.assertEqual(self.client.put(f"/transactions/{foreign_id}", json={"amount": "1.00"}).status_code, 404)
+        self.assertEqual(self.client.delete(f"/transactions/{foreign_id}").status_code, 404)
+        self.assertEqual(next(row for row in self.supabase.rows["expenses"] if row["id"] == foreign_id), foreign)
+
     def test_income_crud_and_filters(self):
         create_response = self.client.post(
             "/transactions",

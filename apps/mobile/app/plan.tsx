@@ -52,7 +52,7 @@ export default function PlanScreen() {
   return (
     <Screen>
       <PageToolbar
-        title="Spending Plan"
+        title="Budgets"
         description="Essential spending and emergency reserves for everyday finances."
         onBack={() => router.back()}
       />
@@ -116,7 +116,7 @@ export default function PlanScreen() {
       </Card>
 
       <Card>
-        <CardHeader title="Category budgets" subtitle="Your existing category budgets remain available. Overall period limits and rollover are planned for later." />
+        <CardHeader title="Category budgets" subtitle="Set a monthly limit on any expense category. Home tracks each one for you." />
         <Button label="Manage category budgets" icon={ClipboardList} variant="secondary" onPress={() => router.navigate('/categories')} />
       </Card>
     </Screen>

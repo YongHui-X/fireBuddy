@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { radii } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
@@ -12,10 +12,12 @@ export interface ChipProps {
   icon?: LucideIcon;
   round?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Makes the chip a button, e.g. a prompt that opens the screen it mentions. */
+  onPress?: () => void;
 }
 
 /** Small status badge: semantic tints for income/expense, lime for the hero delta, pill for filter counts, `hero*` tones on forest. */
-export function Chip({ label, tone = 'neutral', icon: Icon, round = false, style }: ChipProps) {
+export function Chip({ label, tone = 'neutral', icon: Icon, round = false, style, onPress }: ChipProps) {
   const { theme } = useTheme();
   const palette = {
     neutral: { bg: theme.surface2, ink: theme.ink2 },
@@ -32,12 +34,25 @@ export function Chip({ label, tone = 'neutral', icon: Icon, round = false, style
     heroDown: { bg: 'rgba(255, 255, 255, 0.1)', ink: '#ffb0a3' },
   }[tone];
 
-  return (
-    <View style={[styles.chip, { backgroundColor: palette.bg, borderRadius: round ? radii.pill : radii.chip }, style]}>
+  const chipStyle = [styles.chip, { backgroundColor: palette.bg, borderRadius: round ? radii.pill : radii.chip }, style];
+  const content = (
+    <>
       {Icon ? <Icon size={13} color={palette.ink} strokeWidth={2.2} /> : null}
       {tone === 'ai' ? <View style={[styles.dot, { backgroundColor: theme.primary }]} /> : null}
       <AppText variant="captionMedium" style={{ color: palette.ink }}>{label}</AppText>
-    </View>
+    </>
+  );
+  if (!onPress) return <View style={chipStyle}>{content}</View>;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
+      onPress={onPress}
+      style={({ pressed }) => [chipStyle, pressed ? styles.pressed : null]}
+    >
+      {content}
+    </Pressable>
   );
 }
 
@@ -49,6 +64,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     alignSelf: 'flex-start',
+  },
+  pressed: {
+    opacity: 0.7,
   },
   dot: {
     width: 5,

@@ -10,8 +10,17 @@ export const LEGACY_CHAT_TOPICS_STORAGE_KEY = 'firebuddy_chat_topics_v1';
 export const LEGACY_CHAT_ACTIVE_TOPIC_STORAGE_KEY = 'firebuddy_chat_active_topic_v1';
 export const EMBER_STORAGE_VERSION = 3;
 
-export const EMBER_GREETING =
+/** The greeting older builds saved as a first message. Migration drops it, so it must stay byte for byte. */
+export const LEGACY_EMBER_GREETING =
   'Hello, I am Ember. Ask me about CPF, SRS, HDB grants, Singapore Savings Bonds, MoneySense guidance, or FIRE concepts in Singapore.';
+
+export const EMBER_GREETING =
+  'Hi, I’m Doudou! Ask me about CPF, SRS, HDB grants, Singapore Savings Bonds, MoneySense guidance, or FIRE concepts in Singapore.';
+
+/** True for the greeting a fresh conversation was seeded with, under either name. */
+function isSeedGreeting(content: string) {
+  return content === EMBER_GREETING || content === LEGACY_EMBER_GREETING;
+}
 
 export type EmberFailureKind = 'authentication' | 'rate_limit' | 'unavailable' | 'empty_response' | 'retrieval' | 'unknown';
 export type EmberMessageStatus = 'streaming' | 'complete';
@@ -237,7 +246,7 @@ function normalizeStoredTopic(value: unknown): EmberTopic | null {
     .map(normalizeStoredMessage)
     .filter((message): message is EmberMessage => message !== null);
 
-  if (messages.length === 1 && messages[0].role === 'assistant' && messages[0].content === EMBER_GREETING) {
+  if (messages.length === 1 && messages[0].role === 'assistant' && isSeedGreeting(messages[0].content)) {
     messages = [];
   }
 
@@ -315,7 +324,7 @@ function migrateLegacyTopic(value: LegacyChatTopic, topicIndex: number): EmberTo
     })];
   });
 
-  if (messages.length === 1 && messages[0].role === 'assistant' && messages[0].content === EMBER_GREETING) {
+  if (messages.length === 1 && messages[0].role === 'assistant' && isSeedGreeting(messages[0].content)) {
     messages.splice(0, 1);
   }
 

@@ -27,6 +27,11 @@ export function formatMonthLabel(monthKey: string) {
   return new Date(`${monthKey}-01T00:00:00`).toLocaleDateString('en-SG', { month: 'long', year: 'numeric' });
 }
 
+/** "Sep 2026" for a YYYY-MM key, for tight rows. */
+export function formatShortMonthLabel(monthKey: string) {
+  return new Date(`${monthKey}-01T00:00:00`).toLocaleDateString('en-SG', { month: 'short', year: 'numeric' });
+}
+
 /** "September" for a YYYY-MM key. */
 export function formatMonthName(monthKey: string) {
   return new Date(`${monthKey}-01T00:00:00`).toLocaleDateString('en-SG', { month: 'long' });

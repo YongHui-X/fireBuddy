@@ -198,9 +198,9 @@ components:
 
 **Creative North Star: "The Forest Ledger"**
 
-FireBuddy is a money workbench for Singapore savers working toward financial independence. A deep forest rail and a forest hero card own the left and the top-left of every signed-in view; the rest of the canvas is a pale green-white ground carrying white paper cards with one soft shadow, with a soft forest tint behind the toolbar and first row that settles into the plain canvas by the second row (dark mode adds a faint forest glow top-left). Lime is spent on exactly one thing at a time: the primary action (Add Transaction, Save, the mobile Add tile) and the sun in the mark. Figures are set in Bricolage Grotesque so the numbers read as the headline of every card; everything around them is Schibsted Grotesk at a working size.
+FireBuddy is a money workbench for Singapore savers working toward financial independence. A deep forest rail and a forest hero card own the left and the top-left of every signed-in view; the rest of the canvas is a pale green-white ground carrying white paper cards with one soft shadow, with a soft forest tint behind the toolbar and first row that settles into the plain canvas by the second row (dark mode adds a faint forest glow top-left). Lime is spent on exactly one thing at a time: the primary action (Add Transaction, Save, the mobile Add tile) and DouDou's bean in the mark. Figures are set in Bricolage Grotesque so the numbers read as the headline of every card; everything around them is Schibsted Grotesk at a working size.
 
-FIRE means financial independence, retire early. The identity refuses the literal flame: the mark is an early sun resting on a horizon line, drawn in lime and white on forest. The Ascent mark (rising steps with a lime landing) is the reserve secondary mark and currently serves as the FIRE Planner navigation icon. Ember, the assistant, keeps a small warm spark in `#D9782D`.
+FIRE means financial independence, retire early. The identity refuses the literal flame. The mark is **DouDou** (豆豆, "little bean"), a lime sprout bean with two leaves on a forest tile: plant early, let it grow, retire early. DouDou is also the mascot and the name of the AI guide (formerly Ember). The Ascent mark (rising steps with a lime landing) is the reserve secondary mark and currently serves as the FIRE Planner navigation icon. The warm `#D9782D` spark survives as DouDou's thinking dots.
 
 **Key Characteristics:**
 
@@ -228,7 +228,7 @@ FIRE means financial independence, retire early. The identity refuses the litera
 - **Expense Red** (`{colors.expense}`, `#C23A2B`) on **Expense Wash** (`{colors.expense-soft}`): Negative amounts, Expense badges, destructive actions, errors.
 - **Warning Ochre** (`{colors.warning}`, `#9A6700`) on **Warning Wash**: Limited data, anomalies, draft labels, the sync banner.
 - **Projection Blue** (`{colors.projection}`, `#35678A`): Savings bar, projected FIRE paths, the expense trend line, informational notes.
-- **Ember Spark** (`{colors.ember}`, `#D9782D`): The assistant's mark and its tinted tile.
+- **Ember Spark** (`{colors.ember}`, `#D9782D`): DouDou's thinking dots and confetti. DouDou's own tiles use a soft lime tint (`--doudou-tint`).
 
 ### Neutral
 
@@ -326,9 +326,36 @@ Centered sheets are 520px, with a header divider and a 24px body. The add transa
 
 ### Navigation
 
-Desktop rail items are 42px rows with muted ink; the active row has a lime-tinted fill and lime text. Ask Ember sits in its own section with an AI indicator. Mobile uses a 60px forest topbar and a 64px bottom bar.
+Desktop rail items are 42px rows with muted ink; the active row has a lime-tinted fill and lime text. Ask DouDou sits in its own section with an AI indicator. Mobile uses a 60px forest topbar and a 64px bottom bar.
 
-### Ember
+### DouDou, the mascot
+
+DouDou's art is shape data in `packages/shared/src/doudou.ts`, so web and mobile draw the same character. On web, `Doudou` renders a pose, `DoudouAvatar` the cropped face, and `DoudouIcon` the app icon (all in `apps/web/src/components/DouDou.tsx`). On mobile the same three live in `apps/mobile/components/brand/DouDou.tsx`, drawn with `react-native-svg` and animated with Reanimated, and `EmptyState` takes a `doudou` pose. The app icon, adaptive icon layers and splash are rendered from the same art by `apps/mobile/scripts/render-brand-assets.mjs`.
+
+| Pose | Used for |
+|---|---|
+| hello | Welcome and the chat introduction |
+| point | Tutorial steps and tips beside a control |
+| peek | Empty lists and dashboards with no data |
+| think | The AI preparing an answer |
+| yay | Milestones and first wins |
+| oops | Errors, failed answers, filters that match nothing |
+| shh | Privacy and AI consent |
+| sleep | Logged out, offline, demo |
+
+Rules: at most one DouDou per screen; never inside tables, charts or beside figures; DouDou encourages and never scolds spending; motion is CSS only, used for idle, thinking, celebrating, growing and sleeping, and stops under reduced motion. Internal identifiers (`/ember`, `Ember*` files, `ember_*` services) keep the old name; only user-facing copy says DouDou.
+
+### Welcome and tour (mobile)
+
+First launch opens a full-screen welcome after the launch intro: DouDou in the hello pose asks "How should we address you?", with one field, a lime Continue and a text Skip. The field never focuses itself, so no keyboard rises over the launch animation. The nickname stays on the phone. Next, "Where do you live?" lists Singapore first, then a searchable country list, then confirms the currency. After it, DouDou switches to yay ("Nice to meet you, Jo!") and offers "Show me around".
+
+The tutorial is a spotlight over the real UI: the screen dims with the theme `backdrop` and a circle frames one control at a time (sized to the control's longer side, so round shortcuts and tab icons are hugged closely). A speech bubble above or below the circle, with a caret pointing at it, carries a small DouDou in the point pose (the only DouDou on screen), a title, one sentence, and "Skip · 2 of 6 · Back · Next"; lime marks only Next, and Back is hidden on the first step. The highlighted control is not tappable during the tutorial. Under reduced motion the circle jumps and the bubble fades instead of sliding.
+
+The 9pm reminder speaks as DouDou: playful, a little cheeky, never guilt-tripping and never mentioning amounts ("Psst… it's DouDou. 30 seconds to log today?").
+
+Returning users see "Good morning, Jo!" (or "Good morning!" without a name) and one short tip a day under the greeting. Tips are encouraging, never mention amounts, never scold spending, and can be dismissed for the day.
+
+### DouDou chat
 
 Assistant answers are white reading panels with sources beneath a divider; user messages are forest bubbles on the right. The composer is a forest field with a lime send button. History is a 300px rail at 1180px and up, a right drawer below.
 
@@ -336,6 +363,11 @@ Assistant answers are white reading panels with sources beneath a divider; user 
 
 The phone layout is the same system, not a second one. Palette, type scale, radii and shadows are
 unchanged; what changes is the shell, the density, and how a control is reached by a thumb.
+
+One deliberate palette difference: since 6 October 2026 the phone's light canvas is a light cream
+(`#F7F3EA`, lines `#E9E3D7`, muted surfaces a warm `#F1ECE1`) under the same white cards, so the
+app reads warm rather than clinical. The launch screen and Android splash use the same cream. Dark
+mode is unchanged. The paused web app keeps `#F2F4EC` until web work resumes.
 
 **Breakpoint ladder.** CSS media queries cannot read custom properties and there is no PostCSS
 step, so the stylesheets use literals — but only these, and `apps/web/src/app/breakpoints.ts`

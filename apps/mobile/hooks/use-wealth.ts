@@ -1,5 +1,6 @@
 import {
   debtRepaidShare,
+  describeDebtGoal,
   describeDebtPayoff,
   getDeviceDateKey,
   recentWealthHistory,
@@ -10,6 +11,7 @@ import {
 import { useMemo } from 'react';
 
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { usePrivacy } from '@/lib/privacy';
 
 /** Everything a position row needs, derived once per store change. */
 export interface PositionView {
@@ -21,11 +23,15 @@ export interface PositionView {
   tags: string[];
   payoff: ReturnType<typeof describeDebtPayoff> | null;
   repaid: number | null;
+  /** The "pay it off by" line when the debt has a goal month. */
+  goal: ReturnType<typeof describeDebtGoal>;
 }
 
 /** Memoised balance sheet over the store's positions and snapshots so screens stay presentational. */
 export function useWealth() {
   const { positions, snapshots, contributions } = useFireBuddy();
+  // The payoff line's interest figure follows the user's currency and the hide-amounts switch.
+  const { money } = usePrivacy();
   const today = useMemo(() => getDeviceDateKey(), []);
 
   return useMemo(() => {
@@ -48,8 +54,9 @@ export function useWealth() {
         balance,
         valueDate: latest?.valueDate ?? null,
         tags: wealthPositionTags(position),
-        payoff: isLiability ? describeDebtPayoff(position, balance, today) : null,
+        payoff: isLiability ? describeDebtPayoff(position, balance, today, (value) => money(value, 0)) : null,
         repaid: isLiability ? debtRepaidShare(position, balance) : null,
+        goal: isLiability ? describeDebtGoal(position, balance, today, (value) => money(value, 0)) : null,
       };
     };
 
@@ -63,5 +70,5 @@ export function useWealth() {
       history: recentWealthHistory(snapshots, contributions, 10),
       positionName: (id: string) => positions.find((item) => item.id === id)?.name ?? 'Archived position',
     };
-  }, [positions, snapshots, contributions, today]);
+  }, [positions, snapshots, contributions, today, money]);
 }

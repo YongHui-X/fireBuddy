@@ -17,6 +17,8 @@
     "typecheck:mobile": "npm run typecheck --workspace=@firebuddy/mobile",
     "typecheck:shared": "npm run typecheck --workspace=@firebuddy/shared",
     "dev:backend": "uvicorn main:app --reload --reload-dir apps/backend --app-dir apps/backend",
+    "dev:backend:phone": "uvicorn main:app --reload --reload-dir apps/backend --app-dir apps/backend --host 0.0.0.0",
+    "eval:doudou": "npx tsx apps/backend/rag/evaluation/mobile/run_doudou_eval.ts",
     "android": "npm run android --workspace=@firebuddy/mobile",
     "ios": "npm run ios --workspace=@firebuddy/mobile",
     "web": "npm run web --workspace=@firebuddy/mobile",

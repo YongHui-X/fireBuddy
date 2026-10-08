@@ -80,6 +80,72 @@ class FinancialRouteTests(unittest.TestCase):
         archived = next(row for row in self.supabase.rows["wealth_positions"] if row["id"] == POSITION_ID)
         self.assertTrue(archived["is_archived"])
 
+    def test_foreign_wealth_children_and_mutations_are_rejected(self):
+        """Foreign positions, snapshots and contributions stay unreadable and unchanged."""
+        snapshot = self.supabase.complete_row("wealth_position_snapshots", {
+            "user_id": OTHER_USER_ID, "wealth_position_id": OTHER_POSITION_ID,
+            "value_date": "2026-08-20", "amount": "999999",
+        })
+        contribution = self.supabase.complete_row("wealth_contributions", {
+            "user_id": OTHER_USER_ID, "wealth_position_id": OTHER_POSITION_ID,
+            "contribution_date": "2026-08-20", "amount": "999999", "note": "Private",
+        })
+        self.supabase.rows["wealth_position_snapshots"].append(snapshot)
+        self.supabase.rows["wealth_contributions"].append(contribution)
+        before = deepcopy(self.supabase.rows)
+        self.assertEqual(self.client.get("/wealth/contributions").json(), [])
+        requests = [
+            ("PUT", f"/wealth/positions/{OTHER_POSITION_ID}", {"name": "Changed"}),
+            ("DELETE", f"/wealth/positions/{OTHER_POSITION_ID}", None),
+            ("GET", f"/wealth/positions/{OTHER_POSITION_ID}/snapshots", None),
+            ("POST", f"/wealth/positions/{OTHER_POSITION_ID}/snapshots", {"amount": "1", "valueDate": "2026-08-20"}),
+            ("POST", "/wealth/contributions", {"wealthPositionId": OTHER_POSITION_ID, "amount": "1", "contributionDate": "2026-08-20"}),
+            ("PUT", f"/wealth/contributions/{contribution['id']}", {"amount": "1", "contributionDate": "2026-08-20"}),
+            ("DELETE", f"/wealth/contributions/{contribution['id']}", None),
+        ]
+        for position_id in (POSITION_ID, OTHER_POSITION_ID):
+            path = f"/wealth/positions/{position_id}/snapshots/{snapshot['id']}"
+            requests.extend([("PUT", path, {"amount": "1", "valueDate": "2026-08-20"}), ("DELETE", path, None)])
+        for method, path, payload in requests:
+            with self.subTest(method=method, path=path):
+                response = self.client.request(method, path, **({"json": payload} if payload is not None else {}))
+                self.assertEqual(response.status_code, 404, response.text)
+        self.assertEqual(self.supabase.rows, before)
+
+    def test_analytics_excludes_another_users_financial_rows(self):
+        """Foreign balances and spending must not change the caller's aggregate response."""
+        path = "/analytics/financial-summary?asOf=2026-08-23"
+        baseline = self.client.get(path)
+        self.assertEqual(baseline.status_code, 200, baseline.text)
+        self.supabase.rows["wealth_position_snapshots"].append(self.supabase.complete_row("wealth_position_snapshots", {
+            "user_id": OTHER_USER_ID, "wealth_position_id": OTHER_POSITION_ID,
+            "amount": "999999", "value_date": "2026-08-20",
+        }))
+        self.supabase.rows["expenses"].append(self.supabase.complete_row("expenses", {
+            "user_id": OTHER_USER_ID, "amount": "999999", "date": "2026-08-20",
+            "transaction_type": "expense", "category_id": "20000000-0000-4000-8000-000000000099",
+        }))
+        response = self.client.get(path)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json(), baseline.json())
+
+    def test_fire_profile_update_and_scenario_preserve_another_users_plan(self):
+        """Creating the caller's profile cannot overwrite or use a foreign saved plan."""
+        payload = {"monthlyContribution": "2500", "expectedReturnRate": "0.07",
+                   "inflationRate": "0.02", "withdrawalRate": "0.04"}
+        app.dependency_overrides[get_current_user] = lambda: AuthenticatedUser(id=OTHER_USER_ID)
+        saved = self.client.put("/fire/profile", json=payload)
+        self.assertEqual(saved.status_code, 200, saved.text)
+        foreign = deepcopy(self.supabase.rows["fire_profiles"])
+        app.dependency_overrides[get_current_user] = lambda: AuthenticatedUser(id=USER_ID)
+        self.assertIsNone(self.client.get("/fire/profile").json()["profile"])
+        scenario = self.client.post("/fire/scenario", json={"asOf": "2026-08-23", "monthlyContribution": "100"})
+        self.assertEqual(scenario.status_code, 200, scenario.text)
+        self.assertEqual(self.supabase.rows["fire_profiles"], foreign)
+        updated = self.client.put("/fire/profile", json={**payload, "monthlyContribution": "100"})
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertEqual([row for row in self.supabase.rows["fire_profiles"] if row["user_id"] == OTHER_USER_ID], foreign)
+
     def test_profile_validation_scenario_and_summary_states(self):
         invalid = self.client.put("/fire/profile", json={
             "monthlyContribution": "1000", "expectedReturnRate": "0.31", "inflationRate": "0.02",

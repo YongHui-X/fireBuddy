@@ -1,14 +1,18 @@
+import type { DoudouPose } from '@firebuddy/shared';
 import type { LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
+import { Doudou } from '../brand/Doudou';
 import { Button } from './Button';
 import { AppText } from './Text';
 
 export interface EmptyStateProps {
   icon?: LucideIcon;
+  /** Show DouDou in this pose instead of the icon. Use on at most one empty state per screen. */
+  doudou?: DoudouPose;
   title: string;
   message?: string;
   actionLabel?: string;
@@ -17,11 +21,11 @@ export interface EmptyStateProps {
 }
 
 /** Centred prompt for an empty card or route, with one secondary action. */
-export function EmptyState({ icon: Icon, title, message, actionLabel, onAction, style }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, doudou, title, message, actionLabel, onAction, style }: EmptyStateProps) {
   const { theme } = useTheme();
   return (
     <View style={[styles.wrap, style]}>
-      {Icon ? (
+      {doudou ? <Doudou pose={doudou} size={88} style={styles.doudou} /> : Icon ? (
         <View style={[styles.iconTile, { backgroundColor: theme.surface2 }]}>
           <Icon size={22} color={theme.ink2} strokeWidth={1.8} />
         </View>
@@ -48,10 +52,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
+  doudou: {
+    marginBottom: spacing.xs,
+  },
   message: {
     maxWidth: 300,
   },
+  // Button sets alignSelf: 'flex-start' by default, which beats the column's centring.
   action: {
     marginTop: spacing.sm,
+    alignSelf: 'center',
   },
 });

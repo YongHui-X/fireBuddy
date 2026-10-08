@@ -1,4 +1,4 @@
-import DateTimePicker, { DateTimePickerAndroid, type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { formatLongDate, getDeviceDateKey } from '@firebuddy/shared';
 import { CalendarDays } from 'lucide-react-native';
 import { useState } from 'react';
@@ -37,9 +37,8 @@ export function DateField({ label, value, onChange, placeholder = 'Choose a date
         value: toDate(value),
         mode: 'date',
         maximumDate,
-        onChange: (event: DateTimePickerEvent, date?: Date) => {
-          if (event.type === 'set' && date) onChange(getDeviceDateKey(date));
-        },
+        // `onValueChange` fires only when a date is picked; cancelling simply closes the dialog.
+        onValueChange: (_event, date) => onChange(getDeviceDateKey(date)),
       });
       return;
     }
@@ -70,7 +69,7 @@ export function DateField({ label, value, onChange, placeholder = 'Choose a date
             maximumDate={maximumDate}
             accentColor={theme.accent}
             themeVariant={undefined}
-            onChange={(_event, date) => date && setIosDraft(date)}
+            onValueChange={(_event, date) => setIosDraft(date)}
           />
         </BottomSheet>
       ) : null}

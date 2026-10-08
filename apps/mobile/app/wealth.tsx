@@ -20,6 +20,7 @@ import { useWealth } from '@/hooks/use-wealth';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
 import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
+import { useRegion } from '@/lib/user-profile';
 
 /**
  * Balance sheet positions, separate from payment accounts and transactions. Every value is a
@@ -30,6 +31,7 @@ export default function WealthScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { money, percent } = usePrivacy();
+  const { isSingapore } = useRegion();
   const wealth = useWealth();
   const { addPosition, updatePosition, archivePosition, addSnapshot, deleteSnapshot, addContribution, deleteContribution, notify } = useFireBuddy();
   const [addOpen, setAddOpen] = useState(false);
@@ -80,7 +82,7 @@ export default function WealthScreen() {
       <Card padded={false}>
         <CardHeader title="Assets" subtitle={wealth.assets.length ? money(wealth.assetTotal, 0) : 'Nothing recorded yet'} style={styles.listHeader} action={<Button label="Add" variant="text" size="compact" icon={TrendingUp} onPress={() => openAdd('asset')} />} />
         {wealth.assetRows.length === 0 ? (
-          <AppText variant="bodySmall" tone="ink2" style={styles.emptyCopy}>Add cash, investments, property or CPF.</AppText>
+          <AppText variant="bodySmall" tone="ink2" style={styles.emptyCopy}>{isSingapore ? 'Add cash, investments, property or CPF.' : 'Add cash, investments, property or a pension.'}</AppText>
         ) : wealth.assetRows.map((row, index) => <PositionRow key={row.position.id} row={row} first={index === 0} onPress={() => setEditing(row.position)} />)}
       </Card>
 
@@ -112,7 +114,7 @@ export default function WealthScreen() {
         onClose={() => setAddMenuOpen(false)}
         title="Add to your wealth"
         actions={[
-          { label: 'Add asset', detail: 'Cash, investments, property or CPF', icon: TrendingUp, onSelect: () => openAdd('asset') },
+          { label: 'Add asset', detail: isSingapore ? 'Cash, investments, property or CPF' : 'Cash, investments, property or a pension', icon: TrendingUp, onSelect: () => openAdd('asset') },
           { label: 'Add debt', detail: 'Mortgage, loan or credit card', icon: Landmark, onSelect: () => openAdd('debt') },
           { label: 'Record contribution', detail: 'Money moved into an FI asset', icon: Plus, onSelect: () => openAdd('contribution'), disabled: wealth.fiAssets.length === 0 },
         ]}

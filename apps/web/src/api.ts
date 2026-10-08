@@ -381,7 +381,7 @@ export async function streamFinancialAdvisor(
     if (!response.ok) {
       throw await readApiError(response);
     }
-    throw new ApiRequestError('Ember returned an unreadable stream.', 503);
+    throw new ApiRequestError('Doudou returned an unreadable stream.', 503);
   }
 
   const reader = response.body.getReader();
@@ -420,7 +420,7 @@ export async function streamFinancialAdvisor(
       handlers.onDone?.();
     } else if (eventName === 'error') {
       throw new ApiRequestError(
-        typeof data.message === 'string' ? data.message : 'Ember could not complete the answer.',
+        typeof data.message === 'string' ? data.message : 'Doudou could not complete the answer.',
         typeof data.status === 'number' ? data.status : response.status || 503,
         typeof data.code === 'string' ? data.code : undefined,
       );
@@ -446,7 +446,7 @@ export async function streamFinancialAdvisor(
     throw new ApiRequestError(`Ember request failed with ${response.status}.`, response.status);
   }
   if (!receivedDone) {
-    throw new ApiRequestError('Ember stopped before completing the answer.', 503);
+    throw new ApiRequestError('Doudou stopped before completing the answer.', 503);
   }
 }
 

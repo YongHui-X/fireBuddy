@@ -1,11 +1,13 @@
 import logging
+import os
 import sys
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from config import settings
+from lib.auth import require_registered_user
 from routers.accounts import router as accounts_router
 from routers.analytics import router as analytics_router
 from routers.ai import router as ai_router
@@ -42,7 +44,14 @@ def configure_logging() -> None:
 configure_logging()
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title='FireBuddy API')
+# Railway sets RAILWAY_ENVIRONMENT, so the interactive API docs stay local-only.
+_public_deploy = bool(os.getenv('RAILWAY_ENVIRONMENT'))
+app = FastAPI(
+    title='FireBuddy API',
+    docs_url=None if _public_deploy else '/docs',
+    redoc_url=None if _public_deploy else '/redoc',
+    openapi_url=None if _public_deploy else '/openapi.json',
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -77,15 +86,18 @@ def health():
     return {'status': 'ok'}
 
 
-app.include_router(accounts_router)
-app.include_router(analytics_router)
-app.include_router(ai_router)
-app.include_router(categories_router)
-app.include_router(expenses_router)
-app.include_router(fire_router)
+# Anonymous phone sessions may only reach DouDou chat (rag), the consent level
+# (profile) and account deletion (user_account); every record route needs a real account.
+registered_only = [Depends(require_registered_user)]
+app.include_router(accounts_router, dependencies=registered_only)
+app.include_router(analytics_router, dependencies=registered_only)
+app.include_router(ai_router, dependencies=registered_only)
+app.include_router(categories_router, dependencies=registered_only)
+app.include_router(expenses_router, dependencies=registered_only)
+app.include_router(fire_router, dependencies=registered_only)
 app.include_router(profile_router)
 app.include_router(rag_router)
-app.include_router(transactions_router)
-app.include_router(tags_router)
+app.include_router(transactions_router, dependencies=registered_only)
+app.include_router(tags_router, dependencies=registered_only)
 app.include_router(user_account_router)
-app.include_router(wealth_router)
+app.include_router(wealth_router, dependencies=registered_only)

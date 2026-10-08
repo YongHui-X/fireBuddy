@@ -60,7 +60,8 @@ import {
 import { useFireBuddy } from '../app/fireBuddyContext';
 import { exportTransactions as exportApiTransactions } from '../api';
 import { buildTransactionCsv, downloadCsvBlob, filterLocalExportTransactions, getTransactionExportFilename } from '../app/transactionExport';
-import { AscentMark, EmberMark, FireBuddyMark } from '../app/BrandMarks';
+import { AscentMark, DoudouMark, FireBuddyMark } from '../app/BrandMarks';
+import { Doudou } from '../components/Doudou';
 
 import { AppUtilityActions } from '../components/AppUtilityActions';
 import { CategorySheet } from '../components/CategorySheet';
@@ -100,7 +101,7 @@ const desktopNavItems = [
 ] as const;
 const mobileNavItems = desktopNavItems.filter((item) => ['/', '/transactions', '/categories', '/profile'].includes(item.path));
 const secondaryNavItems = [
-  { path: '/ember', icon: EmberNavIcon, label: 'Ask Ember', indicator: 'AI' },
+  { path: '/ember', icon: DoudouNavIcon, label: 'Ask Doudou', indicator: 'AI' },
 ] as const;
 /** Everything that is not one of the four tabs, in the order the phone More sheet lists it. */
 const moreNavItems = [
@@ -113,9 +114,9 @@ const moreNavItems = [
   { path: '/goals', icon: Flag, label: 'Goals' },
 ] as const;
 
-/** Adapt Ember's custom brand mark to the shared navigation icon contract. */
-function EmberNavIcon({ size = 18 }: { size?: number; strokeWidth?: number }) {
-  return <EmberMark className="ember-nav-mark" size={size} />;
+/** Adapt Doudou's avatar to the shared navigation icon contract. */
+function DoudouNavIcon({ size = 18 }: { size?: number; strokeWidth?: number }) {
+  return <DoudouMark className="ember-nav-mark" size={size + 2} />;
 }
 
 function Layout() {
@@ -1337,6 +1338,7 @@ function Transactions() {
             </table>
           ) : (
             <div className="transactions-empty" role="status">
+              <Doudou pose={transactions.length ? 'oops' : 'peek'} size={88} />
               <strong>{transactions.length ? 'No transactions match these filters' : 'No transactions yet'}</strong>
               <p>
                 {transactions.length
@@ -1898,7 +1900,7 @@ function InsightsFallback() {
 }
 
 function EmberFallback() {
-  return <main className="page ember-page" aria-label="Loading Ember" />;
+  return <main className="page ember-page" aria-label="Loading Doudou" />;
 }
 
 export default Layout;

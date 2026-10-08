@@ -1,5 +1,10 @@
 import {
   createTransactionDraft,
+  currencyPrefix,
+  describeRecurringSchedule,
+  RECURRING_FREQUENCIES,
+  recurringFrequencyLabels,
+  type RecurringFrequency,
   draftToCreateInput,
   firstCategoryIdForType,
   sanitizeAmountInput,
@@ -10,11 +15,12 @@ import {
 } from '@firebuddy/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Plus, Trash2, Wallet } from 'lucide-react-native';
-
-import { CategorySheet } from '@/components/categories/CategorySheet';
+import { Plus, Repeat, Trash2, Wallet } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
+
+import { AccountSheet } from '@/components/accounts/AccountSheet';
+import { CategorySheet } from '@/components/categories/CategorySheet';
 
 import { ActionSheet } from '@/components/ui/ActionSheet';
 import { BottomSheet } from '@/components/ui/BottomSheet';
@@ -25,8 +31,11 @@ import { DateField } from '@/components/ui/DateField';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { AppText } from '@/components/ui/Text';
 import { SelectField, TextField } from '@/components/ui/TextField';
+import { ToggleRow } from '@/components/ui/ToggleRow';
 import { fonts, radii, spacing, tint } from '@/constants/tokens';
+import { useGridItemWidth } from '@/hooks/use-grid-item-width';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
 
 /**
@@ -36,8 +45,9 @@ import { useTheme } from '@/lib/theme';
 export default function AddTransactionScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { currency } = usePrivacy();
   const { id, duplicateOf } = useLocalSearchParams<{ id?: string; duplicateOf?: string }>();
-  const { transactions, accounts, categories, tags, addTransaction, updateTransaction, deleteTransaction, addTag, addCategory, getAccountById, getCategoryById, notify } = useFireBuddy();
+  const { transactions, accounts, categories, tags, recurringRules, addTransaction, addRecurringTransaction, updateRecurringRule, updateTransaction, deleteTransaction, addTag, addCategory, addAccount, getAccountById, getCategoryById, notify } = useFireBuddy();
 
   const editing = useMemo(() => (typeof id === 'string' ? transactions.find((transaction) => transaction.id === id) ?? null : null), [id, transactions]);
   const source = editing ?? (typeof duplicateOf === 'string' ? transactions.find((transaction) => transaction.id === duplicateOf) ?? null : null);
@@ -49,6 +59,17 @@ export default function AddTransactionScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  // Repeating is offered when creating; an edited copy instead asks whether the change applies to its rule.
+  const [repeat, setRepeat] = useState<RecurringFrequency | null>(null);
+  const [repeatPicker, setRepeatPicker] = useState(false);
+  const [hasEnd, setHasEnd] = useState(false);
+  const [endDate, setEndDate] = useState('');
+  const [endError, setEndError] = useState<string | null>(null);
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const rule = editing?.recurringId ? recurringRules.find((item) => item.id === editing.recurringId) ?? null : null;
+  const categoryGrid = useGridItemWidth(4, spacing.sm);
+  const chipWidth = categoryGrid.itemWidth ? { width: categoryGrid.itemWidth } : null;
 
   const visibleCategories = categories.filter((category) => category.categoryType === draft.transactionType);
   const account = getAccountById(draft.accountId);
@@ -77,10 +98,36 @@ export default function AddTransactionScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined);
       return;
     }
+    if (!editing && repeat && hasEnd && (!endDate || endDate < draft.date)) {
+      setEndError('Pick an end date on or after the first date.');
+      return;
+    }
+    if (editing && rule) {
+      // A copy from a repeating rule: ask whether later copies should change too.
+      setScopeOpen(true);
+      return;
+    }
+    commit(false);
+  }
+
+  /** Save the draft; `applyToRule` also updates the repeating rule this copy came from. */
+  function commit(applyToRule: boolean) {
     const input = draftToCreateInput(draft, getCategoryById(draft.categoryId)?.name);
     if (editing) {
       updateTransaction(editing.id, input);
-      notify('Transaction updated.');
+      if (applyToRule && rule) {
+        updateRecurringRule({
+          ...rule,
+          template: { transactionType: input.transactionType, amount: input.amount, categoryId: input.categoryId, accountId: input.accountId, description: input.description, tagIds: [...input.tagIds] },
+          updatedAt: new Date().toISOString(),
+        });
+        notify('Transaction and future repeats updated.');
+      } else {
+        notify('Transaction updated.');
+      }
+    } else if (repeat) {
+      addRecurringTransaction(input, repeat, hasEnd ? endDate : null);
+      notify(`${input.transactionType === 'income' ? 'Income' : 'Expense'} saved. It repeats ${recurringFrequencyLabels[repeat].toLowerCase()}.`);
     } else {
       addTransaction(input);
       notify(`${input.transactionType === 'income' ? 'Income' : 'Expense'} saved.`);
@@ -88,6 +135,15 @@ export default function AddTransactionScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     // Land on the ledger for the saved month so the new entry is the first thing on screen.
     close(() => router.navigate({ pathname: '/transactions', params: { month: input.date.slice(0, 7), saved: String(Date.now()) } }));
+  }
+
+  /**
+   * Blur the amount or description field first. Otherwise Android hands focus back to it when the
+   * category sheet closes and the keyboard pops up again over the new category.
+   */
+  function openCategorySheet() {
+    Keyboard.dismiss();
+    setCategorySheetOpen(true);
   }
 
   function addNewTag() {
@@ -104,7 +160,7 @@ export default function AddTransactionScreen() {
         open={open}
         onClose={() => close()}
         title={editing ? 'Edit transaction' : 'Add transaction'}
-        description={editing ? undefined : 'Record income or an expense against one of your accounts.'}
+        fill
         footer={(
           <View style={styles.footer}>
             <Button label={editing ? 'Save changes' : 'Save transaction'} variant="primary" block onPress={save} />
@@ -123,7 +179,7 @@ export default function AddTransactionScreen() {
           <View style={[styles.amountWell, { backgroundColor: theme.surface2, borderColor: errors.amount ? theme.danger : 'transparent' }]}>
             <AppText variant="overline" tone="ink2">Amount</AppText>
             <View style={styles.amountRow}>
-              <AppText variant="metric" tone="ink2">S$</AppText>
+              <AppText variant="metric" tone="ink2">{currencyPrefix(currency).trim()}</AppText>
               <TextInput
                 accessibilityLabel="Amount"
                 value={draft.amount}
@@ -161,9 +217,36 @@ export default function AddTransactionScreen() {
             />
           </View>
 
+          {editing ? (
+            rule ? (
+              <View style={[styles.repeatNote, { backgroundColor: theme.surface2 }]}>
+                <Repeat size={16} color={theme.ink2} strokeWidth={2} />
+                <AppText variant="caption" tone="ink2" style={styles.repeatNoteText}>
+                  {`Repeats: ${describeRecurringSchedule(rule).toLowerCase()}${rule.paused ? ' (paused)' : ''}. Manage it under Recurring on the Transactions tab.`}
+                </AppText>
+              </View>
+            ) : null
+          ) : (
+            <View style={styles.field}>
+              <SelectField
+                label="Repeats"
+                icon={Repeat}
+                value={repeat ? describeRecurringSchedule({ frequency: repeat, startDate: draft.date }) : 'Never'}
+                help={repeat ? 'Later copies are added by themselves on their dates, for salary, rent or subscriptions.' : undefined}
+                onPress={() => setRepeatPicker(true)}
+              />
+              {repeat ? (
+                <>
+                  <ToggleRow label="Set an end date" value={hasEnd} onChange={(next) => { setHasEnd(next); setEndError(null); }} />
+                  {hasEnd ? <DateField label="End date" value={endDate} onChange={(date) => { setEndDate(date); setEndError(null); }} error={endError} placeholder="Choose a date" /> : null}
+                </>
+              ) : null}
+            </View>
+          )}
+
           <View style={styles.field}>
             <AppText variant="label">Category</AppText>
-            <View style={styles.categoryGrid}>
+            <View style={styles.categoryGrid} onLayout={categoryGrid.onLayout}>
               {visibleCategories.map((category) => {
                 const selected = draft.categoryId === category.id;
                 return (
@@ -174,6 +257,7 @@ export default function AddTransactionScreen() {
                     onPress={() => update('categoryId', category.id)}
                     style={[
                       styles.categoryChip,
+                      chipWidth,
                       { backgroundColor: selected ? tint(category.color, 0.16) : theme.surface, borderColor: selected ? category.color : theme.line },
                     ]}
                   >
@@ -185,13 +269,13 @@ export default function AddTransactionScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="New category"
-                onPress={() => setCategorySheetOpen(true)}
-                style={[styles.categoryChip, styles.newCategoryChip, { borderColor: theme.lineStrong }]}
+                onPress={openCategorySheet}
+                style={[styles.categoryChip, chipWidth, styles.newCategoryChip, { borderColor: theme.lineStrong }]}
               >
                 <View style={[styles.newCategoryIcon, { backgroundColor: theme.surface2 }]}>
                   <Plus size={19} color={theme.ink2} strokeWidth={2} />
                 </View>
-                <AppText variant="captionMedium" tone="ink2" align="center">New category</AppText>
+                <AppText variant="captionMedium" tone="ink2" numberOfLines={2} align="center">New category</AppText>
               </Pressable>
             </View>
             {errors.categoryId ? <AppText variant="caption" tone="danger">{errors.categoryId}</AppText> : null}
@@ -229,12 +313,53 @@ export default function AddTransactionScreen() {
         open={accountPicker}
         onClose={() => setAccountPicker(false)}
         title="Account"
-        actions={accounts.map((option) => ({
-          label: option.name,
-          detail: option.lastFour ? `···· ${option.lastFour}` : undefined,
-          selected: option.id === draft.accountId,
-          onSelect: () => update('accountId', option.id),
-        }))}
+        actions={[
+          ...accounts.map((option) => ({
+            label: option.name,
+            detail: option.lastFour ? `···· ${option.lastFour}` : undefined,
+            selected: option.id === draft.accountId,
+            onSelect: () => update('accountId', option.id),
+          })),
+          // Always last, so the user's own accounts stay at the top of the list.
+          { key: 'add-account', label: 'Add account', icon: Plus, onSelect: () => setAccountSheetOpen(true) },
+        ]}
+      />
+      <ActionSheet
+        open={repeatPicker}
+        onClose={() => setRepeatPicker(false)}
+        title="Repeats"
+        actions={[
+          { key: 'never', label: 'Never', selected: repeat === null, onSelect: () => setRepeat(null) },
+          ...RECURRING_FREQUENCIES.map((frequency) => ({
+            key: frequency,
+            label: recurringFrequencyLabels[frequency],
+            detail: describeRecurringSchedule({ frequency, startDate: draft.date }),
+            selected: repeat === frequency,
+            onSelect: () => setRepeat(frequency),
+          })),
+        ]}
+      />
+      <ActionSheet
+        open={scopeOpen}
+        onClose={() => setScopeOpen(false)}
+        title="This transaction repeats"
+        description="Change only this one, or this one and every future repeat?"
+        actions={[
+          { key: 'one', label: 'Just this one', onSelect: () => commit(false) },
+          { key: 'future', label: 'This and future repeats', onSelect: () => commit(true) },
+        ]}
+      />
+      <AccountSheet
+        open={accountSheetOpen}
+        mode="add"
+        onClose={() => setAccountSheetOpen(false)}
+        onSave={(input) => {
+          Keyboard.dismiss();
+          const account = addAccount(input);
+          update('accountId', account.id);
+          setAccountSheetOpen(false);
+          notify(`${account.name} added.`);
+        }}
       />
       <CategorySheet
         open={categorySheetOpen}
@@ -242,6 +367,7 @@ export default function AddTransactionScreen() {
         categoryType={draft.transactionType}
         onClose={() => setCategorySheetOpen(false)}
         onSave={(input) => {
+          Keyboard.dismiss();
           const category = addCategory(input);
           update('categoryId', category.id);
           setCategorySheetOpen(false);
@@ -270,6 +396,16 @@ export default function AddTransactionScreen() {
 const styles = StyleSheet.create({
   body: {
     gap: spacing.lg,
+  },
+  repeatNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radii.tile,
+  },
+  repeatNoteText: {
+    flex: 1,
   },
   footer: {
     gap: spacing.sm,
@@ -311,13 +447,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
+  // Four fixed columns once measured, so the grid stays short and a new category never stretches the row.
   categoryChip: {
-    width: '31%',
-    flexGrow: 1,
+    width: '23%',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 6,
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     borderRadius: radii.tile,
     borderWidth: 1,
   },
@@ -326,8 +462,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   newCategoryIcon: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: radii.tile,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,4 +1,4 @@
-import { monthIndex } from '@firebuddy/shared';
+import { coastNumber } from '@firebuddy/shared';
 import { useRouter } from 'expo-router';
 import { Landmark, PencilLine, SlidersHorizontal } from 'lucide-react-native';
 import { useState } from 'react';
@@ -20,6 +20,7 @@ import { layout, radii, spacing } from '@/constants/tokens';
 import { ageAt, describeFire, fireMonthLabel, pct, timeUntil, useFireProjection } from '@/hooks/use-fire-plan';
 import { useTheme } from '@/lib/theme';
 import { usePrivacy } from '@/lib/privacy';
+import { useRegion } from '@/lib/user-profile';
 
 /**
  * The saved retirement plan on a phone, told top-down: when you retire, whether the money lasts,
@@ -43,6 +44,7 @@ export default function FirePlannerScreen() {
       {!ready ? (
         <Card>
           <EmptyState
+            doudou="point"
             title="Review required"
             message={fire.warnings.map((warning) => warning.message).join(' ') || 'Confirm your timeline, retirement spending, spendable assets, income and assumptions to activate a projection.'}
             actionLabel="Set up plan"
@@ -74,9 +76,9 @@ interface ResultsProps {
 
 function Results({ fire, theme, onScenario, onAssets, onEdit }: ResultsProps) {
   const { money, percent } = usePrivacy();
+  const { isSingapore } = useRegion();
   const amount = (value: string | null | undefined) => (value == null ? 'Unavailable' : money(Number(value), 0));
   const { plan, depletion, funded, retirementAge, earliestAge, progress, contributionDelta, peak, monthsToRetirement, firstRetirement, firstCpf, cpfIncluded, years } = describeFire(fire);
-  const monthly = (annual: number) => (1 + annual) ** (1 / 12) - 1;
   const retireMonth = fireMonthLabel(plan.retirementMonth);
   const progressLabel = `${percent(progress)} funded`;
   const contribution = money(plan.monthlyContribution, 0);
@@ -89,12 +91,16 @@ function Results({ fire, theme, onScenario, onAssets, onEdit }: ResultsProps) {
     depletion
       ? { label: 'Money runs out', value: fireMonthLabel(depletion), detail: `age ${ageAt(plan, depletion)} · plan runs to ${plan.endAge}`, warn: true }
       : { label: 'Money lasts until', value: `Age ${plan.endAge}`, detail: 'the end of your plan' },
-    { label: 'CPF LIFE payouts start', value: cpfIncluded ? `Age ${plan.cpfStartAge}` : 'Not included', detail: cpfIncluded ? `${money(plan.cpfMonthlyPayout, 0)} a month` : plan.cpfPlan === 'basic' ? 'Basic plan payouts are not modelled yet' : 'payout amount not known yet' },
+    // CPF LIFE is Singapore's; the general mode leaves it out entirely.
+    ...(isSingapore ? [{ label: 'CPF LIFE payouts start', value: cpfIncluded ? `Age ${plan.cpfStartAge}` : 'Not included', detail: cpfIncluded ? `${money(plan.cpfMonthlyPayout, 0)} a month` : plan.cpfPlan === 'basic' ? 'Basic plan payouts are not modelled yet' : 'payout amount not known yet' }] : []),
   ];
+  // Coast FIRE: what today's portfolio must be to reach the target with no more contributions.
+  const coast = plan.fireType === 'coast' && fire.fiTarget != null ? coastNumber(Number(fire.fiTarget), Math.max(0, monthsToRetirement), plan.beforeReturn) : null;
+  const coastReached = coast !== null && Number(fire.currentInvestableAssets ?? 0) >= coast;
 
   const budgetColumns = [
     { title: 'First month of retirement', when: firstRetirement ? fireMonthLabel(firstRetirement.month) : '', row: firstRetirement },
-    { title: 'Once CPF LIFE starts', when: `age ${plan.cpfStartAge}`, row: firstCpf },
+    ...(isSingapore ? [{ title: 'Once CPF LIFE starts', when: `age ${plan.cpfStartAge}`, row: firstCpf }] : []),
   ];
 
   return (
@@ -121,6 +127,18 @@ function Results({ fire, theme, onScenario, onAssets, onEdit }: ResultsProps) {
         </View>
         <AppText variant="caption" tone="heroMuted">Accounting for {pct(plan.inflation)} annual inflation.</AppText>
       </Card>
+
+      {coast !== null ? (
+        <Card>
+          <CardHeader title="Your coast number" subtitle={`What you need invested today to stop adding and still reach ${amount(fire.fiTarget)} by ${retireMonth}`} style={styles.tightHeader} />
+          <AppText variant="metric">{money(coast, 0)}</AppText>
+          <AppText variant="body" tone="ink2">
+            {coastReached
+              ? `You have ${amount(fire.currentInvestableAssets)}, so you have reached it. Growth alone at ${pct(plan.beforeReturn)} a year can carry you from here.`
+              : `You have ${amount(fire.currentInvestableAssets)}: ${money(coast - Number(fire.currentInvestableAssets ?? 0), 0)} to go. Once you reach it, you can stop investing and let ${pct(plan.beforeReturn)} a year of growth do the rest.`}
+          </AppText>
+        </Card>
+      ) : null}
 
       {/* 2. What to do about it. */}
       <Card style={!funded ? { borderColor: theme.warning, backgroundColor: theme.warningSoft } : null}>
@@ -177,7 +195,7 @@ function Results({ fire, theme, onScenario, onAssets, onEdit }: ResultsProps) {
       {/* 5. What retirement costs each month. */}
       <Card>
         <CardHeader title="Monthly budget in retirement" subtitle="Per month, in future dollars" />
-        {!cpfIncluded ? <AppText variant="caption" tone="warning" style={styles.note}>CPF LIFE income is not included{plan.cpfPlan === 'basic' ? ': Basic plan payouts are not modelled yet.' : ': the payout amount is not known yet.'}</AppText> : null}
+        {isSingapore && !cpfIncluded ? <AppText variant="caption" tone="warning" style={styles.note}>CPF LIFE income is not included{plan.cpfPlan === 'basic' ? ': Basic plan payouts are not modelled yet.' : ': the payout amount is not known yet.'}</AppText> : null}
         <View style={styles.columns}>
           {budgetColumns.map(({ title, when, row }) => (
             <View key={title} style={[styles.column, { backgroundColor: theme.surface2 }]}>
@@ -188,7 +206,7 @@ function Results({ fire, theme, onScenario, onAssets, onEdit }: ResultsProps) {
               {row ? (
                 <>
                   <Fact label="Spending" value={amount(row.expenses)} />
-                  <Fact label="CPF LIFE payout" value={amount(row.cpf)} />
+                  {isSingapore ? <Fact label="CPF LIFE payout" value={amount(row.cpf)} /> : null}
                   <Fact label="Other income" value={amount(row.otherIncome)} />
                   <Fact label="Drawn from your portfolio" value={money(Math.max(0, Number(row.expenses) - Number(row.cpf) - Number(row.otherIncome)), 0)} strong />
                 </>
@@ -222,29 +240,29 @@ function Results({ fire, theme, onScenario, onAssets, onEdit }: ResultsProps) {
       </Collapsible>
 
       <Collapsible title="How the numbers are calculated">
-        <AppText variant="bodySmall" tone="ink2">Calculation {fire.calculationVersion}, effective {fire.effectiveDate}. Monthly growth is applied first; investments or withdrawals follow at month end. Spending is inflated once from {fireMonthLabel(plan.spendingMonth)}; CPF estimates are in commencement dollars.</AppText>
-        <Formula label="Monthly growth before retirement" value={`(1 + ${pct(plan.beforeReturn)})^(1/12) − 1 = ${pct(monthly(plan.beforeReturn), 3)}`} />
-        <Formula label="Monthly growth after retirement" value={`(1 + ${pct(plan.afterReturn)})^(1/12) − 1 = ${pct(monthly(plan.afterReturn), 3)}`} />
-        {firstRetirement ? <Formula label="Spending at retirement" value={`${money(plan.monthlySpending, 0)} × (1 + ${pct(plan.inflation)})^(${monthIndex(firstRetirement.month) - monthIndex(plan.spendingMonth) + 1}/12) = ${amount(firstRetirement.expenses)} per month`} /> : null}
-        <Formula label={`Amount needed for retirement in ${retireMonth}`} value={`Capital that funds every retirement month through age ${plan.endAge} after CPF and other income, worked backwards at ${pct(plan.afterReturn)} = ${amount(fire.fiTarget)}`} />
-        <Formula label={`Projected portfolio in ${retireMonth}`} value={`${amount(fire.currentInvestableAssets)} grown for ${monthsToRetirement} months plus ${contribution} monthly = ${amount(fire.projectedPortfolio)}`} />
+        <AppText variant="bodySmall" tone="ink2">
+          {`Month by month: investments grow ${pct(plan.beforeReturn)} a year until you retire and ${pct(plan.afterReturn)} after, and spending rises ${pct(plan.inflation)} a year.`}
+        </AppText>
+        {firstRetirement ? <Formula label="Spending when you retire" value={`${money(plan.monthlySpending, 0)} today, after ${pct(plan.inflation)} a year of inflation = ${amount(firstRetirement.expenses)} a month`} /> : null}
+        <Formula label="Amount needed" value={`Enough to pay every month to age ${plan.endAge}${isSingapore && cpfIncluded ? ', after CPF LIFE and other income' : ', after other income'} = ${amount(fire.fiTarget)}`} />
+        <Formula label="Projected amount" value={`${amount(fire.currentInvestableAssets)} now plus ${contribution} a month, grown to ${retireMonth} = ${amount(fire.projectedPortfolio)}`} />
         <Formula label="Funded" value={`${amount(fire.projectedPortfolio)} ÷ ${amount(fire.fiTarget)} = ${percent(progress, 1)}`} />
-        <Formula label="Today’s money" value={`Retirement-date amounts ÷ (1 + ${pct(plan.inflation)})^(${monthsToRetirement}/12)`} />
       </Collapsible>
 
       <Collapsible title="Assumptions and data quality">
-        <AppText variant="bodySmall" tone="ink2">Return before retirement {pct(plan.beforeReturn)}, after retirement {pct(plan.afterReturn)}, inflation {pct(plan.inflation)}. Individual plan through age {plan.endAge}. These are editable assumptions, not official forecasts or safe rates.</AppText>
-        <AppText variant="bodySmall" tone="ink2">Recorded spending period: {fire.spendingBaseline.startDate ?? 'Unavailable'} to {fire.spendingBaseline.endDate ?? 'Unavailable'} ({fire.spendingBaseline.completedMonths} completed months). Missing records do not prove zero spending.</AppText>
-        {fire.warnings.map((warning) => <AppText key={warning.code} variant="bodySmall" tone="warning">{warning.message}</AppText>)}
-        <View style={styles.provenance}>
-          {Object.entries(plan.provenance).map(([key, value]) => (
-            <View key={key} style={styles.provenanceRow}>
-              <AppText variant="caption" tone="ink2" style={styles.provenanceKey}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())}</AppText>
-              <AppText variant="captionMedium">{value === 'user-entered' ? 'Typed by you' : value === 'recorded' ? 'Recorded' : 'Default'}</AppText>
-            </View>
-          ))}
-        </View>
-        <AppText variant="caption" tone="ink3">Policy reference reviewed 7 September 2026: CPF Board CPF LIFE and MoneySense retirement planning. Older policy figures are not calculation constants.</AppText>
+        <AppText variant="bodySmall" tone="ink2">
+          {`Returns ${pct(plan.beforeReturn)} before and ${pct(plan.afterReturn)} after retiring, inflation ${pct(plan.inflation)}, planned to age ${plan.endAge}. Assumptions you can edit, not forecasts.`}
+        </AppText>
+        {fire.spendingBaseline.startDate && fire.spendingBaseline.endDate ? (
+          <AppText variant="bodySmall" tone="ink2">{`Spending based on ${fire.spendingBaseline.completedMonths} recorded month${fire.spendingBaseline.completedMonths === 1 ? '' : 's'}.`}</AppText>
+        ) : null}
+        {fire.warnings
+          .filter((warning) => isSingapore || warning.code !== 'cpf_not_included')
+          .map((warning) => <AppText key={warning.code} variant="bodySmall" tone="ink2">{`• ${shortWarning(warning.code, warning.message)}`}</AppText>)}
+        <AppText variant="caption" tone="ink3">{provenanceSummary(plan.provenance)}</AppText>
+        {isSingapore ? (
+          <AppText variant="caption" tone="ink3">CPF LIFE rules checked against the CPF Board on 6 Oct 2026.</AppText>
+        ) : null}
       </Collapsible>
 
       {/* 7. Next steps. */}
@@ -263,6 +281,30 @@ function Fact({ label, value, strong = false }: { label: string; value: string; 
       <AppText variant={strong ? 'amount' : 'amountSmall'}>{value}</AppText>
     </View>
   );
+}
+
+/** Plain, short versions of the engine's warnings; anything unknown keeps the engine's own words. */
+const SHORT_WARNINGS: Record<string, string> = {
+  smooth_returns: 'Assumes steady returns; real markets rise and fall.',
+  selected_assets: 'Only the assets you ticked count.',
+  cpf_not_included: 'CPF LIFE isn’t included yet.',
+  stale_snapshot: 'Your typed total is over 35 days old.',
+};
+function shortWarning(code: string, message: string) {
+  return SHORT_WARNINGS[code] ?? message;
+}
+
+/** "5 values typed by you, 3 defaults" for the plan's provenance. */
+function provenanceSummary(provenance: Record<string, string>) {
+  const values = Object.values(provenance);
+  const typed = values.filter((value) => value === 'user-entered').length;
+  const recorded = values.filter((value) => value === 'recorded').length;
+  const defaults = values.length - typed - recorded;
+  return [
+    typed ? `${typed} value${typed === 1 ? '' : 's'} typed by you` : null,
+    recorded ? `${recorded} from your records` : null,
+    defaults ? `${defaults} default${defaults === 1 ? '' : 's'}` : null,
+  ].filter(Boolean).join(', ') + '.';
 }
 
 function Formula({ label, value }: { label: string; value: string }) {
@@ -385,17 +427,6 @@ const styles = StyleSheet.create({
   },
   formula: {
     gap: 2,
-  },
-  provenance: {
-    gap: spacing.xs,
-  },
-  provenanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  provenanceKey: {
-    flex: 1,
   },
   footer: {
     flexDirection: 'row',

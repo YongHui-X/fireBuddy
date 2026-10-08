@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   // v3: demo plan reseeded for the S$80,000 saver (retire at 60, S$2,000 a month) on 2026-09-30.
   retirementPlan: 'firebuddy_mobile_retirement_plan_v3',
   essentialCategories: 'firebuddy_mobile_essential_categories_v1',
+  recurringRules: 'firebuddy_mobile_recurring_rules_v1',
 } as const;
 
 export const DEMO_STORAGE_KEYS = Object.values(STORAGE_KEYS);

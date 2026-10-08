@@ -1,12 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { formatSGD } from '@firebuddy/shared';
+import { currencyPrefix, formatMoney } from '@firebuddy/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+
+import { useRegion } from './user-profile';
 
 /** Kept outside the demo dataset keys so resetting the data does not reveal amounts again. */
 export const PRIVACY_STORAGE_KEY = 'firebuddy_mobile_hide_amounts_v1';
 
-/** What every masked SGD figure renders as, so hidden amounts stay the same width everywhere. */
-export const MASKED_AMOUNT = 'S$ ••••';
+/** What a masked figure renders as, so hidden amounts stay the same width everywhere. */
+export function maskedAmount(currency = 'SGD') {
+  return `${currencyPrefix(currency).trim()} ••••`;
+}
+export const MASKED_AMOUNT = maskedAmount();
 /** Ratios derived from amounts (savings rate, funded share) are masked too, or they leak the trend. */
 export const MASKED_PERCENT = '••%';
 
@@ -16,7 +21,9 @@ interface PrivacyContextValue {
   /** True once the stored choice has been read; the splash stays up until then so real figures never flash. */
   hydrated: boolean;
   toggle: () => void;
-  /** Drop-in for `formatSGD` that renders the mask while amounts are hidden. */
+  /** The user's currency (from the welcome or Profile), for labels such as "Amount (SGD)". */
+  currency: string;
+  /** Drop-in for `formatSGD` in the user's currency that renders the mask while amounts are hidden. */
   money: (value: number | string, digits?: number) => string;
   /** A 0-1 ratio as a percentage string, masked while amounts are hidden. */
   percent: (ratio: number, digits?: number) => string;
@@ -56,10 +63,11 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(PRIVACY_STORAGE_KEY, String(next)).catch(() => undefined);
   }, [hidden]);
 
-  const money = useCallback((value: number | string, digits = 2) => (hidden ? MASKED_AMOUNT : formatSGD(value, digits)), [hidden]);
+  const { currency } = useRegion();
+  const money = useCallback((value: number | string, digits = 2) => (hidden ? maskedAmount(currency) : formatMoney(value, currency, digits)), [hidden, currency]);
   const percent = useCallback((ratio: number, digits = 0) => (hidden ? MASKED_PERCENT : `${(ratio * 100).toFixed(digits)}%`), [hidden]);
 
-  const value = useMemo<PrivacyContextValue>(() => ({ hidden, hydrated, toggle, money, percent }), [hidden, hydrated, toggle, money, percent]);
+  const value = useMemo<PrivacyContextValue>(() => ({ hidden, hydrated, toggle, currency, money, percent }), [hidden, hydrated, toggle, currency, money, percent]);
   return <PrivacyContext.Provider value={value}>{children}</PrivacyContext.Provider>;
 }
 

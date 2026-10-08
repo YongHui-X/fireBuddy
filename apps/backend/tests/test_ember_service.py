@@ -363,7 +363,7 @@ class EmberServiceTests(unittest.TestCase):
             events = list(ember_service.stream_ember_question("user-a", "Is my emergency fund large enough?"))
 
         self.assertEqual([e["event"] for e in events], ["status", "status", "done"])
-        self.assertEqual(events[1]["data"]["message"], "Reading your FireBuddy data")
+        self.assertEqual(events[1]["data"]["message"], "Breaking it down into steps")
         self.assertIs(stream.call_args.kwargs["personal_context"], snapshot)
 
     def test_stream_includes_aggregate_evidence_without_identity(self):

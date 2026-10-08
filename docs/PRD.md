@@ -1,6 +1,6 @@
 # FireBuddy Product Requirements Document
 
-Last updated: 29 September 2026
+Last updated: 3 October 2026
 
 ## 1. Purpose and ownership
 
@@ -21,7 +21,47 @@ When documentation differs from the file tree, mounted backend routes, or migrat
 
 The primary user is a Singapore based emerging FIRE planner, roughly 25 to 39 years old, who has begun earning, saving, or investing but lacks a reliable view of net worth, monthly momentum, or the path to financial independence. The product must also remain useful to a tracker only user who has not configured FIRE assumptions.
 
-Secondary audiences are people building confidence with Singapore finance concepts and recruiters assessing a deployed portfolio project. The active surface is the React and Vite web app. Mobile remains deferred until shared web contracts and core flows are stable.
+Secondary audiences are people building confidence with Singapore finance concepts and recruiters assessing a deployed portfolio project.
+
+### 2.1 Platform direction
+
+Decided 3 October 2026: **FireBuddy is a mobile app.** The Expo and React Native app in `apps/mobile` is the only active product surface, released Android first through Google Play. This replaces the 17 September 2026 plan to ship responsive web first and build the native app only once it needed the Play Store or a native capability.
+
+The React and Vite web app in `apps/web` is **frozen**. It stays in the repository as a working reference implementation of every flow, and its tests must stay green when shared code changes. It receives no new features or design work and is not a launch target.
+
+| Surface | Status | Rule |
+| --- | --- | --- |
+| `apps/mobile` (Expo, React Native) | **Active** | The product. All new user facing work starts here. |
+| `apps/backend` (FastAPI) | **Active** | Unchanged role: protected data, deterministic calculations, AI routing, RAG. |
+| `packages/shared` | **Active** | Business logic, contracts, and DouDou's art. New client logic lands here before either app uses it. |
+| `apps/web` (React, Vite) | **Frozen** | Reference only. Fix it only when a shared change breaks it. |
+
+Most business logic already lives in `packages/shared`, and the mobile app already has every main screen on local demo data. The remaining work is the DouDou consent and anonymous session, DouDou's art, and the store release, not a rewrite. Records stay on the phone, so there is no sign in and no backend data wiring (section 2.3). Phase 2 in section 14 defines it.
+
+### 2.3 Mobile privacy and data
+
+Decided 3 October 2026: **the phone collects nothing unless the user turns DouDou on.** This supersedes the managed cloud storage decision in section 11.1 for the mobile app.
+
+1. **Records stay on the phone.** Every transaction, account, position, snapshot, contribution and plan lives in on device storage. The app never writes records to Supabase or the backend. Backup is a passphrase encrypted file the user saves themselves.
+2. **No sign in screen.** Users never create an account or give a name or email.
+3. **DouDou is one choice, Off or On.** The phone does not offer the web's three levels. Off is the default.
+
+| | Off (default) | On |
+| --- | --- | --- |
+| Account | None | Invisible anonymous Supabase session, created when the user taps "Turn on DouDou" |
+| Network | None | DouDou requests only |
+| Leaves the phone | Nothing | The scrubbed question and recent history, plus masked figures only for the parts of the summary the question needs |
+| Server keeps | Nothing | A random id, the level `personalised`, and the consent time |
+
+4. **Relevant data only when needed, otherwise none.** The phone picks, per question, which snapshot sections the question needs: spending, cash flow, net worth, emergency fund, or FIRE. It sends only those, masked as tokens with a rough range. A general question sends no figures. If the phone cannot tell, it sends none. A section with no records behind it (no expenses, no wealth positions, no FIRE plan, or no budgets for a budget question) is never sent: when nothing is left, DouDou replies on the phone, with no network call, that the user has no recorded transactions (or wealth, plan, budgets) yet and where to add them; when some sections remain, the answer ends with the same note for the missing ones.
+5. **No pass unless DouDou is turned on.** A user who never turns DouDou on never gets an anonymous session. Only a user who turned it on and later turns it off has one to remove: the phone stops AI at once, then deletes the anonymous user through `DELETE /account`.
+6. **Why the anonymous session exists:** so the backend can rate limit each phone and check consent. It is a signed Supabase JWT, kept in the Keychain or Keystore, refreshed hourly, and sent over HTTPS in production.
+
+The user facing consent text and full data flow live in `docs/PRIVACY.md`.
+
+### 2.2 DouDou
+
+Decided 3 October 2026: the mascot and the AI guide are one character, **DouDou** (豆豆, "little bean"), a lime sprout bean. DouDou replaces the earlier sun mark as the app icon and replaces the name Ember in every user facing string. Internal identifiers such as the `/ember` route, `ember_*` backend services, and `Ember*` files keep their old names. DouDou's poses, motion, and usage rules live in `DESIGN.md`, and its drawing is shared shape data in `packages/shared/src/doudou.ts`.
 
 The dashboard must answer four questions in this order:
 
@@ -46,16 +86,30 @@ The dashboard must answer four questions in this order:
 3. **Evidence before advice.** Analytics and recommended actions identify their evidence and a relevant product action.
 4. **Honest data states.** Historical facts, projections, warnings, and incomplete data are visibly distinct. Illustrative numbers never appear as user results.
 5. **Singapore relevance.** Currency, CPF classification, and educational content reflect a Singapore context without regulated advice claims.
-6. **One Ember.** Ember routes supported questions to deterministic analytics, FIRE calculations, scenario results, or curated Singapore finance retrieval.
+6. **One DouDou.** DouDou routes supported questions to deterministic analytics, FIRE calculations, scenario results, or curated Singapore finance retrieval.
 7. **Human control.** AI suggestions are optional and reviewable. They never silently save or change financial records.
-8. **Focused architecture.** Keep React, Vite, FastAPI, Supabase Auth, Postgres, and shared TypeScript contracts.
+8. **Focused architecture.** Keep Expo and React Native for the app, FastAPI, Supabase Auth, Postgres, and shared TypeScript contracts.
 9. **Private by default.** Every user owned record and calculation is authenticated and owner scoped.
 
 ## 5. Capability inventory
 
-### 5.1 Current web experience
+### 5.1 Current mobile app
 
-Repository inspection confirms these **Current** capabilities:
+The Expo app in `apps/mobile` has these **Current** capabilities, all running on records kept on the phone:
+
+1. A four tab shell (Home, Transactions, Categories, Profile) with a centred lime Add tile, safe area aware on Android and iOS.
+2. Home with the net worth hero, Money Pulse, category budgets, spending donut, and recent transactions, plus an app wide control that hides every amount.
+3. Transactions with a period stepper, search, filters, a day grouped ledger, details, edit, duplicate, delete, tags, and CSV export through the system share sheet.
+4. Categories with breakdown and add and edit, and the Add and Edit transaction sheet.
+5. Secondary screens for Wealth, FIRE Planner and plan editing, Insights, Accounts, Plan (essential spending), the AI chat, and a Goals placeholder.
+6. Records stored only on the phone in AsyncStorage, seeded from the shared demo dataset. Ledger maths, Insights series, CSV building, essential spending, and formatters come from `packages/shared`.
+7. An AI chat that masks on the phone and calls the backend only when a developer API address and access token are configured, and a three level AI consent stored on the device.
+
+These are **Next**, not Current, on mobile: the Off/On DouDou consent with an anonymous session and per question data selection (section 2.3), DouDou in place of Ember in user facing strings, and a Google Play release. Supabase sign in and FastAPI data for records are **Excluded** on mobile by section 2.3.
+
+### 5.2 Frozen web app
+
+The frozen web app implements these capabilities. They set the feature bar the mobile app must reach before release:
 
 1. Supabase sign up, sign in, session recovery, reset password, and sign out.
 2. Explicit demo only local state, separate from authenticated data.
@@ -65,15 +119,15 @@ Repository inspection confirms these **Current** capabilities:
 6. Typed expense and income categories. Current `monthly_budget` applies to expenses, while income categories require zero.
 7. Expense only Insights with Day, Week, Month, and Year ranges, charts, category share, and CSV export.
 8. Optional expense category suggestions that require explicit user action and review before saving.
-9. Ember with an empty opening transcript, starter topics, streamed answers, per answer citations, and searchable local topic history in a responsive right rail or drawer.
+9. DouDou with an empty opening transcript, starter topics, streamed answers, per answer citations, and searchable local topic history in a responsive right rail or drawer.
 10. Real data Home dashboard with net worth, savings rate, emergency fund runway, explainable FIRE progress, monthly spending, Monthly Money Pulse, one deterministic next action, and transparent recent transaction indicators.
 11. Wealth position, dated snapshot, and contribution management, separate from payment accounts.
 12. FIRE assumptions, essential expense category selection, and nonpersistent contribution or retirement spending scenarios.
 13. Full versioned local demo state for wealth and FIRE records, clearly labelled as local demo data.
 
-### 5.2 Current navigation, backend, and schema
+### 5.3 Current navigation, backend, and schema
 
-The **Current** desktop navigation is Home, Transactions, Categories, Plan, Goals, and Profile, with Ember visually separated. Plan and Goals are honest Later placeholders. Mobile keeps exactly Home, Transactions, Categories, and Profile. Insights, Accounts, Wealth, and FIRE setup are secondary routes. Add transaction is a desktop action and mobile floating action.
+The **Current** mobile navigation is exactly four tabs: Home, Transactions, Categories, and Profile, with Add transaction as the centred lime tile that opens a sheet. Wealth, FIRE Planner, Insights, Accounts, Plan, Goals, and the DouDou chat are secondary screens pushed over the tabs. Plan and Goals are honest Later placeholders. The frozen web app reaches the same destinations through a desktop sidebar.
 
 The **Current** core tables are `profiles`, `categories`, `accounts`, `expenses`, `wealth_positions`, `wealth_position_snapshots`, `wealth_contributions`, `fire_profiles`, `essential_expense_categories`, and `rag_chunks`. The `expenses` table stores typed income and expense transactions during compatibility.
 
@@ -95,27 +149,30 @@ The **Current** mounted API surfaces are:
 
 Supabase Auth issues JWTs. The frontend uses Supabase directly for authentication only. FastAPI validates bearer tokens and scopes application queries. Row level security and ownership checks provide a second boundary. RAG storage and retrieval remain private to backend service role clients.
 
-### 5.3 Status summary
+### 5.4 Status summary
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Auth, accounts, transactions, categories, Insights, AI suggestion, Ember | **Current** | Implemented, subject to production configuration and smoke testing |
-| Wealth positions, snapshots, contributions, financial summary, real FIRE dashboard | **Current** | Implemented locally; manual responsive browser smoke remains before deployment |
+| Mobile app screens with records on the phone | **Current** | Every main and secondary screen exists in `apps/mobile` |
+| Mobile Off/On DouDou consent, anonymous session, per question data selection, DouDou art, Google Play release | **Next** | Phase 2, the path to first release |
+| Mobile sign in and backend record storage | **Excluded** | Section 2.3 keeps records on the phone |
+| Auth, accounts, transactions, categories, Insights, AI suggestion, DouDou on the backend and frozen web app | **Current** | Implemented, subject to production configuration and smoke testing |
+| Wealth positions, snapshots, contributions, financial summary, real FIRE dashboard | **Current** | Backend and frozen web app; mobile computes these on the phone from shared logic |
 | Spending Plan and Life Goals | **Later** | Approved monthly planning milestone |
 | CSV import, expanded analytics, drilldowns, recurring detection | **Later** | Data depth milestone |
-| Unified data aware Ember | **Later** | Requires deterministic services first |
+| Unified data aware DouDou | **Later** | Requires deterministic services first |
 | Saved scenarios, Coast FI, CPF layers, retirement income, sensitivity, resilience | **Later** | Planning depth |
 | Bank connections, live feeds, payment execution, investment execution | **Excluded** | Outside planned scope |
 
-## 6. Current: dashboard foundation before first deployment
+## 6. Current: dashboard foundation before first release
 
-The dashboard foundation is **Current** in the repository. Automated web, backend, calculation, migration, RLS, and local database checks pass. The first public deployment remains blocked until the manual localhost browser journey and signed in two user smoke complete. Existing tracker and Ember behavior remain unchanged.
+The dashboard foundation is **Current** in the repository. Automated web, backend, calculation, migration, RLS, and local database checks pass. The first public release is the Android app. It is blocked until the mobile app runs on real records kept on the phone and passes the device acceptance in section 15.2. Existing tracker and DouDou behavior remain unchanged.
 
 ### 6.1 Target navigation
 
-The **Current** desktop sidebar order is Home, Transactions, Categories, Plan, Goals, Profile, then a visually separated Ember entry. Log out and Add Transaction remain at the bottom.
+The app keeps exactly four tabs: Home, Transactions, Categories, and Profile. Add transaction remains the centred tile that opens a sheet, never a fifth tab. Plan, Goals, DouDou, Wealth, FIRE Planner, Accounts, and detailed Insights remain secondary screens. Ask DouDou is reached from Home.
 
-Mobile keeps exactly four tabs: Home, Transactions, Categories, and Profile. Add transaction remains a floating action, modal, or sheet. Plan, Goals, Ember, Accounts, and detailed Insights remain secondary mobile flows.
+The frozen web app keeps its sidebar order of Home, Transactions, Categories, Plan, Goals, Profile, then a separated Ask DouDou entry. It is not redesigned.
 
 ### 6.2 Target Home dashboard
 
@@ -129,7 +186,7 @@ The dashboard order is:
 
 The monthly spending solid pie follows the supplied mobile chart reference and shows the four largest expense categories, combining the remainder into an `Others` segment. Every visible segment, including `Others`, must retain its complete category name and percentage connected to that exact segment by one straight radial leader line in the matching slice colour. The label and line endpoint follow the slice midpoint rather than a separately adjusted lane, keeping the connector geometrically straight. A visible gap separates each line endpoint from its text. Category names must never be cropped or shortened with an ellipsis. Narrow layouts wrap long names at a word boundary, and labels must remain inside the card without overlapping at desktop, tablet, and mobile widths. The total expense amount sits above the pie so the chart remains visually clear. Hovering or selecting a slice moves it, its straight connector, and its label slightly outward as one unit while exposing its exact SGD value. The movement must respect the user's reduced motion preference. View More opens the complete detailed Insights breakdown. The detailed view must repeat the same pie and include a matching row for every visible segment with its percentage, category name, colour, and actual SGD spending amount.
 
-Home must not contain a large Goals or Ember panel because both have dedicated pages. Compact contextual links are acceptable when they support a result or empty state.
+Home must not contain a large Goals or DouDou panel because both have dedicated pages. Compact contextual links are acceptable when they support a result or empty state.
 
 When real data is unavailable, cards show setup prompts and direct actions such as Add a wealth position, Categorise transactions, or Set FIRE assumptions. They never substitute mockup figures.
 
@@ -273,7 +330,7 @@ The existing category `monthly_budget` evolves into a **Later** period based Spe
 
 ### 7.2 Life Goals
 
-Life Goals are an approved **Later** capability with a dedicated Goals page. A goal stores target amount, target date, current progress, contributions, status, and an optional eligible wealth position link. Goal contributions do not automatically become expenses.
+Life Goals are an approved **Later** capability with a dedicated Goals page. The mobile app has no Goals screen until this ships; the placeholder was removed before the first Play Store test. A goal stores target amount, target date, current progress, contributions, status, and an optional eligible wealth position link. Goal contributions do not automatically become expenses.
 
 Initial statuses are `draft`, `on_track`, `at_risk`, `achieved`, and `paused`. Emergency fund designation may support an emergency goal, but the underlying value has one authoritative source.
 
@@ -294,9 +351,19 @@ Expanded analytics are **Later**. They include explicit period totals, savings t
 
 Recurring detection is **Later**. It identifies likely subscriptions and bills using reviewable merchant, amount, and interval evidence. It does not create, schedule, or execute payments.
 
-## 9. Current: routed Ember
+### 8.1 Future plans: Card and Rewards Optimizer
 
-Routed Ember is **Current**. It uses one structured planning call, one fixed read-only data tool when needed, optional curated retrieval, and at most one final answer generation call. It is a bounded orchestrator, not an autonomous or iterative agent.
+The Card and Rewards Optimizer is **out of scope for the initial beta** and remains a future planning capability. It would use a user's existing spending pattern, such as dining, groceries, transport, and shopping totals, to identify Singapore credit cards whose rewards rules fit that pattern. The purpose is to optimise rewards from existing spending in support of the FIRE goal, rather than encourage additional spending.
+
+FireBuddy cannot know the actual Merchant Category Code (MCC) assigned by a card issuer or payment network when a user manually records a transaction. A future merchant knowledge base may provide an expected or likely category for known merchants, such as McDonald's or FairPrice, but must never present that estimate as the verified MCC of the user's card transaction. Merchants such as Grab may require transaction type or context because different services can map to different categories.
+
+The future card rules dataset would need to represent reward categories, earn rates, minimum monthly spend, caps, exclusions, payment method requirements, eligibility conditions, and effective dates. Recommendations must show the assumptions and source freshness, and must not rely on expired promotions or stale rules. The primary output would be a comparison of cards that fit the user's observed spending, rather than a raw MCC display.
+
+This capability depends on a carefully maintained and traceable Singapore card rewards data source. The calculator itself is expected to be straightforward; the difficult product and operational work is keeping issuer rules, exclusions, caps, minimum spends, and promotional periods accurate over time.
+
+## 9. Current: routed DouDou
+
+Routed DouDou is **Current**. It uses one structured planning call, one fixed read-only data tool when needed, optional curated retrieval, and at most one final answer generation call. It is a bounded orchestrator, not an autonomous or iterative agent.
 
 | Question type | Authoritative source |
 | --- | --- |
@@ -306,7 +373,18 @@ Routed Ember is **Current**. It uses one structured planning call, one fixed rea
 | Temporary comparison | Later deterministic scenario tool |
 | Singapore finance concept | Curated Singapore finance RAG |
 
-FastAPI supplies the authenticated user ID after JWT verification. The planner cannot supply identity fields or SQL, each tool scopes its queries to that server identity, and answer prompts receive aggregate facts rather than raw transaction rows. Browser conversation history is partitioned by account. Ember explains structured results in plain language and never silently changes data. Answers identify periods and assumptions. Missing inputs produce a limitation or setup request.
+FastAPI supplies the authenticated user ID after JWT verification. The planner cannot supply identity fields or SQL, each tool scopes its queries to that server identity, and answer prompts receive aggregate facts rather than raw transaction rows. Browser conversation history is partitioned by account. DouDou explains structured results in plain language and never silently changes data. Answers identify periods and assumptions. Missing inputs produce a limitation or setup request.
+
+### 9.1 Future plans: DouDou that calculates and plans (kept in view)
+
+These ideas are **Later** and wait until after the first Google Play closed test. They come from an October 2026 review of an agent pipeline idea; only the parts that fit the privacy model and need no new provider were kept.
+
+1. **The phone does the maths.** On mobile the AI only sees masked tokens and rough ranges, so it cannot answer "if I save S$500 more a month, when can I retire?" exactly. The planner would instead return which deterministic calculation to run and with which inputs changed; the phone runs it with the shared maths (`retirement.ts`, `essential.ts`) on the real records and shows the exact result. The provider still never sees a figure.
+2. **Life Goals become plans.** Builds on item 1 and on section 7.2. A goal such as "4-room HDB flat in 2028, about S$40,000 down payment" turns into a monthly saving amount, its effect on the FIRE date, two or three next steps, and monthly progress tracking.
+3. **Fresh official figures with sources.** Run `fetch_figures.py` on a schedule so CPF, HDB and IRAS figures stay current. Every answer that quotes one shows its source and as-of date, and DouDou says when a figure is older than its usual update cycle and links the official page.
+4. **Visible steps.** While DouDou works, show short status lines such as "Checking official CPF figures" and "Running your numbers on this phone".
+
+Suggested order: 1, 2, 3, 4. Considered and not planned: switching the planner to NVIDIA Nemotron on Nebius (no problem it solves; a new provider means new privacy terms and a full re-evaluation) and live web search through Tavily (a paid third party that receives questions, with results that still need checking; item 3 covers the need).
 
 ## 10. Later: planning depth
 
@@ -316,19 +394,19 @@ CPF and other restricted balances remain distinct from pre retirement liquidity.
 
 ## 11. Design, architecture, and trust
 
-The FireBuddy mockup is the primary visual reference. Preserve the green identity, warm professional tone, curved headers, restrained gradients, thin borders, rounded surfaces, whitespace, and sentence case. Desktop follows the target sidebar. Tablet and mobile reflow the same hierarchy without changing the four mobile tabs.
+The FireBuddy mockup is the primary visual reference. Preserve the green identity, warm professional tone, thin borders, rounded surfaces, whitespace, and sentence case. Phone screens are the design target, and the `DESIGN.md` mobile and touch rules apply: safe areas, thumb reachable controls, bottom sheets, and the four tabs. DouDou appears at most once per screen and only for moments such as welcomes, tips, empty states, errors, privacy, and milestones.
 
-The **Current** Ember route is a focused two region reading workspace. Its flexible conversation canvas uses distinct user and cited assistant surfaces with a grounded bottom composer. Searchable local conversation history sits in a right rail from `1180px` and becomes a keyboard accessible right drawer below that width. The dedicated answer guide panel is not part of this layout; essential scope and educational guidance remain visible in the empty state and composer note.
+In the frozen web app, the **Current** DouDou chat route is a focused two region reading workspace. Its flexible conversation canvas uses distinct user and cited assistant surfaces with a grounded bottom composer. Searchable local conversation history sits in a right rail from `1180px` and becomes a keyboard accessible right drawer below that width. The dedicated answer guide panel is not part of this layout; essential scope and educational guidance remain visible in the empty state and composer note.
 
 Charts need text summaries, keyboard reachable details, and non color distinctions. Currency defaults to Singapore dollars. Dates and assumptions use plain language.
 
 All **Current**, **Next**, and **Later** work keeps these constraints:
 
-1. React and Vite remain the active web frontend.
+1. Expo and React Native are the active frontend. The React and Vite web app is frozen.
 2. FastAPI owns protected APIs, deterministic rules, AI routing, and RAG.
 3. Supabase Auth remains the only authentication system.
 4. Postgres remains the data store with RLS on every user facing table.
-5. The frontend calls Supabase directly only for authentication and FastAPI for application data.
+5. The app calls Supabase directly only for authentication and FastAPI for application data.
 6. Shared client consumed contracts belong in `packages/shared`.
 7. New user owned tables and derived services receive ownership and cross user isolation tests.
 8. Financial records and secrets are not written to application logs.
@@ -342,10 +420,10 @@ Decided 29 September 2026 after comparing managed cloud, a self hosted mini PC, 
 | --- | --- | --- | --- |
 | Database, Auth, pgvector | Supabase, Singapore region (`ap-southeast-1`) | Free | 0 USD |
 | FastAPI backend | Railway, Singapore region (existing `apps/backend/railway.toml`) | Hobby | 5 USD |
-| Web build | Cloudflare Pages preferred, Vercel Hobby acceptable for non commercial use | Free | 0 USD |
+| Android app | Expo EAS Build free tier, Google Play Console with its one time 25 USD registration | Free | 0 USD |
 | AI models | OpenAI `gpt-4o-mini` and `text-embedding-3-small`, bounded by the advisor and AI suggestion rate limits | Usage | 2 to 10 USD |
 
-Why managed cloud: user financial records need in region storage, encryption at rest, row level security, and a recovery path that does not depend on one machine or one home network. A self hosted box on a residential connection fails uptime, exposure, and PDPA reasonable security expectations for other people's data. On device only storage would require a sync engine and account recovery before anything else and would remove the server side aggregates Ember's data mode depends on.
+Why managed cloud: user financial records need in region storage, encryption at rest, row level security, and a recovery path that does not depend on one machine or one home network. A self hosted box on a residential connection fails uptime, exposure, and PDPA reasonable security expectations for other people's data. On device only storage would require a sync engine and account recovery before anything else and would remove the server side aggregates DouDou's data mode depends on.
 
 Why the free Supabase tier is acceptable at launch: the knowledge base is well under 50 MB with its HNSW index, user rows are small against the 500 MB limit, and the 50,000 monthly active user Auth allowance is not a constraint. The free tier has two production gaps, and both are closed by requirements below rather than by paying for Pro.
 
@@ -361,7 +439,9 @@ Requirements before public launch:
 
 The mini PC is limited to workloads that never hold user data: staging, the eval suite, the monthly knowledge base refresh, and optional local model experiments. It does not serve production traffic and does not hold production backups as the only copy.
 
-Upgrade trigger: move Supabase to Pro (about 25 USD, daily backups, optional point in time recovery) the first time a day of lost user entries would be unacceptable, or when database size approaches 400 MB. An opt in local mode that keeps records on device with reduced Ember features is a **Later** privacy tier built on top of the cloud product, never a replacement for it.
+Superseded for mobile on 3 October 2026 by section 2.3: the phone keeps records on the device, and Supabase holds only the anonymous identity and consent of users who turn DouDou on. The table, rate limit and AI requirements above still apply to the backend and the frozen web app. Backup and restore requirements 2 and 3 now cover the knowledge base and consent rows, not mobile records.
+
+Upgrade trigger: move Supabase to Pro (about 25 USD, daily backups, optional point in time recovery) the first time a day of lost user entries would be unacceptable, or when database size approaches 400 MB. The earlier plan to make on device storage only a **Later** opt in tier is replaced by section 2.3 for mobile.
 
 ## 12. Functional reference boundaries
 
@@ -379,38 +459,49 @@ These capabilities are **Excluded**:
 4. Investment execution or automated record changes
 5. Generic brokerage portfolio management
 6. Regulated financial advice
-7. Custom authentication or migration from React, Vite, FastAPI, Supabase Auth, and Postgres
+7. Custom authentication or migration away from Expo, React Native, FastAPI, Supabase Auth, and Postgres
 8. MCP tool sprawl, multiple user facing agent services, graph infrastructure, Kubernetes, Terraform, or multi cloud work added for feature count
 9. Telegram integration and iOS App Store submission in the active roadmap
 10. External product source copying or pixel for pixel replication
 11. Serving production traffic or storing production user data on home hardware
 12. On device only storage as the primary data store
+13. New features or design work in the frozen web app
 
 ## 14. Delivery roadmap
 
 ### Phase 0: Current baseline
 
-Maintain the **Current** tracker and Ember functionality. Do not reintroduce illustrative FIRE figures as user results.
+Maintain the **Current** tracker and DouDou functionality. Do not reintroduce illustrative FIRE figures as user results.
 
-### Phase 1: Current dashboard foundation before first deployment
+### Phase 1: Current dashboard foundation
 
-Wealth positions, snapshots, contributions, financial summary, revised FIRE profile, deterministic calculations, temporary scenarios, dashboard states, and target navigation are implemented. Complete the remaining manual localhost browser and signed in account isolation smoke before public deployment.
+Wealth positions, snapshots, contributions, financial summary, revised FIRE profile, deterministic calculations, temporary scenarios, and dashboard states are implemented in the backend, `packages/shared`, and the frozen web app.
 
-Exit condition: section 15.2 passes and no dashboard metric depends on illustrative data.
+### Phase 2: Next mobile release
 
-### Phase 2: Later monthly planning
+Make the Expo app the real product and ship it to Google Play. In order:
+
+1. **DouDou consent and anonymous session.** Replace the three levels with one Off/On choice and the plain language consent text. "Turn on DouDou" creates an anonymous Supabase session kept in secure device storage and saves `personalised` to the profile; turning it off deletes the anonymous user. Remove the developer access token path.
+2. **Relevant data only.** Select snapshot sections per question on the phone, mask only those, and show what was used under each answer.
+3. **Real records on the phone.** Start new installs with an empty store instead of demo data, keep demo mode clearly labelled, and keep encrypted file backup and restore as the recovery path.
+4. **DouDou.** Rename Ember to DouDou in every user facing string, draw DouDou from the shared art with `react-native-svg`, and use the poses where `DESIGN.md` assigns them. Build the app icon, adaptive icon, and splash screen from DouDou.
+5. **Release.** Remove every placeholder screen, build with EAS, run a Google Play closed test with at least 12 testers opted in for 14 consecutive days (required for new personal developer accounts before production access), fix what testers find, then publish to production.
+
+Exit condition: section 15.2 passes on a physical Android phone, and no screen depends on illustrative data outside labelled demo mode.
+
+### Phase 3: Later monthly planning
 
 Evolve category budgets into Spending Plan and add Life Goals.
 
-### Phase 3: Later data depth
+### Phase 4: Later data depth
 
 Add reviewable CSV import, expanded analytics, drilldowns, anomaly depth, and recurring detection.
 
-### Phase 4: Current routed Ember
+### Phase 5: Current routed DouDou
 
 The bounded planner, expense tools, financial summary, FIRE projection, financial health review, hybrid RAG path, provenance UI, and account-scoped history are implemented. Supporting-record drilldowns and temporary scenario tools remain later.
 
-### Phase 5: Later planning depth
+### Phase 6: Later planning depth
 
 Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivity ranges, and resilience modelling.
 
@@ -424,10 +515,10 @@ Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivi
 4. Local design references are versioned in the repository.
 5. No WealthWise code, architecture, branding, or pixel specification is copied.
 
-### 15.2 Localhost acceptance before first deployment
+### 15.2 Acceptance before first release
 
 1. Displayed net worth, savings rate, runway, invested total, FI target, FI progress, and projection reconcile with seeded real records and documented formulas.
-2. Desktop, tablet, and mobile preserve readable hierarchy and required navigation.
+2. Small and large Android phones preserve readable hierarchy, safe areas, the four tabs, and the Add sheet, in light and dark mode.
 3. Empty, loading, missing setup, limited history, zero income, stale snapshot, unreachable FI, validation, and backend error states are tested.
 4. Historical facts are visibly distinct from projections and warnings.
 5. Data periods, snapshot dates, and FIRE assumptions are exposed.
@@ -436,9 +527,11 @@ Add saved scenarios, Coast FI, CPF layers, retirement income coverage, sensitivi
 8. Payment accounts remain unchanged and are never treated as balances.
 9. Temporary scenarios do not mutate saved financial data.
 10. Route and migration security tests prove account isolation for all new identifiers.
-11. Existing web, shared type, backend, migration, and Ember regressions remain green.
-12. A localhost smoke journey covers auth, transaction entry, wealth setup, snapshot update, contribution entry, FIRE assumptions, dashboard reconciliation, responsive layouts, and sign out.
-13. The section 11.1 launch requirements are met: Singapore region confirmed, nightly backup workflow green with at least one dump in object storage, a tested restore, the keep alive workflow scheduled, rate limits enabled, and export and account deletion verified.
+11. Mobile lint and typecheck, shared types, backend, migration, and DouDou regressions remain green, and the frozen web tests still pass.
+12. A smoke journey on a physical Android phone against the staging backend covers transaction entry, wealth setup, snapshot update, contribution entry, FIRE assumptions, dashboard reconciliation, encrypted backup and restore, turning DouDou on, a general answer that sends no figures, a personal answer that sends only the matching masked sections, and turning DouDou off with the anonymous user removed.
+13. With DouDou off, the app makes no network requests and no Supabase user exists.
+14. The Google Play internal testing build installs and survives an app restart without losing records or the DouDou session.
+15. The section 11.1 launch requirements that still apply are met: Singapore region confirmed, the keep alive workflow scheduled, rate limits enabled, anonymous sign ins enabled with their rate limit, and an HTTPS API address in the build.
 
 ### 15.3 Calculation tests
 
@@ -463,9 +556,9 @@ Resume claims describe only **Current** implemented and verified functionality.
 
 > FireBuddy | React, FastAPI, Supabase, OpenAI API, Supabase pgvector
 >
-> Built a Singapore focused personal finance app with authenticated transaction workflows, a dated asset and liability ledger, deterministic net worth and cash flow summaries, and an explainable FIRE projection, plus Ember, a private hybrid RAG guide over Singapore finance sources.
+> Built a Singapore focused personal finance app with authenticated transaction workflows, a dated asset and liability ledger, deterministic net worth and cash flow summaries, and an explainable FIRE projection, plus DouDou, a private hybrid RAG guide over Singapore finance sources.
 
-Spending Plan, Life Goals, CSV import, recurring detection, data aware Ember, and deeper planning remain future portfolio targets until implemented and verified. Public deployment still requires the manual localhost acceptance steps in section 15.2.
+Spending Plan, Life Goals, CSV import, recurring detection, and deeper planning remain future portfolio targets until implemented and verified. Once Phase 2 ships, the stack line becomes React Native (Expo), FastAPI, Supabase, OpenAI API, Supabase pgvector, and the description becomes a Singapore focused personal finance Android app. Until then the web app is the verified implementation.
 
 ## 17. FireBuddy user stories
 

@@ -43,6 +43,9 @@ class AdvisorAppContext(BaseModel):
     alias="recentActions",
     max_length=5,
   )
+  # ISO country code the phone's user chose. Outside Singapore DouDou keeps answers general and
+  # never applies CPF or SRS rules. A code, never a figure, so it needs no masking.
+  country: str | None = Field(default=None, pattern=r"^[A-Z]{2}$")
 
 
 MAX_CLIENT_SNAPSHOT_CHARS = 3600

@@ -16,7 +16,7 @@ const pageLabels: Array<[prefix: string, label: string]> = [
   ['/goals', 'Life Goals'],
   ['/add', 'Add transaction'],
   ['/profile', 'Profile'],
-  ['/ember', 'Ember'],
+  ['/ember', 'Doudou'],
 ];
 
 /** Record a generic successful action without retaining record values or identifiers. */

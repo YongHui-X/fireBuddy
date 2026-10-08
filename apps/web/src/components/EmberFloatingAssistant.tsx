@@ -8,7 +8,7 @@ import {
   getEmberPageSuggestion,
   subscribeToEmberAppActions,
 } from '../app/emberAppContext';
-import { EmberMark } from '../app/BrandMarks';
+import { DoudouMark } from '../app/BrandMarks';
 import { EmberRichText } from '../app/emberRichText';
 import { EmberConsentPanel } from './EmberConsentPanel';
 import { useFireBuddy } from '../app/fireBuddyContext';
@@ -47,7 +47,7 @@ function FloatingMessage({ message }: { message: EmberMessage }) {
 
   return (
     <article className={`ember-float-message ember-float-message-${message.role}`}>
-      <strong>{message.role === 'user' ? 'You' : 'Ember'}</strong>
+      <strong>{message.role === 'user' ? 'You' : 'Doudou'}</strong>
       {message.content
         ? <EmberRichText content={message.content} />
         : <p>{message.streamStatus === 'preparing' ? 'Preparing an answer...' : 'Understanding your question...'}</p>}
@@ -230,7 +230,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
         })),
       });
       if (!answer.trim()) {
-        throw new Error('Ember returned an empty answer.');
+        throw new Error('Doudou returned an empty answer.');
       }
       updateTopic(topicSnapshot.id, (topic) => ({
         ...topic,
@@ -251,7 +251,7 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
               streamStatus: undefined,
               error: {
                 kind: 'unavailable',
-                message: 'Ember could not answer right now. Your question is saved in the full conversation.',
+                message: 'Doudou could not answer right now. Your question is saved in the full conversation.',
                 retryable: true,
                 retryOfMessageId: userMessage.id,
               },
@@ -290,8 +290,8 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
           aria-labelledby="ember-floating-title"
         >
           <header>
-            <div><EmberMark size={24} /><span><strong id="ember-floating-title">Ask Ember</strong></span></div>
-            <button type="button" onClick={closeAssistant} aria-label="Close Ember"><X size={18} /></button>
+            <div><DoudouMark size={28} /><span><strong id="ember-floating-title">Ask Doudou</strong></span></div>
+            <button type="button" onClick={closeAssistant} aria-label="Close Doudou"><X size={18} /></button>
           </header>
           {aiOff ? (
             <EmberConsentPanel compact onChoose={(level) => setAiPreference(level)} />
@@ -326,16 +326,16 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
                 onKeyDown={handleKeyDown}
                 maxLength={MAX_QUESTION_LENGTH}
                 rows={2}
-                placeholder="Ask Ember a question"
+                placeholder="Ask Doudou a question"
               />
-              <button type="submit" disabled={!canSend} aria-label="Send question to Ember"><ArrowUp size={17} /></button>
+              <button type="submit" disabled={!canSend} aria-label="Send question to Doudou"><ArrowUp size={17} /></button>
             </div>
           </form>
           </>
           )}
           <footer>
             <span>Educational information only</span>
-            <button type="button" onClick={() => { closeAssistant(); onOpenFullEmber(); }}>Open full Ember</button>
+            <button type="button" onClick={() => { closeAssistant(); onOpenFullEmber(); }}>Open full chat</button>
           </footer>
         </aside>
       ) : null}
@@ -346,12 +346,12 @@ export function EmberFloatingAssistant({ pathname, onOpenFullEmber }: EmberFloat
         onClick={isOpen ? closeAssistant : openAssistant}
         aria-controls={pathname === '/ember' ? 'ember-question' : 'ember-quick-chat'}
         aria-expanded={pathname === '/ember' ? undefined : isOpen}
-        aria-label={pathname === '/ember' ? 'Focus Ember conversation' : isOpen ? 'Close Ember' : `Ask Ember about ${appContext.currentPage}`}
-        title={pathname === '/ember' ? 'Focus Ember conversation' : 'Ask Ember'}
+        aria-label={pathname === '/ember' ? 'Focus Doudou conversation' : isOpen ? 'Close Doudou' : `Ask Doudou about ${appContext.currentPage}`}
+        title={pathname === '/ember' ? 'Focus Doudou conversation' : 'Ask Doudou'}
       >
         {isOpen ? <X size={22} /> : <>
-          <span className="ember-floating-launcher-icon" aria-hidden="true"><EmberMark size={30} /></span>
-          <span className="ember-floating-launcher-label">Ask Ember</span>
+          <span className="ember-floating-launcher-icon" aria-hidden="true"><DoudouMark size={34} /></span>
+          <span className="ember-floating-launcher-label">Ask Doudou</span>
         </>}
       </button>
     </div>

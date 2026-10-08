@@ -1,6 +1,6 @@
-import { getBackupFilename, type EncryptedBackupFile } from '@firebuddy/shared';
+import { BACKUP_FILE_EXTENSION, getBackupFilename, type EncryptedBackupFile } from '@firebuddy/shared';
 import * as DocumentPicker from 'expo-document-picker';
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 /**
@@ -25,4 +25,28 @@ export async function pickBackupFileText(): Promise<string | null> {
   if (result.canceled || !result.assets?.[0]) return null;
   const file = new File(result.assets[0].uri);
   return file.text();
+}
+
+/**
+ * Delete the backup copies FireBuddy left in its own temporary folder: the file made for the
+ * share sheet, and files the document picker copied in for a restore. Copies the person saved
+ * elsewhere (Drive, Files, a message) are theirs and are not touched. Used by "Start fresh".
+ */
+export function clearBackupCache() {
+  const isBackup = (name: string) => name.startsWith('firebuddy-backup') || name.endsWith(`.${BACKUP_FILE_EXTENSION}`);
+  const sweep = (directory: Directory, depth: number) => {
+    for (const entry of directory.list()) {
+      if (entry instanceof File) {
+        if (isBackup(entry.name)) entry.delete();
+      } else if (depth > 0) {
+        sweep(entry, depth - 1);
+      }
+    }
+  };
+  try {
+    // The picker copies into a subfolder of the cache, so look one level down as well.
+    sweep(new Directory(Paths.cache), 2);
+  } catch {
+    // Nothing to clear, or the cache is unavailable (for example in the web preview).
+  }
 }

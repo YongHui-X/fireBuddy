@@ -1,0 +1,147 @@
+{
+  "label": "phone_v3",
+  "todayKey": "2026-10-04",
+  "apiBase": "http://127.0.0.1:8000",
+  "total": 8,
+  "passed": 8,
+  "results": [
+    {
+      "id": "phone_spend_this_month_and_july",
+      "question": "How much did I spend this month and in july",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much did I spend this month and in july",
+      "maskedContextChars": 1088,
+      "mode": "hybrid",
+      "answer": "- This month, from 1 to 4 October 2026, you spent a total of S$1,176.\n- Your top spending categories this month include:\n  - Food & Drink: S$517\n  - Bills & Utilities: S$187\n  - Shopping: S$148\n  - Travel: S$120\n  - Transport: S$100\n\n- In July 2026, you spent a total of S$1,801.\n- Your top spending categories in July included:\n  - Healthcare: S$1,019\n  - Food & Drink: S$372\n  - Bills & Utilities: S$232",
+      "sources": [
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        },
+        {
+          "title": "FI Calc",
+          "path": "manual/fire/sources/fi-calc.md"
+        },
+        {
+          "title": "CPF LIFE Payout Examples",
+          "path": "manual/cpf/cpf-life-payout-examples.md"
+        },
+        {
+          "title": "RetireCan.sg Singapore Retirement Calculator",
+          "path": "manual/fire/sources/retirecan.md"
+        }
+      ],
+      "sourceExpectation": "Owner screenshot 4 Oct 2026: July was ignored and September given instead. The phone now sends July's spending block; the answer must state July's total, not September's.",
+      "latencyMs": 10469,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "phone_spend_top_categories",
+      "question": "How much have I spent this month, and which categories are highest?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much have I spent this month, and which categories are highest?",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- You have spent a total of S$1,176 this month from 1 to 4 October 2026.\n- Your highest spending categories this month are:\n  - Food & Drink: S$517\n  - Bills & Utilities: S$187\n  - Shopping: S$148\n  - Travel: S$120\n  - Transport: S$100",
+      "sources": [],
+      "sourceExpectation": "Owner screenshot: correct figures but unrelated FIRE articles cited and a raw 2026-10-01 date. A pure data answer should cite nothing and write dates in words.",
+      "latencyMs": 4181,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "phone_how_are_you",
+      "question": "How are you",
+      "usedSections": [],
+      "maskedQuestion": "How are you",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "I'm doing well, thanks for asking! I'm DouDou, your Singapore money guide. Ask me about your spending, CPF, SRS, Singapore Savings Bonds or your FIRE plan.",
+      "sources": [],
+      "sourceExpectation": "Owner screenshot: answered with a FIRE definition. Small talk gets a friendly fixed reply.",
+      "latencyMs": 9,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "phone_hi",
+      "question": "hi",
+      "usedSections": [],
+      "maskedQuestion": "hi",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "Hi there! I'm DouDou, your Singapore money guide. Ask me about your spending, CPF, SRS, Singapore Savings Bonds or your FIRE plan.",
+      "sources": [],
+      "latencyMs": 9,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "phone_thanks",
+      "question": "thanks!",
+      "usedSections": [],
+      "maskedQuestion": "thanks!",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "Glad to help! Ask me about your spending, CPF, SRS or your FIRE plan whenever you like.",
+      "sources": [],
+      "latencyMs": 8,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "phone_leetcode",
+      "question": "Do the leetcode two sum problem",
+      "usedSections": [],
+      "maskedQuestion": "Do the leetcode two sum problem",
+      "maskedContextChars": 0,
+      "mode": "unsupported",
+      "answer": "DouDou can only help with the Singapore personal-finance topics covered by FireBuddy, such as CPF, MoneySense planning, Singapore Savings Bonds, IRAS reliefs, investing basics, and FIRE planning.",
+      "sources": [],
+      "sourceExpectation": "Owner screenshot: correctly declined. Keep it that way.",
+      "latencyMs": 8,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "phone_exact_net_worth",
+      "question": "What's my exact balance net worth",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "What's my exact balance net worth",
+      "maskedContextChars": 231,
+      "mode": "hybrid",
+      "answer": "- Your exact balance net worth is S$80,000.",
+      "sources": [],
+      "sourceExpectation": "Owner screenshot: stated the figure correctly but leaked the internal range '50k-100k' and cited unrelated FIRE articles.",
+      "latencyMs": 3417,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "phone_spend_in_may_and_march",
+      "question": "What did I spend in May and in March?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "What did I spend in May and in March?",
+      "maskedContextChars": 1383,
+      "mode": "hybrid",
+      "answer": "- In May 2026, you spent a total of S$2,018.\n- Your top spending categories in May were:\n  - Food & Drink: S$730\n  - Entertainment: S$332\n  - Travel: S$320\n\n- In March 2026, you spent a total of S$2,668.\n- Your top spending categories in March were:\n  - Shopping: S$1,688\n  - Food & Drink: S$466\n  - Bills & Utilities: S$194",
+      "sources": [],
+      "latencyMs": 4737,
+      "dataChecks": [],
+      "pass": true
+    }
+  ]
+}

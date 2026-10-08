@@ -78,6 +78,11 @@ function inferLegacySeedDate(records: DemoSlices, todayKey: string) {
 /** Seeded demo transactions share this id prefix; locally created rows never do. */
 const DEMO_TRANSACTION_ID_PREFIX = '00000000-0000-4000-9000-';
 
+/** Whether a ledger still contains rows from the demo dataset (a restored backup may hold none). */
+export function hasDemoTransactions(transactions: readonly { id: string }[]) {
+  return transactions.some((row) => row.id.startsWith(DEMO_TRANSACTION_ID_PREFIX));
+}
+
 /**
  * Re-date only seeded demo records when the month changes, leaving local records and edits intact.
  * A ledger persisted by an older demo generation (different seeded ids, so nothing can be matched

@@ -1,22 +1,28 @@
-import { formatMonthLabel, formatMonthName, getGreeting, type Transaction } from '@firebuddy/shared';
+import { formatGreeting, formatMonthLabel, formatMonthName, type Transaction } from '@firebuddy/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { Screen } from '@/components/layout/Screen';
+import { DailyTipCard } from '@/components/home/DailyTipCard';
 import { HomeActions } from '@/components/home/HomeActions';
 import { CategoryBudgetsCard, MoneyPulseCard, NetWorthHeadline, RecentTransactionsCard, SpendingBreakdownCard } from '@/components/home/HomeCards';
 import { QuickActions } from '@/components/home/QuickActions';
 import { TransactionDetailsSheet } from '@/components/transactions/TransactionDetailsSheet';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Chip } from '@/components/ui/Chip';
 import { PageToolbar } from '@/components/ui/PageToolbar';
+import { useDailyTip } from '@/hooks/use-daily-tip';
 import { useCategoryBudgets, useCurrentMonth, useMonthSummary, useRecentTransactions, useSpendingBreakdown } from '@/hooks/use-ledger';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { useUserProfile } from '@/lib/user-profile';
 
 /** Home: a forest hero holding the greeting, net worth headline and shortcuts, then this month's detail on the canvas. Retirement progress lives in the planner. */
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile, deleteTransaction, notify } = useFireBuddy();
+  const { deleteTransaction, notify, isFreshDataset } = useFireBuddy();
+  const { nickname } = useUserProfile();
+  const dailyTip = useDailyTip();
   const month = useCurrentMonth();
   const monthName = formatMonthName(month);
   const summary = useMonthSummary(month);
@@ -27,7 +33,6 @@ export default function HomeScreen() {
   const [deleting, setDeleting] = useState<Transaction | null>(null);
 
   const openAdd = () => router.push('/add-transaction');
-  const firstName = profile.name.split(' ')[0] ?? profile.name;
 
   return (
     <Screen
@@ -36,16 +41,19 @@ export default function HomeScreen() {
           <PageToolbar
             variant="greeting"
             tone="hero"
-            title={`${getGreeting()}, ${firstName}!`}
+            title={formatGreeting(nickname)}
             description={`Your finances for ${monthName}.`}
+            // Development builds start on sample figures; say so until the tester chooses Start fresh.
+            metadata={__DEV__ && !isFreshDataset ? <Chip label="Sample data · Start fresh in Profile" tone="heroNeutral" /> : undefined}
             trailing={<HomeActions />}
             style={styles.toolbar}
           />
-          <NetWorthHeadline monthName={monthName} />
+          <NetWorthHeadline monthName={monthName} onOpenWealth={() => router.push('/wealth')} />
           <QuickActions />
         </>
       )}
     >
+      {dailyTip.tip ? <DailyTipCard tip={dailyTip.tip} onDismiss={dailyTip.dismiss} /> : null}
       <MoneyPulseCard summary={summary} monthName={monthName} />
       <CategoryBudgetsCard rows={budgets} periodLabel={formatMonthLabel(month)} onManage={() => router.navigate('/categories')} />
       <SpendingBreakdownCard

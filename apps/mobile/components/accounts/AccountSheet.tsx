@@ -1,5 +1,5 @@
 import { accountTypeLabels, categoryColors, type Account, type AccountType, type CreateAccountInput } from '@firebuddy/shared';
-import { Banknote, Building2, Check, CreditCard, Smartphone, Trash2, WalletCards, type LucideIcon } from 'lucide-react-native';
+import { Banknote, Building2, Check, CreditCard, Smartphone, Star, Trash2, WalletCards, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -31,10 +31,12 @@ export interface AccountSheetProps {
   onClose: () => void;
   onSave: (input: CreateAccountInput) => void;
   onDelete?: () => void;
+  /** Offered in edit mode for an account that is not already the default. */
+  onMakeDefault?: () => void;
 }
 
 /** Create or edit a payment account: type, name, optional last four digits and a colour. Balances are never stored. */
-export function AccountSheet({ open, mode, initial, deleteBlockedReason = null, onClose, onSave, onDelete }: AccountSheetProps) {
+export function AccountSheet({ open, mode, initial, deleteBlockedReason = null, onClose, onSave, onDelete, onMakeDefault }: AccountSheetProps) {
   const { theme } = useTheme();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
@@ -64,6 +66,7 @@ export function AccountSheet({ open, mode, initial, deleteBlockedReason = null, 
 
   const canDelete = mode === 'edit' && Boolean(onDelete) && !deleteBlockedReason;
   const deleteHint = mode === 'edit' ? deleteBlockedReason : null;
+  const canMakeDefault = mode === 'edit' && Boolean(onMakeDefault) && initial && !initial.isDefault;
 
   return (
     <BottomSheet
@@ -74,6 +77,7 @@ export function AccountSheet({ open, mode, initial, deleteBlockedReason = null, 
       footer={(
         <View style={styles.footer}>
           <Button label={mode === 'add' ? 'Save account' : 'Save changes'} variant="primary" block onPress={save} />
+          {canMakeDefault ? <Button label="Make default" icon={Star} variant="secondary" block onPress={onMakeDefault} /> : null}
           {canDelete ? <Button label="Delete account" icon={Trash2} variant="danger" block onPress={onDelete} /> : null}
         </View>
       )}

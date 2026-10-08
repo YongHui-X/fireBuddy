@@ -31,6 +31,11 @@ export interface PersonalSnapshotInput {
   /** A projection already computed by the planner hook; computed here when omitted. */
   fire?: FireCalculationResult | null;
   todayKey?: string;
+  /**
+   * Extra YYYY-MM months the question names ("…and in July"), added as `spending.otherMonths`.
+   * This month and last month are always included; pick these with `requestedSpendingMonths`.
+   */
+  extraSpendingMonths?: readonly string[];
 }
 
 export interface PersonalSnapshot {
@@ -55,7 +60,39 @@ function spendingBlock(transactions: readonly Transaction[], categories: readonl
   return {
     period: `${monthKey}-01 to ${end}`,
     total: total.toFixed(2),
-    topCategories: breakdown.slice(0, limit).map((row) => ({ category: row.name, amount: row.amount.toFixed(2) })),
+    // `share` is precomputed so "what share went to food?" never needs arithmetic on placeholders.
+    topCategories: breakdown.slice(0, limit).map((row) => ({
+      category: row.name,
+      amount: row.amount.toFixed(2),
+      share: total > 0 ? (row.amount / total).toFixed(6) : null,
+    })),
+  };
+}
+
+const direction = (difference: number) => (Math.abs(difference) < 0.005 ? 'same' : difference < 0 ? 'less' : 'more');
+
+/**
+ * This month against last month, worked out on the phone: the model only sees placeholders and
+ * may never subtract them, so "how much less did I spend?" and "more on food this month?" need the
+ * answer ready-made. This month is month to date, so `direction` reads "so far". Per-category
+ * changes cover this month's top categories, using last month's full breakdown.
+ */
+function spendingComparison(transactions: readonly Transaction[], categories: readonly Category[], monthKey: string, todayKey: string, limit: number) {
+  const prevKey = shiftMonthKey(monthKey, -1);
+  const byCategory = (key: string) => {
+    const rows = transactions.filter((item) => item.transactionType === 'expense' && item.date.startsWith(key) && item.date <= todayKey);
+    return { rows, breakdown: summariseSpendingByCategory(rows, categories) };
+  };
+  const current = byCategory(monthKey);
+  const previous = byCategory(prevKey);
+  const sum = (rows: readonly Transaction[]) => rows.reduce((total, item) => total + transactionMagnitude(item), 0);
+  const difference = sum(current.rows) - sum(previous.rows);
+  return {
+    thisMonthSoFarVersusLastMonth: { direction: direction(difference), difference: Math.abs(difference).toFixed(2) },
+    categoryChanges: current.breakdown.slice(0, limit).map((row) => {
+      const last = previous.breakdown.find((item) => item.name === row.name)?.amount ?? 0;
+      return { category: row.name, lastMonthAmount: last.toFixed(2), direction: direction(row.amount - last), difference: Math.abs(row.amount - last).toFixed(2) };
+    }),
   };
 }
 
@@ -97,7 +134,11 @@ export function buildPersonalSnapshot(input: PersonalSnapshotInput): PersonalSna
     snapshotStatus,
     netWorth: complete ? money(wealth.netWorth) : null,
     liabilityTotal: complete ? money(wealth.liabilityTotal) : null,
+    // Precomputed so "what are my total assets?" is quoted, not derived (net worth + debts).
+    assetTotal: complete ? money(wealth.netWorth + wealth.liabilityTotal) : null,
     monthlyDebtService: debt.totalMonthlyDebtService,
+    // Monthly debt repayments as a share of this month's income.
+    debtToIncome: debt.totalMonthlyDebtService != null && pulse.income > 0 ? (Number(debt.totalMonthlyDebtService) / pulse.income).toFixed(6) : null,
     investableAssets: money(investable),
     emergencyRunwayMonths: runway === null ? null : runway.toFixed(6),
     averageMonthlyEssentialSpending: money(essential.averageEssential),
@@ -117,7 +158,15 @@ export function buildPersonalSnapshot(input: PersonalSnapshotInput): PersonalSna
       ? {
           fundingStatus: fire.fundingStatus ?? null,
           fiTarget: fire.fiTarget,
-          progressRate: fire.progressRate,
+          // Named for what it is: the portfolio projected at the planned retirement date as a
+          // share of the target. "progressRate" read as progress today and misled the model.
+          projectedShareOfTargetAtRetirement: fire.progressRate,
+          projectedPortfolio: fire.projectedPortfolio ?? null,
+          // Shortfall at the planned retirement date, and the gap from today's investable assets.
+          fundingGap: fire.fundingGap ?? null,
+          gapFromTodayAssets: fire.fiTarget != null && investable != null ? money(Math.max(0, Number(fire.fiTarget) - investable)) : null,
+          // Progress today: today's investable assets as a share of the target.
+          progressToday: fire.fiTarget != null && Number(fire.fiTarget) > 0 ? (investable / Number(fire.fiTarget)).toFixed(6) : null,
           requiredMonthlyInvestment: fire.requiredMonthlyInvestment,
           estimatedFiYear: fire.estimatedFiYear,
           earliestRetirementMonth: fire.earliestRetirementMonth ?? null,
@@ -129,6 +178,10 @@ export function buildPersonalSnapshot(input: PersonalSnapshotInput): PersonalSna
     spending: {
       currentMonth: spendingBlock(input.transactions, input.categories, monthKey, todayKey, TOP_CATEGORY_COUNT),
       previousMonth: spendingBlock(input.transactions, input.categories, shiftMonthKey(monthKey, -1), todayKey, 3),
+      comparison: spendingComparison(input.transactions, input.categories, monthKey, todayKey, TOP_CATEGORY_COUNT),
+      ...(input.extraSpendingMonths?.length
+        ? { otherMonths: input.extraSpendingMonths.map((month) => ({ month, ...spendingBlock(input.transactions, input.categories, month, todayKey, 3) })) }
+        : {}),
     },
   };
 

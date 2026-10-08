@@ -1,0 +1,45 @@
+name: Supabase Keep Alive
+
+# Supabase's free plan pauses a project after 7 days without activity. This reads one row from the
+# knowledge base every 3 days, which counts as database activity, so the project never pauses and
+# nobody has to restore it by hand. Uses the same secrets as update-knowledge-base.yml.
+# Note: GitHub turns off scheduled workflows in a public repo after 60 days with no commits.
+
+on:
+  schedule:
+    - cron: '17 3 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Read one knowledge base row
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY secrets are required."
+            exit 1
+          fi
+          # Retries ride out a brief outage; the response body is discarded so nothing is logged.
+          status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            --retry 3 --retry-delay 20 --retry-all-errors --max-time 30 \
+            "${SUPABASE_URL%/}/rest/v1/rag_chunks?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}")
+          echo "Supabase answered HTTP ${status}"
+          if [ "$status" != "200" ]; then
+            echo "::error::Supabase keep-alive failed with HTTP ${status}. If the project is already paused, restore it once in the Supabase dashboard."
+            exit 1
+          fi

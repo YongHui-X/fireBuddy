@@ -1,11 +1,12 @@
 import { formatDateLabel, formatMonthLabel, formatShortDate, type LedgerFilters, type Transaction } from '@firebuddy/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Copy, Download, Ellipsis, Pencil, SlidersHorizontal, Tags, Trash2, Wallet } from 'lucide-react-native';
+import { Copy, Download, Ellipsis, Pencil, Repeat, SlidersHorizontal, Tags, Trash2, Wallet } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
 import { Screen, useScreenInsets } from '@/components/layout/Screen';
 import { FiltersSheet, type LedgerFilterDraft } from '@/components/transactions/FiltersSheet';
+import { RecurringSheet } from '@/components/transactions/RecurringSheet';
 import { TagsSheet } from '@/components/transactions/TagsSheet';
 import { TransactionDetailsSheet } from '@/components/transactions/TransactionDetailsSheet';
 import { TransactionRow } from '@/components/transactions/TransactionRow';
@@ -36,7 +37,7 @@ export default function TransactionsScreen() {
   const { money } = usePrivacy();
   const insets = useScreenInsets();
   const { q, month: requestedMonth, saved } = useLocalSearchParams<{ q?: string; month?: string; saved?: string }>();
-  const { transactions, categories, accounts, tags, getCategoryById, getAccountById, deleteTransaction, duplicateTransaction, addTag, renameTag, deleteTag, notify } = useFireBuddy();
+  const { transactions, categories, accounts, tags, recurringRules, getCategoryById, getAccountById, deleteTransaction, duplicateTransaction, addTag, renameTag, deleteTag, updateRecurringRule, deleteRecurringRule, notify } = useFireBuddy();
   const latestMonth = useCurrentMonth();
   const months = useTransactionMonths();
   const [month, setMonth] = useState(latestMonth);
@@ -49,6 +50,7 @@ export default function TransactionsScreen() {
   const [viewing, setViewing] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [recurringOpen, setRecurringOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -115,10 +117,15 @@ export default function TransactionsScreen() {
       <PageToolbar
         title="Transactions"
         description="Review income and expenses across your accounts."
-        trailing={<IconButton icon={Ellipsis} accessibilityLabel="More actions" onPress={() => setOverflowOpen(true)} />}
+        trailing={(
+          <View style={styles.toolbarActions}>
+            <IconButton icon={Repeat} accessibilityLabel={`Recurring, ${recurringRules.length} set up`} onPress={() => setRecurringOpen(true)} />
+            <IconButton icon={Ellipsis} accessibilityLabel="More actions" onPress={() => setOverflowOpen(true)} />
+          </View>
+        )}
       />
-      <MonthStepper months={months} value={month} onChange={setMonth} onOpenPicker={() => setMonthPickerOpen(true)} valueLabel={customRangeLabel} />
       <SearchField value={search} onChangeText={setSearch} />
+      {/* Filters and the month share one row, so the period and its filters read together. */}
       <View style={styles.filterRow}>
         <Button
           label="Filters"
@@ -127,9 +134,14 @@ export default function TransactionsScreen() {
           onPress={() => setFiltersOpen(true)}
           accessibilityState={{ expanded: filtersOpen }}
         />
-        {ledger.activeFilterCount ? <Chip label={`${ledger.activeFilterCount} active`} tone="accent" round /> : null}
-        {ledger.activeFilterCount ? <Button label="Clear" variant="text" size="compact" onPress={() => setDraft(emptyFilters)} /> : null}
+        <MonthStepper compact months={months} value={month} onChange={setMonth} onOpenPicker={() => setMonthPickerOpen(true)} valueLabel={customRangeLabel} style={styles.monthStepper} />
       </View>
+      {ledger.activeFilterCount ? (
+        <View style={styles.activeRow}>
+          <Chip label={`${ledger.activeFilterCount} active`} tone="accent" round />
+          <Button label="Clear" variant="text" size="compact" onPress={() => setDraft(emptyFilters)} />
+        </View>
+      ) : null}
       <Card padded={false} style={styles.summary}>
         <View style={[styles.summaryCell, { borderRightColor: theme.line }]}>
           <AppText variant="overline" tone="ink2">Expenses</AppText>
@@ -173,6 +185,7 @@ export default function TransactionsScreen() {
           <Card>
             {ledger.activeFilterCount || search ? (
               <EmptyState
+                doudou="oops"
                 title="No transactions match these filters"
                 message="Clear the filters to see everything recorded this month."
                 actionLabel="Clear filters"
@@ -181,6 +194,7 @@ export default function TransactionsScreen() {
             ) : (
               // Nothing recorded in this month at all, whether or not other months have entries.
               <EmptyState
+                doudou="peek"
                 title="No transactions were recorded"
                 message="Have you written your expenses for today?"
                 actionLabel="Add transaction"
@@ -198,11 +212,27 @@ export default function TransactionsScreen() {
         title="Month"
         actions={months.map((option) => ({ label: formatMonthLabel(option), selected: option === month && !customRange, onSelect: () => { setMonth(option); setDraft((current) => ({ ...current, startDate: null, endDate: null })); } }))}
       />
+      <RecurringSheet
+        open={recurringOpen}
+        rules={recurringRules}
+        categories={categories}
+        accounts={accounts}
+        onClose={() => setRecurringOpen(false)}
+        onSave={(rule) => {
+          updateRecurringRule(rule);
+          notify(rule.paused ? `${rule.template.description} paused.` : `${rule.template.description} updated.`);
+        }}
+        onStop={(rule) => {
+          deleteRecurringRule(rule.id);
+          notify(`${rule.template.description} no longer repeats.`);
+        }}
+      />
       <ActionSheet
         open={overflowOpen}
         onClose={() => setOverflowOpen(false)}
         title="Transactions"
         actions={[
+          { label: 'Recurring', detail: recurringRules.length ? `${recurringRules.length} repeating` : 'Salary, rent, subscriptions', icon: Repeat, onSelect: () => setRecurringOpen(true) },
           { label: 'Manage tags', detail: `${tags.length} tag${tags.length === 1 ? '' : 's'}`, icon: Tags, onSelect: () => setTagsOpen(true) },
           { label: 'Export CSV', detail: ledger.rows.length ? `${ledger.rows.length} row${ledger.rows.length === 1 ? '' : 's'} shown` : 'Nothing to export', icon: Download, disabled: exporting || !ledger.rows.length, onSelect: () => void exportCsv() },
           { label: 'Accounts', detail: 'Manage payment accounts', icon: Wallet, onSelect: () => router.push('/accounts') },
@@ -253,6 +283,11 @@ export default function TransactionsScreen() {
 }
 
 const styles = StyleSheet.create({
+  toolbarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   list: {
     paddingHorizontal: layout.gutter,
     paddingTop: spacing.xl,
@@ -265,6 +300,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  monthStepper: {
+    flex: 1,
+    minWidth: 0,
+  },
+  activeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: -spacing.sm,
   },
   summary: {
     flexDirection: 'row',

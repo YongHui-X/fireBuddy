@@ -29,7 +29,7 @@ describe('Ember Markdown export', () => {
     const markdown = formatEmberConversationMarkdown(topic, new Date('2026-09-03T08:00:00.000Z'));
 
     expect(markdown).toContain('# CPF / FIRE plan');
-    expect(markdown.indexOf('## You')).toBeLessThan(markdown.indexOf('## Ember'));
+    expect(markdown.indexOf('## You')).toBeLessThan(markdown.indexOf('## Doudou'));
     expect(markdown).toContain('[CPF guide](https://cpf.gov.sg/guide)');
     expect(markdown).toContain('- Unsafe source');
     expect(markdown).not.toContain('javascript:');

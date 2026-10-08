@@ -1,3 +1,4 @@
+import { CURRENCIES, currencyDigits, formatMoney } from './region';
 import type { RagChatMessage } from './types';
 
 /**
@@ -22,9 +23,9 @@ const MONEY_KEYS = new Set([
   'total', 'amount', 'difference', 'currentInvestableAssets', 'projectedPortfolio', 'fundingGap', 'targetToday',
   'portfolioToday', 'monthlySpending', 'monthlyContribution', 'cpfMonthlyPayout', 'balance', 'expenseTotal',
   'annualisedSpending', 'emergencyFundTarget3Months', 'emergencyFundTarget6Months', 'totalMonthlyDebtService',
-  'monthlyPayment', 'originalPrincipal',
+  'monthlyPayment', 'originalPrincipal', 'assetTotal', 'gapFromTodayAssets', 'lastMonthAmount',
 ]);
-const RATIO_KEYS = new Set(['savingsRate', 'progressRate', 'progressRateCapped', 'beforeReturn', 'afterReturn', 'inflation', 'interestRate', 'debtToIncome', 'highestInterestRate']);
+const RATIO_KEYS = new Set(['savingsRate', 'progressRate', 'progressRateCapped', 'projectedShareOfTargetAtRetirement', 'progressToday', 'share', 'beforeReturn', 'afterReturn', 'inflation', 'interestRate', 'debtToIncome', 'highestInterestRate']);
 const PERCENT_KEYS = new Set(['changePercent']);
 const MONTH_KEYS = new Set(['emergencyRunwayMonths', 'emergencyRunwayMonthsWithDebt', 'estimatedMonths', 'monthsRemaining']);
 const CATEGORY_KEYS = new Set(['category']);
@@ -34,15 +35,21 @@ const PASSTHROUGH_KEYS = new Set([
   'savingsRateStatus', 'warningCodes', 'code', 'kind', 'label', 'destination', 'ruleId', 'actionType',
   'calculationVersion', 'estimatedFiYear', 'earliestRetirementMonth', 'retirementMonth', 'endAge', 'cpfStartAge',
   'cpfPlan', 'provenance', 'recordCount', 'completedMonths', 'evidencePeriod', 'startDate', 'endDate', 'figure',
-  'year', 'value', 'unit', 'availableYears', 'sourceTitle', 'payoffMonth',
+  'year', 'value', 'unit', 'availableYears', 'sourceTitle', 'payoffMonth', 'direction',
 ]);
 const NUMERIC_RE = /^-?\d+(?:\.\d+)?$/;
 
-const CURRENCY_RE = /(?:S\$|SGD\s?|\$)\s?-?\d[\d,]*(?:\.\d+)?(?:\s?[kKmM]\b)?/g;
+/**
+ * Money prefixes the user might type or the snapshot might hold, Singapore's and the general
+ * mode's currencies alike, so an amount is scrubbed whichever currency it is written in.
+ */
+const MONEY_PREFIX = String.raw`(?:S\$|US\$|A\$|C\$|NZ\$|HK\$|NT\$|B\$|MX\$|R\$|CN¥|(?:${CURRENCIES.join('|')})\s?|RM\s?|Rp\s?|€|£|¥|₹|₩|₱|฿|₫|\$)`;
+const CURRENCY_RE = new RegExp(String.raw`${MONEY_PREFIX}\s?-?\d[\d,]*(?:\.\d+)?(?:\s?[kKmM]\b)?`, 'g');
 const THOUSANDS_RE = /(?<![\d{\w])\d{1,3}(?:,\d{3})+(?:\.\d+)?(?![\d%\w])/g;
 const BARE_NUMBER_RE = /(?<![\d{\w/.-])\d{4,}(?:\.\d+)?(?![\d%\w/.-])/g;
 const PERCENT_IN_TEXT_RE = /(?<![\w{])-?\d+(?:\.\d+)?\s?%/g;
-const AMOUNT_IN_TEXT_RE = /S\$\s?-?\d[\d,]*(?:\.\d+)?/g;
+const AMOUNT_IN_TEXT_RE = new RegExp(String.raw`${MONEY_PREFIX}\s?-?\d[\d,]*(?:\.\d+)?`, 'g');
+const MONEY_PREFIX_RE = new RegExp(`^${MONEY_PREFIX}`);
 
 const NAME_STOPLIST = new Set(['cash', 'bank', 'savings', 'cpf', 'investments', 'loan', 'mortgage', 'others', 'other', 'home', 'car', 'salary']);
 const MIN_NAME_LENGTH = 4;
@@ -90,9 +97,75 @@ export function monthsBand(months: number): string {
   return 'over 12 months';
 }
 
-export function formatMaskedMoney(value: number): string {
-  const sign = value < 0 ? '-' : '';
-  return `${sign}S$${Math.abs(value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+/**
+ * "S$1,240.71", or "S$1,241" with `decimals` 0 to match screens that show whole dollars. Other
+ * currencies use their own prefix ("€1,240.71"), and zero-decimal ones never show cents ("¥1,241").
+ */
+export function formatMaskedMoney(value: number, decimals: 0 | 2 = 2, currency = 'SGD'): string {
+  const places = currencyDigits(currency, decimals);
+  const rounded = places === 0 ? Math.round(Math.abs(value)) : Math.abs(value);
+  const sign = value < 0 && rounded !== 0 ? '-' : '';
+  return `${sign}${formatMoney(rounded, currency, places)}`;
+}
+
+/**
+ * A band the model wrote away from its token, e.g. "{{M1}} this month (range: 1k-5k)". Bands are
+ * for the model only, so any left after the tokens are put back are removed.
+ */
+const STRAY_BAND_RE = /\s*\(range:[^)]*\)/gi;
+/** A money band label as the model may write it: "50k-100k", "50k–100k", "1k to 5k". */
+const MONEY_BAND = String.raw`(?:under 1k|over 1M|\d+k\s*(?:-|–|—|to)\s*\d+(?:k|M))`;
+/** "which falls", "and this is", or nothing, in front of a band clause. */
+const BAND_LEAD = String.raw`,?\s*(?:(?:which|and|this|that|it)\s+)*`;
+/** A money band label copied on its own after a figure: "S$517 (under 1k)", "(1k-5k)". */
+const STRAY_MONEY_BAND_RE = new RegExp(String.raw`\s*\(${MONEY_BAND}\)`, 'gi');
+/**
+ * A clause that restates a money band: "which falls within the range of 50k-100k". Only the
+ * clause goes, so "Your net worth is S$80,000, which falls within the range of 50k-100k." keeps
+ * its figure. Percent and month bands are left alone: "3-6 months" is also real guidance text.
+ */
+const BAND_CLAUSE_RE = new RegExp(String.raw`${BAND_LEAD}(?:falls|sits|lies|is)?\s*(?:with)?in\s+(?:the\s+|a\s+)?range\s+of\s+${MONEY_BAND}`, 'gi');
+/** The same clause worded as a bracket: ", which is in the 50k-100k bracket". */
+const BRACKET_CLAUSE_RE = new RegExp(String.raw`${BAND_LEAD}(?:falls|sits|lies|is)?\s*(?:with)?in\s+the\s+${MONEY_BAND}\s+(?:bracket|band|range)`, 'gi');
+/**
+ * The same clause worded with "between": ", which falls between 50k and 100k". It needs a verb,
+ * so advice such as "aim for between 50k and 100k" is left alone.
+ */
+const BETWEEN_CLAUSE_RE = new RegExp(String.raw`${BAND_LEAD}(?:falls|sits|lies|is)\s+(?:somewhere\s+)?between\s+\d+k\s+and\s+\d+(?:k|M)`, 'gi');
+/**
+ * The same leak for a percent band, but only straight after "which is …": ", which is in the
+ * range of 90-100%". Guidance such as "savings rates of 50–70%" has no such lead-in and stays.
+ */
+const PERCENT_BAND_CLAUSE_RE = /,?\s*which\s+(?:is|falls|sits)\s+(?:with)?in\s+(?:the\s+)?range\s+of\s+\d+\s*-\s*\d+%/gi;
+/** A months band after "which is": "17.1 months, which is over 12 months" or "…in the 6-12 months range". */
+const MONTHS_BAND_CLAUSE_RE = /,?\s*which\s+is\s+(?:over 12 months|(?:with)?in\s+the\s+(?:range\s+of\s+)?(?:0-1|1-3|3-6|6-12) months(?:\s+range)?)/gi;
+/** Placeholder-speak the model sometimes keeps: "Your income is represented by S$5,200." */
+const REPRESENTED_BY_RE = /\b(?:is\s+)?represented\s+by\s+(?:the\s+)?(?:placeholder\s+|[a-z]+[A-Z][A-Za-z]*\s+(?:ratio\s+|figure\s+|value\s+)?(?:of\s+)?)?(?=S\$|\$|\d)/g;
+/** The range wording inside a sentence that also holds a real figure: "… and the range is 50k-100k". */
+const BAND_PHRASE_RE = new RegExp(String.raw`,?\s*(?:(?:and|with|but)\s+)?(?:(?:the|a|its|your)\s+)?range\s+(?:is|of|being)?\s*${MONEY_BAND}`, 'gi');
+const REAL_FIGURE_RE = /S\$\s?\d|\d(?:\.\d+)?%|\d(?:\.\d+)? months/;
+
+/**
+ * A sentence that mentions a money band. If it also states a real figure ("Your net worth is
+ * S$75,000 and the range is 50k-100k."), only the range wording goes; a sentence that is nothing
+ * but the range ("The range for your net worth is 50k-100k.") goes entirely.
+ */
+function stripBandSentence(sentence: string) {
+  return REAL_FIGURE_RE.test(sentence) ? sentence.replace(BAND_PHRASE_RE, '') : '';
+}
+
+/** A short sentence that only restates a money band: "The range for your net worth is 50k-100k." */
+const BAND_SENTENCE_RE = new RegExp(String.raw`[^.\n]*\brange\b[^.\n]{0,40}\b${MONEY_BAND}\b[^.\n]*\.?`, 'gi');
+/** A months or percent band right after its own figure: "17.1 months (over 12 months)", "77.4% (70-80%)". */
+const FIGURE_BAND_RE = /(\d(?:\.\d+)? months|\d(?:\.\d+)?%)\s*\((?:0-1 months|1-3 months|3-6 months|6-12 months|over 12 months|\d+-\d+%|over 100%)\)/gi;
+/** A bullet left empty once its band clause is gone, e.g. "- ." */
+const EMPTY_BULLET_RE = /^[ \t]*-[ \t]*(?:(?:this|that|it)(?:[ \t]+(?:total|figure|amount|value|number))?)?[ \t]*[.,;:]?[ \t]*(?:\r?\n|$)/gim;
+
+export interface MaskingOptions {
+  /** Show money as whole dollars when the real values are put back, like the app's own screens. */
+  wholeDollars?: boolean;
+  /** ISO currency the restored figures are written in; SGD when unset. */
+  currency?: string;
 }
 
 function escapeRegExp(text: string) {
@@ -106,8 +179,12 @@ export class MaskingSession {
   private readonly counters = new Map<string, number>();
   private readonly categoryNames = new Map<string, string>();
   private readonly namePatterns: Array<{ pattern: RegExp; kind: 'P' | 'C'; real: string }> = [];
+  private readonly moneyDecimals: 0 | 2;
+  private readonly currency: string;
 
-  constructor(names: MaskingNames = {}) {
+  constructor(names: MaskingNames = {}, options: MaskingOptions = {}) {
+    this.moneyDecimals = options.wholeDollars ? 0 : 2;
+    this.currency = options.currency ?? 'SGD';
     for (const name of names.customCategories ?? []) this.categoryNames.set(name.toLowerCase(), name);
     const protectedNames: Array<[string, 'P' | 'C']> = [
       ...[...(names.accounts ?? []), ...(names.positions ?? [])].map((name): [string, 'P' | 'C'] => [name, 'P']),
@@ -135,7 +212,7 @@ export class MaskingSession {
   private moneyToken(raw: string) {
     const value = Number(raw);
     if (!Number.isFinite(value)) return this.maskText(raw);
-    return `${this.tokenFor('M', formatMaskedMoney(value))} (range: ${moneyBand(value)})`;
+    return `${this.tokenFor('M', formatMaskedMoney(value, this.moneyDecimals, this.currency))} (range: ${moneyBand(value)})`;
   }
 
   private ratioToken(raw: string) {
@@ -184,12 +261,12 @@ export class MaskingSession {
     return this.maskText(value);
   }
 
-  /** Mask S$ amounts, percentages and registered names inside a sentence. */
+  /** Mask money amounts (any listed currency), percentages and registered names inside a sentence. */
   maskText(text: string): string {
     if (!text) return text;
     let masked = text.replace(AMOUNT_IN_TEXT_RE, (match) => {
-      const value = Number(match.replace('S$', '').replace(/,/g, '').trim());
-      return Number.isFinite(value) ? `${this.tokenFor('M', formatMaskedMoney(value))} (range: ${moneyBand(value)})` : match;
+      const value = Number(match.replace(MONEY_PREFIX_RE, '').replace(/,/g, '').trim());
+      return Number.isFinite(value) ? `${this.tokenFor('M', formatMaskedMoney(value, this.moneyDecimals, this.currency))} (range: ${moneyBand(value)})` : match;
     });
     masked = masked.replace(PERCENT_IN_TEXT_RE, (match) => {
       const value = Number(match.replace('%', '').trim());
@@ -220,9 +297,45 @@ export class MaskingSession {
     return history.map((message) => ({ ...message, content: this.scrubQuestion(message.content) }));
   }
 
-  /** Put the real values back. A token the session never issued becomes a neutral marker. */
+  /**
+   * Unmask an answer that is still streaming in. A placeholder or its "(range: …)" band can be
+   * split across chunks ("{{M" … "1}} (ran" … "ge: 1k-5k)"), so the unfinished tail is held back
+   * until it closes; the rest is unmasked as usual. Call `unmask` on the full text at the end.
+   */
+  unmaskPartial(text: string): string {
+    let safe = text;
+    const openToken = safe.lastIndexOf('{{');
+    if (openToken >= 0 && safe.indexOf('}}', openToken) < 0) safe = safe.slice(0, openToken);
+    const openBracket = safe.lastIndexOf('(');
+    if (openBracket >= 0 && safe.indexOf(')', openBracket) < 0) safe = safe.slice(0, openBracket);
+    return this.unmask(safe);
+  }
+
+  /**
+   * Put the real values back. A token the session never issued becomes a neutral marker, and any
+   * "(range: …)" band the model left elsewhere in the sentence is removed.
+   */
   unmask(text: string | null | undefined): string {
     if (!text) return '';
-    return text.replace(TOKEN_WITH_BAND_RE, (_match, id: string) => this.values.get(id) ?? UNAVAILABLE_FIGURE);
+    return text
+      .replace(TOKEN_WITH_BAND_RE, (_match, id: string) => this.values.get(id) ?? UNAVAILABLE_FIGURE)
+      .replace(STRAY_BAND_RE, '')
+      .replace(STRAY_MONEY_BAND_RE, '')
+      .replace(BAND_CLAUSE_RE, '')
+      .replace(BRACKET_CLAUSE_RE, '')
+      .replace(BETWEEN_CLAUSE_RE, '')
+      .replace(PERCENT_BAND_CLAUSE_RE, '')
+      .replace(MONTHS_BAND_CLAUSE_RE, '')
+      .replace(REPRESENTED_BY_RE, 'is ')
+      .replace(BAND_SENTENCE_RE, stripBandSentence)
+      .replace(FIGURE_BAND_RE, '$1')
+      .replace(EMPTY_BULLET_RE, '')
+      // A months value already ends in "months"; the model often writes "{{N1}} months" as well.
+      .replace(/(\d months) months\b/g, '$1');
+  }
+
+  /** `unmask` for a finished answer: also drops the trailing spaces and blank tail the clean-ups can leave. */
+  unmaskFinal(text: string | null | undefined): string {
+    return this.unmask(text).replace(/[ \t]+$/gm, '').replace(/\n+$/, '');
   }
 }

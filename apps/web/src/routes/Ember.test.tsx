@@ -30,7 +30,7 @@ vi.mock('../app/fireBuddyContext', async () => {
 });
 
 function askQuestion(question: string) {
-  const composer = screen.getByRole('textbox', { name: 'Ask Ember' });
+  const composer = screen.getByRole('textbox', { name: 'Ask Doudou' });
   fireEvent.change(composer, { target: { value: question } });
   fireEvent.keyDown(composer, { key: 'Enter', shiftKey: false });
   return composer;
@@ -68,8 +68,8 @@ describe('Ember page', () => {
     mocks.aiPreference = 'off';
     render(<MemoryRouter><Ember /></MemoryRouter>);
 
-    expect(screen.queryByRole('textbox', { name: 'Ask Ember' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Turn on Ember' })).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: 'Ask Doudou' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Turn on Doudou' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Use Guide' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Use Personalised' })).toBeTruthy();
     expect(mocks.streamFinancialAdvisor).not.toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe('Ember page', () => {
     render(<Ember />);
 
     fireEvent.click(screen.getByRole('button', { name: /Understand CPF rates/i }));
-    const composer = screen.getByRole('textbox', { name: 'Ask Ember' }) as HTMLTextAreaElement;
+    const composer = screen.getByRole('textbox', { name: 'Ask Doudou' }) as HTMLTextAreaElement;
 
     await waitFor(() => expect(document.activeElement).toBe(composer));
     expect(composer.value).toContain('CPF contribution rates for 2026');
@@ -99,10 +99,10 @@ describe('Ember page', () => {
   it('explains Ember capabilities and limitations without adding a greeting message', () => {
     render(<Ember />);
 
-    expect(screen.getByRole('heading', { name: 'Your Singapore finance guide' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: "Hi, I'm Doudou, your Singapore finance guide" })).toBeTruthy();
     expect(screen.getByText(/explain your FireBuddy spending and FIRE results/i)).toBeTruthy();
     expect(screen.getByText(/uses read only calculations, cannot change records/i)).toBeTruthy();
-    expect(screen.queryByText('Ember', { selector: '.ember-message-author' })).toBeNull();
+    expect(screen.queryByText('Doudou', { selector: '.ember-message-author' })).toBeNull();
     const composerHelp = screen.getByText('Enter to send. Shift+Enter for a new line.');
     expect(composerHelp.nextElementSibling?.textContent).toContain('Educational information only');
     expect(composerHelp.nextElementSibling?.tagName).toBe('SMALL');
@@ -159,7 +159,7 @@ describe('Ember page', () => {
     });
     render(<Ember />);
 
-    const composer = screen.getByRole('textbox', { name: 'Ask Ember' });
+    const composer = screen.getByRole('textbox', { name: 'Ask Doudou' });
     fireEvent.change(composer, { target: { value: 'How does CPF work?' } });
     fireEvent.keyDown(composer, { key: 'Enter', shiftKey: true });
     expect(mocks.streamFinancialAdvisor).not.toHaveBeenCalled();
@@ -213,7 +213,7 @@ describe('Ember page', () => {
       'access-token',
       expect.objectContaining({
         appContext: expect.objectContaining({
-          currentPage: 'Ember',
+          currentPage: 'Doudou',
           recentActions: [expect.objectContaining({ label: 'Updated FIRE assumptions' })],
         }),
       }),
@@ -236,7 +236,7 @@ describe('Ember page', () => {
     askQuestion('Is my emergency fund large enough?');
     expect((await screen.findAllByText('Your runway is 5.2 months.')).length).toBeGreaterThan(0);
 
-    const note = await screen.findByText("Ember's response is customised to your existing data");
+    const note = await screen.findByText("Doudou's response is customised to your existing data");
     expect(note.tagName).toBe('EM');
     expect(note.closest('a')).toBeNull();
     expect(screen.queryByText('Your FireBuddy snapshot')).toBeNull();
@@ -337,7 +337,7 @@ describe('Ember page', () => {
     const suggestion = await screen.findByRole('button', { name: 'How are CPF contributions allocated across my CPF accounts?' });
     fireEvent.click(suggestion);
 
-    const composer = screen.getByRole('textbox', { name: 'Ask Ember' }) as HTMLTextAreaElement;
+    const composer = screen.getByRole('textbox', { name: 'Ask Doudou' }) as HTMLTextAreaElement;
     await waitFor(() => expect(document.activeElement).toBe(composer));
     expect(composer.value).toBe('How are CPF contributions allocated across my CPF accounts?');
     expect(mocks.streamFinancialAdvisor).toHaveBeenCalledOnce();
@@ -364,7 +364,7 @@ describe('Ember page', () => {
     render(<Ember />);
 
     askQuestion('Copy this question');
-    const emberCopyButton = screen.getByRole('button', { name: 'Copy Ember message' }) as HTMLButtonElement;
+    const emberCopyButton = screen.getByRole('button', { name: 'Copy Doudou message' }) as HTMLButtonElement;
     await waitFor(() => expect(emberCopyButton.disabled).toBe(false));
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy your message' }));
@@ -373,7 +373,7 @@ describe('Ember page', () => {
 
     fireEvent.click(emberCopyButton);
     await waitFor(() => expect(mocks.clipboardWrite).toHaveBeenCalledWith('A grounded Ember answer.'));
-    expect(screen.getByRole('button', { name: 'Copied Ember message' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copied Doudou message' })).toBeTruthy();
     expect(screen.getByText('Message copied to clipboard.')).toBeTruthy();
   });
 
@@ -510,10 +510,10 @@ describe('Ember page', () => {
   it('opens new topics with suggestions and no unsolicited assistant message', () => {
     render(<Ember />);
 
-    expect(screen.queryByText(/Hello, I am Ember/i)).toBeNull();
-    expect(screen.queryByText('Ember', { selector: '.ember-message-author' })).toBeNull();
+    expect(screen.queryByText(/Hi, I’m Doudou/i)).toBeNull();
+    expect(screen.queryByText('Doudou', { selector: '.ember-message-author' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
-    expect(screen.queryByText(/Hello, I am Ember/i)).toBeNull();
+    expect(screen.queryByText(/Hi, I’m Doudou/i)).toBeNull();
     expect(screen.getAllByRole('button', { name: /Understand CPF rates/i }).length).toBeGreaterThan(0);
   });
 });

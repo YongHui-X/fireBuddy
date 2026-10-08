@@ -117,6 +117,37 @@ class EmberMaskingTests(unittest.TestCase):
         self.assertEqual(session.unmask(f"Balance {token} (range: 5k-10k)."), "Balance S$6,800.00.")
         self.assertEqual(session.unmask("Balance {{M999}}."), "Balance [figure unavailable].")
 
+    def test_unmask_drops_band_wording_but_keeps_guidance(self):
+        session = MaskingSession(enabled=True)
+        cases = [
+            ("Your net worth is S$75,000, which falls within the range of 50k-100k.", "Your net worth is S$75,000."),
+            ("Your net worth is S$75,000, which falls within the range of 50k–100k.", "Your net worth is S$75,000."),
+            ("Your net worth is S$75,000, which is in the 50k-100k bracket.", "Your net worth is S$75,000."),
+            ("Your net worth is S$75,000, which falls between 50k and 100k.", "Your net worth is S$75,000."),
+            ("Your spending is S$517 (under 1k).", "Your spending is S$517."),
+            ("The range for your net worth is 50k-100k.", ""),
+            ("17.1 months, which is over 12 months.", "17.1 months."),
+            ("MoneySense suggests 3-6 months of expenses", "MoneySense suggests 3-6 months of expenses"),
+            ("Aim for between 50k and 100k in savings.", "Aim for between 50k and 100k in savings."),
+            ("Consider a range of options.", "Consider a range of options."),
+        ]
+        for answer, expected in cases:
+            with self.subTest(answer=answer):
+                self.assertEqual(session.unmask(answer).strip(), expected)
+
+    def test_streaming_unmasker_drops_a_band_clause_split_across_deltas(self):
+        session = MaskingSession(enabled=True)
+        session.mask_facts({"netWorth": "75000"})
+        unmasker = session.unmasker()
+        deltas = ["Your net worth is {{M1}}, which falls within the ra", "nge of 50k-1", "00k. Keep it up", "."]
+        restored = "".join(unmasker.feed(delta) for delta in deltas) + unmasker.flush()
+        self.assertEqual(restored, "Your net worth is S$75,000.00. Keep it up.")
+
+    def test_ratio_keys_match_the_phone(self):
+        masked = MaskingSession(enabled=True).mask_facts({"progressToday": "0.42", "direction": "up"})
+        self.assertTrue(masked["progressToday"].startswith("{{R"))
+        self.assertEqual(masked["direction"], "up")
+
     def test_streaming_unmasker_restores_tokens_split_across_deltas(self):
         for deltas in (
             ["Your net worth {", "{M1}} is"],

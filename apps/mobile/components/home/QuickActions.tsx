@@ -5,7 +5,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
-import { AscentMark, EmberMark } from '../brand/BrandMarks';
+import { AscentMark, DoudouMark } from '../brand/BrandMarks';
+import { useTourTarget } from '../tour/TourProvider';
 import { PressOverlay } from '../ui/PressOverlay';
 import { AppText } from '../ui/Text';
 
@@ -13,7 +14,7 @@ interface QuickAction {
   key: 'wealth' | 'planner' | 'insights' | 'ember';
   label: string;
   icon?: LucideIcon;
-  mark?: 'ascent' | 'ember';
+  mark?: 'ascent' | 'doudou';
 }
 
 // Static so the icon components are not recreated on every render.
@@ -21,7 +22,8 @@ const actions: readonly QuickAction[] = [
   { key: 'wealth', label: 'Wealth', icon: Landmark },
   { key: 'planner', label: 'Planner', mark: 'ascent' },
   { key: 'insights', label: 'Insights', icon: ChartPie },
-  { key: 'ember', label: 'Ask Ember', mark: 'ember' },
+  // Short label so it never truncates beside the others; the screen reader still hears "Ask DouDou".
+  { key: 'ember', label: 'DouDou', mark: 'doudou' },
 ];
 
 /**
@@ -32,6 +34,13 @@ const actions: readonly QuickAction[] = [
 export function QuickActions() {
   const { theme } = useTheme();
   const router = useRouter();
+  // Each shortcut's round tile is a stop on DouDou's tour, so the spotlight circles the icon.
+  const targets = {
+    wealth: useTourTarget('wealth'),
+    planner: useTourTarget('planner'),
+    insights: useTourTarget('insights'),
+    ember: useTourTarget('doudou'),
+  };
   const open = (key: QuickAction['key']) => {
     if (key === 'wealth') router.push('/wealth');
     else if (key === 'planner') router.push('/fire-planner');
@@ -42,14 +51,14 @@ export function QuickActions() {
   return (
     <View style={styles.row}>
       {actions.map(({ key, label, icon: Icon, mark }) => (
-        <Pressable key={key} accessibilityRole="button" accessibilityLabel={label} onPress={() => open(key)} style={styles.action}>
+        <Pressable key={key} accessibilityRole="button" accessibilityLabel={key === 'ember' ? 'Ask DouDou' : label} onPress={() => open(key)} style={styles.action}>
           {({ pressed }) => (
             <>
-              <View style={[styles.tile, { borderColor: theme.heroLine }]}>
+              <View {...targets[key]} style={[styles.tile, { borderColor: theme.heroLine }]}>
                 <PressOverlay pressed={pressed} radius={radii.pill} light />
                 {Icon ? <Icon size={22} color={theme.heroInk} strokeWidth={1.9} /> : null}
                 {mark === 'ascent' ? <AscentMark size={22} color={theme.heroInk} /> : null}
-                {mark === 'ember' ? <EmberMark size={22} color={theme.heroInk} /> : null}
+                {mark === 'doudou' ? <DoudouMark size={30} /> : null}
               </View>
               <AppText variant="captionMedium" tone="heroMuted" numberOfLines={1}>{label}</AppText>
             </>

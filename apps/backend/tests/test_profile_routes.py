@@ -37,6 +37,20 @@ class ProfileRouteTests(unittest.TestCase):
         app.dependency_overrides.clear()
         self.patcher.stop()
 
+    def test_hides_and_preserves_another_users_profile(self):
+        """Reading and changing consent uses the caller even with another profile present."""
+        foreign = {"id": UNKNOWN_USER_ID, "email": "private@example.com",
+                   "ai_preference": "personalised", "ai_consented_at": "2026-10-01T00:00:00+00:00"}
+        self.supabase.rows["profiles"].insert(0, dict(foreign))
+        response = self.client.get("/profile")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], USER_ID)
+        self.assertNotIn(foreign["email"], response.text)
+        updated = self.client.put("/profile/ai-preference", json={"aiPreference": "guide"})
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()["id"], USER_ID)
+        self.assertEqual(next(row for row in self.supabase.rows["profiles"] if row["id"] == UNKNOWN_USER_ID), foreign)
+
     def test_get_profile_returns_off_and_null_consent(self):
         response = self.client.get("/profile")
         self.assertEqual(response.status_code, 200, response.text)

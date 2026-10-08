@@ -14,3 +14,6 @@ apps/web/.env.local
 apps/web/.env.*.local
 apps/mobile/node_modules/
 packages/shared/dist/
+
+# Expo CLI state created when Expo runs from the repo root
+.expo/

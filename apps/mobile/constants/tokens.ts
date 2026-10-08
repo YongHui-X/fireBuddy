@@ -70,16 +70,17 @@ export interface Theme {
   backdrop: string;
 }
 
+// Light cream canvas under white cards (owner, 6 Oct 2026); the paused web keeps #f2f4ec.
 export const lightTheme: Theme = {
-  bg: '#f2f4ec',
+  bg: '#f7f3ea',
   surface: '#ffffff',
-  surface2: '#f1f4ec',
-  surface3: '#e4e9de',
+  surface2: '#f1ece1',
+  surface3: '#e7e0d2',
   ink: '#14231c',
   ink2: '#56655c',
   ink3: '#6b7a71',
-  line: '#dde2d6',
-  lineStrong: '#c3ccbd',
+  line: '#e9e3d7',
+  lineStrong: '#cfc7b6',
   primary: brand.lime500,
   primaryHover: brand.lime600,
   onPrimary: '#14231c',
@@ -118,41 +119,86 @@ export const lightTheme: Theme = {
   backdrop: 'rgba(15, 37, 28, 0.45)',
 };
 
+/**
+ * Dark mode is deep forest, not black: the canvas keeps a visible green hue so the app still reads
+ * as FireBuddy at night, and each surface step is a lighter forest. ink3 is lifted to keep 4.5:1
+ * on `surface`.
+ */
 export const darkTheme: Theme = {
   ...lightTheme,
-  bg: '#0c1712',
-  surface: '#132119',
-  surface2: '#1b2c22',
-  surface3: '#24382c',
+  // Lifted again on 4 Oct 2026: #15291f still read as black on a phone screen.
+  bg: '#1f3a2e',
+  surface: '#284637',
+  surface2: '#2f4f3f',
+  surface3: '#385a49',
   ink: '#edf2ea',
-  ink2: '#a9b7ad',
-  ink3: '#8a988f',
-  line: '#26392e',
-  lineStrong: '#375043',
+  ink2: '#b8c6bc',
+  ink3: '#a3b2a8',
+  line: '#3b5a4b',
+  lineStrong: '#4d6e5d',
   accent: '#8fd1a8',
-  accentSoft: '#1c3226',
+  accentSoft: '#2f5240',
   accentText: '#a9e0bc',
   focusRing: brand.lime500,
   income: '#6fd193',
-  incomeSoft: '#173225',
+  incomeSoft: '#2a4d38',
   expense: '#f08d7d',
-  expenseSoft: '#3c221f',
+  expenseSoft: '#4a2e2a',
   danger: '#f08d7d',
   dangerFill: '#d9534a',
   warning: '#e6bd5f',
-  warningSoft: '#332a14',
+  warningSoft: '#453a1e',
   info: '#86b9da',
-  infoSoft: '#17293a',
+  infoSoft: '#243a4b',
   chartProjection: '#86b9da',
-  railBg: '#0f1e17',
+  railBg: '#1a3227',
   railLine: 'rgba(255, 255, 255, 0.08)',
-  heroBg: '#1d3b2d',
-  heroLine: 'rgba(255, 255, 255, 0.12)',
+  // A richer forest than the canvas so the Home hero still stands apart from it.
+  heroBg: '#2d6249',
+  heroLine: 'rgba(255, 255, 255, 0.14)',
   brandMarkFill: brand.forest700,
   emberSymbol: '#f0a068',
   pressOverlay: 'rgba(237, 242, 234, 0.08)',
   backdrop: 'rgba(0, 0, 0, 0.6)',
 };
+
+/**
+ * The launch screen, which follows the phone's light or dark setting (the native splash shows
+ * before the app can read the in-app theme choice). `bg` must match the expo-splash-screen colours
+ * in app.json exactly, so the hand-off from the native splash is invisible.
+ */
+export interface LaunchPalette {
+  bg: string;
+  /** Radial glow behind DouDou as [offset 0-1, colour, opacity] stops, centred just above the middle. */
+  glow: readonly (readonly [number, string, number])[];
+  ground: string;
+  ink: string;
+  muted: string;
+  /** Olive edge on the bean, needed only on the pale light glow. */
+  outline: boolean;
+}
+
+export const launchPalettes: Record<'light' | 'dark', LaunchPalette> = {
+  light: {
+    bg: '#f7f3ea',
+    glow: [[0, '#fdfbf3', 1], [0.34, '#f2f2d6', 1], [0.72, '#f7f3ea', 1]],
+    ground: 'rgba(95, 125, 18, 0.16)',
+    ink: brand.forest800,
+    muted: '#56655c',
+    outline: true,
+  },
+  dark: {
+    bg: '#15291f',
+    glow: [[0, brand.lime500, 0.16], [0.34, brand.lime500, 0.07], [0.72, brand.lime500, 0]],
+    ground: 'rgba(0, 0, 0, 0.3)',
+    ink: '#eef4ee',
+    muted: '#b0beb4',
+    outline: false,
+  },
+};
+
+/** The line under "FireBuddy" on the launch screen. */
+export const BRAND_TAGLINE = 'Small steps to financial freedom';
 
 export const radii = {
   chip: 6,

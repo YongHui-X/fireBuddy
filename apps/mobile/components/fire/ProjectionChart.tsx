@@ -54,6 +54,10 @@ export function ProjectionChart({ fire, depletion, peak, height = 220 }: Project
   const firstYear = rows[0]!.month.slice(0, 4);
   const lastYear = rows[rows.length - 1]!.month.slice(0, 4);
   const retireYear = plan.retirementMonth.slice(0, 4);
+  // The red depletion line gets its year at the foot like the retirement line. Labels are about
+  // 30-60px wide, so the end year steps aside when the depletion year would sit on top of it.
+  const depletionX = depletion ? Math.min(Math.max(x(depletion), pad.left + 16), width - pad.right - 16) : null;
+  const showLastYear = depletionX === null || width - pad.right - depletionX > 52;
 
   return (
     <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.wrap}>
@@ -76,7 +80,8 @@ export function ProjectionChart({ fire, depletion, peak, height = 220 }: Project
           {fire.fiTarget ? <Circle cx={x(plan.retirementMonth)} cy={y(Number(fire.fiTarget))} r={5} fill={theme.warning} stroke={theme.surface} strokeWidth={2} /> : null}
           <SvgText x={pad.left} y={height - 6} fontSize={11} fontFamily={fonts.body.regular} fill={theme.ink3} textAnchor="start">{firstYear}</SvgText>
           <SvgText x={x(plan.retirementMonth)} y={height - 6} fontSize={11} fontFamily={fonts.body.medium} fill={theme.ink2} textAnchor="middle">{`Retire ${retireYear}`}</SvgText>
-          <SvgText x={width - pad.right} y={height - 6} fontSize={11} fontFamily={fonts.body.regular} fill={theme.ink3} textAnchor="end">{lastYear}</SvgText>
+          {depletion && depletionX !== null ? <SvgText x={depletionX} y={height - 6} fontSize={11} fontFamily={fonts.body.medium} fill={theme.expense} textAnchor="middle">{depletion.slice(0, 4)}</SvgText> : null}
+          {showLastYear ? <SvgText x={width - pad.right} y={height - 6} fontSize={11} fontFamily={fonts.body.regular} fill={theme.ink3} textAnchor="end">{lastYear}</SvgText> : null}
         </Svg>
       ) : null}
       <View style={styles.key}>

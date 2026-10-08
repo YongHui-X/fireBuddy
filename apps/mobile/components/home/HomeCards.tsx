@@ -27,7 +27,7 @@ import { AppText } from '../ui/Text';
  * the app-wide privacy eye beside it, the figure in white, this month's change, and the asset and
  * debt totals. Reads the latest dated wealth values.
  */
-export function NetWorthHeadline({ monthName }: { monthName: string }) {
+export function NetWorthHeadline({ monthName, onOpenWealth }: { monthName: string; onOpenWealth?: () => void }) {
   const { theme } = useTheme();
   const { money, hidden, toggle } = usePrivacy();
   const { netWorth, assetTotal, liabilityTotal, monthlyChange, active, missingValues } = useWealth();
@@ -58,18 +58,18 @@ export function NetWorthHeadline({ monthName }: { monthName: string }) {
             icon={hidden ? undefined : monthlyChange >= 0 ? ArrowUpRight : ArrowDownRight}
             round
           />
-        ) : (
-          // Mirrors the Wealth screen: a total built on unvalued positions says so.
+        ) : !active.length || missingValues ? (
+          // Mirrors the Wealth screen: a total built on unvalued positions says so. With no
+          // monthly change to show yet, nothing is shown rather than a prompt (owner, 5 Oct 2026).
           <Chip
             label={!active.length
               ? 'Add your first asset or debt'
-              : missingValues
-                ? `${missingValues} position${missingValues === 1 ? ' has' : 's have'} no value yet`
-                : 'Add this month’s values to see the change'}
+              : `${missingValues} position${missingValues === 1 ? ' has' : 's have'} no value yet`}
             tone="heroNeutral"
             round
+            onPress={onOpenWealth}
           />
-        )}
+        ) : null}
         <AppText variant="caption" tone="heroMuted" numberOfLines={1} style={styles.headlineTotals}>
           Assets {money(assetTotal, 0)} · Debts {money(liabilityTotal, 0)}
         </AppText>
@@ -233,7 +233,7 @@ export function RecentTransactionsCard({ transactions, onSelect, onViewAll, onAd
           />
         ))
       ) : (
-        <EmptyState title="No transactions yet." message="Add one to build your monthly pulse." actionLabel="Add transaction" onAction={onAdd} />
+        <EmptyState doudou="peek" title="No transactions yet." message="Add one to build your monthly pulse." actionLabel="Add transaction" onAction={onAdd} />
       )}
     </Card>
   );

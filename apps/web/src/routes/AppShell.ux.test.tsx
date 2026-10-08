@@ -153,11 +153,11 @@ describe('App shell UX', () => {
     render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
 
     const assistantNavigation = screen.getByRole('navigation', { name: 'Assistant' });
-    const desktopEmberLink = within(assistantNavigation).getByRole('link', { name: 'Ask Ember' });
+    const desktopEmberLink = within(assistantNavigation).getByRole('link', { name: 'Ask Doudou' });
     expect(desktopEmberLink).toBeTruthy();
     expect(within(desktopEmberLink).getByText('AI')).toBeTruthy();
     expect(desktopEmberLink.querySelector('.ember-nav-mark')).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Ask Ember about Home dashboard' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ask Doudou about Home dashboard' })).toBeTruthy();
     expect(screen.queryByText('Guide')).toBeNull();
     expect(screen.getByRole('heading', { name: 'FireBuddy' })).toBeTruthy();
     expect(document.querySelector('.sidebar-brand-mark')).not.toBeNull();
@@ -168,7 +168,7 @@ describe('App shell UX', () => {
     expect(screen.queryByRole('navigation', { name: 'More FireBuddy pages' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     const mobileMoreNavigation = screen.getByRole('navigation', { name: 'More FireBuddy pages' });
-    const mobileEmberLink = within(mobileMoreNavigation).getByRole('link', { name: 'Ask Ember' });
+    const mobileEmberLink = within(mobileMoreNavigation).getByRole('link', { name: 'Ask Doudou' });
     expect(within(mobileEmberLink).getByText('AI')).toBeTruthy();
     expect(mobileEmberLink.querySelector('.ember-nav-mark')).not.toBeNull();
     expect(within(mobileMoreNavigation).getByRole('link', { name: 'Plan' })).toBeTruthy();
@@ -179,8 +179,8 @@ describe('App shell UX', () => {
 
     expect(screen.queryByRole('button', { name: 'Open Ember' })).toBeNull();
     fireEvent.click(desktopEmberLink);
-    expect(await screen.findByRole('heading', { name: 'Ember' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Focus Ember conversation' })).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Doudou' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Focus Doudou conversation' })).toBeNull();
 
     const mainSidebar = document.getElementById('main-sidebar') as HTMLElement;
     fireEvent.click(screen.getByRole('button', { name: 'Hide main navigation' }));
@@ -854,7 +854,7 @@ describe('App shell on a phone', () => {
     setViewportWidth(viewports.phone);
     render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
 
-    expect(screen.queryByRole('button', { name: 'Ask Ember about Home dashboard' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ask Doudou about Home dashboard' })).toBeNull();
     expect(document.querySelector('.ember-floating-root')).toBeNull();
   });
 
@@ -974,6 +974,6 @@ describe('App shell on a phone', () => {
     setViewportWidth(viewports.desktop);
     render(<MemoryRouter initialEntries={['/']}><AppShell /></MemoryRouter>);
 
-    expect(screen.getByRole('button', { name: 'Ask Ember about Home dashboard' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ask Doudou about Home dashboard' })).toBeTruthy();
   });
 });

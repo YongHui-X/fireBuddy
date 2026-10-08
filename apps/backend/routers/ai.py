@@ -127,7 +127,7 @@ def parse_input(payload: ParseInputRequest, current_user: CurrentUser):
     if load_ai_preference(current_user.id) != "personalised":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={"code": "ai_disabled", "message": "AI suggestions are off for this account. Turn them on under Profile, Ember and AI."},
+            detail={"code": "ai_disabled", "message": "AI suggestions are off for this account. Turn them on under Profile, DouDou and AI."},
         )
 
     categories = fetch_available_categories(current_user.id)

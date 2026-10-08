@@ -1,0 +1,244 @@
+{
+  "label": "placeholder_v1",
+  "todayKey": "2026-10-05",
+  "apiBase": "http://127.0.0.1:8000",
+  "total": 10,
+  "passed": 4,
+  "results": [
+    {
+      "id": "ph_direct_spend",
+      "question": "How much have I spent this month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much have I spent this month?",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- You have spent a total of S$1,176 this month from 1 to 5 October 2026.\n- Your top spending categories for this period include:\n  - Food & Drink: S$517\n  - Bills & Utilities: S$187\n  - Shopping: S$148\n  - Travel: S$120\n  - Transport: S$100",
+      "sources": [],
+      "sourceExpectation": "Direct lookup: S$1,176.",
+      "latencyMs": 6667,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_savings_rate",
+      "question": "What is my savings rate this month?",
+      "usedSections": [
+        "cashflow"
+      ],
+      "maskedQuestion": "What is my savings rate this month?",
+      "maskedContextChars": 266,
+      "mode": "hybrid",
+      "answer": "- Your savings rate this month is 77.4%.\n- Your total income is S$5,200.\n- Your total spending is S$1,176.\n- Your savings amount is S$4,024.",
+      "sources": [],
+      "sourceExpectation": "Precomputed ratio: 77.4% (S$4,024 of S$5,200).",
+      "latencyMs": 3548,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_emergency_vs_guideline",
+      "question": "Is my emergency fund within MoneySense's 3 to 6 months?",
+      "usedSections": [
+        "emergency"
+      ],
+      "maskedQuestion": "Is my emergency fund within MoneySense's 3 to 6 months?",
+      "maskedContextChars": 291,
+      "mode": "hybrid",
+      "answer": "- According to MoneySense, it is generally accepted to set aside at least 3 to 6 months' worth of expenses as emergency funds.\n- Your derived emergency fund target for 3 months is S$3,167, and for 6 months, it is S$6,333.\n- Your recorded emergency runway is 17.1 months, which is over 12 months.\n- Since your emergency runway exceeds the 6-month target, it is well above the MoneySense guideline.",
+      "sources": [
+        {
+          "title": "Basic Financial Planning Guide Faqs",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide-faqs.md"
+        },
+        {
+          "title": "Basic Financial Planning Guide",
+          "path": "markdown-cache/moneysense/basic-financial-planning-guide.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "Investing in Singapore",
+          "path": "manual/investing/investing-in-singapore.md"
+        }
+      ],
+      "sourceExpectation": "Runway 17.1 months, above six months; targets S$3,167 and S$6,333.",
+      "latencyMs": 8570,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_order_months",
+      "question": "Did I spend more this month or last month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "Did I spend more this month or last month?",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- This month, your total spending from 1 to 5 October 2026 is S$1,176.\n- Last month, your total spending from 1 to 30 September 2026 was S$3,817.\n- I do not have enough reliable context in the FireBuddy knowledge base to answer that.",
+      "sources": [],
+      "sourceExpectation": "Less this month: S$1,176 vs S$3,817 (different range bands).",
+      "latencyMs": 4400,
+      "dataChecks": [],
+      "pass": true
+    },
+    {
+      "id": "ph_difference_months",
+      "question": "How much less did I spend this month than last month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "How much less did I spend this month than last month?",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- This month, your total spending is S$1,176.\n- Last month, your total spending was S$3,817.\n- The difference in spending between this month and last month is S$3,817 minus S$1,176.",
+      "sources": [],
+      "sourceExpectation": "Difference not precomputed: S$3,817 - S$1,176 = S$2,642 less.",
+      "latencyMs": 3815,
+      "dataChecks": [
+        "missing phrase \"2,642\""
+      ],
+      "pass": false
+    },
+    {
+      "id": "ph_order_same_band",
+      "question": "Did I spend more on Food & Drink this month or last month?",
+      "usedSections": [
+        "spending"
+      ],
+      "maskedQuestion": "Did I spend more on Food & Drink this month or last month?",
+      "maskedContextChars": 770,
+      "mode": "hybrid",
+      "answer": "- This month, your spending on Food & Drink is S$517.\n- Last month, your spending on Food & Drink was S$541.\n- Since both amounts are under 1k, it's not clear which month had higher spending based on the ranges provided.",
+      "sources": [
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "Retirement Booklet English 2024",
+          "path": "markdown-cache/moneysense/retirement-booklet-english-2024.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "CPF Wage Ceilings and the CPF Annual Limit",
+          "path": "manual/cpf/cpf-wage-ceilings-and-limits.md"
+        }
+      ],
+      "sourceExpectation": "Both under 1k, so the bands cannot order them: S$517 this month is less than S$541 last month.",
+      "latencyMs": 6290,
+      "dataChecks": [
+        "an internal range was written into the answer"
+      ],
+      "pass": false
+    },
+    {
+      "id": "ph_sum_assets",
+      "question": "What are my total assets?",
+      "usedSections": [
+        "netWorth"
+      ],
+      "maskedQuestion": "What are my total assets?",
+      "maskedContextChars": 231,
+      "mode": "hybrid",
+      "answer": "- Your total assets are represented by your net worth, which is S$80,000.\n- This figure accounts for your investable assets and liabilities.",
+      "sources": [],
+      "sourceExpectation": "Sum not precomputed: net worth S$80,000 + debts S$365,000 = S$445,000.",
+      "latencyMs": 3427,
+      "dataChecks": [
+        "missing phrase \"445,000\""
+      ],
+      "pass": false
+    },
+    {
+      "id": "ph_ratio_category_share",
+      "question": "What share of this month's spending went to Food & Drink?",
+      "usedSections": [],
+      "maskedQuestion": "What share of this month's spending went to Food & Drink?",
+      "maskedContextChars": 0,
+      "mode": "knowledge",
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "sources": [],
+      "sourceExpectation": "Ratio not precomputed: S$517 of S$1,176, about 44%.",
+      "latencyMs": 2752,
+      "dataChecks": [
+        "missing phrase \"44\""
+      ],
+      "pass": false
+    },
+    {
+      "id": "ph_difference_fi_gap",
+      "question": "How much more do I need to reach my FI target?",
+      "usedSections": [
+        "fire"
+      ],
+      "maskedQuestion": "How much more do I need to reach my FI target?",
+      "maskedContextChars": 335,
+      "mode": "hybrid",
+      "answer": "- Your FIRE target is S$2,565,681.\n- Currently, you are in a funding status of shortfall.\n- Your progress rate is 94.7%, which is in the range of 90-100%.\n- To reach your target, you need to make a required monthly investment of S$2,136.",
+      "sources": [
+        {
+          "title": "Dr Wealth, Financial Independence Retire Early Guide",
+          "path": "manual/fire/sources/dr-wealth.md"
+        },
+        {
+          "title": "The Financial Coconut, The FIRE Spreadsheet That Breaks Down a S$4M Retirement Goal",
+          "path": "manual/fire/sources/the-financial-coconut.md"
+        },
+        {
+          "title": "FIRE Path Lion, Detail of My Planned Expenses at FI",
+          "path": "manual/fire/sources/fire-path-lion.md"
+        },
+        {
+          "title": "FIRE in Singapore",
+          "path": "manual/fire/FIRE.md"
+        },
+        {
+          "title": "FinSight SG, How to Calculate Your FIRE Number as a Singaporean",
+          "path": "manual/fire/sources/finsight-sg.md"
+        }
+      ],
+      "sourceExpectation": "Difference not precomputed: FI target S$2,565,681 minus investable assets S$65,000 = S$2,500,681.",
+      "latencyMs": 4792,
+      "dataChecks": [
+        "an internal range was written into the answer",
+        "missing phrase \"2,500,681\""
+      ],
+      "pass": false
+    },
+    {
+      "id": "ph_ratio_debt_service",
+      "question": "What is my monthly debt service as a share of my income?",
+      "usedSections": [
+        "cashflow",
+        "netWorth"
+      ],
+      "maskedQuestion": "What is my monthly debt service as a share of my income?",
+      "maskedContextChars": 440,
+      "mode": "knowledge",
+      "answer": "I do not have enough reliable context in the FireBuddy knowledge base to answer that. Try asking about CPF, Singapore Savings Bonds, MoneySense planning guides, IRAS reliefs, FIRE planning, or Singapore investing basics.",
+      "sources": [],
+      "sourceExpectation": "Ratio not precomputed: S$1,650 of S$5,200, about 32%.",
+      "latencyMs": 3365,
+      "dataChecks": [
+        "missing phrase \"32\""
+      ],
+      "pass": false
+    }
+  ]
+}
