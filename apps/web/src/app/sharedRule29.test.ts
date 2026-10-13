@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { RetirementPlan } from '@firebuddy/shared';
 import {
   HOME_PRICES,
   calculateRetirement,
@@ -11,7 +12,7 @@ import {
 import fixtures from '../../../../packages/shared/fixtures/retirement.json';
 
 const asOf = '2026-10-10';
-const base = { ...fixtures.base, retirementMonth: '2046-01', cpfEstimate: { sum: 'frs' as const, source: 'balances' as const }, cpfBalances: { oa: 10_000, sa: 20_000, ma: 30_000, month: '2026-10' }, cpfBalancesSource: 'typed' as const };
+const base = { ...(fixtures.base as RetirementPlan), retirementMonth: '2046-01', cpfEstimate: { sum: 'frs' as const, source: 'balances' as const }, cpfBalances: { oa: 10_000, sa: 20_000, ma: 30_000, month: '2026-10' }, cpfBalancesSource: 'typed' as const };
 const position = (id: string, positionType: 'cpf' | 'cash' = 'cpf', extra: Record<string, unknown> = {}) => ({ id, positionType, positionKind: 'asset', isArchived: false, cpfAccount: 'oa', ...extra }) as never;
 
 describe('shared rule 29', () => {

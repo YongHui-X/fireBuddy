@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { RetirementPlan } from '@firebuddy/shared';
 import { cpfRetirementSum, estimateCpfLifePayout, standardCpfLifePayout, withCpfEstimate } from '@firebuddy/shared';
 import fixtures from '../../../../packages/shared/fixtures/retirement.json';
 
@@ -42,9 +43,9 @@ describe('CPF LIFE estimates', () => {
   });
 
   it('only replaces a saved CPF estimate', () => {
-    const withoutEstimate = { ...fixtures.base };
+    const withoutEstimate = { ...(fixtures.base as RetirementPlan) };
     expect(withCpfEstimate(withoutEstimate)).toBe(withoutEstimate);
-    const plan = { ...fixtures.base, cpfEstimate: { sum: 'frs' as const } };
+    const plan = { ...(fixtures.base as RetirementPlan), cpfEstimate: { sum: 'frs' as const } };
     expect(withCpfEstimate(plan).cpfMonthlyPayout).toBe(Math.round(1780 * 228200 / 220400)); // born 1976: turns 55 in 2031, 2027's sum at 0% inflation
   });
 });

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { RetirementPlan } from '@firebuddy/shared';
 import { calculateRetirement, cpfRetirementSum, employeeCpfNow, projectCpf, withCpfProjection, CPF_WITHDRAWAL_LABEL } from '@firebuddy/shared';
 import fixtures from '../../../../packages/shared/fixtures/retirement.json';
 
 const asOf = '2026-10-10';
-const base = { ...fixtures.base, birthMonth: '1991-01', retirementMonth: '2046-01', endAge: 95, monthlySpending: 3000, monthlyContribution: 1500, portfolioOverride: { amount: 100000, date: '2026-10-01' }, cpfPlan: 'standard' as const, cpfStartAge: 65, beforeReturn: 0.05, afterReturn: 0.05, inflation: 0.03, residency: 'citizen' as const, pay: { grossMonthly: 6000, bonusMonths: 1 }, cpfBalances: { oa: 60000, sa: 30000, ma: 25000, month: '2026-10' }, cpfEstimate: { sum: 'frs' as const, source: 'balances' as const } };
+const base = { ...(fixtures.base as RetirementPlan), birthMonth: '1991-01', retirementMonth: '2046-01', endAge: 95, monthlySpending: 3000, monthlyContribution: 1500, portfolioOverride: { amount: 100000, date: '2026-10-01' }, cpfPlan: 'standard' as const, cpfStartAge: 65, beforeReturn: 0.05, afterReturn: 0.05, inflation: 0.03, residency: 'citizen' as const, pay: { grossMonthly: 6000, bonusMonths: 1 }, cpfBalances: { oa: 60000, sa: 30000, ma: 25000, month: '2026-10' }, cpfEstimate: { sum: 'frs' as const, source: 'balances' as const } };
 
 describe('CPF projection rules 22 to 24', () => {
   it('returns null without CPF eligibility, balances, or after payout age', () => {

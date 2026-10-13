@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { RetirementPlan } from '@firebuddy/shared';
 import { buildSchedule, calculateRetirement, validateRetirementPlan } from '@firebuddy/shared';
 import fixtures from '../../../../packages/shared/fixtures/retirement.json';
 
 const asOf = '2026-10-10';
-const base = { ...fixtures.base, retirementMonth: '2046-01', healthcare: undefined };
+const base = { ...(fixtures.base as RetirementPlan), retirementMonth: '2046-01', healthcare: undefined };
 
 describe('healthcare and validation rules', () => {
   it('does not change results when healthcare is absent or zero', () => {

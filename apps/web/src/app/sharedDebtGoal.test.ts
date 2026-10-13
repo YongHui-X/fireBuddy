@@ -27,18 +27,18 @@ describe('requiredPaymentForTarget', () => {
 });
 
 describe('describeDebtGoal', () => {
-  const base = { payoffTargetMonth: '2027-10', interestRate: 0, monthlyPayment: 100 };
+  const base = { payoffTargetMonth: '2027-10', interestRate: '0', monthlyPayment: '100' };
 
   it('describes missing, on-track, and below-target payments', () => {
     expect(describeDebtGoal({ ...base, payoffTargetMonth: null }, 1200, '2026-10-07')).toBeNull();
     expect(describeDebtGoal(base, 1200, '2026-10-07')?.text.startsWith('On track')).toBe(true);
-    expect(describeDebtGoal({ ...base, monthlyPayment: 50 }, 1200, '2026-10-07')?.text).toContain('more than now');
+    expect(describeDebtGoal({ ...base, monthlyPayment: '50' }, 1200, '2026-10-07')?.text).toContain('more than now');
     expect(describeDebtGoal({ ...base, monthlyPayment: null }, 1200, '2026-10-07')?.text).not.toContain('more than now');
     expect(describeDebtGoal({ ...base, interestRate: null }, 1200, '2026-10-07')?.text).toContain('interest rate');
   });
 
   it('uses the supplied amount formatter', () => {
-    const result = describeDebtGoal({ ...base, monthlyPayment: 50 }, 1200, '2026-10-07', (value) => `RM${value}`);
+    const result = describeDebtGoal({ ...base, monthlyPayment: '50' }, 1200, '2026-10-07', (value) => `RM${value}`);
     expect(result?.text).toContain('RM100');
   });
 });

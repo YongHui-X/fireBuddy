@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { RetirementPlan } from '@firebuddy/shared';
 import { calculateRetirement, monthIndex, validateRetirementPlan } from '@firebuddy/shared';
 import fixtures from '../../../../packages/shared/fixtures/retirement.json';
 
 const asOf = '2026-01-01';
-const base = { ...fixtures.base };
+const base = { ...(fixtures.base as RetirementPlan) };
 
 describe('retirement lump sums', () => {
   it('counts Basic CPF at the standard level', () => {
