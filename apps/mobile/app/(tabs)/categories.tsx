@@ -5,10 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CategorySheet } from '@/components/categories/CategorySheet';
 import { Screen } from '@/components/layout/Screen';
-import { Button } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { CategoryAvatar } from '@/components/ui/CategoryAvatar';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { IconButton } from '@/components/ui/IconButton';
 import { PageToolbar } from '@/components/ui/PageToolbar';
 import { PressOverlay } from '@/components/ui/PressOverlay';
 import { ProgressTrack } from '@/components/ui/ProgressTrack';
@@ -44,26 +44,42 @@ export default function CategoriesScreen() {
     });
   }, [categories, transactions, type, month]);
 
+  // The band's one figure: this month's spend against the budgets set, or a plain prompt when none are.
+  const budgetTotal = rows.reduce((sum, row) => sum + row.budget, 0);
+  const spentTotal = rows.reduce((sum, row) => sum + row.spent, 0);
+  const bandLine = type === 'income'
+    ? 'Manage the sources used to classify income.'
+    : budgetTotal > 0
+      ? `${money(spentTotal, 0)} spent of ${money(budgetTotal, 0)} budgeted this month`
+      : 'Manage your spend categories and monthly budgets.';
+
   return (
-    <Screen>
-      <PageToolbar
-        title="Categories"
-        description={type === 'expense' ? 'Manage your spend categories and monthly budgets.' : 'Manage the sources used to classify income.'}
-        // One Lime Rule: the tab bar's Add tile owns the lime on this screen, so this stays secondary.
-        actions={<Button label="Add category" icon={Plus} variant="secondary" onPress={() => setAdding(true)} />}
-      />
-      <SegmentedControl<TransactionType>
-        options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
-        value={type}
-        onChange={setType}
-        accessibilityLabel="Category type"
-      />
+    <Screen
+      hero={(
+        <>
+          <PageToolbar
+            tone="hero"
+            title="Categories"
+            description={bandLine}
+            // One Gold Rule: the tab bar's Add tile owns the gold on this screen, so adding a category is a quiet icon.
+            trailing={<IconButton icon={Plus} tone="hero" accessibilityLabel="Add category" onPress={() => setAdding(true)} />}
+          />
+          <SegmentedControl<TransactionType>
+            tone="hero"
+            options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
+            value={type}
+            onChange={setType}
+            accessibilityLabel="Category type"
+          />
+        </>
+      )}
+    >
       <View style={styles.grid} onLayout={grid.onLayout}>
         {rows.map(({ category, spent, budget, ratio }) => (
           <Pressable
             key={category.id}
             accessibilityRole="button"
-            accessibilityLabel={category.isDefault ? `${category.name}, system category` : `Edit ${category.name}`}
+            accessibilityLabel={category.isDefault ? (category.categoryType === 'expense' ? `Set a budget for ${category.name}` : `${category.name}, built-in category`) : `Edit ${category.name}`}
             onPress={() => setEditing(category)}
             style={[styles.card, shadows.card, { backgroundColor: theme.surface, borderColor: theme.line }, grid.itemWidth ? { width: grid.itemWidth } : null]}
           >
@@ -72,13 +88,13 @@ export default function CategoriesScreen() {
                 <PressOverlay pressed={pressed} radius={radii.card} />
                 <View style={styles.cardTop}>
                   <CategoryAvatar category={category} size="card" />
-                  {!category.isDefault ? <Pencil size={16} color={theme.ink3} strokeWidth={1.9} /> : null}
+                  {!category.isDefault || category.categoryType === 'expense' ? <Pencil size={16} color={theme.ink3} strokeWidth={1.9} /> : null}
                 </View>
                 <AppText variant="bodySemibold" numberOfLines={1}>{category.name}</AppText>
                 {category.categoryType === 'expense' ? (
                   <>
                     <AppText variant="caption" tone="ink2">{money(spent, 0)} this month</AppText>
-                    <ProgressTrack value={ratio} color={category.color} style={styles.track} />
+                    <ProgressTrack value={ratio} style={styles.track} />
                     <AppText variant="caption" tone="ink2">
                       {budget > 0 ? `${percent(ratio)} of ${money(budget, 0)}` : 'No budget'}
                     </AppText>

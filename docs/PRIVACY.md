@@ -8,11 +8,12 @@ Terms of use in `packages/shared/src/legal.ts`, shown by `apps/mobile/app/legal.
 
 Phone legal flow (8 Oct 2026): the welcome's first step has two stacked tick
 boxes, "I agree to the Terms of use" and "I've read the Privacy policy", each
-linking to its document (which ends with a Back button). Continue and Skip stay
-off until both are ticked; finishing the
+linking to its document (which ends with a Back button). There is no Skip:
+Continue stays off until a name is entered and both are ticked; finishing the
 welcome stores `legalAcceptedVersion` and `legalAcceptedAt` on the device. A
 phone that accepted an older `LEGAL_VERSION`, or none, sees a one-time
-"We've updated our terms" sheet with Continue. Bump `LEGAL_VERSION` and
+"We've updated our terms" sheet with the same two tick boxes; Continue stays
+off until both are ticked. Bump `LEGAL_VERSION` and
 `LEGAL_LAST_UPDATED` on every material change. Both documents are linked from
 Profile → About. The tester email template is `docs/TESTER_INVITE.md`.
 
@@ -110,6 +111,11 @@ needs (`packages/shared/src/snapshot-scope.ts`):
 | Net worth | Net worth, liabilities, investable assets, monthly debt service |
 | Emergency fund | Runway in months, essential spending, 3x and 6x targets |
 | FIRE | Funding status, FI target, progress, required monthly investment, estimated FI year |
+
+Account-linked cash balances (PRD 6.4.1) are worked out on the phone from
+entered balances and that account's transactions. They feed the net worth and
+emergency fund figures above as the same masked totals. The account link
+itself, and the transactions behind it, are never sent.
 
 A general question ("How does CPF LIFE work?") sends no snapshot. A personal
 question sends only the matching sections, plus the effective date and whether

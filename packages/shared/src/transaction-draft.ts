@@ -60,6 +60,16 @@ export function sanitizeAmountInput(text: string) {
   return `${whole}.${rest.join('').slice(0, 2)}`;
 }
 
+/**
+ * A typed amount with thousands separators for display ("120000.5" -> "120,000.5"). Pair it with
+ * `sanitizeAmountInput`, which strips the commas again as the person types.
+ */
+export function groupThousands(text: string) {
+  const [whole, ...rest] = text.split('.');
+  const grouped = (whole ?? '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return rest.length ? `${grouped}.${rest.join('')}` : grouped;
+}
+
 export function validateTransactionDraft(draft: TransactionDraft): TransactionDraftErrors {
   const errors: TransactionDraftErrors = {};
   const amount = Number(draft.amount);

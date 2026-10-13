@@ -114,3 +114,19 @@ export function formatShortDate(value: string) {
     month: 'short',
   });
 }
+
+/** Longest last-two-word pair kept together; a longer pair would rather wrap than break mid-word. */
+const NO_ORPHAN_MAX_PAIR = 18;
+
+/**
+ * Stops a single word sitting alone on the last line (an orphan, e.g. "go."): joins the last two
+ * words with a no-break space so they always wrap together. Leaves short text (under three words)
+ * and long final pairs alone, and only touches the last line of multi-line text.
+ */
+export function avoidOrphan(text: string) {
+  const match = /^([\s\S]*\S) +(\S+) +(\S+)$/.exec(text);
+  if (!match) return text;
+  const [, head, secondLast, last] = match;
+  if (secondLast.length + 1 + last.length > NO_ORPHAN_MAX_PAIR) return text;
+  return `${head} ${secondLast}\u00A0${last}`;
+}

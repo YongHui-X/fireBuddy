@@ -1,4 +1,4 @@
-import { formatMonthLabel, formatShortDate } from '@firebuddy/shared';
+import { formatMonthLabel } from '@firebuddy/shared';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { radii, spacing } from '@/constants/tokens';
@@ -6,7 +6,6 @@ import type { PositionView } from '@/hooks/use-wealth';
 import { useTheme } from '@/lib/theme';
 import { usePrivacy } from '@/lib/privacy';
 
-import { Chip } from '../ui/Chip';
 import { PressOverlay } from '../ui/PressOverlay';
 import { ProgressTrack } from '../ui/ProgressTrack';
 import { AppText } from '../ui/Text';
@@ -19,21 +18,24 @@ export interface PositionRowProps {
 }
 
 /**
- * One asset or debt: a type icon, name and value, the tags as separate chips, then for debts one fact
- * per line (payoff month, interest still to pay, the goal, progress) so nothing runs together.
+ * One asset or debt: a type icon, name and value, then for debts one fact per line (monthly payment,
+ * payoff month, interest still to pay, the goal, progress) so nothing runs together. No tags or dates
+ * (owner, 11 Oct 2026).
  */
 export function PositionRow({ row, first, onPress }: PositionRowProps) {
   const { theme } = useTheme();
-  const { money, percent } = usePrivacy();
-  const { position, isLiability, balance, valueDate, tags, payoff, repaid, goal } = row;
+  const { money, signedMoney, percent } = usePrivacy();
+  const { position, isLiability, linkedAccountName, balance, payoff, repaid, goal } = row;
+  // A row tied to an account shows the account's live name, so renaming it anywhere renames the row.
+  const displayName = linkedAccountName ?? position.name;
   const Icon = positionIcon(position.positionType, position.positionKind);
-  const valueText = balance === null ? 'Add a value' : `${isLiability ? '−' : ''}${money(balance, 0)}`;
-  const chips = [...tags, ...(isLiability && position.monthlyPayment ? [`${money(Number(position.monthlyPayment), 0)} a month`] : [])];
+  // A debt reads as owed (−); an account overspent from zero keeps its own minus sign.
+  const valueText = balance === null ? 'Add a value' : isLiability ? `−${money(balance, 0)}` : signedMoney(balance, 0);
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${position.name}, ${valueText}. Edit`}
+      accessibilityLabel={`${displayName}, ${valueText}. Edit`}
       onPress={onPress}
       style={[styles.row, !first ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.line } : null]}
     >
@@ -45,12 +47,10 @@ export function PositionRow({ row, first, onPress }: PositionRowProps) {
           </View>
           <View style={styles.copy}>
             <View style={styles.titleRow}>
-              <AppText variant="bodySemibold" numberOfLines={1} style={styles.name}>{position.name}</AppText>
+              <AppText variant="bodySemibold" numberOfLines={1} style={styles.name}>{displayName}</AppText>
               <AppText variant="amount" tone={isLiability ? 'expense' : 'ink'}>{valueText}</AppText>
             </View>
-            <View style={styles.chips}>
-              {chips.map((chip) => <Chip key={chip} label={chip} />)}
-            </View>
+            {isLiability && position.monthlyPayment ? <AppText variant="caption" tone="ink2">{`${money(Number(position.monthlyPayment), 0)} a month`}</AppText> : null}
             {payoff?.payoffMonth ? (
               <AppText variant="caption" tone="ink">{`Paid off by ${formatMonthLabel(payoff.payoffMonth)}`}</AppText>
             ) : null}
@@ -62,7 +62,6 @@ export function PositionRow({ row, first, onPress }: PositionRowProps) {
                 <AppText variant="caption" tone="ink3">{percent(repaid)} repaid</AppText>
               </View>
             ) : null}
-            <AppText variant="caption" tone="ink3">{valueDate ? `As of ${formatShortDate(valueDate)}` : 'No dated value yet'}</AppText>
           </View>
         </>
       )}
@@ -100,12 +99,6 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     minWidth: 0,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginVertical: 2,
   },
   progress: {
     flexDirection: 'row',

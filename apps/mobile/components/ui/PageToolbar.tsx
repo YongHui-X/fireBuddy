@@ -14,12 +14,12 @@ export interface PageToolbarProps {
   onBack?: () => void;
   /** A small label under the copy, e.g. the "Local demo data" pill. */
   metadata?: ReactNode;
-  /** Controls placed under the copy on phones, never lime on a tab screen. */
+  /** Controls placed under the copy on phones, never gold on a tab screen. */
   actions?: ReactNode;
   /** A trailing control on the title row, such as an overflow menu. */
   trailing?: ReactNode;
   variant?: 'page' | 'greeting';
-  /** `hero` sets the copy in white and muted forest ink for a toolbar inside the forest region. */
+  /** `hero` sets the copy in white and muted ink for a toolbar inside the navy hero. */
   tone?: 'canvas' | 'hero';
   style?: StyleProp<ViewStyle>;
 }

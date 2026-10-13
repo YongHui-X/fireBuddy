@@ -207,6 +207,7 @@ FIRE means financial independence, retire early. The identity refuses the litera
 - Fixed 264px forest sidebar with lime active states and a lime Add Transaction button anchored at the bottom.
 - Pale green-white canvas (`#F2F4EC`) under white cards with 16px corners, a 1px line, and one soft offset shadow.
 - One forest card anchors Home: the net worth hero top-left, with a lime glow, a white display figure, and assets and liabilities beneath. Every other card, FI progress included, is white.
+- The mobile app now uses the **Gold Standard** palette (owner, 9 Oct 2026); see "Mobile palette: Gold Standard" under Mobile and Touch. The forest and lime described in this file remain the paused web app's palette.
 - Lime is the only action color. Forest greens carry structure, emphasis, and links. Semantic income, expense, warning, and projection colors stay separate.
 - Bricolage Grotesque for headings and figures, Schibsted Grotesk for body and controls, tabular numerals only where digits align.
 - Dark mode is a night version of the same world: deeper canvas, forest surfaces, lime unchanged.
@@ -267,6 +268,8 @@ FIRE means financial independence, retire early. The identity refuses the litera
 
 **The No-Kicker Rule.** Headings speak for themselves. Context goes in a subtitle below the heading, in secondary ink.
 
+**The No-Orphan Rule (mobile, owner 10 Oct 2026).** Wrapping text never leaves a single word alone on its last line (such as "go."). Lines break between words, never inside one. `AppText` keeps the last two words of plain text together with a no-break space (shared `avoidOrphan`, skipped when that pair is longer than 18 characters) and turns on balanced line breaking (Android `textBreakStrategy="balanced"`, iOS `lineBreakStrategyIOS="push-out"`). One-line text with `numberOfLines={1}` is left alone.
+
 ## Layout
 
 Desktop (1024px and up) uses a fixed 264px forest sidebar and a fluid canvas with a 1400px content maximum and a `clamp(18px, 3vw, 40px)` gutter. The page toolbar sits directly on the canvas with the title left and actions right; theme and notification controls trail the actions behind a hairline.
@@ -320,6 +323,10 @@ The transactions table lives in one bordered container. Header cells are overlin
 
 Income and Expense badges are small pills on their semantic washes. Tags are 6px muted chips. The demo-data label and Limited data status are pills in muted or warning wash.
 
+**Active filters (mobile, 10 Oct 2026).** The Transactions ledger names each active filter as a removable gold pill, such as "Expense ×", "Food ×" or "3 Oct – 9 Oct ×", all 32px tall. When two or more are active, a "Clear all" text button sits on the same line and height. The ledger never shows a bare "1 active" count.
+
+**Info buttons (mobile, 10 Oct 2026).** On information-heavy screens (FIRE Planner, Edit plan, Budgets) a long description moves behind a 16px (i) beside the card title or field label (`CardHeader info`, `TextField info`). Tapping it opens the text in a small dialog with "Got it". A short subtitle may stay on screen. Warnings, shortfalls and anything the person must act on never go behind an (i).
+
 ### Dialogs and Drawers
 
 Centered sheets are 520px, with a header divider and a 24px body. The add transaction editor is a 500px right drawer on desktop and a bottom sheet on phones. Menus are 184px popovers with 8px items.
@@ -361,13 +368,50 @@ Assistant answers are white reading panels with sources beneath a divider; user 
 
 ## Mobile and Touch
 
-The phone layout is the same system, not a second one. Palette, type scale, radii and shadows are
-unchanged; what changes is the shell, the density, and how a control is reached by a thumb.
+The phone layout is the same system, not a second one. Type scale, radii and shadows are
+unchanged; what changes is the shell, the density, how a control is reached by a thumb, and,
+since 9 October 2026, the palette below.
 
-One deliberate palette difference: since 6 October 2026 the phone's light canvas is a light cream
-(`#F7F3EA`, lines `#E9E3D7`, muted surfaces a warm `#F1ECE1`) under the same white cards, so the
-app reads warm rather than clinical. The launch screen and Android splash use the same cream. Dark
-mode is unchanged. The paused web app keeps `#F2F4EC` until web work resumes.
+### Mobile palette: Gold Standard (owner, 9 Oct 2026)
+
+The phone left forest and lime for **Gold Standard** (Coolors `#000814 #001D3D #003566 #FFC300
+#FFD60A`), chosen to draw attention and read as "money" at a glance. It supersedes every forest or
+lime rule in this file for the phone; the paused web app keeps forest and lime. Tokens live in
+`apps/mobile/constants/tokens.ts`.
+
+| Role | Light | Dark |
+|---|---|---|
+| Canvas | cool white `#F6F7FA` | charcoal `#212226` (from the owner's reference, 10 Oct 2026) |
+| Cards | `#FFFFFF` | `#27282D`, dividers `#3D3E43` |
+| Main text | near-black `#14181F` | `#F2F5FA` |
+| Secondary text (solid greys) | `#4D5A6B`, `#6B7686` | `#B6C2D2`, `#93A1B5` |
+| Heroes and rail (navy owns regions) | `#001D3D` | navy `#003566`, which stands apart from the charcoal page |
+| Action: Add tile and primary buttons | gold `#FFC300`, black text | the same |
+| Highlights: up pill, shortcut icons, progress, active rail | gold `#FFD60A` | the same |
+| Links and accents | `#00509D` | `#7FB3E6` |
+| Gold text on white (the `gold` chip) | `#7A5A00` | `#FFD60A` |
+
+1. **One Gold Rule.** Gold is spent on the primary action, highlights inside navy regions, and the
+   dark-mode net worth figure. It never fills a large area, and never sets text on white (use
+   `#7A5A00`).
+2. **White or black text only.** No coloured main text. Secondary text is a solid grey, never a
+   see-through white or black.
+3. **Home hero.** Navy with a white figure in light mode and a gold figure in dark mode; the
+   month's change is a solid gold pill with black text. A negative net worth keeps plain ink.
+4. **DouDou** is a golden bean with green leaves (`DOUDOU_GOLD_COLORS` in
+   `packages/shared/src/doudou.ts`, passed by the mobile app only). The app icon is the golden
+   DouDou on a navy tile with a lighter navy glow; the launch screen is cool white or charcoal with a soft
+   gold glow.
+5. **Semantic colours are unchanged.** Income stays green, expense coral, warning amber, info blue.
+6. **Navy bands on the tab screens (owner, 9 Oct 2026).** Transactions, Categories and Profile open
+   with a navy hero band like Home's: Transactions holds the month and the expense and income
+   totals (income in gold on navy), Categories holds spent against budget and the Expense / Income
+   switch, Profile holds DouDou and the user's name.
+7. **Gold means selected.** The selected segment of a switcher, a selected filter chip and a switch
+   that is on are solid gold with black text or a white thumb; the active tab carries a small gold
+   marker above its icon, and its icon and label turn strong blue `#00509D` in light mode or gold in
+   dark mode (owner, 10 Oct 2026). The Transactions tab is labelled "Trans." on the bar. Budget bars
+   are gold and turn red only when over budget.
 
 **Breakpoint ladder.** CSS media queries cannot read custom properties and there is no PostCSS
 step, so the stylesheets use literals — but only these, and `apps/web/src/app/breakpoints.ts`
@@ -403,8 +447,8 @@ row actions, ledger filters, the Wealth forms, and the existing centred dialogs.
 carries the geometry; `useAccessibleDialog` carries focus trapping, Escape and the body scroll
 lock. Sheets use `--shadow-lg`, the existing transient tier. No new elevation was added.
 
-**Navigation.** The four tabs are fixed: Home, Transactions, Categories, Profile, with the lime Add
-tile centred. Everything else — Ask Ember, Insights, Accounts, Wealth, FIRE Planner, Plan, Goals —
+**Navigation.** The four tabs are fixed: Home, Transactions, Categories, Profile, with the gold Add
+tile centred (lime on the paused web). Everything else — Ask Ember, Insights, Accounts, Wealth, FIRE Planner, Plan, Goals —
 and Log out live in the More sheet. The floating Ember launcher does not mount below 1024px.
 
 **The active tab indicator is forest, not lime.** As a 3px non-text indicator it needs 3:1 contrast

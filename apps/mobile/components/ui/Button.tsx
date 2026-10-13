@@ -23,8 +23,8 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
 }
 
 /**
- * The four web button roles. `primary` is the lime fill and stays reserved for one action per
- * screen; the tab bar's Add tile owns it on the four tab screens (the One Lime Rule).
+ * The four web button roles. `primary` is the gold fill and stays reserved for one action per
+ * screen; the tab bar's Add tile owns it on the four tab screens (the One Gold Rule).
  */
 export function Button({ label, variant = 'secondary', size = 'default', icon: Icon, block = false, loading = false, style, disabled, onPress, ...rest }: ButtonProps) {
   const { theme } = useTheme();
@@ -56,13 +56,17 @@ export function Button({ label, variant = 'secondary', size = 'default', icon: I
       ]}
     >
       {({ pressed }) => (
-        <View style={styles.content}>
+        // The press wash is a sibling of the content, so it covers the whole button rather than a
+        // grey strip behind the label.
+        <>
           <PressOverlay pressed={pressed && !isDisabled} radius={radii.control} />
+          <View style={styles.content}>
           {Icon ? <Icon size={size === 'compact' ? 15 : 17} color={inkColor} strokeWidth={2} /> : null}
           <AppText variant={size === 'compact' ? 'buttonCompact' : 'button'} style={{ color: inkColor }}>
             {loading ? `${label}…` : label}
           </AppText>
-        </View>
+          </View>
+        </>
       )}
     </Pressable>
   );

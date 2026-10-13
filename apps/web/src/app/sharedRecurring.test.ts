@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_CATCH_UP,
   createRecurringRule,
+  defaultFirstRepeatDate,
   describeRecurringSchedule,
   dueOccurrences,
   materialiseRecurring,
@@ -102,6 +103,32 @@ describe('shared recurring helpers', () => {
       rule({ frequency: 'weekly', startDate: '2006-01-01', nextIndex: 1 }),
     ], '2026-10-06', now);
     expect(result.inputs).toHaveLength(MAX_CATCH_UP);
+  });
+
+  it('starts the schedule from a chosen first repeat date', () => {
+    const input = {
+      transactionType: 'expense' as const,
+      amount: '1800.00',
+      categoryId: 'housing',
+      accountId: 'bank',
+      description: 'Rent',
+      date: '2026-10-03',
+      tagIds: [],
+    };
+    expect(defaultFirstRepeatDate(input.date, 'monthly')).toBe('2026-11-03');
+
+    const custom = createRecurringRule(input, 'monthly', null, 'rule-rent', now, '2026-10-25');
+    expect(custom.startDate).toBe('2026-10-25');
+    expect(custom.nextIndex).toBe(0);
+    expect(nextDueDate(custom)).toBe('2026-10-25');
+    expect(occurrenceDate(custom.startDate, custom.frequency, 1)).toBe('2026-11-25');
+
+    // The default date, a date on or before the transaction, or none keeps the original schedule.
+    for (const first of ['2026-11-03', '2026-10-03', '2026-09-30', null]) {
+      const rule = createRecurringRule(input, 'monthly', null, 'rule-rent', now, first);
+      expect(rule.startDate).toBe('2026-10-03');
+      expect(rule.nextIndex).toBe(1);
+    }
   });
 
   it('creates a rule from the transaction template', () => {

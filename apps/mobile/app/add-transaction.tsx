@@ -1,6 +1,7 @@
 import {
   createTransactionDraft,
   currencyPrefix,
+  defaultFirstRepeatDate,
   describeRecurringSchedule,
   RECURRING_FREQUENCIES,
   recurringFrequencyLabels,
@@ -66,6 +67,10 @@ export default function AddTransactionScreen() {
   const [hasEnd, setHasEnd] = useState(false);
   const [endDate, setEndDate] = useState('');
   const [endError, setEndError] = useState<string | null>(null);
+  // Empty means the default: one period after the transaction's own date.
+  const [nextRepeat, setNextRepeat] = useState('');
+  const [nextRepeatError, setNextRepeatError] = useState<string | null>(null);
+  const firstRepeat = repeat ? nextRepeat || defaultFirstRepeatDate(draft.date, repeat) || '' : '';
   const [scopeOpen, setScopeOpen] = useState(false);
   const rule = editing?.recurringId ? recurringRules.find((item) => item.id === editing.recurringId) ?? null : null;
   const categoryGrid = useGridItemWidth(4, spacing.sm);
@@ -98,8 +103,12 @@ export default function AddTransactionScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined);
       return;
     }
-    if (!editing && repeat && hasEnd && (!endDate || endDate < draft.date)) {
-      setEndError('Pick an end date on or after the first date.');
+    if (!editing && repeat && firstRepeat <= draft.date) {
+      setNextRepeatError('Pick a date after this transaction’s date.');
+      return;
+    }
+    if (!editing && repeat && hasEnd && (!endDate || endDate < firstRepeat)) {
+      setEndError('Pick an end date on or after the next repeat.');
       return;
     }
     if (editing && rule) {
@@ -126,7 +135,7 @@ export default function AddTransactionScreen() {
         notify('Transaction updated.');
       }
     } else if (repeat) {
-      addRecurringTransaction(input, repeat, hasEnd ? endDate : null);
+      addRecurringTransaction(input, repeat, hasEnd ? endDate : null, firstRepeat);
       notify(`${input.transactionType === 'income' ? 'Income' : 'Expense'} saved. It repeats ${recurringFrequencyLabels[repeat].toLowerCase()}.`);
     } else {
       addTransaction(input);
@@ -161,12 +170,6 @@ export default function AddTransactionScreen() {
         onClose={() => close()}
         title={editing ? 'Edit transaction' : 'Add transaction'}
         fill
-        footer={(
-          <View style={styles.footer}>
-            <Button label={editing ? 'Save changes' : 'Save transaction'} variant="primary" block onPress={save} />
-            {editing ? <Button label="Delete" icon={Trash2} variant="danger" block onPress={() => setConfirmDelete(true)} /> : null}
-          </View>
-        )}
       >
         <View style={styles.body}>
           <SegmentedControl<TransactionType>
@@ -231,12 +234,19 @@ export default function AddTransactionScreen() {
               <SelectField
                 label="Repeats"
                 icon={Repeat}
-                value={repeat ? describeRecurringSchedule({ frequency: repeat, startDate: draft.date }) : 'Never'}
+                value={repeat ? describeRecurringSchedule({ frequency: repeat, startDate: firstRepeat || draft.date }) : 'Never'}
                 help={repeat ? 'Later copies are added by themselves on their dates, for salary, rent or subscriptions.' : undefined}
                 onPress={() => setRepeatPicker(true)}
               />
               {repeat ? (
                 <>
+                  <DateField
+                    label="Next repeat"
+                    value={firstRepeat}
+                    onChange={(date) => { setNextRepeat(date); setNextRepeatError(null); }}
+                    help="When the next one is due, if it's not the same day as this one (for example, the 25th for rent)."
+                    error={nextRepeatError}
+                  />
                   <ToggleRow label="Set an end date" value={hasEnd} onChange={(next) => { setHasEnd(next); setEndError(null); }} />
                   {hasEnd ? <DateField label="End date" value={endDate} onChange={(date) => { setEndDate(date); setEndError(null); }} error={endError} placeholder="Choose a date" /> : null}
                 </>
@@ -262,7 +272,8 @@ export default function AddTransactionScreen() {
                     ]}
                   >
                     <CategoryAvatar category={category} size="row" />
-                    <AppText variant="captionMedium" numberOfLines={2} align="center">{category.name}</AppText>
+                    {/* A long one-word custom name ends in "…" on one line rather than breaking mid-word; names with spaces may wrap to two lines. Built-ins use short names. */}
+                    <AppText variant="captionMedium" numberOfLines={category.name.trim().includes(' ') ? 2 : 1} ellipsizeMode="tail" align="center">{category.name}</AppText>
                   </Pressable>
                 );
               })}
@@ -306,6 +317,12 @@ export default function AddTransactionScreen() {
               <Button label="Add" icon={Plus} variant="secondary" onPress={addNewTag} disabled={!newTag.trim()} />
             </View>
           </View>
+          {/* The save buttons scroll with the form (owner, 10 Oct 2026), so they can be reached
+              without closing the keyboard instead of sitting half-hidden behind it in a pinned footer. */}
+          <View style={styles.footer}>
+            <Button label={editing ? 'Save changes' : 'Save transaction'} variant="primary" block onPress={save} />
+            {editing ? <Button label="Delete" icon={Trash2} variant="danger" block onPress={() => setConfirmDelete(true)} /> : null}
+          </View>
         </View>
       </BottomSheet>
 
@@ -329,13 +346,14 @@ export default function AddTransactionScreen() {
         onClose={() => setRepeatPicker(false)}
         title="Repeats"
         actions={[
-          { key: 'never', label: 'Never', selected: repeat === null, onSelect: () => setRepeat(null) },
+          { key: 'never', label: 'Never', selected: repeat === null, onSelect: () => { setRepeat(null); setNextRepeat(''); } },
           ...RECURRING_FREQUENCIES.map((frequency) => ({
             key: frequency,
             label: recurringFrequencyLabels[frequency],
             detail: describeRecurringSchedule({ frequency, startDate: draft.date }),
             selected: repeat === frequency,
-            onSelect: () => setRepeat(frequency),
+            // A new frequency moves the next repeat back to its default, one period after the date.
+            onSelect: () => { setRepeat(frequency); setNextRepeat(''); setNextRepeatError(null); },
           })),
         ]}
       />
@@ -409,6 +427,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   amountWell: {
     borderRadius: radii.card,

@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 
+import { doudouColors } from '@/constants/tokens';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { useTheme } from '@/lib/theme';
 
@@ -66,7 +67,7 @@ export function Shapes({ shapes, slots = NO_SLOTS }: { shapes: DoudouShape[]; sl
 function useSlots(cover?: string): SlotColors {
   const { theme, scheme } = useTheme();
   return {
-    shadow: scheme === 'dark' ? 'rgba(0, 0, 0, 0.35)' : 'rgba(22, 58, 44, 0.12)',
+    shadow: scheme === 'dark' ? 'rgba(0, 0, 0, 0.35)' : 'rgba(0, 29, 61, 0.12)',
     cover: cover ?? theme.surface,
     line: theme.line,
     tile: theme.brandMarkFill,
@@ -144,7 +145,7 @@ interface DoudouProps {
  * The ground shadow, ledge and props stay still while the figure moves.
  */
 export function Doudou({ pose = 'hello', size = 96, motion = 'none', label, coverColor, style }: DoudouProps) {
-  const art = getDoudouArt(pose);
+  const art = getDoudouArt(pose, doudouColors);
   const slots = useSlots(coverColor);
   const motionStyle = useMotionStyle(motion);
   const a11y = label
@@ -176,7 +177,7 @@ export function Doudou({ pose = 'hello', size = 96, motion = 'none', label, cove
 
 /** Just DouDou's bean and face, cropped square, for chat avatars and shortcut tiles. Never animates. */
 export function DoudouMark({ size = 24 }: { size?: number }) {
-  const art = getDoudouArt('hello');
+  const art = getDoudouArt('hello', doudouColors);
   const slots = useSlots();
   return (
     <Svg width={size} height={size} viewBox={DOUDOU_MARK_VIEWBOX} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -193,7 +194,7 @@ export function DoudouIcon({ size = 36 }: { size?: number }) {
   const slots = useSlots();
   return (
     <Svg width={size} height={size} viewBox="0 0 48 48" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Shapes shapes={getDoudouIcon(size < 24)} slots={slots} />
+      <Shapes shapes={getDoudouIcon(size < 24, doudouColors)} slots={slots} />
     </Svg>
   );
 }

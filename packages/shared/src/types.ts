@@ -149,6 +149,17 @@ export interface Account {
   color: string;
   lastFour: string | null;
   isDefault: boolean;
+  /**
+   * Mobile only (PRD 6.4.1): false once the user stops a Wealth balance following this account,
+   * so its automatic balance no longer counts. Absent means true.
+   */
+  trackBalance?: boolean;
+  /**
+   * Mobile only (PRD 6.4.1): the moment this account's automatic balance restarted from zero, set
+   * when a Wealth balance that followed it is archived or unlinked; only transactions saved from
+   * then on count. Absent means every transaction counts.
+   */
+  balanceFrom?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -165,6 +176,8 @@ export interface UpdateAccountInput {
   type?: AccountType;
   color?: string;
   lastFour?: string | null;
+  trackBalance?: boolean;
+  balanceFrom?: string | null;
 }
 
 export interface ParseInputRequest {
@@ -305,6 +318,16 @@ export interface WealthPosition {
   originalPrincipal: string | null;
   /** Mobile only: the YYYY-MM the user wants a debt cleared by, for the required monthly payment. */
   payoffTargetMonth?: string | null;
+  /**
+   * Mobile only (PRD 6.4.1): the account whose income and expenses move this cash asset's value
+   * after its latest entered balance. Null or absent means the value is entered by hand.
+   */
+  linkedAccountId?: string | null;
+  /**
+   * Mobile only (PRD 6.6.1, 29): which CPF account a CPF position holds, so the FIRE planner can
+   * read OA, SA and MA from Wealth. 'sa' is the Retirement Account from 55. Absent: not set yet.
+   */
+  cpfAccount?: 'oa' | 'sa' | 'ma' | null;
   isArchived: boolean;
   archivedAt: string | null;
   latestSnapshot: WealthPositionSnapshot | null;
@@ -354,11 +377,11 @@ export interface WealthContribution {
   updatedAt: string;
 }
 
-type DebtTermFields = 'interestRate' | 'monthlyPayment' | 'nextPaymentDate' | 'originalPrincipal' | 'payoffTargetMonth';
+type OptionalPositionFields = 'interestRate' | 'monthlyPayment' | 'nextPaymentDate' | 'originalPrincipal' | 'payoffTargetMonth' | 'linkedAccountId';
 export type CreateWealthPositionInput = Omit<
   WealthPosition,
-  'id' | 'userId' | 'isArchived' | 'archivedAt' | 'latestSnapshot' | 'createdAt' | 'updatedAt' | DebtTermFields
-> & Partial<Pick<WealthPosition, DebtTermFields>>;
+  'id' | 'userId' | 'isArchived' | 'archivedAt' | 'latestSnapshot' | 'createdAt' | 'updatedAt' | OptionalPositionFields
+> & Partial<Pick<WealthPosition, OptionalPositionFields>>;
 export type UpdateWealthPositionInput = Partial<CreateWealthPositionInput>;
 export type CreateWealthSnapshotInput = Pick<WealthPositionSnapshot, 'valueDate' | 'amount'>;
 export type UpdateWealthSnapshotInput = CreateWealthSnapshotInput;
@@ -373,6 +396,24 @@ export interface RetirementIncome {
   annualGrowth: number;
   /** 'barista' marks the part-time income the Barista FIRE type adds; absent for the user's own entries. */
   source?: 'barista';
+  /**
+   * YYYY-MM the amount was typed in, when it is in that month's money (Barista income, PRD 6.6.1).
+   * The engine inflates it to `startMonth` before `annualGrowth` applies. Absent: the amount is
+   * already in the money of the month it starts.
+   */
+  priceMonth?: string;
+}
+
+/** A one-off cost or payment on a chosen month, in today's money (PRD 6.6.1, rule 20). */
+export interface RetirementLumpSum {
+  label: string;
+  /** YYYY-MM it happens. */
+  month: string;
+  /** Today's money, as of `priceMonth`; inflated by the engine like spending. */
+  amount: number;
+  direction: 'out' | 'in';
+  /** YYYY-MM the amount was typed in. */
+  priceMonth: string;
 }
 
 /** Which kind of FIRE the plan aims for. Saved with the plan so the choice is never guessed back. */
@@ -398,6 +439,58 @@ export interface RetirementPlan {
   provenance: Record<string, 'recorded' | 'user-entered' | 'assumed'>;
   /** Mobile only; older plans and the web leave it out and read as 'custom'. */
   fireType?: FireType;
+  /**
+   * Coast FIRE's Coast age as YYYY-MM (PRD 6.6.1, 33): monthly investing stops here and the
+   * portfolio only grows until retirement. Absent: investing continues to retirement.
+   */
+  coastMonth?: string;
+  /** Yearly rise in the monthly investment until retirement (PRD 6.6.1); absent reads as 0. */
+  contributionGrowth?: number;
+  /**
+   * Set when the CPF LIFE payout is estimated on the phone from the retirement sum expected at 55
+   * (PRD 6.6.1, rule 18); `cpfMonthlyPayout` then holds the estimate. Absent: the payout was typed.
+   */
+  cpfEstimate?: {
+    sum: 'brs' | 'frs' | 'ers';
+    /** 'balances' projects the person's CPF balances (rule 24); absent or 'sum' reads the sum alone (rule 18). */
+    source?: 'sum' | 'balances';
+  };
+  /** One-off costs and payments (PRD 6.6.1, rule 20); absent reads as none. */
+  lumpSums?: RetirementLumpSum[];
+  /** Singapore residency (rule 22). 'foreigner' has no CPF; absent reads as citizen. */
+  residency?: 'citizen' | 'pr' | 'foreigner';
+  /** Year the person became a PR, for CPF's graduated first two years (rule 22). */
+  prSinceYear?: number;
+  /** Gross pay (rule 23), in today's money. Stays on the phone. */
+  pay?: { grossMonthly: number; bonusMonths: number };
+  /** Spending now per month, excluding insurance and healthcare (rule 23). */
+  currentSpending?: number;
+  /** CPF balances as of `month` (rule 24). */
+  cpfBalances?: { oa: number; sa: number; ma: number; month: string };
+  /** 'wealth' reads the balances from CPF positions in Wealth on every run (rule 29); absent or 'typed' uses `cpfBalances`. */
+  cpfBalancesSource?: 'wealth' | 'typed';
+  /** Home ownership and the OA used for the home loan (rule 24). */
+  property?: {
+    status: 'own' | 'plan' | 'none';
+    oaMonthly: number;
+    fromMonth: string;
+    untilMonth: string;
+    /** A planned home (rule 31): its budget in today's money, OA used for the downpayment, and cash for the downpayment and renovation. */
+    budget?: number;
+    oaDownpayment?: number;
+    cashUpfront?: number;
+  };
+  /** Take out CPF above the chosen sum at 55 (rule 24); absent reads as false. */
+  cpfWithdrawAt55?: boolean;
+  /** Insurance and healthcare per month in today's money as of `priceMonth`, rising by `growth` a year (rule 25). */
+  healthcare?: {
+    monthlyAmount: number;
+    growth: number;
+    priceMonth: string;
+    /** The two parts the form asks for (rule 29); `monthlyAmount` is their sum and is what the engine reads. */
+    insurance?: number;
+    medical?: number;
+  };
 }
 
 export interface RetirementDraft { step: number; inputs: RetirementPlan }
@@ -409,6 +502,10 @@ export interface RetirementCashFlow {
   expenses: string;
   cpf: string;
   otherIncome: string;
+  /** Net one-off amount that month (payments in minus costs); only on plans with lump sums. */
+  lumpSum?: string;
+  /** The insurance and healthcare part of `expenses`; only on plans with that line (rule 25). */
+  healthcare?: string;
   balance: string;
 }
 

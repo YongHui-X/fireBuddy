@@ -14,6 +14,9 @@ import {
   requestedSpendingMonths,
   sectionsWithRecords,
   selectSnapshotSectionsForTurn,
+  withCpfProjection,
+  withWealthCpfBalances,
+  latestSnapshotByPosition,
   type ChatConversation,
   type RagAnswerMode,
   type RagChatMessage,
@@ -101,10 +104,10 @@ export function useEmber() {
   const presence = useMemo<RecordPresence>(() => ({
     expenses: store.transactions.some((item) => item.transactionType === 'expense'),
     transactions: store.transactions.length > 0,
-    wealth: store.positions.length > 0,
+    wealth: store.balancePositions.length > 0,
     firePlan: store.retirementPlan !== null,
     budgets: store.categories.some((category) => category.categoryType === 'expense' && Number(category.monthlyBudget) > 0),
-  }), [store.transactions, store.positions, store.retirementPlan, store.categories]);
+  }), [store.transactions, store.balancePositions, store.retirementPlan, store.categories]);
 
   /**
    * Everything that leaves the phone is prepared here. The question and history are scrubbed of
@@ -116,7 +119,7 @@ export function useEmber() {
   const prepareRequest = useCallback((question: string, history: RagChatMessage[]): { request: RagChatRequest; session: MaskingSession; usedSections: SnapshotSection[]; missing: MissingRecord[]; nothingOnRecord: boolean } => {
     const session = new MaskingSession({
       accounts: store.accounts.map((account) => account.name),
-      positions: store.positions.map((position) => position.name),
+      positions: store.balancePositions.map((position) => position.name),
       customCategories: store.categories.filter((category) => !category.isDefault).map((category) => category.name),
     }, { wholeDollars: true, currency: region.currency }); // Whole units in the user's currency, matching Home, Categories and Insights.
     const request: RagChatRequest = {
@@ -134,11 +137,15 @@ export function useEmber() {
       const snapshot = buildPersonalSnapshot({
         transactions: store.transactions,
         categories: store.categories,
-        positions: store.positions,
-        snapshots: store.snapshots,
+        positions: [...store.balancePositions],
+        snapshots: [...store.balanceSnapshots],
         contributions: store.contributions,
-        // Outside Singapore a stored CPF payout never counts, matching the FIRE Planner.
-        retirementPlan: store.retirementPlan && !region.isSingapore ? { ...store.retirementPlan, cpfPlan: 'unknown', cpfMonthlyPayout: 0 } : store.retirementPlan,
+        // The same plan the FIRE Planner runs: outside Singapore a stored CPF payout never counts, and in
+        // Singapore the payout is projected or estimated on the phone (PRD 6.6.1, 18 and 24). Only the
+        // resulting aggregates are sent, never pay, balances or labels.
+        retirementPlan: store.retirementPlan && !region.isSingapore
+          ? { ...store.retirementPlan, cpfPlan: 'unknown', cpfMonthlyPayout: 0 }
+          : store.retirementPlan && withCpfProjection(withWealthCpfBalances(store.retirementPlan, store.balancePositions, latestSnapshotByPosition(store.balanceSnapshots, getDeviceDateKey()), getDeviceDateKey()), getDeviceDateKey()),
         essentialCategoryIds: store.essentialCategoryIds,
         // "…and in July": that month's spending goes too, when spending is being sent at all.
         extraSpendingMonths: usedSections.includes('spending') ? requestedSpendingMonths(request.question, getDeviceDateKey()) : [],
@@ -153,7 +160,7 @@ export function useEmber() {
       }
     }
     return { request, session, usedSections, missing, nothingOnRecord };
-  }, [presence, store.accounts, store.positions, store.categories, store.transactions, store.snapshots, store.contributions, store.retirementPlan, store.essentialCategoryIds, region.country, region.currency, region.isSingapore]);
+  }, [presence, store.accounts, store.balancePositions, store.categories, store.transactions, store.balanceSnapshots, store.contributions, store.retirementPlan, store.essentialCategoryIds, region.country, region.currency, region.isSingapore]);
   const busy = messages.some((message) => message.status === 'pending' || message.status === 'streaming');
 
   // Load saved chats, turning an earlier build's single transcript into the first one. The newest

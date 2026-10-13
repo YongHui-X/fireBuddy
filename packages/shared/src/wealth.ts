@@ -2,8 +2,10 @@ import { calculateDebtPayoff, requiredPaymentForTarget } from './debt';
 import { formatShortMonthLabel } from './format';
 import { formatMoney } from './region';
 import type {
+  Account,
   CreateWealthPositionInput,
   FirePathPoint,
+  Transaction,
   WealthContribution,
   WealthPosition,
   WealthPositionSnapshot,
@@ -80,6 +82,130 @@ export function dedupeSameDaySnapshots<T extends WealthPositionSnapshot>(snapsho
   if (keep.size === snapshots.length) return snapshots;
   const kept = new Set([...keep.values()].map((entry) => entry.index));
   return snapshots.filter((_, index) => kept.has(index));
+}
+
+/** Whether a position can follow an account's transactions: cash assets only, for now (PRD 6.4.1). */
+export function isLinkablePosition(position: Pick<WealthPosition, 'positionKind' | 'positionType'>) {
+  return position.positionKind === 'asset' && position.positionType === 'cash';
+}
+
+/** Prefix of the ids of computed account-linked values, which are never stored. */
+export const LINKED_VALUE_ID_PREFIX = 'linked:';
+
+/**
+ * The snapshots with account-linked balances filled in (PRD 6.4.1). For each active cash asset
+ * linked to an account, every date up to `today` with a transaction on that account gets a
+ * computed value: the latest entered balance on or before that date, plus income and minus
+ * expenses on the account that the balance does not already include. A balance includes the
+ * transactions dated before it, and those on its own date that were saved before it; one saved
+ * later the same day still counts, so an expense logged after linking or after typing a balance
+ * moves the value straight away. Transactions before the first entered balance are ignored.
+ * Nothing is stored: pass the result to `summariseWealth`, `latestSnapshotByPosition` and
+ * `buildActualPath` so every screen reads the same value. Returns `snapshots` unchanged when
+ * nothing is linked.
+ */
+export function withLinkedBalances(
+  positions: readonly WealthPosition[],
+  snapshots: readonly WealthPositionSnapshot[],
+  transactions: readonly (Pick<Transaction, 'accountId' | 'date' | 'amount' | 'transactionType'> & { createdAt?: string })[],
+  today: string,
+): readonly WealthPositionSnapshot[] {
+  const linked = positions.filter((item) => !item.isArchived && item.linkedAccountId && isLinkablePosition(item));
+  if (!linked.length) return snapshots;
+  const computed: WealthPositionSnapshot[] = [];
+  for (const position of linked) {
+    const entered = dedupeSameDaySnapshots(snapshots.filter((item) => item.wealthPositionId === position.id))
+      .slice()
+      .sort((a, b) => a.valueDate.localeCompare(b.valueDate));
+    if (!entered.length) continue;
+    const moves = transactions.filter((item) => item.accountId === position.linkedAccountId && item.date <= today && item.date >= entered[0].valueDate);
+    for (const date of [...new Set(moves.map((item) => item.date))].sort()) {
+      const base = [...entered].reverse().find((item) => item.valueDate <= date)!;
+      const savedAt = base.updatedAt ?? base.createdAt ?? '';
+      const counted = moves.filter((item) => item.date <= date
+        && (item.date > base.valueDate || (item.date === base.valueDate && (item.createdAt ?? '') > savedAt)));
+      if (!counted.length) continue;
+      const change = counted.reduce((sum, item) => sum + (item.transactionType === 'income' ? 1 : -1) * (Number(item.amount) || 0), 0);
+      // Stamped no earlier than the newest counted transaction, so on a balance's own date the
+      // computed value (which adds the later entries) wins over the entered one.
+      const stamp = counted.reduce((latest, item) => ((item.createdAt ?? '') > latest ? item.createdAt! : latest), savedAt);
+      computed.push({
+        ...base,
+        id: `${LINKED_VALUE_ID_PREFIX}${position.id}:${date}`,
+        valueDate: date,
+        amount: (Number(base.amount) + change).toFixed(2),
+        updatedAt: stamp,
+      });
+    }
+  }
+  return computed.length ? [...snapshots, ...computed] : snapshots;
+}
+
+/** Prefix of the ids of automatic account balances, which are never stored. */
+export const ACCOUNT_BALANCE_ID_PREFIX = 'account-balance:';
+
+export function isAccountBalancePosition(position: Pick<WealthPosition, 'id'>) {
+  return position.id.startsWith(ACCOUNT_BALANCE_ID_PREFIX);
+}
+
+/**
+ * Automatic balances for accounts nothing in Wealth follows yet (PRD 6.4.1, item 5a): all income
+ * minus all expenses on the account up to `today`, from zero, as a cash asset named after the
+ * account. An account is skipped when an active Wealth balance follows it, when the user turned
+ * its balance off (`trackBalance: false`, the demo data only), or when it has no transactions.
+ * After `balanceFrom`, only transactions saved from that moment count. A hand-entered cash
+ * asset with no link is separate money and does not stop accounts counting. Nothing is stored.
+ */
+export function accountBalances(
+  accounts: readonly Pick<Account, 'id' | 'name' | 'trackBalance' | 'balanceFrom' | 'createdAt'>[],
+  positions: readonly WealthPosition[],
+  transactions: readonly (Pick<Transaction, 'accountId' | 'date' | 'amount' | 'transactionType'> & { createdAt?: string })[],
+  today: string,
+): { positions: WealthPosition[]; snapshots: WealthPositionSnapshot[] } {
+  const result: { positions: WealthPosition[]; snapshots: WealthPositionSnapshot[] } = { positions: [], snapshots: [] };
+  const followed = new Set(positions.filter((item) => !item.isArchived && item.linkedAccountId).map((item) => item.linkedAccountId));
+  for (const account of accounts) {
+    if (account.trackBalance === false || followed.has(account.id)) continue;
+    const moves = new Map<string, number>();
+    for (const transaction of transactions) {
+      if (transaction.accountId !== account.id || transaction.date > today) continue;
+      // Saved before the restart means already gone with the old balance. A record with no save
+      // time falls back to its date, so one dated before the restart day never sneaks back in.
+      if (account.balanceFrom && (transaction.createdAt ?? transaction.date) < account.balanceFrom) continue;
+      const signed = (transaction.transactionType === 'income' ? 1 : -1) * Number(transaction.amount);
+      if (Number.isFinite(signed)) moves.set(transaction.date, (moves.get(transaction.date) ?? 0) + signed);
+    }
+    if (!moves.size) continue;
+    const id = `${ACCOUNT_BALANCE_ID_PREFIX}${account.id}`;
+    result.positions.push({
+      id,
+      userId: '',
+      name: account.name,
+      positionKind: 'asset',
+      positionType: 'cash',
+      liquidityClass: 'liquid',
+      includeInFi: false,
+      isEmergencyFund: false,
+      restrictionType: 'none',
+      currency: 'SGD',
+      interestRate: null,
+      monthlyPayment: null,
+      nextPaymentDate: null,
+      originalPrincipal: null,
+      linkedAccountId: account.id,
+      isArchived: false,
+      archivedAt: null,
+      latestSnapshot: null,
+      createdAt: account.createdAt,
+      updatedAt: account.createdAt,
+    });
+    let running = 0;
+    for (const date of [...moves.keys()].sort()) {
+      running += moves.get(date)!;
+      result.snapshots.push({ id: `${id}:${date}`, userId: '', wealthPositionId: id, valueDate: date, amount: running.toFixed(2), createdAt: account.createdAt, updatedAt: account.createdAt });
+    }
+  }
+  return result;
 }
 
 export interface WealthSummary {

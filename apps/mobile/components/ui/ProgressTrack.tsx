@@ -8,7 +8,7 @@ export interface ProgressTrackProps {
   /** 0..1, values above 1 fill the track and switch to the over-budget colour unless `color` is fixed. */
   value: number;
   color?: string;
-  /** The unfilled track; defaults to the muted surface. Pass `theme.heroLine` on the forest hero. */
+  /** The unfilled track; defaults to the muted surface. Pass `theme.heroLine` on a navy hero. */
   trackColor?: string;
   height?: number;
   /** Forces the fill colour even when over 1. */
@@ -34,7 +34,7 @@ export function ProgressTrack({ value, color, trackColor, height = 8, keepColorW
       accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped * 100) }}
       style={[styles.track, { height, borderRadius: height / 2, backgroundColor: trackColor ?? theme.surface2 }, style]}
     >
-      <View style={[styles.fill, { width: `${clamped * 100}%`, borderRadius: height / 2, backgroundColor: over ? theme.expense : color ?? theme.accent }]} />
+      <View style={[styles.fill, { width: `${clamped * 100}%`, borderRadius: height / 2, backgroundColor: over ? theme.expense : color ?? theme.primary }]} />
     </View>
   );
 }

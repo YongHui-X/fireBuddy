@@ -119,6 +119,7 @@ Follow the existing TypeScript, React Native, Expo Router, and Python patterns a
 - Keep shared UI reusable and keep feature-specific logic close to the consuming route or hook
 - When extending the structure, keep ownership clear across `apps/*` and `packages/shared`
 - Add short summary comments to important functions when their purpose or constraints are not obvious from the name and surrounding code
+- UI layout: never leave orphaned text or numbers. A word, figure or icon must not wrap onto a line of its own or hang past a card's edge. Stack label and value instead of squeezing them side by side, let long labels wrap with their tag and (i) beside the text, and check narrow phone widths
 
 ## Testing Guidelines
 The repository has web Vitest coverage, backend `unittest` coverage, migration security checks, RAG evaluation tests, and a GitHub Actions CI workflow.

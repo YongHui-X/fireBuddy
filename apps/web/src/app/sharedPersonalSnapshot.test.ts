@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_MASKED_CONTEXT_CHARS, MaskingSession, buildPersonalSnapshot,
-  createDemoRetirementPlan, createDemoTransactions, createDemoWealth, demoCategories,
+  createDemoRetirementPlan, createDemoTransactions, createDemoWealth, demoCategories, withLinkedBalances,
 } from '@firebuddy/shared';
 
 const todayKey = '2026-10-05';
@@ -24,9 +24,12 @@ type FireFacts = {
 /** Build the dated demo aggregates used by the arithmetic and masking checks. */
 function demoSnapshot() {
   const wealth = createDemoWealth(todayKey);
+  const transactions = createDemoTransactions(todayKey);
+  // The phone values the demo's bank accounts from their transactions, so the test does too.
+  const snapshots = [...withLinkedBalances(wealth.positions, wealth.snapshots, transactions, todayKey)];
   return buildPersonalSnapshot({
-    transactions: createDemoTransactions(todayKey), categories: demoCategories,
-    ...wealth, retirementPlan: createDemoRetirementPlan(todayKey),
+    transactions, categories: demoCategories,
+    ...wealth, snapshots, retirementPlan: createDemoRetirementPlan(todayKey),
     essentialCategoryIds: demoCategories.filter((category) => category.categoryType === 'expense').map((category) => category.id),
     todayKey,
   });
@@ -35,7 +38,7 @@ function demoSnapshot() {
 describe('shared personal snapshot', () => {
   it('derives total assets from net worth and liabilities', () => {
     const { facts } = demoSnapshot();
-    expect(facts.assetTotal).toBe('445000.00');
+    expect(facts.assetTotal).toBe('446200.00');
     expect(facts.assetTotal).toBe((Number(facts.netWorth) + Number(facts.liabilityTotal)).toFixed(2));
   });
 
@@ -69,7 +72,7 @@ describe('shared personal snapshot', () => {
   it('distinguishes FIRE progress today from projected retirement progress', () => {
     const { facts } = demoSnapshot();
     const fire = facts.fire as FireFacts;
-    expect(fire.gapFromTodayAssets).toBe('2500680.66');
+    expect(fire.gapFromTodayAssets).toBe('3176593.70');
     expect(fire.gapFromTodayAssets).toBe((Number(fire.fiTarget) - Number(facts.investableAssets)).toFixed(2));
     expect(fire.progressToday).toBe((Number(facts.investableAssets) / Number(fire.fiTarget)).toFixed(6));
     expect(fire.projectedShareOfTargetAtRetirement).toBeDefined();

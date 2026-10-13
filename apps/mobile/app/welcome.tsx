@@ -105,25 +105,23 @@ export default function WelcomeScreen() {
               textContentType="givenName"
               maxLength={NICKNAME_MAX_LENGTH + 8}
               returnKeyType="done"
-              onSubmitEditing={() => {
-                if (cleaned && agreed) submit(cleaned);
-              }}
+              // Enter only closes the keyboard, so the name can be checked before pressing Continue.
+              onSubmitEditing={() => input.current?.blur()}
             />
             {/* Sign-up agreement: both boxes must be ticked to go on; finishing the welcome records this version (see completeWelcome). */}
             <View style={styles.agreements}>
               <CheckboxRow checked={agreedTerms} onChange={setAgreedTerms} accessibilityLabel="I agree to the Terms of use">
                 {'I agree to the '}
-                <AppText variant="bodyMedium" tone="accentText" accessibilityRole="link" onPress={() => openLegal('terms')} suppressHighlighting>Terms of use</AppText>
+                <AppText variant="bodyMedium" tone="accentText" accessibilityRole="link" onPress={() => openLegal('terms')} suppressHighlighting style={{ textDecorationLine: 'underline' }}>Terms of use</AppText>
               </CheckboxRow>
               <CheckboxRow checked={agreedPrivacy} onChange={setAgreedPrivacy} accessibilityLabel="I have read the Privacy policy">
                 {"I've read the "}
-                <AppText variant="bodyMedium" tone="accentText" accessibilityRole="link" onPress={() => openLegal('privacy')} suppressHighlighting>Privacy policy</AppText>
+                <AppText variant="bodyMedium" tone="accentText" accessibilityRole="link" onPress={() => openLegal('privacy')} suppressHighlighting style={{ textDecorationLine: 'underline' }}>Privacy policy</AppText>
               </CheckboxRow>
               <AppText variant="caption" tone="ink3">FireBuddy is for information only, not financial advice.</AppText>
             </View>
             <View style={styles.actions}>
               <Button label="Continue" variant="primary" block disabled={!cleaned || !agreed} onPress={() => submit(cleaned)} />
-              <Button label="Skip for now" variant="text" block disabled={!agreed} onPress={() => submit(null)} />
             </View>
           </Animated.View>
         ) : stage === 'country' ? (
@@ -131,9 +129,6 @@ export default function WelcomeScreen() {
             <View style={styles.hero}>
               <Doudou pose="point" size={112} motion="idle" />
               <AppText variant="pageTitle" align="center" accessibilityRole="header">Where do you live?</AppText>
-              <AppText variant="body" tone="ink2" align="center">
-                So I only show what fits you. CPF and SRS tools are for Singapore; elsewhere I keep things general.
-              </AppText>
             </View>
             <RegionPicker value={region} onChange={setRegionChoice} />
             <View style={styles.actions}>

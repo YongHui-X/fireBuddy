@@ -27,7 +27,7 @@ const FAB_LIFT = 22;
 const FAB_RING = 3;
 
 /**
- * The phone shell's bottom bar: the four fixed tabs with a circular lime Add button docked in the
+ * The phone shell's bottom bar: the four fixed tabs with a circular gold Add button docked in the
  * centre, half above the bar edge like a Material docked FAB. Painted in normal layout flow with
  * the bottom inset inside it, so the Android navigation bar and the iOS home indicator never cover
  * a tab and screens never scroll underneath.
@@ -69,14 +69,14 @@ export function TabBar({ state, descriptors, navigation }: ExpoTabBarProps) {
         onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
         style={styles.tab}
       >
-        {({ pressed }) => (
+        {() => (
           <>
-            <PressOverlay pressed={pressed} />
-            {focused ? <View style={[styles.indicator, { backgroundColor: theme.accentText }]} /> : null}
+            {/* No press wash on tabs: it flashed a grey block across the whole slot; the haptic and the switch are the feedback. */}
+            {focused ? <View style={[styles.indicator, { backgroundColor: theme.primary }]} /> : null}
             {/* The tour circles just the icon and label, not the whole slot, which is wide on big screens. */}
             <View {...tabTargets[route.name]} style={styles.tabContent}>
-              <Icon size={20} color={focused ? theme.accentText : theme.ink3} strokeWidth={focused ? 2.2 : 1.6} />
-              <AppText variant="tabLabel" tone={focused ? 'accentText' : 'ink3'} numberOfLines={1}>
+              <Icon size={20} color={focused ? theme.tabActiveInk : theme.ink3} strokeWidth={focused ? 2.4 : 1.6} />
+              <AppText variant="tabLabel" tone={focused ? undefined : 'ink3'} style={focused ? { color: theme.tabActiveInk } : undefined} numberOfLines={1}>
                 {label}
               </AppText>
             </View>
@@ -105,7 +105,7 @@ export function TabBar({ state, descriptors, navigation }: ExpoTabBarProps) {
             }}
             style={({ pressed }) => [
               styles.fab,
-              shadows.limeGlow,
+              shadows.goldGlow,
               { backgroundColor: theme.primary, borderColor: theme.surface },
               pressed ? { transform: [{ translateY: 1 }] } : null,
             ]}

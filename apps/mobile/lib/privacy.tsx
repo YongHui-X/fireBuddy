@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { currencyPrefix, formatMoney } from '@firebuddy/shared';
+import { currencyPrefix, formatMoney, formatSignedMoney } from '@firebuddy/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { useRegion } from './user-profile';
@@ -25,6 +25,8 @@ interface PrivacyContextValue {
   currency: string;
   /** Drop-in for `formatSGD` in the user's currency that renders the mask while amounts are hidden. */
   money: (value: number | string, digits?: number) => string;
+  /** Like `money` but keeps a minus sign below zero, for balances and net worth ("−S$50"). */
+  signedMoney: (value: number | string, digits?: number) => string;
   /** A 0-1 ratio as a percentage string, masked while amounts are hidden. */
   percent: (ratio: number, digits?: number) => string;
 }
@@ -65,9 +67,10 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
 
   const { currency } = useRegion();
   const money = useCallback((value: number | string, digits = 2) => (hidden ? maskedAmount(currency) : formatMoney(value, currency, digits)), [hidden, currency]);
+  const signedMoney = useCallback((value: number | string, digits = 2) => (hidden ? maskedAmount(currency) : formatSignedMoney(value, currency, digits)), [hidden, currency]);
   const percent = useCallback((ratio: number, digits = 0) => (hidden ? MASKED_PERCENT : `${(ratio * 100).toFixed(digits)}%`), [hidden]);
 
-  const value = useMemo<PrivacyContextValue>(() => ({ hidden, hydrated, toggle, currency, money, percent }), [hidden, hydrated, toggle, currency, money, percent]);
+  const value = useMemo<PrivacyContextValue>(() => ({ hidden, hydrated, toggle, currency, money, signedMoney, percent }), [hidden, hydrated, toggle, currency, money, signedMoney, percent]);
   return <PrivacyContext.Provider value={value}>{children}</PrivacyContext.Provider>;
 }
 

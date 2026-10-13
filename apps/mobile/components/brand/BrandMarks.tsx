@@ -15,7 +15,7 @@ export function FireBuddyMark({ size = 36 }: MarkProps) {
   return <DoudouMark size={size} />;
 }
 
-/** Secondary "Ascent" mark: rising steps toward a lime landing. Steps take the given colour. */
+/** Secondary "Ascent" mark: rising steps toward a gold landing. Steps take the given colour. */
 export function AscentMark({ size = 24, color }: MarkProps & { color?: string }) {
   const { theme } = useTheme();
   return (

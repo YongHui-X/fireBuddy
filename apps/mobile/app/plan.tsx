@@ -80,7 +80,8 @@ export default function PlanScreen() {
       <Card>
         <CardHeader
           title="Essential spending categories"
-          subtitle="Choose expenses your emergency reserves need to cover. This updates emergency runway without changing your retirement plan."
+          subtitle="Tick what your emergency fund must cover"
+          info="Choose the expenses your emergency reserves need to cover. This updates your emergency runway without changing your retirement plan."
           action={selection.length ? <Button label="Clear" variant="text" size="compact" onPress={() => setEdited([])} /> : undefined}
         />
         <View style={styles.list}>
@@ -116,7 +117,7 @@ export default function PlanScreen() {
       </Card>
 
       <Card>
-        <CardHeader title="Category budgets" subtitle="Set a monthly limit on any expense category. Home tracks each one for you." />
+        <CardHeader title="Category budgets" info="Set a monthly limit on any expense category. Home tracks each one for you." />
         <Button label="Manage category budgets" icon={ClipboardList} variant="secondary" onPress={() => router.navigate('/categories')} />
       </Card>
     </Screen>

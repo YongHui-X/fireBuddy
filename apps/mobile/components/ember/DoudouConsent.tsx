@@ -72,7 +72,6 @@ export function DoudouConsentDialog({ open, onAccept, onDecline, working = false
 
   const steps: DialogStep[] = DOUDOU_CONSENT.steps.map((step) => ({
     ...step,
-    titleTone: step.key === 'meet' ? 'accentText' : undefined,
     art: <Doudou pose={POSES[step.key]} size={112} motion={step.key === 'control' ? 'celebrate' : 'idle'} />,
     extra: step.key === 'ranges' ? <RangeExample /> : undefined,
   }));

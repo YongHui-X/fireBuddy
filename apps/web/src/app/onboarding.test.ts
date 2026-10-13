@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DAILY_TIPS,
+  DOUDOU_POSES,
   LOG_TODAY_TIP,
   NICKNAME_MAX_LENGTH,
   TOUR_STEPS,
@@ -65,7 +66,7 @@ describe('onboarding helpers', () => {
     }
   });
 
-  it('defines the six spotlight steps and their registered targets', () => {
+  it('defines the eight spotlight steps and their registered targets', () => {
     expect(TOUR_STEPS).toHaveLength(8);
     expect(new Set(TOUR_STEPS.map((step) => step.id)).size).toBe(8);
     expect(new Set(TOUR_STEPS.map((step) => step.targetId)).size).toBe(8);
@@ -73,7 +74,11 @@ describe('onboarding helpers', () => {
     for (const step of TOUR_STEPS) {
       expect(step.title.trim()).not.toBe('');
       expect(step.body.trim()).not.toBe('');
-      expect(step.pose).toBe('point');
+      expect(DOUDOU_POSES).toContain(step.pose);
     }
+    for (let index = 1; index < TOUR_STEPS.length; index += 1) {
+      expect(TOUR_STEPS[index].pose).not.toBe(TOUR_STEPS[index - 1].pose);
+    }
+    expect(new Set(TOUR_STEPS.map((step) => step.pose)).size).toBeGreaterThanOrEqual(4);
   });
 });

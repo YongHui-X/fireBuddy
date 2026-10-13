@@ -1,25 +1,29 @@
+import { DOUDOU_GOLD_COLORS } from '@firebuddy/shared';
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
 /**
- * FireBuddy design tokens for the native app. The palette mirrors `apps/web/src/styles/tokens.css`
- * (forest and lime, lime kept for the single primary action), but the phone canvas is flat: one
- * background colour edge to edge, hairline-bordered flat cards instead of shadowed paper on a
- * tinted canvas, and a single forest accent card per screen. Figures sit directly on the canvas.
+ * FireBuddy design tokens for the native app: the Gold Standard palette (owner, 9 Oct 2026). Navy
+ * owns regions (heroes, the rail), gold is spent on the primary action and highlights, main text is
+ * near-black or white, and secondary text is a solid grey. The canvas is flat: one background colour
+ * edge to edge with hairline-bordered cards. The paused web app keeps its forest and lime palette in
+ * `apps/web/src/styles/tokens.css`. See DESIGN.md, "Mobile palette: Gold Standard".
  */
 
 export const brand = {
-  forest900: '#0f251c',
-  forest800: '#163a2c',
-  forest700: '#1f4d3a',
-  forest600: '#2b6a4f',
-  forest500: '#3a8362',
-  forest300: '#9fc4ad',
-  forest100: '#dcebe0',
-  forest50: '#eef4ee',
-  lime500: '#cbea63',
-  lime600: '#b9dc47',
-  lime700: '#5f7d12',
+  navy950: '#000814',
+  navy900: '#001d3d',
+  navy800: '#003566',
+  navy700: '#00509d',
+  navy50: '#eef3fa',
+  gold400: '#ffd60a',
+  gold500: '#ffc300',
+  gold600: '#e6af00',
+  /** Gold dark enough to set as text on white (about 6:1). */
+  goldText: '#7a5a00',
 } as const;
+
+/** DouDou's colours on the phone: the golden bean with green leaves (the web keeps the lime bean). */
+export const doudouColors = DOUDOU_GOLD_COLORS;
 
 export interface Theme {
   bg: string;
@@ -38,6 +42,8 @@ export interface Theme {
   accentSoft: string;
   accentText: string;
   focusRing: string;
+  /** Gold readable as text on the page (the `gold` chip). */
+  goldText: string;
   income: string;
   incomeSoft: string;
   expense: string;
@@ -57,10 +63,35 @@ export interface Theme {
   railHoverBg: string;
   railActiveBg: string;
   railActiveInk: string;
+  /** Icon and label of the current tab in the bottom bar: strong blue on white, gold on charcoal. */
+  tabActiveInk: string;
   heroBg: string;
   heroInk: string;
   heroInkMuted: string;
   heroLine: string;
+  /** Pill and shortcut background inside a hero; text on it is `heroChipInk`. */
+  heroChipBg: string;
+  heroChipInk: string;
+  /** The change pill inside a hero: `heroUpBg`/`heroUpInk` when up, `heroChipBg`/`heroDownInk` when down. */
+  heroUpBg: string;
+  heroUpInk: string;
+  heroDownInk: string;
+  /** Income and expense figures on a navy hero: the same green and red as the ledger, lifted to read on navy. */
+  heroIncomeInk: string;
+  heroExpenseInk: string;
+  /** Status bar icon colour while a hero sits under it. */
+  heroStatusBar: 'light' | 'dark';
+  /** Up to two soft radial glows painted behind a hero's content; opacity 0 draws none. */
+  heroGlow: string;
+  heroGlowOpacity: number;
+  heroGlow2: string;
+  heroGlow2Opacity: number;
+  /**
+   * Home's net worth hero, applied over the theme inside the Home hero only. It is the navy hero
+   * with a solid gold change pill; `figure` colours a net worth of zero or more (white in light
+   * mode, gold in dark mode).
+   */
+  homeHero: Partial<Omit<Theme, 'homeHero'>> & { figure: string };
   brandMarkFill: string;
   brandMarkSun: string;
   brandMarkLine: string;
@@ -70,24 +101,25 @@ export interface Theme {
   backdrop: string;
 }
 
-// Light cream canvas under white cards (owner, 6 Oct 2026); the paused web keeps #f2f4ec.
+// Cool white canvas under white cards (owner, 9 Oct 2026).
 export const lightTheme: Theme = {
-  bg: '#f7f3ea',
+  bg: '#f6f7fa',
   surface: '#ffffff',
-  surface2: '#f1ece1',
-  surface3: '#e7e0d2',
-  ink: '#14231c',
-  ink2: '#56655c',
-  ink3: '#6b7a71',
-  line: '#e9e3d7',
-  lineStrong: '#cfc7b6',
-  primary: brand.lime500,
-  primaryHover: brand.lime600,
-  onPrimary: '#14231c',
-  accent: brand.forest600,
-  accentSoft: brand.forest50,
-  accentText: brand.forest700,
-  focusRing: brand.forest600,
+  surface2: '#eef1f6',
+  surface3: '#e2e7ef',
+  ink: '#14181f',
+  ink2: '#4d5a6b',
+  ink3: '#6b7686',
+  line: '#e2e6ee',
+  lineStrong: '#c9d1dd',
+  primary: brand.gold500,
+  primaryHover: brand.gold600,
+  onPrimary: '#14181f',
+  accent: brand.navy700,
+  accentSoft: '#e8f0fa',
+  accentText: brand.navy800,
+  focusRing: brand.navy700,
+  goldText: brand.goldText,
   income: '#1e7a45',
   incomeSoft: '#e4f3e8',
   expense: '#c23a2b',
@@ -99,66 +131,92 @@ export const lightTheme: Theme = {
   warningSoft: '#fff3d4',
   info: '#35678a',
   infoSoft: '#e5eef5',
-  chartProjection: '#35678a',
-  railBg: brand.forest800,
-  railInk: '#eef4ee',
-  railInkMuted: '#a9c3b3',
+  // Drawdown line: teal, apart from the blue growth line and the red runs-out line (owner, 10 Oct 2026).
+  chartProjection: '#0f9488',
+  railBg: brand.navy900,
+  railInk: '#eef3fa',
+  railInkMuted: '#a9b8cc',
   railLine: 'rgba(255, 255, 255, 0.1)',
   railHoverBg: 'rgba(255, 255, 255, 0.06)',
-  railActiveBg: 'rgba(203, 234, 99, 0.14)',
-  railActiveInk: brand.lime500,
-  heroBg: brand.forest800,
+  railActiveBg: 'rgba(255, 195, 0, 0.14)',
+  railActiveInk: brand.gold400,
+  tabActiveInk: brand.navy700,
+  heroBg: brand.navy900,
   heroInk: '#ffffff',
-  heroInkMuted: '#b7cfc0',
+  heroInkMuted: '#b8c6d8',
   heroLine: 'rgba(255, 255, 255, 0.14)',
-  brandMarkFill: brand.forest800,
-  brandMarkSun: brand.lime500,
+  heroChipBg: 'rgba(255, 255, 255, 0.1)',
+  heroChipInk: '#b8c6d8',
+  heroUpBg: 'rgba(255, 255, 255, 0.1)',
+  heroUpInk: brand.gold400,
+  heroDownInk: '#ffb0a3',
+  heroIncomeInk: '#6fd193',
+  heroExpenseInk: '#ff6b6b',
+  heroStatusBar: 'light',
+  heroGlow: brand.gold500,
+  heroGlowOpacity: 0,
+  heroGlow2: brand.navy700,
+  heroGlow2Opacity: 0,
+  homeHero: {
+    heroChipBg: 'rgba(255, 255, 255, 0.12)',
+    heroUpBg: brand.gold500,
+    heroUpInk: '#14181f',
+    figure: '#ffffff',
+  },
+  brandMarkFill: brand.navy900,
+  brandMarkSun: brand.gold500,
   brandMarkLine: '#ffffff',
   emberSymbol: '#d9782d',
-  pressOverlay: 'rgba(20, 35, 28, 0.08)',
-  backdrop: 'rgba(15, 37, 28, 0.45)',
+  pressOverlay: 'rgba(0, 29, 61, 0.08)',
+  backdrop: 'rgba(0, 8, 20, 0.45)',
 };
 
 /**
- * Dark mode is deep forest, not black: the canvas keeps a visible green hue so the app still reads
- * as FireBuddy at night, and each surface step is a lighter forest. ink3 is lifted to keep 4.5:1
- * on `surface`.
+ * Dark mode is a neutral charcoal taken from the owner's reference screenshot (10 Oct 2026): page
+ * #212226, cards #27282d, dividers #3d3e43. The navy heroes (#003566) and gold stand out against
+ * it. ink3 keeps 4.5:1 on `surface`.
  */
 export const darkTheme: Theme = {
   ...lightTheme,
-  // Lifted again on 4 Oct 2026: #15291f still read as black on a phone screen.
-  bg: '#1f3a2e',
-  surface: '#284637',
-  surface2: '#2f4f3f',
-  surface3: '#385a49',
-  ink: '#edf2ea',
-  ink2: '#b8c6bc',
-  ink3: '#a3b2a8',
-  line: '#3b5a4b',
-  lineStrong: '#4d6e5d',
-  accent: '#8fd1a8',
-  accentSoft: '#2f5240',
-  accentText: '#a9e0bc',
-  focusRing: brand.lime500,
+  bg: '#212226',
+  surface: '#27282d',
+  surface2: '#2f3036',
+  surface3: '#383940',
+  ink: '#f2f5fa',
+  ink2: '#b6c2d2',
+  ink3: '#93a1b5',
+  line: '#3d3e43',
+  lineStrong: '#4b4d54',
+  accent: '#7fb3e6',
+  accentSoft: '#10294a',
+  accentText: '#a8cbf0',
+  focusRing: brand.gold400,
+  goldText: brand.gold400,
   income: '#6fd193',
-  incomeSoft: '#2a4d38',
+  incomeSoft: '#173a2a',
   expense: '#f08d7d',
-  expenseSoft: '#4a2e2a',
+  expenseSoft: '#3d2326',
   danger: '#f08d7d',
   dangerFill: '#d9534a',
   warning: '#e6bd5f',
-  warningSoft: '#453a1e',
+  warningSoft: '#33290f',
   info: '#86b9da',
-  infoSoft: '#243a4b',
-  chartProjection: '#86b9da',
-  railBg: '#1a3227',
+  infoSoft: '#132b40',
+  chartProjection: '#2dd4bf',
+  railBg: brand.navy900,
   railLine: 'rgba(255, 255, 255, 0.08)',
-  // A richer forest than the canvas so the Home hero still stands apart from it.
-  heroBg: '#2d6249',
+  tabActiveInk: brand.gold400,
+  heroBg: brand.navy800,
   heroLine: 'rgba(255, 255, 255, 0.14)',
-  brandMarkFill: brand.forest700,
+  homeHero: {
+    heroChipBg: 'rgba(255, 255, 255, 0.12)',
+    heroUpBg: brand.gold500,
+    heroUpInk: '#14181f',
+    figure: brand.gold400,
+  },
+  brandMarkFill: brand.navy800,
   emberSymbol: '#f0a068',
-  pressOverlay: 'rgba(237, 242, 234, 0.08)',
+  pressOverlay: 'rgba(242, 245, 250, 0.08)',
   backdrop: 'rgba(0, 0, 0, 0.6)',
 };
 
@@ -174,25 +232,26 @@ export interface LaunchPalette {
   ground: string;
   ink: string;
   muted: string;
-  /** Olive edge on the bean, needed only on the pale light glow. */
+  /** Dark gold edge on the bean, needed only on the pale light glow. */
   outline: boolean;
 }
 
 export const launchPalettes: Record<'light' | 'dark', LaunchPalette> = {
   light: {
-    bg: '#f7f3ea',
-    glow: [[0, '#fdfbf3', 1], [0.34, '#f2f2d6', 1], [0.72, '#f7f3ea', 1]],
-    ground: 'rgba(95, 125, 18, 0.16)',
-    ink: brand.forest800,
-    muted: '#56655c',
+    bg: '#f6f7fa',
+    glow: [[0, brand.gold500, 0.22], [0.34, brand.gold500, 0.09], [0.72, brand.gold500, 0]],
+    ground: 'rgba(0, 29, 61, 0.12)',
+    ink: brand.navy900,
+    muted: '#4d5a6b',
     outline: true,
   },
   dark: {
-    bg: '#15291f',
-    glow: [[0, brand.lime500, 0.16], [0.34, brand.lime500, 0.07], [0.72, brand.lime500, 0]],
-    ground: 'rgba(0, 0, 0, 0.3)',
-    ink: '#eef4ee',
-    muted: '#b0beb4',
+    bg: '#212226',
+    // A lighter navy pool of light, as on the app icon; gold over deep navy turns muddy.
+    glow: [[0, '#1f5a99', 0.5], [0.34, brand.navy800, 0.32], [0.72, brand.navy800, 0]],
+    ground: 'rgba(0, 0, 0, 0.35)',
+    ink: '#f2f5fa',
+    muted: '#b6c2d2',
     outline: false,
   },
 };
@@ -278,13 +337,14 @@ export interface Shadows {
   card: ViewStyle;
   md: ViewStyle;
   lg: ViewStyle;
-  limeGlow: ViewStyle;
+  /** The gold Add tile's soft glow. */
+  goldGlow: ViewStyle;
   /** iOS-only upward shadow for the tab bar; Android relies on the hairline. */
   barUp: ViewStyle;
 }
 
 export function shadows(scheme: 'light' | 'dark'): Shadows {
-  const shadowColor = scheme === 'dark' ? '#000000' : '#14231c';
+  const shadowColor = scheme === 'dark' ? '#000000' : '#001d3d';
   const strength = scheme === 'dark' ? 1.8 : 1;
   return {
     // Cards are flat on the single-colour canvas; the hairline border does the separating.
@@ -309,8 +369,8 @@ export function shadows(scheme: 'light' | 'dark'): Shadows {
       shadowOffset: { width: 0, height: 14 },
       elevation: 12,
     },
-    limeGlow: {
-      shadowColor: brand.lime500,
+    goldGlow: {
+      shadowColor: brand.gold500,
       shadowOpacity: scheme === 'dark' ? 0.35 : 0.55,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 6 },
@@ -328,7 +388,7 @@ export function shadows(scheme: 'light' | 'dark'): Shadows {
   };
 }
 
-/** Category colour at a tinted alpha for icon tiles, e.g. "#3C8A61" -> "#3C8A612e". */
+/** Category colour at a tinted alpha for icon tiles, e.g. "#3987E5" -> "#3987E52e". */
 export function tint(hex: string, alpha: number) {
   const clamped = Math.round(Math.min(Math.max(alpha, 0), 1) * 255);
   const suffix = clamped.toString(16).padStart(2, '0');

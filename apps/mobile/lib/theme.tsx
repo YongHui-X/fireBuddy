@@ -78,6 +78,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+/**
+ * Re-provides the theme with some tokens replaced for one subtree, such as Home's own hero
+ * palette. Everything inside reads the replaced tokens through `useTheme` as usual.
+ */
+export function ThemeScope({ overrides, children }: { overrides: Partial<Theme> | undefined; children: ReactNode }) {
+  const parent = useTheme();
+  const value = useMemo(() => (overrides ? { ...parent, theme: { ...parent.theme, ...overrides } } : parent), [parent, overrides]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {

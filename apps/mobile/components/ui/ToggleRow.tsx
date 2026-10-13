@@ -3,11 +3,14 @@ import { Pressable, StyleSheet, Switch, View, type StyleProp, type ViewStyle } f
 import { radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
+import { InfoButton } from './InfoButton';
 import { AppText } from './Text';
 
 export interface ToggleRowProps {
   label: string;
   help?: string;
+  /** Opens a tooltip beside the label instead of a line of help text. */
+  info?: string | readonly string[];
   value: boolean;
   onChange: (value: boolean) => void;
   disabled?: boolean;
@@ -15,7 +18,7 @@ export interface ToggleRowProps {
 }
 
 /** A form checkbox on a phone: label and one-line help on the left, a native switch on the right. */
-export function ToggleRow({ label, help, value, onChange, disabled, style }: ToggleRowProps) {
+export function ToggleRow({ label, help, info, value, onChange, disabled, style }: ToggleRowProps) {
   const { theme } = useTheme();
   return (
     <Pressable
@@ -27,15 +30,18 @@ export function ToggleRow({ label, help, value, onChange, disabled, style }: Tog
       style={[styles.row, { backgroundColor: theme.surface2 }, disabled ? styles.disabled : null, style]}
     >
       <View style={styles.copy}>
-        <AppText variant="bodyMedium">{label}</AppText>
+        <View style={styles.labelRow}>
+          <AppText variant="bodyMedium" style={styles.label}>{label}</AppText>
+          {info ? <InfoButton title={label} body={info} /> : null}
+        </View>
         {help ? <AppText variant="caption" tone="ink2">{help}</AppText> : null}
       </View>
       <Switch
         value={value}
         onValueChange={onChange}
         disabled={disabled}
-        trackColor={{ false: theme.lineStrong, true: theme.accent }}
-        thumbColor={theme.surface}
+        trackColor={{ false: theme.lineStrong, true: theme.primary }}
+        thumbColor="#ffffff"
         ios_backgroundColor={theme.lineStrong}
       />
     </Pressable>
@@ -56,6 +62,14 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  label: {
+    flexShrink: 1,
   },
   disabled: {
     opacity: 0.5,

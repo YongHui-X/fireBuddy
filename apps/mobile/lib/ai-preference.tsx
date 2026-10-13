@@ -22,7 +22,7 @@ export const DOUDOU_CONSENT = {
     {
       key: "meet",
       title: "Hi, I'm DouDou!",
-      body: "Ask DouDou questions about personal finance and get tips that fit your situation.",
+      body: "I'm your AI buddy. You can ask me questions about personal finance and get tips that fit your situation.",
     },
     {
       key: "stays",

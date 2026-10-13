@@ -1,25 +1,31 @@
 import type { DailyTip } from '@firebuddy/shared';
 import { Sprout, X } from 'lucide-react-native';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
+import { ActionSheet } from '../ui/ActionSheet';
 import { PressOverlay } from '../ui/PressOverlay';
 import { AppText } from '../ui/Text';
 
 interface DailyTipCardProps {
   tip: DailyTip;
   onDismiss: () => void;
+  /** Turns tips off for good; Profile turns them back on. */
+  onTurnOff: () => void;
 }
 
 /**
  * One short DouDou tip under the Home hero. A sprout rather than DouDou itself, because the hero's
- * DouDou shortcut is already the one DouDou on Home. Dismissing hides it until tomorrow.
+ * DouDou shortcut is already the one DouDou on Home. The × offers hiding it until tomorrow or
+ * turning tips off.
  */
-export function DailyTipCard({ tip, onDismiss }: DailyTipCardProps) {
+export function DailyTipCard({ tip, onDismiss, onTurnOff }: DailyTipCardProps) {
   const { theme } = useTheme();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <Animated.View
       entering={FadeIn.duration(220)}
@@ -34,7 +40,7 @@ export function DailyTipCard({ tip, onDismiss }: DailyTipCardProps) {
         <AppText variant="overline" tone="ink2">{"DouDou's tip"}</AppText>
         <AppText variant="bodySmall">{tip.text}</AppText>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Hide today's tip" hitSlop={10} onPress={onDismiss} style={styles.close}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Hide tip" hitSlop={10} onPress={() => setMenuOpen(true)} style={styles.close}>
         {({ pressed }) => (
           <>
             <PressOverlay pressed={pressed} radius={radii.pill} />
@@ -42,6 +48,15 @@ export function DailyTipCard({ tip, onDismiss }: DailyTipCardProps) {
           </>
         )}
       </Pressable>
+      <ActionSheet
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        title="Hide DouDou's tip"
+        actions={[
+          { key: 'today', label: 'Hide for today', detail: 'A new tip tomorrow', onSelect: onDismiss },
+          { key: 'off', label: 'Turn off tips', detail: 'Turn them back on in Profile', onSelect: onTurnOff },
+        ]}
+      />
     </Animated.View>
   );
 }

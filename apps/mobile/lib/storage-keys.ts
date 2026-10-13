@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   retirementPlan: 'firebuddy_mobile_retirement_plan_v3',
   essentialCategories: 'firebuddy_mobile_essential_categories_v1',
   recurringRules: 'firebuddy_mobile_recurring_rules_v1',
+  // One-off category additions already applied, such as the built-in Insurance (PRD 6.6.1, 26).
+  categoryMigrations: 'firebuddy_mobile_category_migrations_v1',
 } as const;
 
 export const DEMO_STORAGE_KEYS = Object.values(STORAGE_KEYS);

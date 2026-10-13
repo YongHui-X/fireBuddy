@@ -4,6 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewProps, type ViewStyle } from
 import { layout, radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
+import { InfoButton } from './InfoButton';
 import { AppText } from './Text';
 
 export interface CardProps extends ViewProps {
@@ -37,16 +38,23 @@ export function Card({ tone = 'paper', padded = true, style, children, ...rest }
 interface CardHeaderProps {
   title: string;
   subtitle?: string;
+  /** Longer explanation behind an (i) beside the title (PRD 6.6.1). */
+  info?: string | readonly string[];
   action?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
 /** Title row with an optional secondary subtitle and a trailing action, matching `.section-title-row`. */
-export function CardHeader({ title, subtitle, action, style }: CardHeaderProps) {
+export function CardHeader({ title, subtitle, info, action, style }: CardHeaderProps) {
   return (
     <View style={[styles.header, style]}>
       <View style={styles.headerCopy}>
-        <AppText variant="cardTitle">{title}</AppText>
+        {info ? (
+          <View style={styles.titleRow}>
+            <AppText variant="cardTitle" style={styles.titleText}>{title}</AppText>
+            <InfoButton title={title} body={info} />
+          </View>
+        ) : <AppText variant="cardTitle">{title}</AppText>}
         {subtitle ? <AppText variant="caption" tone="ink2" style={styles.subtitle}>{subtitle}</AppText> : null}
       </View>
       {action ? <View style={styles.headerAction}>{action}</View> : null}
@@ -55,6 +63,14 @@ export function CardHeader({ title, subtitle, action, style }: CardHeaderProps) 
 }
 
 const styles = StyleSheet.create({
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  titleText: {
+    flexShrink: 1,
+  },
   card: {
     borderRadius: radii.card,
     borderWidth: StyleSheet.hairlineWidth,

@@ -1,5 +1,5 @@
 import { X } from 'lucide-react-native';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode, type Ref } from 'react';
 import {
   Animated,
   Easing,
@@ -41,6 +41,8 @@ export interface BottomSheetProps {
   fill?: boolean;
   /** Disables backdrop and back-button dismissal while a save is in flight. */
   dismissable?: boolean;
+  /** The scrolling body, so a sheet can bring a result into view. */
+  scrollRef?: Ref<ScrollView>;
   children: ReactNode;
 }
 
@@ -63,6 +65,7 @@ export function BottomSheet({
   maxHeightRatio = 0.92,
   fill = false,
   dismissable = true,
+  scrollRef,
   children,
 }: BottomSheetProps) {
   const { theme, shadows } = useTheme();
@@ -170,6 +173,7 @@ export function BottomSheet({
             </View>
             {scroll ? (
               <ScrollView
+                ref={scrollRef}
                 style={fill ? styles.fillBody : undefined}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={[styles.body, { paddingBottom: footer ? spacing.lg : bottomPad }, bodyStyle]}

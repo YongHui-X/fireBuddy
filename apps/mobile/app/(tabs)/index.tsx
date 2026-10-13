@@ -15,12 +15,14 @@ import { PageToolbar } from '@/components/ui/PageToolbar';
 import { useDailyTip } from '@/hooks/use-daily-tip';
 import { useCategoryBudgets, useCurrentMonth, useMonthSummary, useRecentTransactions, useSpendingBreakdown } from '@/hooks/use-ledger';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
+import { useTheme } from '@/lib/theme';
 import { useUserProfile } from '@/lib/user-profile';
 
-/** Home: a forest hero holding the greeting, net worth headline and shortcuts, then this month's detail on the canvas. Retirement progress lives in the planner. */
+/** Home: a navy hero holding the greeting, net worth headline and shortcuts, then this month's detail on the canvas. Retirement progress lives in the planner. */
 export default function HomeScreen() {
   const router = useRouter();
   const { deleteTransaction, notify, isFreshDataset } = useFireBuddy();
+  const { theme } = useTheme();
   const { nickname } = useUserProfile();
   const dailyTip = useDailyTip();
   const month = useCurrentMonth();
@@ -36,6 +38,8 @@ export default function HomeScreen() {
 
   return (
     <Screen
+      // Home's hero adds a solid gold change pill, and a gold net worth figure in dark mode.
+      heroTheme={theme.homeHero}
       hero={(
         <>
           <PageToolbar
@@ -53,7 +57,7 @@ export default function HomeScreen() {
         </>
       )}
     >
-      {dailyTip.tip ? <DailyTipCard tip={dailyTip.tip} onDismiss={dailyTip.dismiss} /> : null}
+      {dailyTip.tip ? <DailyTipCard tip={dailyTip.tip} onDismiss={dailyTip.dismiss} onTurnOff={dailyTip.turnOff} /> : null}
       <MoneyPulseCard summary={summary} monthName={monthName} />
       <CategoryBudgetsCard rows={budgets} periodLabel={formatMonthLabel(month)} onManage={() => router.navigate('/categories')} />
       <SpendingBreakdownCard

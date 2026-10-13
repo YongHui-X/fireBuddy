@@ -64,8 +64,54 @@ export const demoCategories: readonly Category[] = [
   demoCategory(demoCategoryIds.otherIncome, 'Other income', '#A8D3B7', 'income', 0, 'income'),
 ];
 
+/** The phone's built-in Insurance category (PRD 6.6.1, 26). The frozen web keeps its own list. */
+export const INSURANCE_CATEGORY_ID = '00000000-0000-4000-8000-000000000014';
+export const insuranceCategory: Category = demoCategory(INSURANCE_CATEGORY_ID, 'Insurance', '#4F6DB8', 'insurance', 0, 'expense');
+
+/**
+ * Adds the built-in Insurance category once, before Others, unless the list already has it or a
+ * category of the person's own called Insurance. Returns the same array when nothing changes.
+ */
+export function withInsuranceCategory<T extends Pick<Category, 'id' | 'name' | 'categoryType'>>(categories: readonly T[], insurance: T): readonly T[] {
+  const taken = categories.some((category) => category.id === INSURANCE_CATEGORY_ID || (category.categoryType === 'expense' && category.name.trim().toLowerCase() === 'insurance'));
+  if (taken) return categories;
+  const others = categories.findIndex((category) => category.id === demoCategoryIds.others);
+  const at = others < 0 ? categories.length : others;
+  return [...categories.slice(0, at), insurance, ...categories.slice(at)];
+}
+
+/**
+ * Shorter names for the built-in categories on the phone, whose four-column category grid has no
+ * room for "Healthcare" or "Bills & Utilities" (owner, 10 Oct 2026). The web keeps the long names.
+ */
+export const SHORT_DEFAULT_CATEGORY_NAMES: Readonly<Record<string, { from: string; to: string }>> = {
+  [demoCategoryIds.food]: { from: 'Food & Drink', to: 'Food' },
+  [demoCategoryIds.utilities]: { from: 'Bills & Utilities', to: 'Bills' },
+  [demoCategoryIds.health]: { from: 'Healthcare', to: 'Health' },
+  [demoCategoryIds.entertainment]: { from: 'Entertainment', to: 'Leisure' },
+  [demoCategoryIds.otherIncome]: { from: 'Other income', to: 'Other' },
+};
+
+/**
+ * Gives built-in categories their short phone names. Only a built-in category still carrying its
+ * original long name is renamed, so a name the person chose is never overwritten. Returns the same
+ * array when nothing changes.
+ */
+export function shortenDefaultCategoryNames<T extends Pick<Category, 'id' | 'name' | 'isDefault'>>(categories: readonly T[]): readonly T[] {
+  let changed = false;
+  const next = categories.map((category) => {
+    const short = SHORT_DEFAULT_CATEGORY_NAMES[category.id];
+    if (!category.isDefault || !short || category.name !== short.from) return category;
+    changed = true;
+    return { ...category, name: short.to };
+  });
+  return changed ? next : categories;
+}
+
 function demoAccount(id: string, name: string, type: Account['type'], color: string, lastFour: string | null, isDefault = false): Account {
-  return { id, userId: demoUserId, name, type, color, lastFour, isDefault, createdAt: demoTimestamp, updatedAt: demoTimestamp };
+  // DBS Savings and OCBC 360 are followed by Wealth balances; the card and wallets stay out of net
+  // worth, since the card is manual and the wallets hold only spending (PRD 6.4.1, item 5a).
+  return { id, userId: demoUserId, name, type, color, lastFour, isDefault, trackBalance: false, createdAt: demoTimestamp, updatedAt: demoTimestamp };
 }
 
 export const demoAccounts: readonly Account[] = [
@@ -100,7 +146,8 @@ function demoPosition(id: string, name: string, values: Partial<WealthPosition>)
 }
 
 export const demoWealthIds = {
-  cashReserve: '00000000-0000-4000-8000-00000000f101',
+  dbsSavings: '00000000-0000-4000-8000-00000000f101',
+  ocbc360: '00000000-0000-4000-8000-00000000f105',
   brokerage: '00000000-0000-4000-8000-00000000f102',
   home: '00000000-0000-4000-8000-00000000f103',
   mortgage: '00000000-0000-4000-8000-00000000f104',
@@ -113,14 +160,18 @@ export interface DemoWealth {
 }
 
 /**
- * The same balance sheet the web demo seeds: an early-career saver with about S$80,000 of net
- * worth. Cash reserve S$18,000, brokerage S$47,000, and an HDB flat worth S$380,000 with
- * S$365,000 still owed on the loan. Each is valued six months ago, three months ago and this
- * month, plus one investment contribution this month.
+ * An early-career saver with about S$80,000 of net worth: two bank accounts followed by Wealth
+ * (DBS Savings, the emergency fund, and OCBC 360), brokerage S$47,000, and an HDB flat worth
+ * S$380,000 with S$365,000 still owed on the loan, plus one investment contribution this month.
+ * The bank balances are entered on the 1st of each of the last six months, as if updated after
+ * paying the card bill and investing, and the month's transactions move them from there, so this
+ * month's salary lifts DBS Savings to about S$13,000 and the bills take OCBC 360 to about S$5,800.
+ * The other assets and the loan are valued six months ago, three months ago and this month.
  */
 export function createDemoWealth(todayKey = getDeviceDateKey()): DemoWealth {
   const positions: WealthPosition[] = [
-    demoPosition(demoWealthIds.cashReserve, 'Cash reserve', { includeInFi: true, isEmergencyFund: true }),
+    demoPosition(demoWealthIds.dbsSavings, 'DBS Savings', { includeInFi: true, isEmergencyFund: true, linkedAccountId: 'dbs_savings' }),
+    demoPosition(demoWealthIds.ocbc360, 'OCBC 360', { includeInFi: true, linkedAccountId: 'ocbc_360' }),
     demoPosition(demoWealthIds.brokerage, 'Brokerage', { positionType: 'investment', liquidityClass: 'less_liquid', includeInFi: true }),
     demoPosition(demoWealthIds.home, 'Home', { positionType: 'property', liquidityClass: 'less_liquid' }),
     demoPosition(demoWealthIds.mortgage, 'Mortgage', {
@@ -128,19 +179,24 @@ export function createDemoWealth(todayKey = getDeviceDateKey()): DemoWealth {
       interestRate: '0.0260', monthlyPayment: '1650.00', nextPaymentDate: monthsAgo(todayKey, -1), originalPrincipal: '380000.00',
     }),
   ];
-  const current: readonly [string, string][] = [
-    [demoWealthIds.cashReserve, '18000'],
-    [demoWealthIds.brokerage, '47000'],
-    [demoWealthIds.home, '380000'],
-    [demoWealthIds.mortgage, '365000'],
+  const quarterly = [6, 3, 0];
+  const monthly = [6, 5, 4, 3, 2, 1, 0];
+  const current: readonly [string, string, readonly number[]][] = [
+    [demoWealthIds.dbsSavings, '8000', monthly],
+    [demoWealthIds.brokerage, '47000', quarterly],
+    [demoWealthIds.home, '380000', quarterly],
+    [demoWealthIds.mortgage, '365000', quarterly],
+    [demoWealthIds.ocbc360, '6000', monthly],
   ];
-  const snapshots: WealthPositionSnapshot[] = current.flatMap(([wealthPositionId, amount], index) => [6, 3, 0].map((age) => ({
+  const snapshots: WealthPositionSnapshot[] = current.flatMap(([wealthPositionId, amount, ages], index) => ages.map((age) => ({
     id: `00000000-0000-4000-8000-${String(200 + index * 10 + age).padStart(12, '0')}`,
     userId: demoUserId,
     wealthPositionId,
     valueDate: monthsAgo(todayKey, age),
     // Debts shrink over time while assets grow, so the history reads the right way round.
-    amount: age === 0 ? amount : (Number(amount) * (wealthPositionId === demoWealthIds.mortgage ? (age === 6 ? 1.016 : 1.008) : age === 6 ? 0.94 : 0.97)).toFixed(2),
+    amount: age === 0 ? amount : (Number(amount) * (wealthPositionId === demoWealthIds.mortgage
+      ? (age === 6 ? 1.016 : 1.008)
+      : ages === monthly ? 1 - age * 0.01 : age === 6 ? 0.94 : 0.97)).toFixed(2),
     createdAt: demoTimestamp,
     updatedAt: demoTimestamp,
   })));
@@ -153,33 +209,50 @@ export function createDemoWealth(todayKey = getDeviceDateKey()): DemoWealth {
 }
 
 /**
- * An activated retirement plan for the demo saver: born mid-1994, retiring at 60 (28 years from
- * now) on S$3,500 a month of today's spending, investing S$2,000 a month into the two FI assets,
- * with a standard CPF LIFE payout from 65.
+ * An activated retirement plan for the demo saver, filled in the way the phone's form fills it today
+ * so every planner feature has a figure to show: born mid-1994, aiming for Regular FIRE at 60 (28
+ * years from now) on S$3,500 a month of today's spending, investing S$2,000 a month rising 2% a year.
+ * CPF LIFE (Full Retirement Sum, standard plan from 65) is projected from typed CPF balances, the
+ * HDB loan uses S$1,200 of OA a month for 22 years, insurance and healthcare cost S$350 a month
+ * rising 5% a year, and a S$40,000 car in three years is the one big cost.
  */
 export function createDemoRetirementPlan(todayKey = getDeviceDateKey()): RetirementPlan {
   const month = todayKey.slice(0, 7);
   const year = Number(todayKey.slice(0, 4));
+  const mm = todayKey.slice(5, 7);
   return {
     version: 2,
     spendingMonth: month,
     birthMonth: '1994-06',
-    retirementMonth: `${year + 28}-${todayKey.slice(5, 7)}`,
+    retirementMonth: `${year + 28}-${mm}`,
     endAge: 95,
     monthlySpending: 3500,
     monthlyContribution: 2000,
-    assetIds: [demoWealthIds.cashReserve, demoWealthIds.brokerage],
+    contributionGrowth: 0.02,
+    assetIds: [demoWealthIds.dbsSavings, demoWealthIds.ocbc360, demoWealthIds.brokerage],
     portfolioOverride: null,
+    fireType: 'regular',
+    residency: 'citizen',
+    pay: { grossMonthly: 6500, bonusMonths: 2 },
+    currentSpending: 3200,
+    // The payout is worked out from these balances on every run (PRD 6.6.1, 24); 1,500 is a placeholder.
     cpfPlan: 'standard',
     cpfStartAge: 65,
     cpfMonthlyPayout: 1500,
+    cpfEstimate: { sum: 'frs', source: 'balances' },
+    cpfBalancesSource: 'typed',
+    cpfBalances: { oa: 45000, sa: 28000, ma: 32000, month },
+    cpfWithdrawAt55: false,
+    property: { status: 'own', oaMonthly: 1200, fromMonth: month, untilMonth: `${year + 22}-${mm}` },
+    healthcare: { monthlyAmount: 350, insurance: 250, medical: 100, growth: 0.05, priceMonth: month },
+    lumpSums: [{ label: 'Car', month: `${year + 3}-${mm}`, amount: 40000, direction: 'out', priceMonth: month }],
     otherIncome: [],
     beforeReturn: 0.07,
     afterReturn: 0.04,
     inflation: 0.03,
     provenance: {
       birthMonth: 'user-entered', retirementMonth: 'user-entered', monthlySpending: 'user-entered', monthlyContribution: 'user-entered',
-      assetIds: 'recorded', cpfMonthlyPayout: 'user-entered', beforeReturn: 'assumed', afterReturn: 'assumed', inflation: 'assumed', endAge: 'assumed',
+      assetIds: 'recorded', cpfMonthlyPayout: 'assumed', beforeReturn: 'assumed', afterReturn: 'assumed', inflation: 'assumed', endAge: 'assumed',
     },
   };
 }

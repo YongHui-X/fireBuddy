@@ -117,3 +117,13 @@ export function formatMoney(value: number | string, currency = 'SGD', digits = 2
   const places = currencyDigits(currency, digits);
   return `${currencyPrefix(currency)}${safe.toLocaleString('en-SG', { minimumFractionDigits: places, maximumFractionDigits: places })}`;
 }
+
+/**
+ * A balance that can go below zero, such as an account overspent from S$0 or a negative net
+ * worth: "−S$50" (U+2212 minus) below zero, otherwise the same as `formatMoney`.
+ */
+export function formatSignedMoney(value: number | string, currency = 'SGD', digits = 2): string {
+  const numeric = typeof value === 'string' ? Number(value) : value;
+  const negative = Number.isFinite(numeric) && numeric < 0 && formatMoney(numeric, currency, digits) !== formatMoney(0, currency, digits);
+  return `${negative ? '−' : ''}${formatMoney(value, currency, digits)}`;
+}

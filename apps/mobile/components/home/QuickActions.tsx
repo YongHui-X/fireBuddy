@@ -28,8 +28,8 @@ const actions: readonly QuickAction[] = [
 
 /**
  * The row of round shortcuts under the net worth headline, the wallet-app pattern of Top up /
- * Transfer / Receive adapted to FireBuddy's destinations. Translucent white tiles on the forest
- * hero rather than lime, so the tab bar's Add tile stays the one lime action on the screen.
+ * Transfer / Receive adapted to FireBuddy's destinations. Translucent white tiles with gold icons on
+ * the navy hero; the tab bar's Add tile stays the one solid gold action on the screen.
  */
 export function QuickActions() {
   const { theme } = useTheme();
@@ -54,10 +54,10 @@ export function QuickActions() {
         <Pressable key={key} accessibilityRole="button" accessibilityLabel={key === 'ember' ? 'Ask DouDou' : label} onPress={() => open(key)} style={styles.action}>
           {({ pressed }) => (
             <>
-              <View {...targets[key]} style={[styles.tile, { borderColor: theme.heroLine }]}>
+              <View {...targets[key]} style={[styles.tile, { borderColor: theme.heroLine, backgroundColor: theme.heroChipBg }]}>
                 <PressOverlay pressed={pressed} radius={radii.pill} light />
-                {Icon ? <Icon size={22} color={theme.heroInk} strokeWidth={1.9} /> : null}
-                {mark === 'ascent' ? <AscentMark size={22} color={theme.heroInk} /> : null}
+                {Icon ? <Icon size={22} color={theme.railActiveInk} strokeWidth={1.9} /> : null}
+                {mark === 'ascent' ? <AscentMark size={22} color={theme.railActiveInk} /> : null}
                 {mark === 'doudou' ? <DoudouMark size={30} /> : null}
               </View>
               <AppText variant="captionMedium" tone="heroMuted" numberOfLines={1}>{label}</AppText>
@@ -86,7 +86,6 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: radii.pill,
     borderWidth: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

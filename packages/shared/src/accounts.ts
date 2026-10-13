@@ -56,3 +56,58 @@ export function deleteAccountMoving<T extends Pick<Transaction, 'accountId'> & {
     : [...transactions];
   return { accounts: nextAccounts, transactions: nextTransactions };
 }
+
+/** An account name as people mean it: trimmed, inner spaces collapsed, case ignored. */
+function nameKey(name: string) {
+  return name.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
+ * The account already called `name`, if any, so adding or renaming can warn "An account called
+ * DBS already exists". Matching ignores case and extra spaces; `exceptId` skips the account being
+ * renamed. A blank name matches nothing.
+ */
+export function findAccountNamed<T extends Pick<Account, 'id' | 'name'>>(accounts: readonly T[], name: string, exceptId?: string | null): T | undefined {
+  const key = nameKey(name);
+  if (!key) return undefined;
+  return accounts.find((account) => account.id !== exceptId && nameKey(account.name) === key);
+}
+
+/**
+ * Accounts to suggest while a name is typed in Wealth's Account form: names starting with what was
+ * typed come first, then names containing it, ignoring case and extra spaces. A blank query
+ * suggests nothing.
+ */
+export function suggestAccounts<T extends Pick<Account, 'id' | 'name'>>(accounts: readonly T[], query: string, limit = 4): T[] {
+  const key = nameKey(query);
+  if (!key) return [];
+  const starts = accounts.filter((account) => nameKey(account.name).startsWith(key));
+  const contains = accounts.filter((account) => !nameKey(account.name).startsWith(key) && nameKey(account.name).includes(key));
+  return [...starts, ...contains].slice(0, limit);
+}
+
+export type AccountNameResolution<T> =
+  | { kind: 'blank' }
+  /** An existing account with this name, free to link. */
+  | { kind: 'link'; account: T }
+  /** An existing account with this name that another Wealth balance already follows. */
+  | { kind: 'taken'; account: T }
+  /** No account has this name yet: saving creates it. */
+  | { kind: 'create'; name: string };
+
+/**
+ * What a name typed for a Wealth "Account" does (PRD 6.4.1, 5b): link to the account with that name
+ * (ignoring case and extra spaces), report that a Wealth balance already follows it, or create a new
+ * account with the cleaned-up name. `followedAccountIds` lists accounts other balances follow.
+ */
+export function resolveAccountName<T extends Pick<Account, 'id' | 'name'>>(
+  accounts: readonly T[],
+  name: string,
+  followedAccountIds: readonly string[] = [],
+): AccountNameResolution<T> {
+  const cleaned = name.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return { kind: 'blank' };
+  const account = findAccountNamed(accounts, cleaned);
+  if (!account) return { kind: 'create', name: cleaned };
+  return followedAccountIds.includes(account.id) ? { kind: 'taken', account } : { kind: 'link', account };
+}

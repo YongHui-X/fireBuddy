@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { findCountry, getInitials, LEGAL_CONTACT_EMAIL, NICKNAME_MAX_LENGTH, normaliseNickname } from '@firebuddy/shared';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Bell, ClipboardList, Database, Eraser, FileDown, FileText, FileUp, Globe, Landmark, Mail, Moon, Pencil, ShieldCheck, Sparkles, Sprout, TrendingUp, Wallet } from 'lucide-react-native';
+import { Bell, ClipboardList, Lightbulb, Database, Eraser, FileDown, FileText, FileUp, Globe, Landmark, Mail, Moon, Pencil, ShieldCheck, Sparkles, Sprout, TrendingUp, Wallet } from 'lucide-react-native';
 import { useState } from 'react';
 import { Linking, Pressable, StyleSheet, Switch, View } from 'react-native';
 
@@ -40,7 +40,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { theme, preference, setPreference } = useTheme();
   const { clearDemoData, startFresh, isFreshDataset, notify } = useFireBuddy();
-  const { nickname, setNickname, resetTour, resetProfile, setRegion, reminderOn, setReminderOn } = useUserProfile();
+  const { nickname, setNickname, resetTour, resetProfile, setRegion, reminderOn, setReminderOn, tipsOff, setTipsOn } = useUserProfile();
   const region = useRegion();
   const [regionOpen, setRegionOpen] = useState(false);
   const { startTour } = useTour();
@@ -70,28 +70,33 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Screen>
-      <PageToolbar title="Profile" description="Manage your FireBuddy preferences and financial setup." />
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={nickname ? `Name, ${nickname}. Change` : 'Add your name'}
-        onPress={() => setNameDraft(nickname ?? '')}
-        style={styles.identity}
-      >
-        {({ pressed }) => (
-          <>
-            <PressOverlay pressed={pressed} radius={radii.card} />
-            <View style={[styles.avatar, { backgroundColor: theme.railBg }]}>
-              {nickname ? <AppText variant="cardTitle" tone="rail">{getInitials(nickname)}</AppText> : <DoudouMark size={44} />}
-            </View>
-            <View style={styles.identityCopy}>
-              <AppText variant="cardTitle" numberOfLines={1}>{nickname ?? 'Add your name'}</AppText>
-            </View>
-            <Pencil size={18} color={theme.ink3} />
-          </>
-        )}
-      </Pressable>
+    <Screen
+      // The navy band carries the title and who you are (DESIGN.md, navy bands on the tab screens).
+      hero={(
+        <>
+          <PageToolbar tone="hero" title="Profile" description="Manage your FireBuddy preferences and financial setup." />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={nickname ? `Name, ${nickname}. Change` : 'Add your name'}
+            onPress={() => setNameDraft(nickname ?? '')}
+            style={styles.identity}
+          >
+            {({ pressed }) => (
+              <>
+                <PressOverlay pressed={pressed} radius={radii.card} />
+                <View style={[styles.avatar, { backgroundColor: theme.heroChipBg }]}>
+                  {nickname ? <AppText variant="cardTitle" style={{ color: theme.railActiveInk }}>{getInitials(nickname)}</AppText> : <DoudouMark size={44} />}
+                </View>
+                <View style={styles.identityCopy}>
+                  <AppText variant="cardTitle" tone="hero" numberOfLines={1}>{nickname ?? 'Add your name'}</AppText>
+                </View>
+                <Pencil size={18} color={theme.heroInkMuted} />
+              </>
+            )}
+          </Pressable>
+        </>
+      )}
+    >
 
       <View style={styles.section}>
         <AppText variant="overline" tone="ink2" style={styles.sectionTitle}>Money tools</AppText>
@@ -144,6 +149,22 @@ export default function ProfileScreen() {
                 value={doudou.enabled}
                 disabled={doudou.status === 'working'}
                 onValueChange={(next) => (next ? setConsentOpen(true) : setConfirmDoudouOff(true))}
+                trackColor={{ false: theme.lineStrong, true: theme.accent }}
+                thumbColor={theme.surface}
+                ios_backgroundColor={theme.lineStrong}
+              />
+            )}
+          />
+          <SettingRow
+            icon={Lightbulb}
+            label="DouDou's daily tips"
+            detail={tipsOff ? 'Off' : 'One short tip on Home each day'}
+            onPress={() => setTipsOn(tipsOff)}
+            trailing={(
+              <Switch
+                accessibilityLabel="DouDou's daily tips"
+                value={!tipsOff}
+                onValueChange={setTipsOn}
                 trackColor={{ false: theme.lineStrong, true: theme.accent }}
                 thumbColor={theme.surface}
                 ios_backgroundColor={theme.lineStrong}

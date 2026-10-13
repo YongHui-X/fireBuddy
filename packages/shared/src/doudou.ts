@@ -55,9 +55,56 @@ export const DOUDOU_COLORS = {
   star: '#F2C94C',
   drop: '#8EC5E8',
   forest: '#163A2C',
+  /** Feet on the ledge in the peek pose. */
+  ledge: '#B8DA4E',
+  /** Edge of the bean-coloured confetti in the yay pose. */
+  confettiEdge: '#7FB24A',
+  /** Leaves on the 48-unit glyph (icon, launch screen). */
+  glyphLeafDark: '#7CC47F',
+  glyphLeafLight: '#A5DB8A',
+  /** Edge round the glyph bean on a pale background. */
+  outline: '#5F7D12',
 } as const;
 
+export type DoudouColors = { [K in keyof typeof DOUDOU_COLORS]: string };
+
+/**
+ * The phone's golden DouDou for the Gold Standard palette (owner, 9 Oct 2026): a gold bean with green
+ * leaves and a navy lock. The paused web app keeps the lime `DOUDOU_COLORS`.
+ */
+export const DOUDOU_GOLD_COLORS: DoudouColors = {
+  ...DOUDOU_COLORS,
+  bean: '#FFC300',
+  belly: '#FFE594',
+  leafDark: '#2F8A4F',
+  leafLight: '#46A868',
+  stem: '#256B3E',
+  cheek: '#FF8A65',
+  star: '#F2A900',
+  forest: '#001D3D',
+  ledge: '#E0A800',
+  confettiEdge: '#C99700',
+  glyphLeafDark: '#46A868',
+  glyphLeafLight: '#7CC47F',
+  outline: '#E0A800',
+};
+
 const C = DOUDOU_COLORS;
+
+/**
+ * Repaints shapes drawn in the default colours with another palette, by matching each default
+ * colour value to its key. The default palette returns the shapes untouched, so the web's lime
+ * DouDou is unchanged.
+ */
+function recolor(shapes: DoudouShape[], colors: DoudouColors): DoudouShape[] {
+  if (colors === DOUDOU_COLORS) return shapes;
+  const swap = (value: string | undefined) => {
+    if (!value) return value;
+    const key = (Object.keys(DOUDOU_COLORS) as (keyof typeof DOUDOU_COLORS)[]).find((name) => DOUDOU_COLORS[name] === value);
+    return key ? colors[key] : value;
+  };
+  return shapes.map((shape) => ({ ...shape, fill: swap(shape.fill), stroke: swap(shape.stroke) }));
+}
 const CX = 60;
 const CY = 74;
 const EYE_GAP = 13;
@@ -114,8 +161,8 @@ const BODY: DoudouShape[] = [
   { type: 'ellipse', cx: 42, cy: 52, rx: 6, ry: 3.6, fill: '#FFFFFF', opacity: 0.55, transform: 'rotate(-35 42 52)' },
 ];
 
-/** Returns the full drawing for one pose. */
-export function getDoudouArt(pose: DoudouPose): DoudouArt {
+/** Returns the full drawing for one pose, in the lime palette unless `colors` says otherwise. */
+export function getDoudouArt(pose: DoudouPose, colors: DoudouColors = DOUDOU_COLORS): DoudouArt {
   const art: DoudouArt = { shadow: SHADOW, leaves: LEAVES, body: BODY, eyes: [], mouth: [], cover: [], extras: [], tilt: 0 };
 
   switch (pose) {
@@ -138,8 +185,8 @@ export function getDoudouArt(pose: DoudouPose): DoudouArt {
       art.cover = [
         { type: 'rect', x: 0, y: 82, width: 120, height: 38, fill: '$cover' },
         { type: 'path', d: 'M4 82H116', fill: 'none', stroke: '$line', strokeWidth: 2.5 },
-        { type: 'ellipse', cx: 44, cy: 82, rx: 6, ry: 4, fill: '#B8DA4E' },
-        { type: 'ellipse', cx: 76, cy: 82, rx: 6, ry: 4, fill: '#B8DA4E' },
+        { type: 'ellipse', cx: 44, cy: 82, rx: 6, ry: 4, fill: C.ledge },
+        { type: 'ellipse', cx: 76, cy: 82, rx: 6, ry: 4, fill: C.ledge },
       ];
       break;
     case 'think':
@@ -162,7 +209,7 @@ export function getDoudouArt(pose: DoudouPose): DoudouArt {
         { type: 'rect', x: 12, y: 34, width: 7, height: 3, rx: 1.5, fill: C.spark, transform: 'rotate(-30 15 35)' },
         { type: 'rect', x: 100, y: 40, width: 7, height: 3, rx: 1.5, fill: C.leafLight, transform: 'rotate(25 103 41)' },
         { type: 'circle', cx: 16, cy: 58, r: 2.5, fill: C.cheek },
-        { type: 'circle', cx: 106, cy: 60, r: 2.5, fill: C.bean, stroke: '#7FB24A', strokeWidth: 1 },
+        { type: 'circle', cx: 106, cy: 60, r: 2.5, fill: C.bean, stroke: C.confettiEdge, strokeWidth: 1 },
         star(98, 23, 1.2),
         star(18, 19),
       ];
@@ -191,7 +238,17 @@ export function getDoudouArt(pose: DoudouPose): DoudouArt {
       break;
   }
 
-  return art;
+  if (colors === DOUDOU_COLORS) return art;
+  return {
+    ...art,
+    shadow: recolor(art.shadow, colors),
+    leaves: recolor(art.leaves, colors),
+    body: recolor(art.body, colors),
+    eyes: recolor(art.eyes, colors),
+    mouth: recolor(art.mouth, colors),
+    cover: recolor(art.cover, colors),
+    extras: recolor(art.extras, colors),
+  };
 }
 
 /**
@@ -215,8 +272,8 @@ export function selectDoudouMessageId<T extends { id: string }>(
 /** A square crop of the pose canvas that frames just the bean, for avatars and small marks. */
 export const DOUDOU_MARK_VIEWBOX = '11 10 98 98';
 
-/** The olive edge drawn round the bean wherever DouDou sits on the pale launch glow (icon and light launch screen). */
-export const DOUDOU_GLYPH_OUTLINE = '#5F7D12';
+/** The olive edge drawn round the lime bean wherever DouDou sits on a pale glow (web icon). */
+export const DOUDOU_GLYPH_OUTLINE = DOUDOU_COLORS.outline;
 
 export interface DoudouGlyphParts {
   leaves: DoudouShape[];
@@ -226,9 +283,9 @@ export interface DoudouGlyphParts {
 
 /**
  * DouDou on the 48-unit icon canvas with no tile, split into parts so the launch screen can wave
- * the leaves on their own. `outline` adds the olive edge to the bean.
+ * the leaves on their own. `outline` adds the palette's edge to the bean.
  */
-export function getDoudouGlyphParts({ tiny = false, outline = false }: { tiny?: boolean; outline?: boolean } = {}): DoudouGlyphParts {
+export function getDoudouGlyphParts({ tiny = false, outline = false, colors = DOUDOU_COLORS }: { tiny?: boolean; outline?: boolean; colors?: DoudouColors } = {}): DoudouGlyphParts {
   const face: DoudouShape[] = tiny
     ? [
       { type: 'circle', cx: 19, cy: 29, r: 2.8, fill: C.ink },
@@ -244,24 +301,22 @@ export function getDoudouGlyphParts({ tiny = false, outline = false }: { tiny?: 
       { type: 'path', d: 'M22.4 32.6Q24 34.4 25.6 32.6', fill: 'none', stroke: C.ink, strokeWidth: 1.3 },
     ];
 
-  return {
-    leaves: [
-      { type: 'path', d: 'M24 17L24 12', fill: 'none', stroke: '#7CC47F', strokeWidth: 1.8 },
-      { type: 'path', d: 'M24 13.5C20 7 14 7.5 12.5 10C16 14.5 21 14.5 24 13.5Z', fill: '#7CC47F' },
-      { type: 'path', d: 'M24 12C27.5 5.5 34 5.5 35.5 7.5C32.5 12 27.5 13 24 12Z', fill: '#A5DB8A' },
-    ],
-    bean: {
-      type: 'path',
-      d: 'M24 16C34 16 38.5 23.5 38.5 31C38.5 38.5 32.5 42 24 42C15.5 42 9.5 38.5 9.5 31C9.5 23.5 14 16 24 16Z',
-      fill: C.bean,
-      ...(outline ? { stroke: DOUDOU_GLYPH_OUTLINE, strokeWidth: 1.4 } : {}),
-    },
-    face,
+  const leaves: DoudouShape[] = [
+    { type: 'path', d: 'M24 17L24 12', fill: 'none', stroke: C.glyphLeafDark, strokeWidth: 1.8 },
+    { type: 'path', d: 'M24 13.5C20 7 14 7.5 12.5 10C16 14.5 21 14.5 24 13.5Z', fill: C.glyphLeafDark },
+    { type: 'path', d: 'M24 12C27.5 5.5 34 5.5 35.5 7.5C32.5 12 27.5 13 24 12Z', fill: C.glyphLeafLight },
+  ];
+  const bean: DoudouShape = {
+    type: 'path',
+    d: 'M24 16C34 16 38.5 23.5 38.5 31C38.5 38.5 32.5 42 24 42C15.5 42 9.5 38.5 9.5 31C9.5 23.5 14 16 24 16Z',
+    fill: C.bean,
+    ...(outline ? { stroke: C.outline, strokeWidth: 1.4 } : {}),
   };
+  return { leaves: recolor(leaves, colors), bean: recolor([bean], colors)[0], face: recolor(face, colors) };
 }
 
 /** The original app icon: DouDou on a forest tile. `tiny` drops the cheeks and smile for favicon sizes. Web still uses it. */
-export function getDoudouIcon(tiny = false): DoudouShape[] {
-  const { leaves, bean, face } = getDoudouGlyphParts({ tiny });
+export function getDoudouIcon(tiny = false, colors: DoudouColors = DOUDOU_COLORS): DoudouShape[] {
+  const { leaves, bean, face } = getDoudouGlyphParts({ tiny, colors });
   return [{ type: 'rect', x: 0, y: 0, width: 48, height: 48, rx: 13, fill: '$tile' }, ...leaves, bean, ...face];
 }

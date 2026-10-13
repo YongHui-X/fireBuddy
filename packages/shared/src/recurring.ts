@@ -133,9 +133,16 @@ export function materialiseRecurring(rules: readonly RecurringRule[], today: str
   return { inputs, rules: nextRules };
 }
 
+/** Default date of the first repeat: one period after the transaction that starts the rule. */
+export function defaultFirstRepeatDate(date: string, frequency: RecurringFrequency): string | null {
+  return isValidDateKey(date) ? occurrenceDate(date, frequency, 1) : null;
+}
+
 /**
- * A new rule from the transaction that starts it. That transaction is occurrence 0, so the rule's
- * first copy is one period after it.
+ * A new rule from the transaction that starts it. By default that transaction is occurrence 0, so
+ * the first copy is one period after it. `firstRepeatDate` sets a different first copy date (paid
+ * on the 3rd, but the deduction lands on the 25th): the schedule then counts from that date and
+ * the starting transaction stays outside it.
  */
 export function createRecurringRule(
   input: CreateTransactionInput,
@@ -143,7 +150,10 @@ export function createRecurringRule(
   endDate: string | null,
   id: string,
   now: string,
+  firstRepeatDate: string | null = null,
 ): RecurringRule {
+  const custom = firstRepeatDate !== null && isValidDateKey(firstRepeatDate) && firstRepeatDate > input.date
+    && firstRepeatDate !== defaultFirstRepeatDate(input.date, frequency);
   return {
     id,
     template: {
@@ -155,8 +165,8 @@ export function createRecurringRule(
       tagIds: [...input.tagIds],
     },
     frequency,
-    startDate: input.date,
-    nextIndex: 1,
+    startDate: custom ? firstRepeatDate : input.date,
+    nextIndex: custom ? 0 : 1,
     endDate,
     paused: false,
     createdAt: now,

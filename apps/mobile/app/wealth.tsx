@@ -1,4 +1,4 @@
-import { formatShortDate, type WealthPosition } from '@firebuddy/shared';
+import { formatShortDate, isAccountBalancePosition, type WealthPosition } from '@firebuddy/shared';
 import { useRouter } from 'expo-router';
 import { Landmark, Plus, Trash2, TrendingUp } from 'lucide-react-native';
 import { useState } from 'react';
@@ -11,7 +11,10 @@ import { ActionSheet } from '@/components/ui/ActionSheet';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Dialog } from '@/components/ui/Dialog';
+import { Doudou } from '@/components/brand/Doudou';
 import { IconButton } from '@/components/ui/IconButton';
+import { InfoButton } from '@/components/ui/InfoButton';
 import { PageToolbar } from '@/components/ui/PageToolbar';
 import { ProgressTrack } from '@/components/ui/ProgressTrack';
 import { AppText } from '@/components/ui/Text';
@@ -20,7 +23,7 @@ import { useWealth } from '@/hooks/use-wealth';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
 import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
-import { useRegion } from '@/lib/user-profile';
+import { useRegion, useUserProfile } from '@/lib/user-profile';
 
 /**
  * Balance sheet positions, separate from payment accounts and transactions. Every value is a
@@ -28,12 +31,13 @@ import { useRegion } from '@/lib/user-profile';
  * flows straight into the projection.
  */
 export default function WealthScreen() {
+  const { hydrated: profileReady, wealthTipSeenAt, markWealthTipSeen } = useUserProfile();
   const router = useRouter();
   const { theme } = useTheme();
-  const { money, percent } = usePrivacy();
+  const { money, signedMoney, percent } = usePrivacy();
   const { isSingapore } = useRegion();
   const wealth = useWealth();
-  const { addPosition, updatePosition, archivePosition, addSnapshot, deleteSnapshot, addContribution, deleteContribution, notify } = useFireBuddy();
+  const { addPosition, updatePosition, archivePosition, addSnapshot, deleteSnapshot, addContribution, deleteContribution, adoptAccountBalance, notify } = useFireBuddy();
   const [addOpen, setAddOpen] = useState(false);
   const [addTab, setAddTab] = useState<AddTab>('asset');
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -60,38 +64,45 @@ export default function WealthScreen() {
 
       <Card tone="hero" style={styles.hero}>
         <AppText variant="overline" tone="heroMuted">Net worth</AppText>
-        <AppText variant="heroFigure" tone="hero">{wealth.active.length ? money(wealth.netWorth, 0) : '—'}</AppText>
+        <AppText variant="heroFigure" tone="hero">{wealth.active.length ? signedMoney(wealth.netWorth, 0) : '—'}</AppText>
         <AppText variant="caption" tone="heroMuted">
-          {!wealth.active.length ? 'Add your first asset or debt to begin.' : wealth.missingValues ? `${wealth.missingValues} position${wealth.missingValues === 1 ? ' has' : 's have'} no value yet.` : 'Assets less debts, at their latest recorded values.'}
+          {!wealth.active.length ? 'Add your first asset or debt to begin.' : wealth.missingValues ? `${wealth.missingValues} position${wealth.missingValues === 1 ? ' has' : 's have'} no value yet.` : wealth.cpfLeftOut > 0 ? 'Assets less debts, leaving out the CPF you switched off.' : 'Assets less debts.'}
         </AppText>
-        <ProgressTrack value={assetShare} color={theme.railActiveInk} height={8} keepColorWhenOver style={styles.heroTrack} accessibilityLabel={`${percent(assetShare)} of your balance sheet is assets`} />
+        {/* Assets against debts: only meaningful when there is debt. */}
+        {wealth.liabilities.length ? <ProgressTrack value={assetShare} color={theme.railActiveInk} height={8} keepColorWhenOver style={styles.heroTrack} accessibilityLabel={`${percent(assetShare)} of your balance sheet is assets`} /> : null}
         <View style={[styles.heroMeta, { borderTopColor: theme.heroLine }]}>
           <View style={styles.heroMetaItem}>
-            <AppText variant="overline" tone="heroMuted">Assets</AppText>
-            <AppText variant="amount" tone="hero">{money(wealth.assetTotal, 0)}</AppText>
+            <View style={styles.heroMetaLabel}>
+              <AppText variant="overline" tone="heroMuted">Total assets</AppText>
+              <InfoButton title="Total assets" body={isSingapore ? 'Everything you own, including CPF and your home. Net worth leaves out any CPF you switched off from counting toward FI.' : 'Everything you own, including pensions and your home.'} tone="hero" />
+            </View>
+            <AppText variant="amount" tone="hero">{signedMoney(wealth.assetTotal, 0)}</AppText>
             <AppText variant="caption" tone="heroMuted">{wealth.assets.length} position{wealth.assets.length === 1 ? '' : 's'}</AppText>
           </View>
-          <View style={styles.heroMetaItem}>
-            <AppText variant="overline" tone="heroMuted">Debts</AppText>
-            <AppText variant="amount" tone="hero">{wealth.liabilities.length ? `−${money(wealth.liabilityTotal, 0)}` : 'None'}</AppText>
-            <AppText variant="caption" tone="heroMuted">{wealth.liabilities.length ? `${wealth.liabilities.length} liabilit${wealth.liabilities.length === 1 ? 'y' : 'ies'}` : 'No debt recorded'}</AppText>
-          </View>
+          {wealth.liabilities.length ? (
+            <View style={styles.heroMetaItem}>
+              <AppText variant="overline" tone="heroMuted">Debts</AppText>
+              <AppText variant="amount" tone="hero">{`−${money(wealth.liabilityTotal, 0)}`}</AppText>
+              <AppText variant="caption" tone="heroMuted">{`${wealth.liabilities.length} liabilit${wealth.liabilities.length === 1 ? 'y' : 'ies'}`}</AppText>
+            </View>
+          ) : null}
         </View>
       </Card>
 
       <Card padded={false}>
-        <CardHeader title="Assets" subtitle={wealth.assets.length ? money(wealth.assetTotal, 0) : 'Nothing recorded yet'} style={styles.listHeader} action={<Button label="Add" variant="text" size="compact" icon={TrendingUp} onPress={() => openAdd('asset')} />} />
+        <CardHeader title="Total assets" subtitle={wealth.assets.length ? signedMoney(wealth.assetTotal, 0) : 'Nothing recorded yet'} style={styles.listHeader} action={<Button label="Add" variant="text" size="compact" icon={TrendingUp} onPress={() => openAdd('asset')} />} />
         {wealth.assetRows.length === 0 ? (
           <AppText variant="bodySmall" tone="ink2" style={styles.emptyCopy}>{isSingapore ? 'Add cash, investments, property or CPF.' : 'Add cash, investments, property or a pension.'}</AppText>
         ) : wealth.assetRows.map((row, index) => <PositionRow key={row.position.id} row={row} first={index === 0} onPress={() => setEditing(row.position)} />)}
       </Card>
 
-      <Card padded={false}>
-        <CardHeader title="Debts" subtitle={wealth.liabilities.length ? `−${money(wealth.liabilityTotal, 0)}` : 'No debt recorded'} style={styles.listHeader} action={<Button label="Add" variant="text" size="compact" icon={Landmark} onPress={() => openAdd('debt')} />} />
-        {wealth.liabilityRows.length === 0 ? (
-          <AppText variant="bodySmall" tone="ink2" style={styles.emptyCopy}>Add a mortgage, loan or credit card to track its balance and payoff.</AppText>
-        ) : wealth.liabilityRows.map((row, index) => <PositionRow key={row.position.id} row={row} first={index === 0} onPress={() => setEditing(row.position)} />)}
-      </Card>
+      {/* Debts only when there are any; "Add debt" stays in the + menu. */}
+      {wealth.liabilityRows.length ? (
+        <Card padded={false}>
+          <CardHeader title="Debts" subtitle={`−${money(wealth.liabilityTotal, 0)}`} style={styles.listHeader} action={<Button label="Add" variant="text" size="compact" icon={Landmark} onPress={() => openAdd('debt')} />} />
+          {wealth.liabilityRows.map((row, index) => <PositionRow key={row.position.id} row={row} first={index === 0} onPress={() => setEditing(row.position)} />)}
+        </Card>
+      ) : null}
 
       <Card padded={false}>
         <CardHeader title="Recent updates" subtitle="Dated values and contributions" style={styles.listHeader} />
@@ -133,11 +144,15 @@ export default function WealthScreen() {
         latestDate={editingLatest?.valueDate ?? null}
         onClose={() => setEditing(null)}
         onSave={(id, changes, snapshot) => {
-          if (Object.keys(changes).length) updatePosition(id, changes);
-          if (snapshot) addSnapshot(id, snapshot);
+          // An account's automatic balance becomes a stored balance only when something is saved, so
+          // opening it just to look never freezes its value.
+          const target = editing && isAccountBalancePosition(editing) ? adoptAccountBalance(editing).id : id;
+          if (Object.keys(changes).length) updatePosition(target, changes);
+          if (snapshot) addSnapshot(target, snapshot);
           notify('Changes saved.');
         }}
-        onArchive={(id) => setArchiving(wealth.active.find((item) => item.id === id) ?? null)}
+        // An account's automatic balance has no Archive: an account's money always counts; delete the account to remove it.
+        onArchive={editing && isAccountBalancePosition(editing) ? undefined : (id) => setArchiving(wealth.active.find((item) => item.id === id) ?? null)}
       />
       <ConfirmDialog
         open={Boolean(archiving)}
@@ -169,11 +184,29 @@ export default function WealthScreen() {
           setRemoving(null);
         }}
       />
+      {/* One-time tip on the first visit (owner, 10 Oct 2026): accounts appear here by themselves. */}
+      <Dialog
+        open={profileReady && !wealthTipSeenAt}
+        onClose={markWealthTipSeen}
+        footer={<Button label="Got it" variant="primary" block onPress={markWealthTipSeen} />}
+      >
+        <View style={styles.tipBody}>
+          <Doudou pose="point" size={72} motion="idle" />
+          <AppText variant="sheetTitle" align="center">Your accounts are here</AppText>
+          <AppText variant="body" tone="ink2" align="center">
+            Assets include every account you have added. Tap one to adjust its amount if needed.
+          </AppText>
+        </View>
+      </Dialog>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  tipBody: {
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   hero: {
     padding: 22,
     gap: 4,
@@ -191,6 +224,11 @@ const styles = StyleSheet.create({
   heroMetaItem: {
     flex: 1,
     gap: 2,
+  },
+  heroMetaLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   listHeader: {
     paddingHorizontal: layout.cardPad,

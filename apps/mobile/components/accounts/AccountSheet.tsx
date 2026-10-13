@@ -1,9 +1,10 @@
-import { accountTypeLabels, categoryColors, type Account, type AccountType, type CreateAccountInput } from '@firebuddy/shared';
+import { accountTypeLabels, categoryColors, findAccountNamed, type Account, type AccountType, type CreateAccountInput } from '@firebuddy/shared';
 import { Banknote, Building2, Check, CreditCard, Smartphone, Star, Trash2, WalletCards, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { radii, spacing, tint } from '@/constants/tokens';
+import { useFireBuddy } from '@/lib/fire-buddy-store';
 import { useTheme } from '@/lib/theme';
 import { useResetWhen } from '@/hooks/use-reset-when';
 
@@ -44,6 +45,7 @@ export function AccountSheet({ open, mode, initial, deleteBlockedReason = null, 
   const [color, setColor] = useState<string>(categoryColors[0]);
   const [lastFour, setLastFour] = useState('');
   const [errors, setErrors] = useState<{ name?: string; lastFour?: string }>({});
+  const { accounts } = useFireBuddy();
 
   useResetWhen(open, () => {
     setName(initial?.name ?? '');
@@ -56,6 +58,7 @@ export function AccountSheet({ open, mode, initial, deleteBlockedReason = null, 
   function save() {
     const next: typeof errors = {};
     if (!name.trim()) next.name = 'Give the account a name.';
+    else if (findAccountNamed(accounts, name, initial?.id)) next.name = `An account called ${findAccountNamed(accounts, name, initial?.id)!.name} already exists.`;
     if (lastFour && !/^\d{4}$/.test(lastFour)) next.lastFour = 'Enter exactly four digits, or leave this empty.';
     if (Object.keys(next).length) {
       setErrors(next);

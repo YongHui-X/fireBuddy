@@ -34,7 +34,7 @@ export interface TourStep {
   pose: DoudouPose;
 }
 
-/** DouDou's spotlight tour on Home, in order. Copy is short, plain and encouraging. */
+/** DouDou's spotlight tour on Home, in order. Copy is short, plain and encouraging; DouDou changes pose each step (owner, 10 Oct 2026). */
 export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: 'add',
@@ -48,28 +48,28 @@ export const TOUR_STEPS: readonly TourStep[] = [
     targetId: 'wealth',
     title: 'Your wealth, together',
     body: 'See your savings, investments, property and debts in one place.',
-    pose: 'point',
+    pose: 'yay',
   },
   {
     id: 'planner',
     targetId: 'planner',
     title: 'Plan your FIRE date',
     body: 'Work out when you could reach financial freedom.',
-    pose: 'point',
+    pose: 'think',
   },
   {
     id: 'insights',
     targetId: 'insights',
     title: 'Spot the patterns',
     body: 'See where your money goes each month.',
-    pose: 'point',
+    pose: 'peek',
   },
   {
     id: 'doudou',
     targetId: 'doudou',
     title: 'Meet me, DouDou',
-    body: "I'm your money buddy. Ask me about CPF, budgeting or your FIRE plan and I'll explain it simply.",
-    pose: 'point',
+    body: "I'm your AI buddy. Ask me about CPF, budgeting or your FIRE plan and I'll explain it simply.",
+    pose: 'hello',
   },
   {
     id: 'transactions',
@@ -83,14 +83,14 @@ export const TOUR_STEPS: readonly TourStep[] = [
     targetId: 'categories',
     title: 'Sort and budget',
     body: 'Organise your categories and give any of them a monthly budget for Home to track.',
-    pose: 'point',
+    pose: 'think',
   },
   {
     id: 'profile',
     targetId: 'profile',
     title: 'Make it yours',
     body: 'Change your name or country, set a daily reminder, back up, or replay this tour in Profile.',
-    pose: 'point',
+    pose: 'yay',
   },
 ];
 

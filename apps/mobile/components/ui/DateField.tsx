@@ -17,6 +17,7 @@ export interface DateFieldProps {
   onChange: (dateKey: string) => void;
   placeholder?: string;
   error?: string | null;
+  help?: string;
   maximumDate?: Date;
   style?: StyleProp<ViewStyle>;
 }
@@ -26,7 +27,7 @@ function toDate(dateKey: string) {
 }
 
 /** Native date pickers: the Android dialog opens imperatively, iOS shows its inline calendar in a sheet. */
-export function DateField({ label, value, onChange, placeholder = 'Choose a date', error, maximumDate, style }: DateFieldProps) {
+export function DateField({ label, value, onChange, placeholder = 'Choose a date', error, help, maximumDate, style }: DateFieldProps) {
   const { theme } = useTheme();
   const [iosOpen, setIosOpen] = useState(false);
   const [iosDraft, setIosDraft] = useState(() => toDate(value));
@@ -48,7 +49,7 @@ export function DateField({ label, value, onChange, placeholder = 'Choose a date
 
   return (
     <>
-      <SelectField label={label} value={value ? formatLongDate(value) : ''} placeholder={placeholder} icon={CalendarDays} error={error} onPress={open} style={style} accessibilityLabel={label ?? 'Date'} />
+      <SelectField label={label} value={value ? formatLongDate(value) : ''} placeholder={placeholder} icon={CalendarDays} error={error} help={help} onPress={open} style={style} accessibilityLabel={label ?? 'Date'} />
       {Platform.OS !== 'android' ? (
         <BottomSheet
           open={iosOpen}

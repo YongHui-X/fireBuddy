@@ -8,7 +8,7 @@
   "cases": [
     {"name": "CPF bridge", "assets": 1080000, "overrides": {}, "target": "1080000.00"},
     {"name": "Without CPF", "assets": 0, "overrides": {"cpfPlan": "unknown"}, "target": "1620000.00"},
-    {"name": "Basic excluded", "assets": 0, "overrides": {"cpfPlan": "basic"}, "target": "1620000.00"},
+    {"name": "Basic counted as level", "assets": 0, "overrides": {"cpfPlan": "basic"}, "target": "1080000.00"},
     {"name": "Negative returns", "assets": 100000, "overrides": {"beforeReturn": -0.02, "afterReturn": -0.01, "retirementMonth": "2036-01", "monthlyContribution": 3000}},
     {"name": "Equal return inflation", "assets": 100000, "overrides": {"beforeReturn": 0.025, "afterReturn": 0.025, "inflation": 0.025, "retirementMonth": "2036-01"}},
     {"name": "Escalating CPF", "assets": 1000000, "overrides": {"cpfPlan": "escalating", "inflation": 0.025, "afterReturn": 0.03}},

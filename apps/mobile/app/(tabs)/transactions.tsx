@@ -1,10 +1,12 @@
-import { formatDateLabel, formatMonthLabel, formatShortDate, type LedgerFilters, type Transaction } from '@firebuddy/shared';
+import { describeActiveFilters, formatDateLabel, formatMonthLabel, formatShortDate, type ActiveFilterKey, type LedgerFilters, type Transaction } from '@firebuddy/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Copy, Download, Ellipsis, Pencil, Repeat, SlidersHorizontal, Tags, Trash2, Wallet } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
+import { HeroBand } from '@/components/layout/HeroBand';
 import { Screen, useScreenInsets } from '@/components/layout/Screen';
+import { ActiveFilters } from '@/components/transactions/ActiveFilters';
 import { FiltersSheet, type LedgerFilterDraft } from '@/components/transactions/FiltersSheet';
 import { RecurringSheet } from '@/components/transactions/RecurringSheet';
 import { TagsSheet } from '@/components/transactions/TagsSheet';
@@ -13,7 +15,6 @@ import { TransactionRow } from '@/components/transactions/TransactionRow';
 import { ActionSheet } from '@/components/ui/ActionSheet';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
@@ -78,6 +79,16 @@ export default function TransactionsScreen() {
         ? `From ${formatShortDate(draft.startDate)}`
         : `Until ${formatShortDate(draft.endDate as string)}`;
 
+  // One removable chip per active filter, named rather than counted.
+  const activeChips = describeActiveFilters(draft, {
+    categoryName: (id) => getCategoryById(id)?.name,
+    accountName: (id) => getAccountById(id)?.name,
+    tagName: (id) => tags.find((tag) => tag.id === id)?.name,
+    rangeLabel: customRangeLabel,
+  });
+  const removeFilter = (key: ActiveFilterKey) =>
+    setDraft((current) => (key === 'dates' ? { ...current, startDate: null, endDate: null } : { ...current, [key]: null }));
+
   const tagUsage = useMemo(() => {
     const counts = new Map<string, number>();
     for (const transaction of transactions) for (const tagId of transaction.tagIds) counts.set(tagId, (counts.get(tagId) ?? 0) + 1);
@@ -110,16 +121,30 @@ export default function TransactionsScreen() {
 
   const header = (
     <View style={styles.header}>
-      <PageToolbar
-        title="Transactions"
-        description="Review income and expenses across your accounts."
-        trailing={(
-          <View style={styles.toolbarActions}>
-            <IconButton icon={Repeat} accessibilityLabel={`Recurring, ${recurringRules.length} set up`} onPress={() => setRecurringOpen(true)} />
-            <IconButton icon={Ellipsis} accessibilityLabel="More actions" onPress={() => setOverflowOpen(true)} />
+      {/* The navy band holds the title and the period's two totals (DESIGN.md, navy bands on the tab screens). */}
+      <HeroBand>
+        <PageToolbar
+          tone="hero"
+          title="Transactions"
+          description="Review income and expenses across your accounts."
+          trailing={(
+            <View style={styles.toolbarActions}>
+              <IconButton icon={Repeat} tone="hero" accessibilityLabel={`Recurring, ${recurringRules.length} set up`} onPress={() => setRecurringOpen(true)} />
+              <IconButton icon={Ellipsis} tone="hero" accessibilityLabel="More actions" onPress={() => setOverflowOpen(true)} />
+            </View>
+          )}
+        />
+        <View style={styles.summary}>
+          <View style={[styles.summaryCell, { backgroundColor: theme.heroChipBg }]}>
+            <AppText variant="overline" tone="heroMuted">Expenses</AppText>
+            <AppText variant="metric" style={{ color: theme.heroExpenseInk }}>- {money(ledger.expenses)}</AppText>
           </View>
-        )}
-      />
+          <View style={[styles.summaryCell, { backgroundColor: theme.heroChipBg }]}>
+            <AppText variant="overline" tone="heroMuted">Income</AppText>
+            <AppText variant="metric" style={{ color: theme.heroIncomeInk }}>+ {money(ledger.income)}</AppText>
+          </View>
+        </View>
+      </HeroBand>
       <SearchField value={search} onChangeText={setSearch} />
       {/* Filters and the month share one row, so the period and its filters read together. */}
       <View style={styles.filterRow}>
@@ -132,27 +157,16 @@ export default function TransactionsScreen() {
         />
         <MonthStepper compact months={months} value={month} onChange={setMonth} onOpenPicker={() => setMonthPickerOpen(true)} valueLabel={customRangeLabel} style={styles.monthStepper} />
       </View>
-      {ledger.activeFilterCount ? (
+      {activeChips.length ? (
         <View style={styles.activeRow}>
-          <Chip label={`${ledger.activeFilterCount} active`} tone="accent" round />
-          <Button label="Clear" variant="text" size="compact" onPress={() => setDraft(emptyFilters)} />
+          <ActiveFilters chips={activeChips} onRemove={removeFilter} onClear={() => setDraft(emptyFilters)} />
         </View>
       ) : null}
-      <Card padded={false} style={styles.summary}>
-        <View style={[styles.summaryCell, { borderRightColor: theme.line }]}>
-          <AppText variant="overline" tone="ink2">Expenses</AppText>
-          <AppText variant="metric" tone="expense">- {money(ledger.expenses)}</AppText>
-        </View>
-        <View style={styles.summaryCell}>
-          <AppText variant="overline" tone="ink2">Income</AppText>
-          <AppText variant="metric" tone="income">+ {money(ledger.income)}</AppText>
-        </View>
-      </Card>
     </View>
   );
 
   return (
-    <Screen scroll={false}>
+    <Screen scroll={false} heroTop>
       <SectionList
         sections={ledger.sections}
         keyExtractor={(item) => item.id}
@@ -302,20 +316,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   activeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: -spacing.sm,
+    marginTop: -spacing.xs,
   },
   summary: {
     flexDirection: 'row',
-    overflow: 'hidden',
+    gap: spacing.sm,
   },
   summaryCell: {
     flex: 1,
     padding: layout.cardPad,
     gap: 4,
-    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRadius: radii.card,
   },
   sectionHeader: {
     marginTop: spacing.lg,

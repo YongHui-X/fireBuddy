@@ -12,6 +12,7 @@ import { useWealth } from '@/hooks/use-wealth';
 import { useFireBuddy } from '@/lib/fire-buddy-store';
 import { usePrivacy } from '@/lib/privacy';
 import { useTheme } from '@/lib/theme';
+import { useRegion } from '@/lib/user-profile';
 
 import { DonutChart } from '../charts/DonutChart';
 import { TransactionRow } from '../transactions/TransactionRow';
@@ -19,18 +20,20 @@ import { Button } from '../ui/Button';
 import { Card, CardHeader } from '../ui/Card';
 import { Chip } from '../ui/Chip';
 import { EmptyState } from '../ui/EmptyState';
+import { InfoButton } from '../ui/InfoButton';
 import { ProgressTrack } from '../ui/ProgressTrack';
 import { AppText } from '../ui/Text';
 
 /**
- * The net worth headline, set straight on the forest hero like a wallet balance: the label with
+ * The net worth headline, set straight on the navy hero like a wallet balance: the label with
  * the app-wide privacy eye beside it, the figure in white, this month's change, and the asset and
  * debt totals. Reads the latest dated wealth values.
  */
 export function NetWorthHeadline({ monthName, onOpenWealth }: { monthName: string; onOpenWealth?: () => void }) {
   const { theme } = useTheme();
-  const { money, hidden, toggle } = usePrivacy();
-  const { netWorth, assetTotal, liabilityTotal, monthlyChange, active, missingValues } = useWealth();
+  const { money, signedMoney, hidden, toggle } = usePrivacy();
+  const { netWorth, assetTotal, liabilityTotal, liabilities, monthlyChange, active, missingValues } = useWealth();
+  const { isSingapore } = useRegion();
   const EyeIcon = hidden ? EyeOff : Eye;
 
   return (
@@ -49,7 +52,10 @@ export function NetWorthHeadline({ monthName, onOpenWealth }: { monthName: strin
           <EyeIcon size={16} color={theme.heroInkMuted} strokeWidth={2} />
         </Pressable>
       </View>
-      <AppText variant="balance" tone="hero" numberOfLines={1} adjustsFontSizeToFit>{active.length ? money(netWorth, 0) : '—'}</AppText>
+      {/* The figure takes Home's highlight colour; a negative net worth stays in plain ink, since gold reads as good news. */}
+      <AppText variant="balance" tone="hero" numberOfLines={1} adjustsFontSizeToFit style={active.length && netWorth >= 0 ? { color: theme.homeHero.figure } : undefined}>
+        {active.length ? signedMoney(netWorth, 0) : '—'}
+      </AppText>
       <View style={styles.headlineMeta}>
         {monthlyChange !== null ? (
           <Chip
@@ -58,21 +64,30 @@ export function NetWorthHeadline({ monthName, onOpenWealth }: { monthName: strin
             icon={hidden ? undefined : monthlyChange >= 0 ? ArrowUpRight : ArrowDownRight}
             round
           />
-        ) : !active.length || missingValues ? (
-          // Mirrors the Wealth screen: a total built on unvalued positions says so. With no
-          // monthly change to show yet, nothing is shown rather than a prompt (owner, 5 Oct 2026).
+        ) : !active.length ? (
+          // Net worth comes from Wealth balances, not from logged income, so say where it starts.
+          // Kept to caption size on purpose (owner, 8 Oct 2026).
+          <AppText variant="caption" tone="heroMuted" accessibilityRole="link" onPress={onOpenWealth} suppressHighlighting>
+            Add your savings in Wealth to see your net worth.
+          </AppText>
+        ) : missingValues ? (
+          // Mirrors the Wealth screen: a total built on unvalued positions says so.
           <Chip
-            label={!active.length
-              ? 'Add your first asset or debt'
-              : `${missingValues} position${missingValues === 1 ? ' has' : 's have'} no value yet`}
+            label={`${missingValues} position${missingValues === 1 ? ' has' : 's have'} no value yet`}
             tone="heroNeutral"
             round
             onPress={onOpenWealth}
           />
         ) : null}
-        <AppText variant="caption" tone="heroMuted" numberOfLines={1} style={styles.headlineTotals}>
-          Assets {money(assetTotal, 0)} · Debts {money(liabilityTotal, 0)}
-        </AppText>
+        {active.length ? (
+          // Debts show only when there are any (owner, 11 Oct 2026).
+          <View style={styles.headlineTotals}>
+            <AppText variant="caption" tone="heroMuted" numberOfLines={1} style={styles.headlineTotalsText}>
+              Total assets {signedMoney(assetTotal, 0)}{liabilities.length ? ` · Debts ${money(liabilityTotal, 0)}` : ''}
+            </AppText>
+            <InfoButton title="Total assets" body={isSingapore ? 'Everything you own, including CPF and your home. Net worth leaves out any CPF you switched off from counting toward FI.' : 'Everything you own, including pensions and your home.'} tone="hero" />
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -82,11 +97,10 @@ export function NetWorthHeadline({ monthName, onOpenWealth }: { monthName: strin
 export function MoneyPulseCard({ summary, monthName }: { summary: MonthSummary; monthName: string }) {
   const { theme } = useTheme();
   const { money, percent, hidden } = usePrivacy();
-  const { income, expenses, savings, savingsRate, transactionCount } = summary;
+  const { income, expenses, savings, savingsRate } = summary;
   const scale = Math.max(income, expenses, Math.abs(savings), 1);
   const expenseShare = Math.min(expenses / scale, 1);
   const savingsShare = Math.min(Math.max(savings, 0) / scale, 1 - expenseShare);
-  const limited = transactionCount < 3;
 
   let observationTitle: string | null = null;
   let observationDetail: string | null = null;
@@ -103,7 +117,7 @@ export function MoneyPulseCard({ summary, monthName }: { summary: MonthSummary; 
 
   return (
     <Card>
-      <CardHeader title={`${monthName} Money Pulse`} action={limited ? <Chip label="Limited data" tone="warning" style={styles.limited} /> : undefined} />
+      <CardHeader title={`${monthName} Money Pulse`} />
       <AppText variant="caption" tone="ink2">Income</AppText>
       <AppText variant="metric" style={styles.pulseIncome}>{money(income, 0)}</AppText>
       <AppText variant="caption" tone="ink2" style={styles.pulseLabel}>Where it went</AppText>
@@ -159,7 +173,7 @@ export function CategoryBudgetsCard({ rows, periodLabel, onManage }: { rows: Cat
                   {money(row.spent, 0)} <AppText variant="caption" tone="ink2">of {money(row.budget, 0)}</AppText>
                 </AppText>
               </View>
-              <ProgressTrack value={row.ratio} color={row.category.color} accessibilityLabel={`${row.category.name}: ${money(row.spent)} spent of ${money(row.budget)} budget`} />
+              <ProgressTrack value={row.ratio} accessibilityLabel={`${row.category.name}: ${money(row.spent)} spent of ${money(row.budget)} budget`} />
             </View>
           ))}
           <View style={[styles.budgetSummary, { borderTopColor: theme.line }]}>
@@ -261,9 +275,12 @@ const styles = StyleSheet.create({
   },
   headlineTotals: {
     marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  limited: {
-    marginTop: 6,
+  headlineTotalsText: {
+    flexShrink: 1,
   },
   pulseIncome: {
     marginTop: 2,

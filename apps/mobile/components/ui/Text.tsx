@@ -1,4 +1,5 @@
-import { Text, type TextProps } from 'react-native';
+import { avoidOrphan } from '@firebuddy/shared';
+import { Platform, Text, type TextProps } from 'react-native';
 
 import { type, type Theme } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
@@ -45,14 +46,24 @@ function toneColor(theme: Theme, tone: TextTone) {
   }
 }
 
-/** Every piece of text goes through here so the exact font family is always set (Android cannot fake weights). */
-export function AppText({ variant = 'body', tone = 'ink', align, style, ...rest }: AppTextProps) {
+/**
+ * Every piece of text goes through here so the exact font family is always set (Android cannot fake
+ * weights). Wrapping text never leaves one word alone on its last line (owner, 10 Oct 2026): plain
+ * string children keep their last two words together, and the platform's balanced line breaking
+ * evens out the lines. One-line text is left as it is.
+ */
+export function AppText({ variant = 'body', tone = 'ink', align, style, children, ...rest }: AppTextProps) {
   const { theme } = useTheme();
   const color = toneColor(theme, tone);
+  const wraps = rest.numberOfLines !== 1;
   return (
     <Text
+      textBreakStrategy={wraps && Platform.OS === 'android' ? 'balanced' : undefined}
+      lineBreakStrategyIOS={wraps && Platform.OS === 'ios' ? 'push-out' : undefined}
       {...rest}
       style={[type[variant], color ? { color } : null, align ? { textAlign: align } : null, style]}
-    />
+    >
+      {wraps && typeof children === 'string' ? avoidOrphan(children) : children}
+    </Text>
   );
 }

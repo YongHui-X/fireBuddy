@@ -14,42 +14,48 @@ const require = createRequire(import.meta.url);
 const sharp = require('sharp');
 
 /**
- * The icon direction chosen on 4 Oct 2026: the app's beige canvas with a soft lime glow, filling
- * the whole icon so the phone's own mask is the only edge. Matches `launchPalettes` in
- * constants/tokens.ts; keep the two in step.
+ * Gold Standard (owner, 9 Oct 2026): the golden DouDou on a navy tile with a soft lighter-navy glow,
+ * filling the whole icon so the phone's own mask is the only edge. The light splash puts DouDou on
+ * the cool white canvas with a dark gold edge. Colours match `brand`, `doudouColors` and
+ * `launchPalettes` in constants/tokens.ts and `DOUDOU_GOLD_COLORS` in packages/shared; keep them in step.
  */
-const canvas = '#f2f4ec';
-const glowStops = `<stop offset="0" stop-color="#fbfdf2"/><stop offset=".34" stop-color="#eef7d2"/><stop offset=".72" stop-color="${canvas}"/>`;
-const outline = '#5f7d12';
-const groundLight = 'rgba(95,125,18,0.16)';
-const groundDark = 'rgba(0,0,0,0.3)';
+const canvas = '#001d3d';
+// A lighter navy pool of light behind DouDou; gold glow over navy turns muddy olive.
+const glowStops = `<stop offset="0" stop-color="#1f5a99" stop-opacity=".95"/><stop offset=".42" stop-color="#003566" stop-opacity=".7"/><stop offset=".85" stop-color="${canvas}" stop-opacity="0"/>`;
+const outline = '#e0a800';
+const groundLight = 'rgba(0,29,61,0.12)';
+const groundDark = 'rgba(0,0,0,0.35)';
+const beanFill = '#ffc300';
+const leafDark = '#46a868';
+const leafLight = '#7cc47f';
+const cheek = '#ff8a65';
 
 /**
  * DouDou on the 48x48 icon canvas, copied from `getDoudouGlyphParts` in packages/shared/src/doudou.ts.
  * Keep the two in step when the mark changes.
  */
 const leaves = `
-  <path d="M24 17L24 12" stroke="#7cc47f" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M24 13.5C20 7 14 7.5 12.5 10C16 14.5 21 14.5 24 13.5Z" fill="#7cc47f"/>
-  <path d="M24 12C27.5 5.5 34 5.5 35.5 7.5C32.5 12 27.5 13 24 12Z" fill="#a5db8a"/>`;
+  <path d="M24 17L24 12" stroke="${leafDark}" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M24 13.5C20 7 14 7.5 12.5 10C16 14.5 21 14.5 24 13.5Z" fill="${leafDark}"/>
+  <path d="M24 12C27.5 5.5 34 5.5 35.5 7.5C32.5 12 27.5 13 24 12Z" fill="${leafLight}"/>`;
 const bean = 'M24 16C34 16 38.5 23.5 38.5 31C38.5 38.5 32.5 42 24 42C15.5 42 9.5 38.5 9.5 31C9.5 23.5 14 16 24 16Z';
 const face = `
   <circle cx="19" cy="29" r="2.3" fill="#1d2a22"/><circle cx="29" cy="29" r="2.3" fill="#1d2a22"/>
   <circle cx="18.3" cy="28.2" r=".8" fill="#ffffff"/><circle cx="28.3" cy="28.2" r=".8" fill="#ffffff"/>
-  <ellipse cx="15" cy="32.6" rx="2.2" ry="1.3" fill="#f28c8c" opacity=".7"/><ellipse cx="33" cy="32.6" rx="2.2" ry="1.3" fill="#f28c8c" opacity=".7"/>
+  <ellipse cx="15" cy="32.6" rx="2.2" ry="1.3" fill="${cheek}" opacity=".7"/><ellipse cx="33" cy="32.6" rx="2.2" ry="1.3" fill="${cheek}" opacity=".7"/>
   <path d="M22.4 32.6Q24 34.4 25.6 32.6" fill="none" stroke="#1d2a22" stroke-width="1.3" stroke-linecap="round"/>`;
 
-/** DouDou with an optional olive edge on the bean and a ground shadow under the feet. */
+/** DouDou with an optional dark gold edge on the bean and a ground shadow under the feet. */
 function doudou({ edge = false, ground } = {}) {
   const shadow = ground ? `<ellipse cx="24" cy="43.2" rx="10" ry="1.6" fill="${ground}"/>` : '';
   const stroke = edge ? ` stroke="${outline}" stroke-width="1.4" stroke-linejoin="round"` : '';
-  return `${shadow}${leaves}<path d="${bean}" fill="#cbea63"${stroke}/>${face}`;
+  return `${shadow}${leaves}<path d="${bean}" fill="${beanFill}"${stroke}/>${face}`;
 }
 
-/** The glow as a full-bleed square, centred a little above the middle like the launch screen. */
+/** The navy tile with the gold glow as a full-bleed square, centred a little above the middle. */
 function glowRect() {
-  return `<defs><radialGradient id="glow" cx="24" cy="22" r="34" gradientUnits="userSpaceOnUse">${glowStops}</radialGradient></defs>
-  <rect width="48" height="48" fill="url(#glow)"/>`;
+  return `<defs><radialGradient id="glow" cx="24" cy="22" r="30" gradientUnits="userSpaceOnUse">${glowStops}</radialGradient></defs>
+  <rect width="48" height="48" fill="${canvas}"/><rect width="48" height="48" fill="url(#glow)"/>`;
 }
 
 /**
@@ -83,11 +89,11 @@ await mkdir(outDir, { recursive: true });
 
 const jobs = [
   // iOS and older launchers: one opaque square, the system applies the corner mask.
-  ['icon.png', glyph(1024, { scale: 0.78, background: true, edge: true, ground: groundLight }), 1024],
-  ['favicon.png', glyph(96, { scale: 0.86, background: true, edge: true }), 96],
+  ['icon.png', glyph(1024, { scale: 0.78, background: true, ground: groundDark }), 1024],
+  ['favicon.png', glyph(96, { scale: 0.86, background: true }), 96],
   // Android adaptive icon: glow behind, DouDou inside the inner 66% safe zone in front.
   ['android-icon-background.png', glowLayer(1024), 1024],
-  ['android-icon-foreground.png', glyph(1024, { edge: true, ground: groundLight }), 1024],
+  ['android-icon-foreground.png', glyph(1024, { ground: groundDark }), 1024],
   ['android-icon-monochrome.png', glyph(1024, { monochrome: true }), 1024],
   // Splash art, transparent. Android 12+ masks the splash image to a circle, so DouDou sits at the
   // adaptive-icon safe scale; components/brand/LaunchScreen.tsx starts at this size and pops up.

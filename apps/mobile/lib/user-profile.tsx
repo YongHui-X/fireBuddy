@@ -17,6 +17,8 @@ export interface StoredUserProfile {
   tourDoneAt: string | null;
   /** Local YYYY-MM-DD the daily tip was dismissed on, so it stays hidden for the rest of that day. */
   tipDismissedOn: string | null;
+  /** True once the user turns DouDou's daily tips off; Profile turns them back on. */
+  tipsOff: boolean;
   /** ISO country code from the welcome; null (older installs) counts as Singapore. */
   country: string | null;
   /** ISO currency every amount is shown in; null means the country's usual currency. */
@@ -27,9 +29,11 @@ export interface StoredUserProfile {
   legalAcceptedVersion: string | null;
   /** ISO time of that agreement, kept on the phone as the record of acceptance. */
   legalAcceptedAt: string | null;
+  /** ISO time the one-time Wealth tip ("Assets include all your accounts") was dismissed. */
+  wealthTipSeenAt: string | null;
 }
 
-const EMPTY_PROFILE: StoredUserProfile = { nickname: null, welcomedAt: null, tourDoneAt: null, tipDismissedOn: null, country: null, currency: null, reminderOn: null, legalAcceptedVersion: null, legalAcceptedAt: null };
+const EMPTY_PROFILE: StoredUserProfile = { nickname: null, welcomedAt: null, tourDoneAt: null, tipDismissedOn: null, tipsOff: false, country: null, currency: null, reminderOn: null, legalAcceptedVersion: null, legalAcceptedAt: null, wealthTipSeenAt: null };
 
 interface UserProfileContextValue extends StoredUserProfile {
   /** True once the stored profile has been read; the launch screen waits for it so the welcome never flashes for a returning user. */
@@ -42,6 +46,10 @@ interface UserProfileContextValue extends StoredUserProfile {
   /** Country and currency from the welcome or Profile. */
   setRegion: (country: string, currency: string) => void;
   setReminderOn: (on: boolean) => void;
+  /** Turn DouDou's daily tips on Home on or off for good. */
+  setTipsOn: (on: boolean) => void;
+  /** Dismiss the one-time Wealth tip for good. */
+  markWealthTipSeen: () => void;
   /** Agree to the current terms and privacy policy (the updated-terms notice). */
   acceptLegal: () => void;
   /** Forget the name and first-run flags, so the welcome and tour play again ("Start fresh"). */
@@ -61,12 +69,14 @@ function parseStored(raw: string | null): StoredUserProfile {
       welcomedAt: text(parsed.welcomedAt),
       tourDoneAt: text(parsed.tourDoneAt),
       tipDismissedOn: text(parsed.tipDismissedOn),
+      tipsOff: parsed.tipsOff === true,
       // Only known codes survive, so a corrupt value falls back to Singapore rather than a blank mode.
       country: findCountry(text(parsed.country)) ? text(parsed.country) : null,
       currency: text(parsed.currency)?.toUpperCase() ?? null,
       reminderOn: typeof parsed.reminderOn === 'boolean' ? parsed.reminderOn : null,
       legalAcceptedVersion: text(parsed.legalAcceptedVersion),
       legalAcceptedAt: text(parsed.legalAcceptedAt),
+      wealthTipSeenAt: text(parsed.wealthTipSeenAt),
     };
   } catch {
     return EMPTY_PROFILE;
@@ -123,12 +133,14 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   const dismissTipToday = useCallback((dateKey: string) => update({ tipDismissedOn: dateKey }), [update]);
   const setRegion = useCallback((country: string, currency: string) => update({ country: country.toUpperCase(), currency: currency.toUpperCase() }), [update]);
   const setReminderOn = useCallback((on: boolean) => update({ reminderOn: on }), [update]);
+  const setTipsOn = useCallback((on: boolean) => update({ tipsOff: !on }), [update]);
   const acceptLegal = useCallback(() => update({ legalAcceptedVersion: LEGAL_VERSION, legalAcceptedAt: new Date().toISOString() }), [update]);
+  const markWealthTipSeen = useCallback(() => update({ wealthTipSeenAt: new Date().toISOString() }), [update]);
   const resetProfile = useCallback(() => update(EMPTY_PROFILE), [update]);
 
   const value = useMemo<UserProfileContextValue>(
-    () => ({ ...profile, hydrated, setNickname, completeWelcome, completeTour, resetTour, dismissTipToday, setRegion, setReminderOn, acceptLegal, resetProfile }),
-    [profile, hydrated, setNickname, completeWelcome, completeTour, resetTour, dismissTipToday, setRegion, setReminderOn, acceptLegal, resetProfile],
+    () => ({ ...profile, hydrated, setNickname, completeWelcome, completeTour, resetTour, dismissTipToday, setRegion, setReminderOn, setTipsOn, markWealthTipSeen, acceptLegal, resetProfile }),
+    [profile, hydrated, setNickname, completeWelcome, completeTour, resetTour, dismissTipToday, setRegion, setReminderOn, setTipsOn, markWealthTipSeen, acceptLegal, resetProfile],
   );
   return <UserProfileContext.Provider value={value}>{children}</UserProfileContext.Provider>;
 }

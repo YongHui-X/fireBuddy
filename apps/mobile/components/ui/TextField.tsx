@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, TextInput, View, type StyleProp, type TextInputP
 import { fonts, layout, radii, spacing } from '@/constants/tokens';
 import { useTheme } from '@/lib/theme';
 
+import { InfoButton } from './InfoButton';
 import { PressOverlay } from './PressOverlay';
 import { AppText } from './Text';
 
@@ -12,23 +13,29 @@ interface FieldFrameProps {
   label?: string;
   optional?: boolean;
   help?: string;
+  info?: string | readonly string[];
   error?: string | null;
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
 }
 
+/** Pass as `error` to outline a field in red without repeating a message shown on another field. */
+export const FIELD_INVALID = ' ';
+
 /** Label above, control, then help or error copy beneath. */
-export function FieldFrame({ label, optional, help, error, style, children }: FieldFrameProps) {
+export function FieldFrame({ label, optional, help, info, error, style, children }: FieldFrameProps) {
   return (
     <View style={[styles.frame, style]}>
       {label ? (
         <View style={styles.labelRow}>
-          <AppText variant="label">{label}</AppText>
+          {/* A long label wraps, keeping its tag and (i) beside the text, never past the card's edge. */}
+          <AppText variant="label" style={styles.labelText}>{label}</AppText>
           {optional ? <AppText variant="caption" tone="ink3">optional</AppText> : null}
+          {info ? <InfoButton title={label} body={info} /> : null}
         </View>
       ) : null}
       {children}
-      {error ? <AppText variant="caption" tone="danger">{error}</AppText> : help ? <AppText variant="caption" tone="ink2">{help}</AppText> : null}
+      {error?.trim() ? <AppText variant="caption" tone="danger">{error}</AppText> : help ? <AppText variant="caption" tone="ink2">{help}</AppText> : null}
     </View>
   );
 }
@@ -37,21 +44,23 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   label?: string;
   optional?: boolean;
   help?: string;
+  /** Longer explanation behind an (i) beside the label. */
+  info?: string | readonly string[];
   error?: string | null;
   style?: StyleProp<ViewStyle>;
 }
 
 /** Standard 48px text input with the 16px font that keeps iOS from zooming on focus. */
-export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField({ label, optional, help, error, style, ...rest }, ref) {
+export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField({ label, optional, help, info, error, style, ...rest }, ref) {
   const { theme } = useTheme();
   return (
-    <FieldFrame label={label} optional={optional} help={help} error={error} style={style}>
+    <FieldFrame label={label} optional={optional} help={help} info={info} error={error} style={style}>
       <TextInput
         ref={ref}
         {...rest}
         // The visible label is a sibling view, so name the input explicitly for screen readers.
         accessibilityLabel={rest.accessibilityLabel ?? label}
-        accessibilityHint={rest.accessibilityHint ?? (error ?? help ?? undefined)}
+        accessibilityHint={rest.accessibilityHint ?? (error?.trim() || help || undefined)}
         placeholderTextColor={theme.ink3}
         style={[
           styles.input,
@@ -67,6 +76,8 @@ export interface SelectFieldProps {
   label?: string;
   optional?: boolean;
   help?: string;
+  /** Opens a tooltip beside the label, for a description that would crowd the screen. */
+  info?: string | readonly string[];
   error?: string | null;
   value: string;
   placeholder?: string;
@@ -78,10 +89,10 @@ export interface SelectFieldProps {
 }
 
 /** A field-shaped button that opens a picker sheet; native selects have no place in this design. */
-export function SelectField({ label, optional, help, error, value, placeholder = 'Choose…', icon: Icon, leading, onPress, accessibilityLabel, style }: SelectFieldProps) {
+export function SelectField({ label, optional, help, info, error, value, placeholder = 'Choose…', icon: Icon, leading, onPress, accessibilityLabel, style }: SelectFieldProps) {
   const { theme } = useTheme();
   return (
-    <FieldFrame label={label} optional={optional} help={help} error={error} style={style}>
+    <FieldFrame label={label} optional={optional} help={help} info={info} error={error} style={style}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? label}
@@ -110,8 +121,11 @@ const styles = StyleSheet.create({
   },
   labelRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: spacing.sm,
+  },
+  labelText: {
+    flexShrink: 1,
   },
   input: {
     minHeight: layout.touch,

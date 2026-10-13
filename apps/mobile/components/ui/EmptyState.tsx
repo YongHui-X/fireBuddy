@@ -15,13 +15,15 @@ export interface EmptyStateProps {
   doudou?: DoudouPose;
   title: string;
   message?: string;
+  /** A short bold line under the title, for something the person should not miss. */
+  note?: string;
   actionLabel?: string;
   onAction?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
 /** Centred prompt for an empty card or route, with one secondary action. */
-export function EmptyState({ icon: Icon, doudou, title, message, actionLabel, onAction, style }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, doudou, title, message, note, actionLabel, onAction, style }: EmptyStateProps) {
   const { theme } = useTheme();
   return (
     <View style={[styles.wrap, style]}>
@@ -31,6 +33,7 @@ export function EmptyState({ icon: Icon, doudou, title, message, actionLabel, on
         </View>
       ) : null}
       <AppText variant="cardTitle" align="center">{title}</AppText>
+      {note ? <AppText variant="label" align="center" style={styles.message}>{note}</AppText> : null}
       {message ? <AppText variant="bodySmall" tone="ink2" align="center" style={styles.message}>{message}</AppText> : null}
       {actionLabel && onAction ? <Button label={actionLabel} variant="secondary" onPress={onAction} style={styles.action} /> : null}
     </View>

@@ -196,6 +196,34 @@ export function countActiveFilters(filters: LedgerFilters) {
   );
 }
 
+export type ActiveFilterKey = 'transactionType' | 'categoryId' | 'accountId' | 'tagId' | 'dates';
+
+export interface ActiveFilterLookups {
+  categoryName?: (categoryId: string) => string | undefined;
+  accountName?: (accountId: string) => string | undefined;
+  tagName?: (tagId: string) => string | undefined;
+  /** The period label for a custom date range, e.g. "3 Oct – 9 Oct". */
+  rangeLabel?: string;
+}
+
+/**
+ * One removable chip per active filter, in the order the Filters sheet lists them, so the
+ * ledger can show what is filtered (Expense, Food, DBS, #trip, 3 Oct – 9 Oct) rather than a count.
+ * A name that cannot be found falls back to a generic word, never an id.
+ */
+export function describeActiveFilters(filters: LedgerFilters, lookups: ActiveFilterLookups = {}): { key: ActiveFilterKey; label: string }[] {
+  const chips: { key: ActiveFilterKey; label: string }[] = [];
+  if (filters.transactionType) chips.push({ key: 'transactionType', label: filters.transactionType === 'income' ? 'Income' : 'Expense' });
+  if (filters.categoryId) chips.push({ key: 'categoryId', label: lookups.categoryName?.(filters.categoryId) ?? 'Category' });
+  if (filters.accountId) chips.push({ key: 'accountId', label: lookups.accountName?.(filters.accountId) ?? 'Account' });
+  if (filters.tagId) {
+    const tag = lookups.tagName?.(filters.tagId);
+    chips.push({ key: 'tagId', label: tag ? `#${tag}` : 'Tag' });
+  }
+  if (filters.startDate || filters.endDate) chips.push({ key: 'dates', label: lookups.rangeLabel ?? 'Custom dates' });
+  return chips;
+}
+
 export interface LedgerSection<T> {
   dateKey: string;
   data: T[];

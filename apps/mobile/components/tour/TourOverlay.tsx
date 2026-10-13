@@ -55,6 +55,7 @@ export function TourOverlay() {
     if (!step) return undefined;
     let cancelled = false;
     let tries = 0;
+    let confirmed = false;
     let timer: ReturnType<typeof setTimeout>;
     const retry = () => {
       tries += 1;
@@ -78,7 +79,15 @@ export function TourOverlay() {
         node.measureInWindow((x, y, w, h) => {
           if (cancelled) return;
           if (!w || !h || !ow || !oh) retry();
-          else setMeasured({ stepId: step.id, rect: { x: x - ox, y: y - oy, width: w, height: h }, frame: { width: ow, height: oh } });
+          else {
+            setMeasured({ stepId: step.id, rect: { x: x - ox, y: y - oy, width: w, height: h }, frame: { width: ow, height: oh } });
+            // Measure once more after the page settles (the jump to the top, a late layout pass),
+            // so the hole never stays on a stale position.
+            if (!confirmed) {
+              confirmed = true;
+              timer = setTimeout(attempt, 300);
+            }
+          }
         });
       });
     };

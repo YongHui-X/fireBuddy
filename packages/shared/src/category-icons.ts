@@ -16,6 +16,7 @@ export const categoryIconOptions = [
   { id: 'housing', label: 'Housing' },
   { id: 'phone', label: 'Phone & Internet' },
   { id: 'health', label: 'Healthcare' },
+  { id: 'insurance', label: 'Insurance' },
   { id: 'fitness', label: 'Fitness' },
   { id: 'entertainment', label: 'Entertainment' },
   { id: 'gaming', label: 'Gaming' },

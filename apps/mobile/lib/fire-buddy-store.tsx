@@ -6,10 +6,16 @@ import {
   createLocalTransaction,
   demoAccounts,
   demoCategories,
+  insuranceCategory,
+  withInsuranceCategory,
   demoCategoryIds,
   demoProfile,
   demoTags,
   dedupeSameDaySnapshots,
+  accountBalances,
+  isAccountBalancePosition,
+  latestSnapshotByPosition,
+  withLinkedBalances,
   deleteAccountMoving,
   demoUserId,
   getDeviceDateKey,
@@ -36,6 +42,7 @@ import {
   type WealthContribution,
   type WealthPosition,
   type WealthPositionSnapshot,
+  shortenDefaultCategoryNames,
   upgradeDefaultCategoryColors,
 } from '@firebuddy/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
@@ -124,8 +131,9 @@ function freshState(): Records & { seededOn: string } {
   const cash = demoAccounts.find((account) => account.type === 'cash');
   return {
     seededOn: FRESH_DATASET,
-    categories: [...demoCategories],
-    accounts: cash ? [{ ...cash, isDefault: true }] : [],
+    categories: [...withInsuranceCategory(shortenDefaultCategoryNames(demoCategories), insuranceCategory)],
+    // A fresh install's Cash counts toward net worth by itself, unlike the demo's accounts.
+    accounts: cash ? [{ ...cash, isDefault: true, trackBalance: true }] : [],
     transactions: [],
     tags: [],
     positions: [],
@@ -142,7 +150,7 @@ function seedState(todayKey = getDeviceDateKey()): Records & { seededOn: string 
   const wealth = createDemoWealth(todayKey);
   return {
     seededOn: todayKey,
-    categories: [...demoCategories],
+    categories: [...withInsuranceCategory(shortenDefaultCategoryNames(demoCategories), insuranceCategory)],
     accounts: [...demoAccounts],
     transactions: createDemoTransactions(todayKey),
     tags: [...demoTags],
@@ -300,6 +308,19 @@ function newId(prefix: string) {
 
 export interface FireBuddyStore extends StoreState {
   demoMode: true;
+  /**
+   * `snapshots` plus computed values for cash assets linked to an account (PRD 6.4.1). Every
+   * balance, net worth, runway, FIRE and DouDou calculation reads this; editing and history read
+   * `snapshots`, the values the user actually entered.
+   */
+  balanceSnapshots: readonly WealthPositionSnapshot[];
+  /** `positions` plus the automatic balances of accounts nothing in Wealth follows yet (PRD 6.4.1, 5a). */
+  balancePositions: readonly WealthPosition[];
+  /**
+   * Turn an automatic account balance into a stored, linked cash balance whose starting value is
+   * today's, so it can be edited or archived. Returns stored positions unchanged.
+   */
+  adoptAccountBalance: (position: WealthPosition) => WealthPosition;
   profile: typeof demoProfile;
   addTransaction: (input: CreateTransactionInput) => Transaction;
   updateTransaction: (id: string, updates: UpdateTransactionInput) => void;
@@ -333,7 +354,8 @@ export interface FireBuddyStore extends StoreState {
   deleteContribution: (id: string) => void;
   setRetirementPlan: (plan: RetirementPlan | null) => void;
   /** Save a transaction and make it repeat; it becomes occurrence 0 of the new rule. */
-  addRecurringTransaction: (input: CreateTransactionInput, frequency: RecurringFrequency, endDate: string | null) => { transaction: Transaction; rule: RecurringRule };
+  /** `firstRepeatDate` sets the first copy's date when it differs from one period after `input.date`. */
+  addRecurringTransaction: (input: CreateTransactionInput, frequency: RecurringFrequency, endDate: string | null, firstRepeatDate?: string | null) => { transaction: Transaction; rule: RecurringRule };
   /** Replace a rule (template, schedule, pause state); past copies are left as they are. */
   updateRecurringRule: (rule: RecurringRule) => void;
   /** Stop a rule. Copies already recorded stay in the ledger. */
@@ -374,13 +396,19 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
         const start = initialDataset({ hasStoredRecords: entries.some(([, value]) => value != null), isDev: __DEV__ });
         // A brand-new production install starts empty; development builds start on the demo data.
         const seed = start === 'fresh' ? freshState() : seedState();
+        const applied = parseStored<string[]>(stored[STORAGE_KEYS.categoryMigrations], []);
+        const addOnce = (categories: readonly Category[]) => (applied.includes('insurance') ? categories : withInsuranceCategory(categories, insuranceCategory));
+        if (!applied.includes('insurance')) AsyncStorage.setItem(STORAGE_KEYS.categoryMigrations, JSON.stringify([...applied, 'insurance'])).catch(() => undefined);
         const records: Records = {
           // Default categories saved before the multi-colour chart palette move onto it once.
-          categories: upgradeDefaultCategoryColors(parseStored(stored[STORAGE_KEYS.categories], seed.categories)),
+          // Built-in categories also move to their short phone names (Health, Bills) once.
+          // The built-in Insurance category arrives once; deleting it afterwards is respected.
+          categories: [...addOnce(shortenDefaultCategoryNames(upgradeDefaultCategoryColors(parseStored(stored[STORAGE_KEYS.categories], seed.categories))))],
           accounts: parseStored(stored[STORAGE_KEYS.accounts], seed.accounts),
           transactions: parseStored(stored[STORAGE_KEYS.transactions], seed.transactions),
           tags: parseStored(stored[STORAGE_KEYS.tags], seed.tags),
-          positions: parseStored(stored[STORAGE_KEYS.positions], seed.positions),
+          // CPF SA lines saved as "CPF SA or RA" take the shorter name (owner, 11 Oct 2026).
+          positions: parseStored<WealthPosition[]>(stored[STORAGE_KEYS.positions], seed.positions).map((item) => (item.cpfAccount === 'sa' && item.name === 'CPF SA or RA' ? { ...item, name: 'CPF SA' } : item)),
           // Same-day duplicates from before re-saving a date replaced it collapse to the newest.
           snapshots: [...dedupeSameDaySnapshots(parseStored(stored[STORAGE_KEYS.snapshots], seed.snapshots))],
           contributions: parseStored(stored[STORAGE_KEYS.contributions], seed.contributions),
@@ -389,7 +417,18 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
           recurringRules: parseStored(stored[STORAGE_KEYS.recurringRules], seed.recurringRules),
         };
         // A fresh dataset is the person's own; only the demo dataset follows the calendar.
-        const refreshed = start === 'fresh' || stored[STORAGE_KEYS.seededOn] === FRESH_DATASET
+        const fresh = start === 'fresh' || stored[STORAGE_KEYS.seededOn] === FRESH_DATASET;
+        // Demo accounts saved before `trackBalance` existed must not start counting on top of the
+        // demo's hand-entered wealth (PRD 6.4.1); a person's own records are left as they are.
+        if (!fresh) {
+          const demoIds = new Set(demoAccounts.map((account) => account.id));
+          records.accounts = records.accounts.map((account) => (demoIds.has(account.id) && account.trackBalance === undefined ? { ...account, trackBalance: false } : account));
+        } else {
+          // A person's account switched off by the old archive rule (8-9 Oct 2026) counts again,
+          // from the moment it was switched off, so transactions logged since then show up.
+          records.accounts = records.accounts.map((account) => (account.trackBalance === false ? { ...account, trackBalance: true, balanceFrom: account.balanceFrom ?? account.updatedAt } : account));
+        }
+        const refreshed = fresh
           ? { seededOn: FRESH_DATASET }
           : refreshDemoSlices(records, stored[STORAGE_KEYS.seededOn], seed.seededOn);
         dispatch({
@@ -438,6 +477,28 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
   }, [state.hydrated]);
 
   const { categories, accounts, transactions } = state;
+  const { balanceSnapshots, balancePositions } = useMemo(() => {
+    const today = getDeviceDateKey();
+    const automatic = accountBalances(accounts, state.positions, transactions, today);
+    return {
+      balanceSnapshots: [...withLinkedBalances(state.positions, state.snapshots, transactions, today), ...automatic.snapshots],
+      balancePositions: [...state.positions, ...automatic.positions],
+    };
+  }, [accounts, state.positions, state.snapshots, transactions]);
+  /**
+   * Save each linked position's current computed value as an entered balance dated today, so its
+   * value does not jump when it stops following its account (unlink, archive, account deleted).
+   */
+  const freezeLinkedValues = useCallback((positionIds: readonly string[]) => {
+    const today = getDeviceDateKey();
+    const values = latestSnapshotByPosition(balanceSnapshots, today);
+    const timestamp = new Date().toISOString();
+    for (const id of positionIds) {
+      const value = values.get(id);
+      if (!value) continue;
+      dispatch({ type: 'addSnapshot', snapshot: { id: newId('snapshot'), userId: demoUserId, wealthPositionId: id, valueDate: today, amount: value.amount, createdAt: timestamp, updatedAt: timestamp } });
+    }
+  }, [balanceSnapshots]);
 
   const getCategoryById = useCallback((id: string | null | undefined) => categories.find((category) => category.id === id), [categories]);
   const getAccountById = useCallback((id: string | null | undefined) => accounts.find((account) => account.id === id), [accounts]);
@@ -523,13 +584,17 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     const result = deleteAccountMoving(accounts, transactions, id, moveTo, now, state.recurringRules.map((rule) => rule.template.accountId));
     if (!result) return false;
+    // A balance that followed this account keeps its current value and goes back to manual.
+    const linked = state.positions.filter((position) => position.linkedAccountId === id).map((position) => position.id);
+    freezeLinkedValues(linked);
+    for (const positionId of linked) dispatch({ type: 'updatePosition', id: positionId, updates: { linkedAccountId: null } });
     // Rules follow their transactions, so no future copy is ever recorded on the deleted account.
     const recurringRules = moveTo
       ? state.recurringRules.map((rule) => (rule.template.accountId === id ? { ...rule, template: { ...rule.template, accountId: moveTo }, updatedAt: now } : rule))
       : state.recurringRules;
     dispatch({ type: 'applyAccountDeletion', accounts: result.accounts, transactions: result.transactions, recurringRules });
     return true;
-  }, [accounts, transactions, state.recurringRules]);
+  }, [accounts, transactions, state.recurringRules, state.positions, freezeLinkedValues]);
   const setDefaultAccount = useCallback((id: string) => {
     const timestamp = new Date().toISOString();
     if (!accounts.some((account) => account.id === id)) return;
@@ -553,8 +618,37 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
     return position;
   }, []);
 
-  const updatePosition = useCallback((id: string, updates: UpdateWealthPositionInput) => dispatch({ type: 'updatePosition', id, updates }), []);
-  const archivePosition = useCallback((id: string) => dispatch({ type: 'archivePosition', id }), []);
+  const updatePosition = useCallback((id: string, updates: UpdateWealthPositionInput) => {
+    const current = state.positions.find((position) => position.id === id);
+    // Unlinking or switching accounts keeps today's value as the new starting balance, and the old
+    // account's automatic balance stays off so the money is not counted twice.
+    if (current?.linkedAccountId && 'linkedAccountId' in updates && updates.linkedAccountId !== current.linkedAccountId) {
+      freezeLinkedValues([id]);
+      // The old account counts again by itself, from zero now: its past money stays in this balance.
+      dispatch({ type: 'updateAccount', id: current.linkedAccountId, updates: { trackBalance: true, balanceFrom: new Date().toISOString() } });
+    }
+    dispatch({ type: 'updatePosition', id, updates });
+  }, [state.positions, freezeLinkedValues]);
+  const archivePosition = useCallback((id: string) => {
+    const linkedAccountId = state.positions.find((position) => position.id === id)?.linkedAccountId;
+    if (linkedAccountId) {
+      freezeLinkedValues([id]);
+      // The archived balance takes the past money with it; anything logged from now on counts again.
+      dispatch({ type: 'updateAccount', id: linkedAccountId, updates: { trackBalance: true, balanceFrom: new Date().toISOString() } });
+      dispatch({ type: 'updatePosition', id, updates: { linkedAccountId: null } });
+    }
+    dispatch({ type: 'archivePosition', id });
+  }, [state.positions, freezeLinkedValues]);
+
+  const adoptAccountBalance = useCallback((position: WealthPosition) => {
+    if (!isAccountBalancePosition(position) || !position.linkedAccountId) return position;
+    const today = getDeviceDateKey();
+    const value = latestSnapshotByPosition(balanceSnapshots, today).get(position.id)?.amount ?? '0.00';
+    return addPosition({
+      name: position.name, positionKind: 'asset', positionType: 'cash', liquidityClass: 'liquid', restrictionType: 'none',
+      includeInFi: false, isEmergencyFund: false, currency: 'SGD', linkedAccountId: position.linkedAccountId,
+    }, { valueDate: today, amount: value });
+  }, [balanceSnapshots, addPosition]);
 
   const addSnapshot = useCallback((positionId: string, input: CreateWealthSnapshotInput) => {
     const timestamp = new Date().toISOString();
@@ -575,9 +669,9 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
   const deleteContribution = useCallback((id: string) => dispatch({ type: 'deleteContribution', id }), []);
   const setRetirementPlan = useCallback((plan: RetirementPlan | null) => dispatch({ type: 'setRetirementPlan', plan }), []);
 
-  const addRecurringTransaction = useCallback((input: CreateTransactionInput, frequency: RecurringFrequency, endDate: string | null) => {
+  const addRecurringTransaction = useCallback((input: CreateTransactionInput, frequency: RecurringFrequency, endDate: string | null, firstRepeatDate: string | null = null) => {
     const now = new Date().toISOString();
-    const rule = createRecurringRule(input, frequency, endDate, newId('recurring'), now);
+    const rule = createRecurringRule(input, frequency, endDate, newId('recurring'), now, firstRepeatDate);
     const transaction = createLocalTransaction({ ...input, recurringId: rule.id }, demoUserId);
     dispatch({ type: 'addTransaction', transaction });
     dispatch({ type: 'addRecurringRule', rule });
@@ -629,6 +723,9 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<FireBuddyStore>(
     () => ({
       ...state,
+      balanceSnapshots,
+      balancePositions,
+      adoptAccountBalance,
       demoMode: true,
       profile: demoProfile,
       addTransaction,
@@ -667,7 +764,7 @@ export function FireBuddyStoreProvider({ children }: { children: ReactNode }) {
       startFresh,
       isFreshDataset: state.seededOn === FRESH_DATASET,
     }),
-    [state, addTransaction, updateTransaction, deleteTransaction, duplicateTransaction, addCategory, updateCategory, deleteCategory, addTag, renameTag, deleteTag, addAccount, updateAccount, deleteAccount, setDefaultAccount, setEssentialCategoryIds, exportRecords, replaceRecords, getCategoryById, getAccountById, addPosition, updatePosition, archivePosition, addSnapshot, deleteSnapshot, addContribution, deleteContribution, setRetirementPlan, addRecurringTransaction, updateRecurringRule, deleteRecurringRule, notify, dismissNotification, clearDemoData, startFresh],
+    [state, balanceSnapshots, balancePositions, adoptAccountBalance, addTransaction, updateTransaction, deleteTransaction, duplicateTransaction, addCategory, updateCategory, deleteCategory, addTag, renameTag, deleteTag, addAccount, updateAccount, deleteAccount, setDefaultAccount, setEssentialCategoryIds, exportRecords, replaceRecords, getCategoryById, getAccountById, addPosition, updatePosition, archivePosition, addSnapshot, deleteSnapshot, addContribution, deleteContribution, setRetirementPlan, addRecurringTransaction, updateRecurringRule, deleteRecurringRule, notify, dismissNotification, clearDemoData, startFresh],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

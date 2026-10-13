@@ -26,10 +26,15 @@ export interface CategorySheetProps {
 
 const iconChoices = categoryIconOptions.filter((option) => option.id !== 'shapes');
 
-/** Create or edit a custom category: name, type, icon, colour and (for expenses) a monthly budget. */
+/**
+ * Create or edit a custom category: name, type, icon, colour and (for expenses) a monthly budget.
+ * System categories keep their name, type, icon and colour, but their budget can still be set,
+ * since a new install has only system categories.
+ */
 export function CategorySheet({ open, mode, categoryType, initial, onClose, onSave, onDelete }: CategorySheetProps) {
   const { theme } = useTheme();
   const readOnly = Boolean(initial?.isDefault);
+  const budgetOnly = readOnly && initial?.categoryType === 'expense';
   const [name, setName] = useState('');
   const [type, setType] = useState<TransactionType>(categoryType);
   const [icon, setIcon] = useState<string>('others');
@@ -66,8 +71,10 @@ export function CategorySheet({ open, mode, categoryType, initial, onClose, onSa
       open={open}
       onClose={onClose}
       title={readOnly ? initial?.name ?? 'Category' : mode === 'add' ? 'Add category' : 'Edit category'}
-      description={readOnly ? 'System categories cannot be edited, only their budgets on the web.' : undefined}
-      footer={readOnly ? (
+      description={budgetOnly ? 'Built-in categories keep their name and icon, but you can set a monthly budget.' : readOnly ? 'Built-in categories cannot be edited.' : undefined}
+      footer={budgetOnly ? (
+        <Button label="Save budget" variant="primary" block onPress={save} />
+      ) : readOnly ? (
         <Button label="Close" variant="secondary" block onPress={onClose} />
       ) : (
         <View style={styles.footer}>
@@ -137,7 +144,6 @@ export function CategorySheet({ open, mode, categoryType, initial, onClose, onSa
             onChangeText={(text) => setBudget(sanitizeAmountInput(text))}
             placeholder="0.00"
             keyboardType="decimal-pad"
-            editable={!readOnly}
             help="Used for the budget bars on Home and Categories."
           />
         ) : null}

@@ -7,7 +7,7 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withD
 import Svg, { Defs, Ellipse, G, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { BRAND_TAGLINE, fonts, launchPalettes } from '@/constants/tokens';
+import { BRAND_TAGLINE, doudouColors, fonts, launchPalettes } from '@/constants/tokens';
 
 import { Shapes } from './Doudou';
 
@@ -51,7 +51,7 @@ export function LaunchScreen({ ready, onDone }: LaunchScreenProps) {
   const system = useColorScheme();
   const palette = launchPalettes[system === 'dark' ? 'dark' : 'light'];
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const [parts] = useState(() => getDoudouGlyphParts({ outline: palette.outline }));
+  const [parts] = useState(() => getDoudouGlyphParts({ outline: palette.outline, colors: doudouColors }));
 
   const glow = useSharedValue(0);
   const pop = useSharedValue(START_SCALE);
