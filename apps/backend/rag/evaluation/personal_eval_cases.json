@@ -65,7 +65,12 @@
     "id": "improve_my_spending",
     "question": "How can I improve on my spending expenses?",
     "expected_modes": ["hybrid", "data"],
-    "required_facts": [{"path": "personal.spending.currentMonth.topCategories.0.category", "format": "text"}]
+    "required_facts": [
+      {"any_of": [
+        {"path": "expense.categoryTotals.0.category", "format": "text"},
+        {"path": "personal.spending.currentMonth.topCategories.0.category", "format": "text"}
+      ]}
+    ]
   },
   {
     "id": "missing_data_user",

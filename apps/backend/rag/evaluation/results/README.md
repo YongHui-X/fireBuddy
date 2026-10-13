@@ -1001,3 +1001,19 @@ Cases: **11**
 | judge_groundedness | 0.9714 |
 
 Artifacts: [Markdown](personal/versions/v011.md) | [JSON](personal/versions/v011.json)
+
+### Version 12: Personalised consent for every case, status wording accepted
+
+Generated: `2026-10-13T09:42:06.830863+00:00`
+Cases: **11**
+
+| Metric | Score |
+|---|---:|
+| overall_pass_rate | 0.9091 |
+| mode_accuracy | 1.0000 |
+| fact_accuracy | 0.9091 |
+| leak_free_rate | 1.0000 |
+| missing_data_refusal_accuracy | 1.0000 |
+| judge_groundedness | 1.0000 |
+
+Artifacts: [Markdown](personal/versions/v012.md) | [JSON](personal/versions/v012.json)

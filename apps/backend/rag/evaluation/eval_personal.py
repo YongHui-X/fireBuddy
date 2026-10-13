@@ -42,6 +42,14 @@ MISSING_DATA_PHRASES = (
     "no expenses recorded",
 )
 MIN_LEAK_DESCRIPTION_CHARS = 4
+# Plain-language ways an answer states a FIRE funding status. The status code itself
+# ("review_required") is internal, so an answer that says it in words must also pass.
+STATUS_PHRASES = {
+    "review_required": ("review required", "review is required", "needs a review", "needs review",
+                        "confirm the five", "set up your fire plan", "finish setting up"),
+    "funded": ("funded", "on track"),
+    "shortfall": ("shortfall", "not on track", "falls short"),
+}
 
 if str(BACKEND_DIR) not in sys.path:
     sys.path.append(str(BACKEND_DIR))
@@ -214,6 +222,10 @@ def fact_present(answer: str, value, fmt: str) -> bool:
     if value is None:
         return fmt == "text_optional"
     lowered = answer.lower()
+    if fmt == "status":
+        phrases = STATUS_PHRASES.get(str(value), ())
+        if any(phrase in lowered for phrase in phrases):
+            return True
     if fmt in ("text", "text_optional", "status"):
         needle = str(value).lower().replace("_", " ")
         return needle in lowered or str(value).lower() in lowered
@@ -278,7 +290,10 @@ def evaluate_case(
     use_judge: bool,
 ) -> dict:
     target_user = str(uuid.uuid4()) if case.user == "missing" else user_id
-    response = answer_ember_question(target_user, case.question)
+    # Every case runs as a person who chose Personalised, so the run measures answers rather than
+    # whichever AI setting the local accounts happen to hold (the record-less account has no
+    # profile at all). The consent gate itself is covered by the backend unit tests.
+    response = answer_ember_question(target_user, case.question, preference="personalised")
     answer = response.answer
     if case.user != "missing":
         expected = expected_facts_for_evidence(user_id, response.data_evidence, expected)
