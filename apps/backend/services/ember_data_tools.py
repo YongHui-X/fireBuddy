@@ -240,7 +240,7 @@ def _fire_projection(user_id: str, plan: EmberPlan, today: date) -> EmberDataRes
                   f"against S${fire['fiTarget']} required at that same date. The funding gap is S${fire['fundingGap']}. "
                   f"Estimated earliest funded retirement month: {fire.get('earliestRetirementMonth') or 'not found'}. "
                   "These smooth-return projections are not a guarantee and only cover the selected end age.")
-        if saved_plan and saved_plan["cpfPlan"] in ["unknown", "basic"]:
+        if saved_plan and saved_plan["cpfPlan"] == "unknown":
             answer += " CPF income not included."
     else:
         answer = "Review required: confirm the five FIRE Planner setup steps before I can explain an active projection."

@@ -68,7 +68,7 @@ def calculate_retirement(plan, assets, effective_date):
     for offset in range(end - now):
         index = now + offset
         cpf = 0
-        if index >= cpf_start and plan['cpfPlan'] in ['standard', 'escalating']:
+        if index >= cpf_start and plan['cpfPlan'] in ['standard', 'escalating', 'basic']:
             cpf = plan['cpfMonthlyPayout'] * (1.02 ** ((index - cpf_start) // 12) if plan['cpfPlan'] == 'escalating' else 1)
         other = sum(i['monthlyAmount'] * (1 + i['annualGrowth']) ** ((index - month_index(i['startMonth'])) / 12)
                     for i in plan['otherIncome'] if month_index(i['startMonth']) <= index < month_index(i['endMonth']))
@@ -112,8 +112,10 @@ def calculate_retirement(plan, assets, effective_date):
         estimatedFiYear=None if earliest is None else (now + earliest) // 12)
     warn('smooth_returns', 'Smooth returns do not capture market sequence risk or guarantee funding beyond the selected end age. Negative balances show unfunded cash flows, not available borrowing.')
     warn('selected_assets', 'Only the assets you selected in setup count as retirement capital. Check that restricted resources, property and emergency reserves you included can really be spent.')
-    if plan['cpfPlan'] in ['unknown', 'basic']:
-        warn('cpf_not_included', 'CPF income not included: Basic declining payouts are not modelled.' if plan['cpfPlan'] == 'basic' else 'CPF income not included: payout is not yet known.')
+    if plan['cpfPlan'] == 'unknown':
+        warn('cpf_not_included', 'CPF income not included: payout is not yet known.')
+    if plan['cpfPlan'] == 'basic':
+        warn('cpf_basic_level', 'Basic payouts fall once your CPF balances drop below S$60,000, usually late in life. The plan treats them as level.')
     if plan['portfolioOverride'] and (date.fromisoformat(str(effective_date)) - date.fromisoformat(plan['portfolioOverride']['date'])).days > 35:
         warn('stale_snapshot', 'The planning-only portfolio total is older than 35 days; it is not automatically grown to today.')
     return result
