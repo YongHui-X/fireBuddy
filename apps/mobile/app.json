@@ -2,6 +2,7 @@
   "expo": {
     "name": "FireBuddy",
     "slug": "firebuddy",
+    "owner": "firebuddyx",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -62,6 +63,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ce11f348-c3f4-4989-9f4c-6238aa3426bd"
+      }
     }
   }
 }
