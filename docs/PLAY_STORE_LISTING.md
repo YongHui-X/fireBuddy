@@ -62,7 +62,7 @@ Copy for the Play Console. Every privacy statement here must match `docs/PRIVACY
 **Category:** Finance
 **Tags** (pick up to 5 in the console): Budget, Personal finance, Expense tracker, Retirement planner, Net worth
 **Contact email:** firebuddyapp@gmail.com
-**Privacy policy URL:** *needed before review; see "Still to do" below*
+**Privacy policy URL:** https://yonghui-x.github.io/fireBuddy/privacy/ (built from `legal.ts` by `.github/workflows/legal-pages.yml`; terms at `/terms/`)
 
 ## Graphics (to make)
 
@@ -109,7 +109,7 @@ Not collected: name, email, phone, location, contacts, photos, files, health, me
 
 ## Still to do before the store review
 
-1. **Privacy policy URL.** Google needs a public web page, not only the in-app policy. Options: a page on the deployed website, GitHub Pages, or a `/privacy` route on the Railway backend serving the text from `legal.ts`.
+1. **Privacy policy URL.** Done: GitHub Pages serves the in-app text at https://yonghui-x.github.io/fireBuddy/privacy/ and republishes whenever `legal.ts` changes on `main`.
 2. **Zero data retention** with OpenAI (`docs/PRIVACY.md` checklist). Until it is approved, the Data safety form says requests are not processed ephemerally.
 3. **Screenshots and feature graphic.**
 4. **Twelve testers** opted in to the closed test for 14 days in a row.
